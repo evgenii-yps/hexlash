@@ -189,24 +189,81 @@ export const FLIGHT = {
   //   932×430            —       31       22      13
   //   1440×900           —      128      110      92
   //
-  // So the lift is capped by the smallest landscape phone, not by taste. 0.6 keeps
-  // ten screen pixels clear on every current phone and hands the word a real lift:
-  // it now hangs about four fifths of its own cap height above the corridor plane
-  // instead of sitting on it. ⚠️ On 568×320 the gap closes to zero — that layout is
-  // the one place this size and this height cannot both be had, and it is the fork
-  // to take back to the owner rather than shave either number on a hunch.
+  // That table is what the FIT RULE below now handles: every layout where the gap
+  // ran out gets the word shrunk until it comes back, so the height no longer has to
+  // be chosen for the worst phone. What the height IS still chosen for is 844×390,
+  // the one layout that has promised not to shrink — see signY.
   //
-  // ⚠️ Do not raise either number without re-running that table. The two move
-  // together and the chrome does not.
-  signY: 0.6,          // height — clear of the chrome, clear of the camera's arc
-  // Real world width. It is an object: ONE size, no rescaling. Read as a share of
-  // frame width it is 17.2 % at 844×390 (the phone-landscape reference the owner
-  // sizes against, band 16–18 %), and more on squarer screens — 23 % at 1440×900 —
-  // because a narrower horizontal field makes the same object a bigger share of it.
-  // The corridor DISTANCE is deliberately untouched: the word grows, it does not
-  // come closer. Closer is what it was pulled back from this morning.
+  // ⚠️ 13.09.2026: asked to be raised again, and it CANNOT BE — not by any amount
+  // that shows. At 844×390 the top of the letters lands exactly on the 20 px guard
+  // at this height, so every step up is a step the fit rule takes straight back out
+  // as a shrink. And it takes it out from underneath: the word is scaled about its
+  // feet, so a raised-then-shrunk word has its cap on the very same guard line as an
+  // unraised one, and is smaller. Raising is not a trade here, it is a loss:
+  //   y=0.60 → full size, cap on the guard
+  //   y=0.67 → shrunk 5.8 %, cap on the same guard, word 6 % smaller
+  // The height is therefore back where v4 left it, deliberately. What the guard is
+  // measured against also changed: the letters' true cap, bevel included (capY, read
+  // off the built geometry), not the em box it stands in.
+  signY: 0.60,         // height — the top of the 20 px guard at 844×390, full size
+  // Real world width, at full size. Read as a share of frame width it is 17.2 % at
+  // 844×390 (the phone-landscape reference the owner sizes against, band 16–18 %),
+  // and more on squarer screens — 23 % at 1440×900 — because a narrower horizontal
+  // field makes the same object a bigger share of it. The corridor DISTANCE is
+  // deliberately untouched: the word grows, it does not come closer. Closer is what
+  // it was pulled back from this morning.
+  //
+  // ⚠️ "At full size" is new on 13.09.2026: the word is no longer one fixed size in
+  // every layout. See the fit rule.
   signWidth: 5.4,
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
+
+  // ── the fit rule ──
+  // ONE rule, not a list of exceptions: the word keeps clear air under the top
+  // panel, and where it cannot, it shrinks until it does. Nothing here knows about
+  // portrait, or about 568×320, or about any other particular screen — the rule is
+  // evaluated against whatever the viewport and the panel actually are, so there is
+  // no second set of numbers to drift out of step with the first.
+  //
+  // Why a rule at all, when the sign is an object and objects have one size: because
+  // the panel is CSS and the word is geometry, and the two scale by different laws.
+  // The panel's bottom edge sits at a near-fixed 59 screen pixels whatever the
+  // screen (52 in portrait, where the chrome goes compact), while the word's height
+  // on screen grows as the frame gets shorter. On a big screen that leaves 128
+  // pixels of air; on the smallest phone in landscape it left none at all. A single
+  // world size cannot serve both, and picking one for the worst case would throw
+  // away the size the owner asked for on the phone that matters.
+  //
+  // It is measured at ONE pose — the home start framing — and recomputed only when
+  // the viewport changes. So it is not a thing that happens while the player is
+  // looking: the word does not breathe as the camera orbits.
+  //
+  // Continuity, measured across 560…920 px of width at 390 tall and 320…440 px of
+  // height at 844 wide: the scale walks in steps of three to six per cent per twenty
+  // pixels of viewport and never jumps. The ONE exception is not the rule's: at
+  // 576 px the chrome itself changes shape and its lower edge drops seven pixels, and
+  // the word has to follow it down — twelve per cent, in one step, because the word is
+  // only forty-odd pixels tall and seven of them is a sixth of it. That step belongs
+  // to the panel's breakpoint; the guard is hard, so there is nothing to smooth it
+  // with that would not be the word sitting in the chrome for a moment.
+  //
+  // ⚠️ What the rule does NOT fix, and cannot: portrait. There the word is not big,
+  // it is elsewhere — it projects to x 503…818 of a 390-wide frame, its near edge
+  // 15.6° off the axis against a horizontal half-field of 10.06°. Scaling moves the
+  // word toward its own centre, which at x≈660 is off the frame as well, so no
+  // positive scale brings it in; the size never binds there either (314 px of word in
+  // 374 px of room). Portrait is a POSITION problem and this rule is about size. It
+  // declines to grind the word to a dot chasing a frame it was never in.
+  signFitGapPx: 20,    // clear air the word must keep under the panel, screen px
+  signFitMinScale: 0.30, // …and how far it may shrink chasing that before it stops.
+  //                      Chosen by measurement, not by taste: the oldest phone in
+  //                      landscape, 568×320, needs 31.5 % to clear the guard and gets
+  //                      nowhere near it at the 45 % this started at — it sat on the
+  //                      floor four pixels short. The price is a word 6.5 % of the
+  //                      frame wide on that screen, which is small; the guard was
+  //                      ordered as hard, and 20 px of air is what it buys. Every
+  //                      landscape layout measured clears it now; below this a word
+  //                      would be a smudge and the floor is there to stop that.
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signSideBand: 1.6,   // world units either side of the sign's own plane over which
@@ -591,6 +648,7 @@ function buildSign(o) {
 
   const half = o.signDepth / 2;
   const geos = [];
+  let capY = -Infinity;   // the real top of the letters, in the sign's own units
   const front = new THREE.Group(); // reads from the home side (+Z)
   const back = new THREE.Group();  // reads from the plates side (-Z)
   back.rotation.y = Math.PI;
@@ -601,6 +659,14 @@ function buildSign(o) {
     });
     geo = dropBackCap(geo, THREE); // open shell — see the helper
     geo.translate(s.x - emWidth / 2, -0.5, 0); // centre the word on its own origin
+    // The real cap, read off the built letters rather than assumed at +0.5. The em
+    // box is taller than the capitals standing in it, and the fit rule measures its
+    // clearance against this: guarding the em box would have the word ducking under
+    // the panel by however much of the box is empty air above the letters, which on
+    // this face is a couple of screen pixels at the phone size and is exactly the
+    // kind of quiet slack that turns into "why is it small on my screen".
+    geo.computeBoundingBox();
+    capY = Math.max(capY, geo.boundingBox.max.y);
     geos.push(geo);
     front.add(new THREE.Mesh(geo, matFront));
     back.add(new THREE.Mesh(geo, matBack)); // same geometry, mirrored by the group's turn
@@ -613,7 +679,7 @@ function buildSign(o) {
     matFront.dispose();
     matBack.dispose();
   };
-  return { group, matFront, matBack, emWidth, dispose };
+  return { group, matFront, matBack, emWidth, capY, dispose };
 }
 
 // ─────────────────────── The cloud the sign stands in ───────────────────────
@@ -904,7 +970,11 @@ export function createTransitionFlight(deps) {
   // The sign is a FIXED landmark: placed once here and never moved again, so the
   // player can turn round at the plates and find it exactly where they flew past it.
   const sign = buildSign(o);
-  const signScale = o.signWidth / sign.emWidth;
+  // `let`, not `const`, since 13.09.2026: the word keeps this size wherever it fits
+  // and is shrunk off it where it does not — see fitSign. Everything downstream that
+  // needs the size (the bank's grain, above all) reads this one variable, so there is
+  // no second copy to fall out of step when the fit moves it.
+  let signScale = o.signWidth / sign.emWidth;
   sign.group.scale.setScalar(signScale);
   sign.group.position.set(0, o.signY, -o.modeZ * o.signAt);
   sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
@@ -917,6 +987,234 @@ export function createTransitionFlight(deps) {
   const cloud = buildSignCloud(o, sign.emWidth);
   cloud.setGrainScale(camera.fov, signScale);
   sign.group.add(cloud.group);
+
+  // ───────────────────────────── the fit rule ──────────────────────────────
+  //
+  // "Вывеска всегда влезает в кадр целиком и всегда имеет просвет до верхней
+  // панели. Где не влезает — уменьшается ровно настолько, чтобы влезть."
+  //
+  // ONE mechanism. Nothing below knows about portrait, or about 568×320, or about
+  // any other particular screen: it reads the viewport and the panel it is actually
+  // given and solves for the scale that clears them. A table of per-screen sizes
+  // would be the other way to do this and would be wrong — two sets of numbers for
+  // one thing drift apart at the first edit.
+  //
+  // The solve leans on one fact: scaling the word about its own origin leaves that
+  // ORIGIN's screen point exactly where it was. So every other point of the word
+  // moves along a line through it, and the scale that pulls an offending point onto
+  // its limit is just the ratio of the two distances from the origin. Perspective
+  // makes that ratio slightly off — the point is at a different depth once it moves
+  // — so it is iterated, and it converges in two passes.
+  //
+  // It is measured at ONE pose, handed in by the scene: the home start framing,
+  // aimed at the slab centre and NOT at the fighter, because the fighter wanders
+  // and a fit that answered to it would make the word breathe all day. And it is
+  // recomputed only on a viewport change, so it is never a thing that happens while
+  // the player is looking.
+  const _fitCam = new THREE.PerspectiveCamera();
+  const _fitV = new THREE.Vector3();
+
+  /**
+   * Set the scale — about the letters' FEET, not their middle.
+   *
+   * Two reasons, and they happen to be the same reason. Visually: the word stands on
+   * the shoal, so a word that got smaller around its own centre would climb off the
+   * bank and float. Mechanically: shrinking is the only lever the fit rule has over
+   * the top of the letters, and about the centre it is a weak one — the cap can only
+   * ever come down by half the height that was lost. Pivoted on the baseline it comes
+   * down by all of it, which is the difference between the rule working on a small
+   * phone and not. The bank rides along: its surface is authored a hair above the
+   * baseline (cloudTop −0.37 against feet at −0.5), so pivoting there leaves it
+   * essentially where it was and the word keeps standing in it at the same depth.
+   *
+   * `updateMatrixWorld` because `localToWorld` reads matrixWorld and that is only
+   * otherwise refreshed at render time — without it every measurement below would be
+   * reading the previous pass.
+   */
+  function applyFitScale(v) {
+    sign.group.scale.setScalar(v);
+    sign.group.position.y = o.signY - 0.5 * (o.signWidth / sign.emWidth - v);
+    sign.group.updateMatrixWorld(true);
+  }
+
+  /** A point of the sign's own space → screen px under the fit camera. */
+  function fitToScreen(x, y, z, vw, vh) {
+    _fitV.set(x, y, z);
+    sign.group.localToWorld(_fitV);
+    _fitV.project(_fitCam);
+    return { x: (_fitV.x * 0.5 + 0.5) * vw, y: (-_fitV.y * 0.5 + 0.5) * vh };
+  }
+
+  /**
+   * The topmost screen point of the letters' CAP LINE within an x span.
+   *
+   * Not the bounding box. The word is seen at an angle, so its cap runs downhill
+   * across the frame and the box's top corner overstates the clearance by the whole
+   * of that slope — nine pixels at the reference layout, half the guard. What the
+   * panel can actually collide with is the cap directly beneath it, so the cap is
+   * clipped to the panel's own x span first and read there. A straight line in the
+   * world is still a straight line on the screen, so clipping is a lerp.
+   *
+   * @param spans [[x0,x1], …] the chrome's own boxes — the panel is two buttons with
+   *              air between them, and the air cannot collide with anything
+   * @returns screen y, or null when no part of the cap passes under any of them
+   */
+  function capTopOver(spans, vw, vh) {
+    const hw = sign.emWidth / 2;
+    const hz = o.signDepth / 2;
+    let top = null;
+    for (const z of [hz, -hz]) {     // front and back cap edges — either can be higher
+      const a = fitToScreen(-hw, sign.capY, z, vw, vh);
+      const b = fitToScreen(hw, sign.capY, z, vw, vh);
+      const lo = Math.min(a.x, b.x);
+      const hi = Math.max(a.x, b.x);
+      const span = b.x - a.x;
+      for (const [x0, x1] of spans) {
+        const s0 = Math.max(lo, x0);
+        const s1 = Math.min(hi, x1);
+        if (s1 < s0) continue;       // this edge passes clear of that button
+        for (const sx of [s0, s1]) { // the extremes of a straight segment
+          const u = Math.abs(span) < 1e-6 ? 0 : (sx - a.x) / span;
+          const y = a.y + (b.y - a.y) * u;
+          if (top === null || y < top) top = y;
+        }
+      }
+    }
+    return top;
+  }
+
+  /** Screen box of the letters — all eight corners, since the word is turned. */
+  function letterBox(vw, vh) {
+    const hw = sign.emWidth / 2;
+    const hz = o.signDepth / 2;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const sx of [-hw, hw]) for (const sy of [-0.5, sign.capY]) for (const sz of [-hz, hz]) {
+      const p = fitToScreen(sx, sy, sz, vw, vh);
+      if (p.x < x0) x0 = p.x;
+      if (p.x > x1) x1 = p.x;
+      if (p.y < y0) y0 = p.y;
+      if (p.y > y1) y1 = p.y;
+    }
+    return { x0, x1, y0, y1 };
+  }
+
+  /**
+   * How much the word must shrink to stop hanging off an edge it is PARTLY inside.
+   *
+   * "Partly" is the whole of it. A word that straddles an edge is a cut word and
+   * shrinking pulls it back in. A word that is entirely off the frame is not cut —
+   * it is somewhere else — and shrinking does not bring it back, because the point
+   * it shrinks toward is off the frame too. The rule declines to grind such a word
+   * down to a dot chasing a frame it was never in; that case is reported, not fudged.
+   */
+  function edgeShrink(b, P, vw, vh) {
+    let k = 1;
+    const pull = (have, want, pivot) => {
+      const d = have - pivot;
+      if (Math.abs(d) < 1e-6) return;
+      const r = (want - pivot) / d;
+      if (r > 0 && r < k) k = r;
+    };
+    if (b.x0 < 0 && b.x0 < P.x && P.x > 0) pull(b.x0, 0, P.x);
+    if (b.x1 > vw && b.x1 > P.x && P.x < vw) pull(b.x1, vw, P.x);
+    if (b.y0 < 0 && b.y0 < P.y && P.y > 0) pull(b.y0, 0, P.y);
+    if (b.y1 > vh && b.y1 > P.y && P.y < vh) pull(b.y1, vh, P.y);
+    return k;
+  }
+
+  /**
+   * Re-fit the word to a viewport. Call at build and on every resize.
+   *
+   * @param view  { width, height } of the canvas, CSS px
+   * @param panel { bottom, spans } of the top chrome IN CANVAS COORDINATES, or null
+   *              when there is no panel over the word (then only the frame binds)
+   * @param pose  { position, target } the fit is measured at — a FIXED pose, please
+   * @returns a small report — the scale it settled on and why (the scene stashes it
+   *          for the dev readout; nothing in the render path reads it)
+   */
+  function fitSign(view, panel, pose) {
+    const vw = view && view.width;
+    const vh = view && view.height;
+    const full = o.signWidth / sign.emWidth;
+    if (!vw || !vh || !pose) return { scale: signScale, of: signScale / full, why: 'no view' };
+
+    _fitCam.fov = camera.fov;
+    _fitCam.near = camera.near;
+    _fitCam.far = camera.far;
+    _fitCam.aspect = vw / vh;
+    _fitCam.up.copy(camera.up);
+    _fitCam.position.copy(pose.position);
+    _fitCam.lookAt(pose.target);
+    _fitCam.updateMatrixWorld(true);
+    _fitCam.updateProjectionMatrix();
+
+    const need = panel && panel.spans && panel.spans.length
+      ? panel.bottom + o.signFitGapPx
+      : null;
+
+    /**
+     * Does the word fit at this scale? The whole rule, in one predicate.
+     *
+     * A predicate and not a formula because the two constraints do not answer to
+     * scale smoothly. As the word shrinks it also withdraws sideways, so the stretch
+     * of cap that is actually under a button changes as well as its height — and a
+     * closed-form "shrink by this ratio" walks straight past the answer and grinds
+     * the word down to the floor chasing a target that moved. Asked instead of
+     * solved, the question has no such failure mode.
+     */
+    function fits(v) {
+      applyFitScale(v);
+      if (need !== null) {
+        const top = capTopOver(panel.spans, vw, vh);
+        if (top !== null && top < need) return false;
+      }
+      const b = letterBox(vw, vh);
+      // Cut by an edge — and only where the word is PARTLY inside the frame. A word
+      // entirely off the frame is not cut, it is elsewhere, and shrinking will not
+      // fetch it back because the point it shrinks toward is off the frame too.
+      if (b.x1 > 0 && b.x0 < vw && b.y1 > 0 && b.y0 < vh) {
+        if (b.x0 < 0 || b.x1 > vw || b.y0 < 0 || b.y1 > vh) return false;
+      }
+      return true;
+    }
+
+    let s = full;
+    let why = 'full size';
+    if (!fits(full)) {
+      const floor = full * o.signFitMinScale;
+      if (!fits(floor)) {
+        // Nothing in range clears it. Sit on the floor rather than vanish, and SAY so
+        // — a word that cannot fit is a thing for the owner to decide about, not for
+        // the rule to hide by shrinking further.
+        s = floor;
+        why = 'floor — cannot fit';
+      } else {
+        // Largest scale that still fits, to within a quarter of a percent. Eleven
+        // halvings of a range half a unit wide; it runs once per resize.
+        let lo = floor;   // fits
+        let hi = full;    // does not
+        for (let i = 0; i < 11; i++) {
+          const mid = (lo + hi) / 2;
+          if (fits(mid)) lo = mid; else hi = mid;
+        }
+        s = lo;
+        why = 'shrunk to fit';
+      }
+    }
+
+    applyFitScale(s);
+    signScale = s;
+    cloud.setGrainScale(camera.fov, signScale);
+    return {
+      scale: s,
+      of: s / full,
+      why,
+      need,
+      capTop: need !== null ? capTopOver(panel.spans, vw, vh) : null,
+      box: letterBox(vw, vh),
+      view: `${vw}x${vh}`,
+    };
+  }
 
   // The bank is lit by the hall, not by itself. The lights themselves are added at
   // scene build and do not come and go, so the LIST is gathered once; their totals
@@ -1341,7 +1639,7 @@ export function createTransitionFlight(deps) {
   }
 
   return {
-    play, skip, update, snapTo, dispose, setLookHint,
+    play, skip, update, snapTo, dispose, setLookHint, fitSign,
     /** Reset the session counter (used when the scene remounts). */
     resetSession() { flights = 0; },
     get active() { return active; },
