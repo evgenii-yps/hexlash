@@ -452,6 +452,24 @@ export const FLIGHT = {
   //
   // Neighbours at this position, reference frame: 0.80 → 69 %, 1.20 → 77 %,
   // 1.40 → 83 %, 1.60 → 87 % ✗.
+  //
+  // ⚠️ WHAT THE CEILING MEASURES, and what it does not. The MEAN is a solid number:
+  // 110 on the phone reference, 116 on 1920, the same to a tenth run after run. The
+  // PEAK is one pixel and it moves: ten frozen samples on 1920 came out 0.808, 0.808,
+  // 0.808, 0.812, 0.828, 0.831, 0.845, 0.875, 0.881 of the FIGHT button, so three of
+  // ten sit above the 85 % line. The phone reference never did — 0.756…0.820 over the
+  // same runs — and the phone reference is the frame the ceiling was written for.
+  //
+  // The spread is the HALL, not the sign. Kill the emissive entirely and the word's
+  // brightest pixel still reads 51…61 from the corridor lamps alone, and it is that
+  // 0…20 levels, varying with whichever lamp phase the freeze catches, that rides on
+  // top of a constant 197.6 of the word's own light. So the glow is NOT sitting on
+  // the ceiling: it is sitting four points under it, and the lamps occasionally lend
+  // the difference.
+  //
+  // Left at 1.30 deliberately. Trimming it would cost the mean the last three briefs
+  // were spent buying, and it would be trimming against a statistic whose spread is
+  // wider than the change. Reported instead — the owner's call.
   signGlow: 1.30,      // multiplies MATERIALS.sign.emissiveIntensity
 
   // ── the contact stutters ──
