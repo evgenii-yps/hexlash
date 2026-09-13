@@ -30,7 +30,7 @@
 //
 // Exports: FLIGHT (the tuning block), createTransitionFlight.
 import * as THREE from 'three';
-import { FOG_COLOR } from '../data/sceneTokens.js';
+import { FOG_COLOR, MATERIALS } from '../data/sceneTokens.js';
 
 // ─────────────────────────────── Tuning ───────────────────────────────
 export const FLIGHT = {
@@ -161,7 +161,8 @@ export const FLIGHT = {
   signY: 3.4,          // height — clear of the camera's arc, above the plate plane
   signWidth: 3.6,      // real world width. It is an object: ONE size, no rescaling.
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
-  signFace: 0x9aa2ad,  // matte cold grey. NO emissive. NO pink. Brand rule.
+  // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
+  // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signOpacity: 0.95,   // at the top of the title beat
   signRest: 0.82,      // …and once it is just a landmark you can turn round and see
 
@@ -330,10 +331,10 @@ function buildSign(o) {
   const emWidth = x - SIGN_TRACK;
 
   const mat = new THREE.MeshStandardMaterial({
-    color: o.signFace,
-    flatShading: true,
-    roughness: 0.62,
-    metalness: 0.28,
+    // MATTE, and the brand white — never a mid grey. Emissive is left at black and
+    // blending at normal on purpose: the word must not light itself. Kill every
+    // light in the scene and it goes black, which is the test for that.
+    ...MATERIALS.sign,
     transparent: true,
     opacity: 0,
     // The sign WRITES DEPTH, unlike the rest of the fading pieces here, and it has
