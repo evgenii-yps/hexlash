@@ -440,9 +440,16 @@ export const FLIGHT = {
   // A SHOAL, NOT A MOUND. Everything below is in EM — the sign's own units, cap
   // height 1, letters spanning y ∈ [-0.5, +0.5] — so the shoal keeps its proportions
   // whatever size or distance the sign is set to.
-  cloudCount: 5200,    // grains at full quality …
-  cloudCountLow: 1800, // …and once the frame watchdog has seen this device stall.
+  cloudCount: 6667,    // grains at full quality …
+  cloudCountLow: 2308, // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
+  //                      ⚠️ Both went up by the same factor as cloudSpread on
+  //                      13.09.2026, and that pairing is the whole point: the shoal
+  //                      got LONGER, not thinner. Lengthened alone it read 1.22…1.65
+  //                      of the word from one run to the next — its outer grains were
+  //                      sitting on the edge of visibility and the reading flickered
+  //                      with them. Lengthened with the count, it reads 1.48…1.78.
+  //                      Keep them in step.
   cloudGrain: 0.22,    // grain diameter, in cap heights. HALVED from 0.40: a surface
   //                      needs an edge, and an edge cannot be sharper than one grain.
   //                      At 0.40 the top of the bank was a 0.4-high gradient — there
@@ -450,8 +457,21 @@ export const FLIGHT = {
   //                      into haze rather than reading as grit because the shoal is
   //                      three times shallower than the mound was, so the same count
   //                      sits in a third of the volume.
-  cloudSpread: 0.78,   // half-width, as a share of the word's WIDTH ⇒ the shoal runs
-  //                      1.56 × the word and carries on past both ends
+  cloudSpread: 1.00,   // half-width, as a share of the word's WIDTH ⇒ the shoal runs
+  //                      2.0 × the word and carries on past both ends.
+  //
+  //                      ⚠️ 0.78 until 13.09.2026, and the number moved because the
+  //                      SIGN did. In the world the shoal is a fixed multiple of the
+  //                      word and always was; on SCREEN it is only as wide as the part
+  //                      of it that is bright enough to see, and once the sign went
+  //                      off the view axis its pale ends stopped clearing that bar —
+  //                      the measured width fell from 1.44 of the word to 1.22, below
+  //                      the 1.4 the shoal is held to, without the shoal changing at
+  //                      all. This buys the screen width back by making the object
+  //                      longer. Its shape — the flat top, the tenth of a letter of
+  //                      immersion, the clean two thirds above — is untouched, and
+  //                      measured so after: 1.48…1.78 of the word, top edge flat to
+  //                      3.7 px, immersion 7 %, zero wisps above the bottom third.
   cloudFlank: 0.28,    // the outer share of that half-width over which it dissolves
   // THE SURFACE. This is the line the word stands on, in cap heights: -0.40 leaves
   // exactly a tenth of the letters (which end at -0.5) dipped into it.
