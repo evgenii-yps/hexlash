@@ -1016,6 +1016,14 @@ export function createTransitionFlight(deps) {
   // needs the size (the bank's grain, above all) reads this one variable, so there is
   // no second copy to fall out of step when the fit moves it.
   let signScale = o.signWidth / sign.emWidth;
+  // Set by the fit rule: the frame cuts this word and no size stops it, so it is not
+  // drawn. See fitSign, and applySignOpacity, which is where the veto lands.
+  let signClipped = false;
+  // Where the title swell was left, so a re-fit can re-apply the veto without
+  // disturbing it. (It is 1 at rest today — signRest reached the top — but the swell
+  // is still the thing that owns this number, so the fit rule borrows it rather than
+  // guessing.)
+  let lastTitleK = 0;
   sign.group.scale.setScalar(signScale);
   sign.group.position.set(o.signX, o.signY, -o.modeZ * o.signAt);
   sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
@@ -1251,10 +1259,35 @@ export function createTransitionFlight(deps) {
     applyFitScale(s);
     signScale = s;
     cloud.setGrainScale(camera.fov, signScale);
+
+    // ── the veto: a cut word is not shown ──
+    // Half a sign hanging off the edge of the frame does not read as a sign, it reads
+    // as something broken. If the rule could not get the whole word inside, the word
+    // does not appear — absence is the better of the two, and it is the same answer
+    // the owner already gave for portrait.
+    //
+    // Decided HERE, at the fit pose, once per viewport — not per frame. The camera
+    // turns all day and the word slides a long way across the frame with it; a veto
+    // re-tested every frame would blink the sign in and out as it went, which is worse
+    // than either state it was choosing between. So this is a property of the layout,
+    // like the scale, and it holds until the viewport changes.
+    //
+    // Note what it is NOT: a word that fits the frame but stands under a button is
+    // still drawn, at full size. That case is about the chrome, not the frame, and a
+    // sign beside a button is a sign; a sign with its end sawn off is not.
+    signClipped = false;
+    for (const c of cams) {
+      const b = letterBox(c, vw, vh);
+      const onScreen = b.x1 > 0 && b.x0 < vw && b.y1 > 0 && b.y0 < vh;
+      if (onScreen && (b.x0 < 0 || b.x1 > vw || b.y0 < 0 || b.y1 > vh)) { signClipped = true; break; }
+    }
+    applySignOpacity(lastTitleK);
+
     return {
       scale: s,
       of: s / full,
       why,
+      clipped: signClipped,
       need,
       capTop: need !== null ? capTopOver(cams[0], panel.spans, vw, vh) : null,
       box: letterBox(cams[0], vw, vh),
@@ -1529,6 +1562,7 @@ export function createTransitionFlight(deps) {
   // decision that has since been reversed. The title beat only ever ADDS: it swells
   // over the landmark on the way out and then leaves it standing.
   function applySignOpacity(titleK) {
+    lastTitleK = titleK;
     const rest = o.signRest;
     const op = Math.max(rest, o.signOpacity * titleK);
     // WHICH HALF the reader is looking at. The sign faces +Z, so the side is simply
@@ -1550,7 +1584,9 @@ export function createTransitionFlight(deps) {
     // under it is a caption. `sign.group.visible` covers the cloud too — it is a
     // child of the sign group.
     cloud.mat.opacity = o.cloudAlpha * op;
-    sign.group.visible = op > 0.004;
+    // …and the fit rule's veto sits on top of both: a word the frame cuts in half is
+    // not shown at all. See signClipped.
+    sign.group.visible = !signClipped && op > 0.004;
   }
 
   // The bank turns, very slowly and RIGIDLY — the whole volume as one body, so it
