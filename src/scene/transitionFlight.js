@@ -327,8 +327,8 @@ export const FLIGHT = {
   // A SHOAL, NOT A MOUND. Everything below is in EM — the sign's own units, cap
   // height 1, letters spanning y ∈ [-0.5, +0.5] — so the shoal keeps its proportions
   // whatever size or distance the sign is set to.
-  cloudCount: 3600,    // grains at full quality …
-  cloudCountLow: 1250, // …and once the frame watchdog has seen this device stall.
+  cloudCount: 5200,    // grains at full quality …
+  cloudCountLow: 1800, // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
   cloudGrain: 0.22,    // grain diameter, in cap heights. HALVED from 0.40: a surface
   //                      needs an edge, and an edge cannot be sharper than one grain.
@@ -342,14 +342,25 @@ export const FLIGHT = {
   cloudFlank: 0.28,    // the outer share of that half-width over which it dissolves
   // THE SURFACE. This is the line the word stands on, in cap heights: -0.40 leaves
   // exactly a tenth of the letters (which end at -0.5) dipped into it.
-  cloudTop: -0.40,
-  cloudTopJitter: 0.05, // …with this much play, so the surface is a water line and
+  cloudTop: -0.37,
+  cloudTopJitter: 0.03, // …with this much play, so the surface is a water line and
   //                      not a ruled edge. Small on purpose: it is the only thing
   //                      between "level" and "wavy".
+  // …and the surface FADES IN over this depth rather than starting at full strength.
+  // Without it the top row of grains reads as a comb: up there the shoal is thin, so
+  // each grain is on its own and its round edge becomes a scallop. Measured flat
+  // (worst deviation from a straight line 1.3 px) and still wrong to the eye at 3×.
+  // Fading them instead of cutting them keeps the geometry — and with it the
+  // guarantee below — while the eye sees a surface rather than a row of beads.
+  cloudEdge: 0.10,
+  cloudEdgeFloor: 0.12, // how much the very topmost grains keep. Not zero: a taper
+  //                      that reaches nothing just moves the hard edge down to where
+  //                      it stops.
   // ⚠️ The guarantee that nothing reaches the letters: the highest a grain's CENTRE
-  // can sit is cloudTop + cloudTopJitter = -0.35, and a grain reaches half its own
-  // diameter past that, so the very top of the haze is -0.35 + 0.11 = -0.24. The
-  // bottom two thirds of the letters end at -0.167. Margin: 0.073 cap heights.
+  // can sit is cloudTop + cloudTopJitter = -0.34, and a grain reaches half its own
+  // diameter past that, so the very top of the haze is -0.34 + 0.11 = -0.23. The
+  // bottom third of the letters ends at -0.167. Margin: 0.063 cap heights, and the
+  // grains up there are on the taper's floor anyway.
   // Raising cloudTop, cloudTopJitter or cloudGrain eats that margin directly.
   cloudBody: 0.20,     // even, full-density body below the surface …
   cloudTail: 0.16,     // …and a fade under that. Body + tail = 0.36 against letters
@@ -741,7 +752,19 @@ function buildSignCloud(o, emWidth) {
     // spill, just faintly. A hard edge to the lit part would draw the outline of the
     // lamp, and the one thing this bank must not grow is an edge.
     const f = 1 / (1 + d * d);
-    const w = o.cloudNearBase + (1 - o.cloudNearBase) * f;
+    let w = o.cloudNearBase + (1 - o.cloudNearBase) * f;
+
+    // The surface FADES IN over the top `cloudEdge`. Up there the shoal is thin and
+    // every grain stands alone, so a hard cut hands the eye a row of round edges —
+    // a comb, not a water line. Dimming them does what dropping them cannot: the
+    // geometry (and the guarantee that nothing reaches the letters) is untouched,
+    // and the edge still dissolves. Colour, not alpha, because one Points material
+    // has a single alpha for all of it — and over a near-black corridor dimming a
+    // grain and thinning it come to the same thing.
+    const fromTop = o.cloudTop - y;
+    const e = clamp01(fromTop / Math.max(1e-3, o.cloudEdge));
+    w *= o.cloudEdgeFloor + (1 - o.cloudEdgeFloor) * (e * e * (3 - 2 * e));
+
     col[i * 3] = w; col[i * 3 + 1] = w; col[i * 3 + 2] = w;
   }
   const geo = new THREE.BufferGeometry();
