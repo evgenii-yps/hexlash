@@ -24,9 +24,11 @@
 // more life it gets it from the DENSITY (see fogBreath), never from added geometry.
 //
 // SIGN DISCIPLINE — the HEXLASH sign is real extruded geometry standing in the world,
-// NOT DOM text, not a sprite. It is MATTE, monochrome, and has no emissive and no
-// pink: what shape it has comes from the light catching its bevels. This is the brand
-// rule and it does not get rewritten here.
+// NOT DOM text, not a sprite. It is monochrome, COLD WHITE, and it GLOWS: since
+// 13.09.2026 the owner separates the flat mark in the chrome (matte, as it always
+// was) from this sign, which is a lit object inside the world. The rule that came
+// with that change: pink glow belongs to action, white glow belongs to the world —
+// so there is no pink on this object and there never will be.
 //
 // Exports: FLIGHT (the tuning block), createTransitionFlight.
 import * as THREE from 'three';
@@ -190,6 +192,40 @@ export const FLIGHT = {
   //                      findable from BOTH ends of the corridor, so nothing dims it
   //                      but the distance falloff every other object answers to.
 
+  // ── how bright the sign burns ──
+  // WHAT the sign is made of is in sceneTokens (MATERIALS.sign): a cold white
+  // emissive plus a deliberately dim response to the hall. HOW HARD it burns is
+  // here, because it is a framing decision and it is measured against the one thing
+  // on this screen that is allowed to be brighter — the FIGHT button.
+  //
+  // The ceiling is not taste: FIGHT is the anchor of the home screen and the word is
+  // a landmark behind it, so the word's peak has to sit a clear margin below FIGHT's
+  // (the owner's band: at least a third). Measured on a phone-sized frame, home,
+  // landscape: FIGHT peaks at ≈246 and the word at ≈150 — 39 % under, inside the band
+  // with room to spare, and still well clear of the ≈8 the empty sky sits at.
+  // Raising this is a framing change, not a polish knob: check FIGHT again after.
+  signGlow: 1.0,       // multiplies MATERIALS.sign.emissiveIntensity
+
+  // ── the sign lighting its own bank ──
+  // The word is a light now, so the haze it stands in has to answer to it: a bank
+  // lit only by the hall reads as dirt the word happens to be standing behind,
+  // rather than as air the word is shining through.
+  //
+  // Split, not replacement. `cloudSignShare` is how much of the bank's brightness
+  // comes from the word rather than from the hall. Most of it does — that is what
+  // makes the bank dip with the word when the contact stutters, and what keeps it
+  // alive if the hall ever goes dark.
+  cloudSignShare: 0.68,
+  // The SHAPE of that light, baked per grain at build (see buildSignCloud). The
+  // falloff is measured OUT of the letter slab, not from its centre — along the word
+  // every grain is beside some letter, so there is nothing to fall off from there.
+  cloudNear: 0.50,     // distance, in cap heights, at which the word's light is down
+  //                      to a quarter. Roughly the depth of the bank itself, so the
+  //                      grains wrapping the feet are lit and the outer flanks are not
+  cloudNearBase: 0.18, // …and what the far flanks keep anyway. NOT zero: the light
+  //                      has to run out smoothly, or the lit part draws its own edge
+  //                      and the bank grows the silhouette it was built to avoid
+
   // ── the sign's own cloud ──
   // The word does not hang in clean black: its bottom third is sunk in a low bank of
   // haze that it stands in. This is the sign's OWN cloud and it lives with the sign
@@ -203,11 +239,12 @@ export const FLIGHT = {
   // soft grains, each at a real world position, so the parallax is honest from every
   // angle the orbit can reach and there is no single edge to catch.
   //
-  // NOT A LIGHT. It is darker than nothing else in the corridor is: a cold grey a
-  // shade above the sky, never warm, and its colour is driven off the scene's own
-  // ambient + hemisphere (see litReference) so that killing the lights kills it too.
-  // Points are unlit by nature and would otherwise survive a lights-off check, which
-  // would make the check worthless.
+  // NOT A LIGHT OF ITS OWN — but LIT, and mostly by the word. Points are unlit by
+  // nature, so both lights are folded into the colour by hand (see setLit): the
+  // hall's ambient + hemisphere, and the sign's own glow with its flicker. The
+  // second one is new on 13.09.2026 and it is the difference between air the word
+  // shines through and dirt the word stands behind. Still never additive, and still
+  // never warm.
   //
   // A BANK, NOT A BALL. It was first authored as a squashed ellipsoid with the grains
   // packed toward its middle, and on a phone that read as one smear of dirt between
@@ -422,9 +459,11 @@ function buildSign(o) {
   const emWidth = x - SIGN_TRACK;
 
   const makeMat = () => new THREE.MeshStandardMaterial({
-    // MATTE, and the brand white — never a mid grey. Emissive is left at black and
-    // blending at normal on purpose: the word must not light itself. Kill every
-    // light in the scene and it goes black, which is the test for that.
+    // Cold white, and it BURNS: the emissive in the token is the word's own light,
+    // the colour is the little it takes from the hall. Blending stays normal and
+    // there is no additive anywhere — additive is how haze and signage turn into a
+    // smear with no letters left in it. Details, and why the hall response is held
+    // down, are on MATERIALS.sign.
     ...MATERIALS.sign,
     transparent: true,
     opacity: 0,
@@ -554,6 +593,11 @@ function buildSignCloud(o, emWidth) {
 
   const rnd = mulberry32(0x48584c); // 'HXL'
   const pos = new Float32Array(o.cloudCount * 3);
+  // Per-grain share of the SIGN's own light — see the `cloudNear` block in FLIGHT.
+  // Baked once, at build: the word does not move inside its own bank, so a grain's
+  // distance from the letters never changes and there is nothing to recompute.
+  const col = new Float32Array(o.cloudCount * 3);
+  const near = Math.max(1e-3, o.cloudNear);
   for (let i = 0; i < o.cloudCount; i++) {
     // Along the word: EVEN density end to end. This is the whole difference between
     // a bank and the ball this used to be — a ball is densest in the middle and has
@@ -572,19 +616,43 @@ function buildSignCloud(o, emWidth) {
     const u = bell(rnd);
     const y = o.cloudCore + (u >= 0 ? u * o.cloudUp : u * o.cloudDown) * section;
 
+    const z = bell(rnd) * rz * section;
     pos[i * 3] = x * rx;
     pos[i * 3 + 1] = y;
-    pos[i * 3 + 2] = bell(rnd) * rz * section;
+    pos[i * 3 + 2] = z;
+
+    // How much of the WORD'S light this grain catches. The letters are a slab: they
+    // span the whole width, y ∈ [-0.5, 0.5], and are thin in depth, so the distance
+    // that matters is the distance OUT of that slab — vertically for the grains under
+    // the feet, in depth for the ones standing in front of and behind the word. Along
+    // the word there is nothing to fall off from: a grain beside the H is as close to
+    // a letter as one beside the A. Past the ends it does fall off, which the width
+    // term below carries.
+    const dy = Math.max(0, Math.abs(y) - 0.5);
+    const dz = Math.max(0, Math.abs(z) - o.signDepth / 2);
+    const dx = Math.max(0, Math.abs(x * rx) - emWidth / 2);
+    const d = Math.hypot(dx, dy, dz) / near;
+    // Falls off smoothly and NEVER to nothing: the far flanks still sit in the word's
+    // spill, just faintly. A hard edge to the lit part would draw the outline of the
+    // lamp, and the one thing this bank must not grow is an edge.
+    const f = 1 / (1 + d * d);
+    const w = o.cloudNearBase + (1 - o.cloudNearBase) * f;
+    col[i * 3] = w; col[i * 3 + 1] = w; col[i * 3 + 2] = w;
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.setDrawRange(0, o.cloudCount);
 
   const mat = new THREE.PointsMaterial({
     size: o.cloudGrain, // in cap heights — resolved against camera + scale below
     sizeAttenuation: true,
     map: tex,
-    color: 0x000000,      // set every frame from the scene's own light — see setLit
+    color: 0x000000,      // set every frame from the light in the corridor — setLit
+    // Per-grain weight: how much of the WORD's own light each grain catches. Baked
+    // above. The material colour is the light LEVEL (hall + sign, and it flickers
+    // with the sign); this attribute is the SHAPE of it, and the shape never moves.
+    vertexColors: true,
     transparent: true,
     opacity: o.cloudAlpha,
     // Writes NO depth, tests against it. That single pair is what sinks the letters:
@@ -626,12 +694,23 @@ function buildSignCloud(o, emWidth) {
       mat.size = o.cloudGrain * worldPerEm / Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
     },
     /**
-     * The bank is LIT, not self-coloured. Points carry no lighting of their own, so
-     * the ambient + hemisphere the hall actually has is folded into the colour here.
-     * With the lights gone the factor is zero and the bank is black — which is what
-     * makes "kill the lights and look" a real test rather than a formality.
+     * The bank is LIT, not self-coloured, and since 13.09.2026 it has TWO lights.
+     *
+     * @param hallK  the hall's own ambient + hemisphere, 0…1 (see relight)
+     * @param signK  the word's own glow, 0…1, flicker included (see signGlowNow)
+     *
+     * Points carry no lighting of their own, so both are folded into the colour by
+     * hand. The split between them is `cloudSignShare`: the bank is mostly the
+     * word's own spill, which is why it dips when the word's contact stutters and
+     * why it survives the hall going dark. That last part used to be the test that
+     * the bank was not a light of its own — the owner cancelled it on 13.09 when
+     * the sign became a light, and it is now the wrong test: a lit sign standing in
+     * an unlit room still lights the air around itself.
      */
-    setLit(k) { mat.color.copy(_c.copy(tint).multiplyScalar(k)); },
+    setLit(hallK, signK) {
+      const k = (1 - o.cloudSignShare) * hallK + o.cloudSignShare * signK;
+      mat.color.copy(_c.copy(tint).multiplyScalar(k));
+    },
     dispose() { geo.dispose(); mat.dispose(); tex.dispose(); },
   };
 }
@@ -719,15 +798,59 @@ export function createTransitionFlight(deps) {
   // check worthless, which is exactly what it did on the first pass.
   const skyLights = [];
   scene.traverse((n) => { if (n.isAmbientLight || n.isHemisphereLight) skyLights.push(n); });
+
+  // How hard the word is burning RIGHT NOW, 0…1, where 1 is its resting glow.
+  // One number, read by both the letters and the bank, so the two can never drift
+  // apart — a bank that kept burning through a dip in the letters would read as
+  // two separate effects rather than as one sign with a bad contact.
+  let signGlowNow = 1;
+
   function relight() {
     let lit = 0;
     for (const n of skyLights) {
       if (!n.visible) continue;
       lit += n.intensity * lum(n.isHemisphereLight ? n.color : n.color);
     }
-    cloud.setLit(clamp01(lit / litReference()));
+    cloud.setLit(clamp01(lit / litReference()), signGlowNow);
   }
-  relight();
+
+  // The word's own light, applied. Base intensity comes from the material token,
+  // `signGlow` is the framing multiplier, `signGlowNow` the flicker.
+  const emissiveBase = (MATERIALS.sign.emissiveIntensity ?? 1) * o.signGlow;
+  function applySignGlow(k) {
+    signGlowNow = k;
+    const e = emissiveBase * k;
+    sign.matFront.emissiveIntensity = e;
+    sign.matBack.emissiveIntensity = e;
+    relight();
+  }
+  applySignGlow(1);
+
+  // >>> MEASUREMENT SCAFFOLD — not for commit <<<
+  if (typeof window !== 'undefined') {
+    window.__signDebug = {
+      sign, cloud, camera, scene, o,
+      hideSign() { sign.matFront.visible = false; sign.matBack.visible = false; },
+      showSign() { sign.matFront.visible = true; sign.matBack.visible = true; },
+      hideCloud() { cloud.group.visible = false; },
+      showCloud() { cloud.group.visible = true; },
+      /** Screen box of the LETTERS (local x ±emWidth/2, y ±0.5, z ±signDepth/2). */
+      signBox(wpx, hpx) {
+        const v = new THREE.Vector3();
+        const pts = [];
+        const hw = sign.emWidth / 2, hz = o.signDepth / 2;
+        for (const sx of [-hw, hw]) for (const sy of [-0.5, 0.5]) for (const sz of [-hz, hz]) {
+          v.set(sx, sy, sz);
+          sign.group.localToWorld(v);
+          v.project(camera);
+          pts.push([(v.x * 0.5 + 0.5) * wpx, (-v.y * 0.5 + 0.5) * hpx]);
+        }
+        const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+        return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+      },
+    };
+  }
+  // <<< END MEASUREMENT SCAFFOLD >>>
 
   // Remember the scene's own resting fog colour so the flight always hands it back
   // exactly. The DISTANCE of the curve is not remembered — it is derived from
