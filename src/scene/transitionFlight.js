@@ -170,62 +170,52 @@ export const FLIGHT = {
   // to where the home's own air still lets it through, and grown to hold its size in
   // frame from further away at the other end.
   signAt: 0.50,        // where along the corridor it stands (0 = home, 1 = the plates)
-  // HEIGHT and SIZE are ONE decision, not two, and the thing that decides them is
-  // the top-right chrome (SHOP + the cabinet). The home camera looks DOWN at the slab
-  // (it sits at 5.2 and aims at 1.6), so the corridor rides the TOP of that frame and
-  // lands under exactly that chrome — the camera is off-centre in +X, so the corridor
-  // axis leaves frame centre to the right. Raising the sign walks it up into the
-  // chrome; enlarging it does the same from the other side. There is one budget and
-  // both spend it.
+  // WHERE ACROSS the corridor it stands — and this is the one that was wrong for a
+  // week. The sign sat on the corridor's own axis, x = 0, which sounds like the only
+  // defensible place for it until you trace the start camera: it stands at x = +4.6
+  // and aims at the fighter near the origin, so its line of sight crosses the sign's
+  // plane (z = −15) at x = −12.9. Frame centre in that pose IS x = −12.9. A sign on
+  // the axis therefore lands far to the RIGHT of centre — under SHOP and the cabinet,
+  // every time, in 100 % of the samples with the camera un-turned.
   //
-  // Measured (letter pixels against the chrome's bottom edge, start frame, word at
-  // this size). Clearance in screen px:
+  // Two days were spent trying to fix that with height. Height cannot fix it: raising
+  // the word walks it further up behind the same buttons, and to clear them over the
+  // top it would have to reach y ≈ 4.0, where its own top is thirty pixels off the
+  // frame. Lowering it clears them, which is what 12.09 did, and the owner's answer
+  // was that the word now sits in the dark with nothing around it — correct, and not
+  // the point.
   //
-  //                     y=0.2   y=0.6   y=0.9   y=1.2
-  //   568×320             8       0      -15     —      ← oldest phone, landscape
-  //   667×375            19      10        3     —
-  //   740×360            —       10        3     -13
-  //   844×390            32      22       14       6
-  //   932×430            —       31       22      13
-  //   1440×900           —      128      110      92
+  // Moving it sideways is the only lever that takes the buttons out of the argument
+  // altogether, and it is cheap: the chrome starts at x = 635 on the reference layout,
+  // and the word's right edge crosses under that line at about x = −4.5. Measured at
+  // the start azimuth, 844×390:
   //
-  // That table is what the FIT RULE below now handles: every layout where the gap
-  // ran out gets the word shrunk until it comes back, so the height no longer has to
-  // be chosen for the worst phone. What the height IS still chosen for is 844×390,
-  // the one layout that has promised not to shrink — see signY.
+  //         x = 0    x = −4   x = −5   x = −6
+  //   right   764      648      623      604
+  //   clear    no       no      yes      yes
   //
-  // ⚠️ 13.09.2026 — this went DOWN, not up, and the measurement is why.
+  // −6 rather than −5 because the chrome's left edge is not a constant: it moves with
+  // the SHOP label, and a locale with a longer word walks it left onto a sign parked
+  // at the minimum.
   //
-  // Asked to be raised. It cannot be raised; it had to come down about a unit. Two
-  // findings underneath that, both of them measured:
+  // ⚠️ The corridor DISTANCE (signAt, z) is untouched. This is sideways only: the word
+  // does not come closer, and is not allowed to.
+  signX: -6,           // across the corridor — out from under the corner chrome
+  // HEIGHT. Back where v4 left it, and now for a different reason: with the sign out
+  // from under the buttons, the chrome no longer has an opinion about its height at
+  // all. What is left is the frame's own top edge, and 0.6 keeps thirty-odd pixels of
+  // it. The 12.09 answer of −0.35 was the height the buttons forced when the word was
+  // still under them; nothing forces it now.
+  signY: 0.6,          // height — clear of the frame's top edge, chrome not involved
+  // Real world width, at full size. 7.0, up from 5.4, and the increase is the PRICE OF
+  // THE SIDEWAYS MOVE, not a change of mind about size: a word pushed off the view
+  // axis is seen more obliquely and reads narrower for the same object. At x = −6 the
+  // old 5.4 came out at 13.7 % of the reference frame against the 18 % it held on the
+  // axis; 7.0 puts it back at 17.4 %. Same apparent size, further round the corner.
   //
-  // 1. Every earlier reading of this clearance was taken at a framing the player
-  //    never gets. The harness aimed the camera at the middle of the slab; the home
-  //    camera aims at the FIGHTER, who starts a unit further forward. One unit of
-  //    pivot tips the view by 2.3° and lifts everything twenty-odd screen pixels —
-  //    so the "22 px of air" this height was chosen for was a fiction. At the framing
-  //    the screen actually opens on, the word at this size runs UP BEHIND the chrome:
-  //      y=0.60, full size → cap at 55 px, the panel's lower edge at 59. Four pixels
-  //      of the word are behind the buttons, and the guard is 24 px short.
-  // 2. Once that is measured honestly, the height that clears the 20 px guard at full
-  //    size on 844×390 is −0.35, and the gap either side of it is a pixel per
-  //    0.04 units: y=−0.30 → −1.0 px, y=−0.35 → +0.2 px, y=−0.40 → +1.5 px.
-  //
-  // So "as high as the fit rule allows" resolves to −0.35, and the answer to "raise
-  // it" is that the room it would need is not there and never was. What the guard is
-  // measured against also changed: the letters' true cap, bevel included (capY, read
-  // off the built geometry), not the em box it stands in.
-  signY: -0.35,        // height — the top of the 20 px guard at 844×390, full size
-  // Real world width, at full size. Read as a share of frame width it is 17.2 % at
-  // 844×390 (the phone-landscape reference the owner sizes against, band 16–18 %),
-  // and more on squarer screens — 23 % at 1440×900 — because a narrower horizontal
-  // field makes the same object a bigger share of it. The corridor DISTANCE is
-  // deliberately untouched: the word grows, it does not come closer. Closer is what
-  // it was pulled back from this morning.
-  //
-  // ⚠️ "At full size" is new on 13.09.2026: the word is no longer one fixed size in
-  // every layout. See the fit rule.
-  signWidth: 5.4,
+  // ⚠️ "At full size": the word is no longer one fixed size in every layout — see the
+  // fit rule, which is what carries this size onto the screens it will not fit.
+  signWidth: 7.0,
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
 
   // ── the fit rule ──
@@ -266,14 +256,14 @@ export const FLIGHT = {
   // declines to grind the word to a dot chasing a frame it was never in.
   signFitGapPx: 20,    // clear air the word must keep under the panel, screen px
   signFitMinScale: 0.30, // …and how far it may shrink chasing that before it stops.
-  //                      Chosen by measurement, not by taste: the oldest phone in
-  //                      landscape, 568×320, needs 31.5 % to clear the guard and gets
-  //                      nowhere near it at the 45 % this started at — it sat on the
-  //                      floor four pixels short. The price is a word 6.5 % of the
-  //                      frame wide on that screen, which is small; the guard was
-  //                      ordered as hard, and 20 px of air is what it buys. Every
-  //                      landscape layout measured clears it now; below this a word
-  //                      would be a smudge and the floor is there to stop that.
+  //                      Low on purpose: the narrow layouts need deep cuts to clear a
+  //                      chrome that is fixed in pixels while the word is not — the
+  //                      chrome eats 37 % of a 568-wide frame against 25 % of a
+  //                      844-wide one. Below this a word is a smudge, and the floor is
+  //                      there to stop that. ⚠️ Reaching the floor without fitting is
+  //                      NOT a result: the rule then hands the word back at full size
+  //                      (see fitSign) rather than deliver an unreadable one that is
+  //                      still in the wrong place.
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signSideBand: 1.6,   // world units either side of the sign's own plane over which
@@ -986,7 +976,7 @@ export function createTransitionFlight(deps) {
   // no second copy to fall out of step when the fit moves it.
   let signScale = o.signWidth / sign.emWidth;
   sign.group.scale.setScalar(signScale);
-  sign.group.position.set(0, o.signY, -o.modeZ * o.signAt);
+  sign.group.position.set(o.signX, o.signY, -o.modeZ * o.signAt);
   sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
   scene.add(sign.group);
 
@@ -1187,11 +1177,22 @@ export function createTransitionFlight(deps) {
     if (!fits(full)) {
       const floor = full * o.signFitMinScale;
       if (!fits(floor)) {
-        // Nothing in range clears it. Sit on the floor rather than vanish, and SAY so
-        // — a word that cannot fit is a thing for the owner to decide about, not for
-        // the rule to hide by shrinking further.
-        s = floor;
-        why = 'floor — cannot fit';
+        // Nothing in range clears it — so shrinking buys NOTHING, and the word stays
+        // at full size.
+        //
+        // This branch used to sit on the floor, and that was wrong in the one way that
+        // matters: it made the word a smudge AND left it overlapping whatever it was
+        // overlapping. Shrinking is a lever on the frame's edges and on the chrome
+        // only while the word's own middle is clear of them; once the middle is under
+        // a button, every scale is under that button and a smaller word is just a
+        // smaller word in the same wrong place. Measured on 568×320 with the sign at
+        // its new offset: the floor gave 6.2 % of frame width and still breached the
+        // guard by 29 px, against 21 % and a 52 px breach at full size. Neither fits;
+        // one of them is at least readable.
+        //
+        // It is reported, not hidden — `why` says so, and a layout that lands here is
+        // a thing for the owner to decide about.
+        why = 'cannot fit — left at full size';
       } else {
         // Largest scale that still fits, to within a quarter of a percent. Eleven
         // halvings of a range half a unit wide; it runs once per resize.
@@ -1320,10 +1321,14 @@ export function createTransitionFlight(deps) {
     // hanging along the top edge of a mostly empty frame.
     const midY = THREE.MathUtils.lerp(p1.y, to.position.y, 0.5) + o.midLift;
     const p2 = new THREE.Vector3(THREE.MathUtils.lerp(p1.x, to.position.x, 0.6), midY, midZ);
-    // Mid-corridor look point: the sign itself. It stands on the corridor axis, so
-    // aiming the middle of the look path at it composes the title beat on it for
-    // free — and the camera's own arc humps well above it, so it passes over, not
-    // through.
+    // Mid-corridor look point: the sign itself, wherever it stands. Aiming the middle
+    // of the look path at it composes the title beat on it for free, and the camera's
+    // own arc humps well above it, so it passes over, not through.
+    //
+    // ⚠️ Since 13.09.2026 the sign is OFF the corridor axis (signX), so this point is
+    // off it too and the beat pans further sideways than it used to. That is the beat
+    // following the word, which is what it is for; the arc above is unchanged, and so
+    // is the duration — the curve changes shape, not length in time.
     const l2 = sign.group.position.clone();
 
     const back = _p.copy(to.position).sub(to.target);
