@@ -268,8 +268,8 @@ export const FLIGHT = {
   // to end and the shape only gives way in the last fifth, where it dissolves rather
   // than stops. Everything below is in EM — the sign's own units, cap height 1 — so
   // the bank keeps its proportions whatever size or distance the sign is set to.
-  cloudCount: 2400,    // grains at full quality …
-  cloudCountLow: 880,  // …and once the frame watchdog has seen this device stall.
+  cloudCount: 3600,    // grains at full quality …
+  cloudCountLow: 1250, // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
   cloudGrain: 0.40,    // grain diameter, in cap heights. Big enough that the grains
   //                      merge into haze instead of reading as grit on the letters
@@ -290,8 +290,15 @@ export const FLIGHT = {
   cloudDepth: 0.55,    // half-depth. The letters are 0.16 deep, so the bank stands
   //                      both in front of them and behind — the feet are wrapped,
   //                      not curtained
-  cloudTint: 0x1e1e24, // the densest the bank is ever allowed to be (owner, 13.09)
-  cloudAlpha: 0.34,    // one grain's share — the mass comes from overlap, not from
+  // The densest the bank is ever allowed to be. ⚠️ The old ceiling of 0x1e1e24 —
+  // "a shade above the sky and no more" — was CANCELLED by the owner on 13.09.2026
+  // in the same breath as the glow: a bank lit by a lit sign has to be lighter than
+  // one lit by nothing, or the word reads as standing in front of the haze rather
+  // than in it. The ceiling that replaces it is a RELATIVE one and it is the real
+  // constraint: the bank's own peak must stay clearly under the letters' peak,
+  // because a source has to be brighter than what it lights.
+  cloudTint: 0x3a3a44,
+  cloudAlpha: 0.40,    // one grain's share — the mass comes from overlap, not from
   //                      any single grain being visible on its own. Overlap can only
   //                      ever converge ON the tint, never past it, so the ceiling
   //                      above is structural: raising this makes the bank reach its
