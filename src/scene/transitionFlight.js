@@ -33,6 +33,7 @@
 // Exports: FLIGHT (the tuning block), createTransitionFlight.
 import * as THREE from 'three';
 import { FOG_COLOR, LIGHTING, MATERIALS } from '../data/sceneTokens.js';
+import { flickerAt } from '../data/signFlicker.js';
 
 // ─────────────────────────────── Tuning ───────────────────────────────
 export const FLIGHT = {
@@ -205,6 +206,19 @@ export const FLIGHT = {
   // with room to spare, and still well clear of the ≈8 the empty sky sits at.
   // Raising this is a framing change, not a polish knob: check FIGHT again after.
   signGlow: 1.0,       // multiplies MATERIALS.sign.emissiveIntensity
+
+  // ── the contact stutters ──
+  // The word flickers like a sign with a bad contact, and it flickers with EXACTLY
+  // the character the landing headline has: same period, same two events at the same
+  // uneven places, same two jolts inside each, same floor. There is one table for
+  // both and it lives in src/data/signFlicker.js — the numbers are not repeated here
+  // on purpose, because two copies of a rhythm come apart at the first edit.
+  //
+  // The flicker rides the word's own light (emissive) and rides it ALONE: the letters
+  // keep their body through the deepest dip, exactly as the landing's letters keep
+  // theirs while only the halo layer drops. The bank dips with it, because the bank
+  // is lit by the word — one sign with one bad contact, not two effects.
+  signFlicker: true,   // off under reduced motion and on a device that is struggling
 
   // ── the sign lighting its own bank ──
   // The word is a light now, so the haze it stands in has to answer to it: a bank
@@ -804,6 +818,9 @@ export function createTransitionFlight(deps) {
   // apart — a bank that kept burning through a dip in the letters would read as
   // two separate effects rather than as one sign with a bad contact.
   let signGlowNow = 1;
+  // Whether the contact is allowed to stutter at all. Reduced motion turns it off
+  // outright; the frame watchdog turns it off later if the device cannot hold up.
+  let flickerOn = o.signFlicker && !reduced;
 
   function relight() {
     let lit = 0;
@@ -825,32 +842,6 @@ export function createTransitionFlight(deps) {
     relight();
   }
   applySignGlow(1);
-
-  // >>> MEASUREMENT SCAFFOLD — not for commit <<<
-  if (typeof window !== 'undefined') {
-    window.__signDebug = {
-      sign, cloud, camera, scene, o,
-      hideSign() { sign.matFront.visible = false; sign.matBack.visible = false; },
-      showSign() { sign.matFront.visible = true; sign.matBack.visible = true; },
-      hideCloud() { cloud.group.visible = false; },
-      showCloud() { cloud.group.visible = true; },
-      /** Screen box of the LETTERS (local x ±emWidth/2, y ±0.5, z ±signDepth/2). */
-      signBox(wpx, hpx) {
-        const v = new THREE.Vector3();
-        const pts = [];
-        const hw = sign.emWidth / 2, hz = o.signDepth / 2;
-        for (const sx of [-hw, hw]) for (const sy of [-0.5, 0.5]) for (const sz of [-hz, hz]) {
-          v.set(sx, sy, sz);
-          sign.group.localToWorld(v);
-          v.project(camera);
-          pts.push([(v.x * 0.5 + 0.5) * wpx, (-v.y * 0.5 + 0.5) * hpx]);
-        }
-        const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
-        return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
-      },
-    };
-  }
-  // <<< END MEASUREMENT SCAFFOLD >>>
 
   // Remember the scene's own resting fog colour so the flight always hands it back
   // exactly. The DISTANCE of the curve is not remembered — it is derived from
@@ -1101,7 +1092,20 @@ export function createTransitionFlight(deps) {
   // watch happen. Off under reduced motion, with the rest of the scene's idle life.
   let lastFov = camera.fov;
   function spinCloud(t) {
-    relight();
+    // The stutter, before relight — the bank is lit by the word and has to carry the
+    // same dip in the same frame, or the two read as two effects.
+    //
+    // Driven off the scene's OWN running clock, never off flight-elapsed: the rhythm
+    // belongs to the object, so it must not restart when the player leaves for the
+    // plates and comes back, and must not pause while the camera is moving. It is
+    // also applied to both halves of the word equally, so the front/back handover
+    // cannot make it jump.
+    //
+    // Off under reduced motion (steady glow — the sign does not go out, it just stops
+    // stuttering) and off once the frame watchdog has thinned the bank: on a device
+    // that is already struggling the flicker is the first thing to go and the glow is
+    // the last.
+    applySignGlow(flickerOn && t !== undefined ? flickerAt(t) : 1);
     if (camera.fov !== lastFov) { lastFov = camera.fov; cloud.setGrainScale(camera.fov, signScale); }
     if (reduced || t === undefined) return;
     cloud.group.rotation.y = t * o.cloudTurn;
@@ -1166,6 +1170,12 @@ export function createTransitionFlight(deps) {
         // its cheap layout for the rest of the session — fewer grains, never none:
         // a word left with no footing reads as something broken, not as restraint.
         cloud.setCount(o.cloudCountLow);
+        // …and stop the contact stuttering, with the glow left burning steady. On a
+        // frame that is already dropping, a flicker cannot be told from the drop:
+        // it stops reading as a sign with a bad contact and starts reading as the
+        // page failing. The glow itself is the last thing to go, and it doesn't.
+        flickerOn = false;
+        applySignGlow(1);
         skip();
         return true;
       }

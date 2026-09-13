@@ -33,5 +33,10 @@
 <script setup>
 import { DiscordIcon, ArrowIcon } from './icons.js';
 import { t } from '@/locales/index.js';
+// Кадры сбоя для слоя .glow. Их набор общий с объёмной вывеской в коридоре
+// сцены, поэтому живёт одной таблицей в src/data/signFlicker.js, а не вторым
+// блоком @keyframes в landing.css — см. комментарий на месте, где он стоял.
+import { installFlickerKeyframes } from '@/data/signFlicker.js';
+installFlickerKeyframes();
 defineEmits(['play']);
 </script>
