@@ -523,8 +523,8 @@ export const FLIGHT = {
   // A SHOAL, NOT A MOUND. Everything below is in EM — the sign's own units, cap
   // height 1, letters spanning y ∈ [-0.5, +0.5] — so the shoal keeps its proportions
   // whatever size or distance the sign is set to.
-  cloudCount: 6667,    // grains at full quality …
-  cloudCountLow: 2308, // …and once the frame watchdog has seen this device stall.
+  cloudCount: 11000,   // grains at full quality …
+  cloudCountLow: 3808, // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
   //                      ⚠️ Both went up by the same factor as cloudSpread on
   //                      13.09.2026, and that pairing is the whole point: the shoal
@@ -533,6 +533,14 @@ export const FLIGHT = {
   //                      sitting on the edge of visibility and the reading flickered
   //                      with them. Lengthened with the count, it reads 1.48…1.78.
   //                      Keep them in step.
+  //
+  //                      ⚠️ …and they moved together again when the slab became a
+  //                      club: the section it fills grew about 3.6×, and a bank
+  //                      thinned out by that much fails the same visibility bar its
+  //                      ends failed before. Not raised by 3.6 though — most of the
+  //                      new room is DEPTH, and depth adds grains along the view ray
+  //                      rather than spreading them across the screen, so it pays for
+  //                      much of itself. Measured, not reasoned: see the frame share.
   cloudGrain: 0.22,    // grain diameter, in cap heights. HALVED from 0.40: a surface
   //                      needs an edge, and an edge cannot be sharper than one grain.
   //                      At 0.40 the top of the bank was a 0.4-high gradient — there
@@ -556,6 +564,14 @@ export const FLIGHT = {
   //                      measured so after: 1.48…1.78 of the word, top edge flat to
   //                      3.7 px, immersion 7 %, zero wisps above the bottom third.
   cloudFlank: 0.28,    // the outer share of that half-width over which it dissolves
+  cloudBelly: 0.30,    // …and how much fuller the middle of the body is than its
+  //                      flanks, in density and in section together. Measured flat
+  //                      before this existed — 146 · 662 · 816 · 854 · 843 · 862 ·
+  //                      848 · 879 · 843 · 902 · 864 · 891 · 806 · 653 · 131 across
+  //                      fifteen bands, which is an extruded section, not a mass.
+  //                      ⚠️ Gentle on purpose. This knob is the ball the shoal was
+  //                      built to escape; past about 0.5 the word's ends start
+  //                      hanging in the void again.
   // THE SURFACE. This is the line the word stands on, in cap heights: -0.40 leaves
   // exactly a tenth of the letters (which end at -0.5) dipped into it.
   cloudTop: -0.37,
@@ -572,23 +588,72 @@ export const FLIGHT = {
   cloudEdgeFloor: 0.12, // how much the very topmost grains keep. Not zero: a taper
   //                      that reaches nothing just moves the hard edge down to where
   //                      it stops.
-  // ⚠️ The guarantee that nothing reaches the letters: the highest a grain's CENTRE
-  // can sit is cloudTop + cloudTopJitter = -0.34, and a grain reaches half its own
-  // diameter past that, so the very top of the haze is -0.34 + 0.11 = -0.23. The
-  // bottom third of the letters ends at -0.167. Margin: 0.063 cap heights, and the
-  // grains up there are on the taper's floor anyway.
-  // Raising cloudTop, cloudTopJitter or cloudGrain eats that margin directly.
-  cloudBody: 0.20,     // even, full-density body below the surface …
-  cloudTail: 0.16,     // …and a fade under that. Body + tail = 0.36 against letters
-  //                      of 1.0: the shoal is plainly shallower than the word is
-  //                      tall, which is what stops it reading as a cloud. The tail
-  //                      matters because there is no floor down there for a bank to
-  //                      rest on — it has to run out, not stop.
-  cloudDepth: 0.34,    // half-depth. The letters are 0.16 deep, so the shoal still
-  //                      stands both in front of them and behind — the feet are
-  //                      wrapped, not curtained. Pulled in from 0.55 with the rest:
-  //                      a deep bank puts more grains in FRONT of the word, and in
-  //                      front is where they become the wisps this pass is removing.
+  // ⚠️ The guarantee that nothing reaches the letters, and the ONE place it lives.
+  // Every grain is planed off at cloudTop and the jitter only ever lowers one, so the
+  // highest a grain's CENTRE can sit is cloudTop itself, -0.37. A grain reaches half
+  // its own diameter past that, putting the very top of the haze at -0.26. The bottom
+  // third of the letters ends at -0.167. Margin: 0.093 cap heights, and the grains up
+  // there are on the taper's floor anyway.
+  // Raising cloudTop or cloudGrain eats that margin directly. The section's own size
+  // — height, depth, how hard it packs — cannot, which is what makes the roll under
+  // this line free to grow.
+  // ── the section ──
+  // ⚠️ 13.09.2026 — the shoal became a CLUB, and these three knobs replaced the flat
+  // `cloudBody` (0.20) + `cloudTail` (0.16) that shaped it before. The old pair built
+  // a slab: height drawn flat, depth drawn from a bell centred on the word's own
+  // plane. A rectangle crossed with a spike, which is a strip — a bank from the
+  // front and a card from the side, and the orbit shows the side.
+  //
+  // Now the section is an ELLIPSE in (y, z), sampled by radius and planed off level
+  // at cloudTop. Same flat top the word stands on; a mass under it instead of a
+  // sheet.
+  cloudHeight: 0.46,   // vertical radius of the roll …
+  cloudCore: 0.12,     // …and how far below the planed top its axis runs. The haze
+  //                      therefore reaches cloudCore + cloudHeight = 0.58 below the
+  //                      surface, against letters 1.014 tall — 57 % of the word's
+  //                      height, where the old slab managed 0.36 and read as a line
+  //                      under the feet.
+  cloudPack: 0.62,     // how the grains crowd the section's core. 0.5 spreads them
+  //                      evenly over its area; 1.0 piles them on the axis. This is
+  //                      the "denser in the middle, softer at the edges" the flat
+  //                      body never had — and it works across AND along, because the
+  //                      flank envelope shrinks the whole section, not just its height.
+  //
+  // WHAT THE CLUB MEASURES, reference frame 844×390, letters 43 px tall on screen:
+  //
+  //   visible height          26 px median, 29 px at the ninth decile — 0.60 of the
+  //                           letters, against 0.36 as a slab. Geometry agrees: the
+  //                           haze reaches 0.607 em below its own top line.
+  //   profile ALONG           105 · 542 · 773 · 837 · 901 · 921 · 919 · 965 · 921 ·
+  //                           936 · 884 · 874 · 746 · 559 · 117 — a belly with the
+  //                           ends dissolving, where it used to be flat to a few %.
+  //   profile ACROSS          66 · 370 · 593 · 777 · 906 · 1043 · 1211 · 1281 ·
+  //                           1136 · 972 · 894 · 715 · 622 · 350 · 64 — a core.
+  //   profile DOWN            552 · 967 · 1116 · 1081 · 1108 · 1008 · 898 · 855 ·
+  //                           750 · 745 · 589 · 503 · 383 · 292 · 153 — thickest just
+  //                           under the word, running out below with no cut.
+  //   depth                   2160 grains in front of the letters, 2220 behind,
+  //                           2521 inside their own slab. Wrapped, not curtained.
+  //   from the side           seen end-on the haze's silhouette is 1.35 wide to 1
+  //                           tall and keeps 1824 px of body. A card would be a line.
+  //   immersion               11.1 % of the letters' height — the tenth, kept.
+  //   wisps above the bottom third                                    zero
+  //   on-screen width         1.76 … 1.97 of the word (held to ≥ 1.4)
+  //   share of frame          1.86 % (ceiling 8 %)
+  //   own peak vs the word's  36 against 196 — 0.19
+  //   warm pixels / pink      0 / 0, measured on the haze's OWN contribution
+  //   top edge                worst deviation from level 1.6 px
+  //   on the cheap layout     width 1.75, height 24 px, frame 1.68 % — the cap holds
+  cloudDepth: 0.34,    // depth radius of that same section. Unchanged in value and
+  //                      completely changed in effect: as a bell's width four fifths
+  //                      of the grains sat inside ±0.11 of the word's plane, so the
+  //                      bank was 0.39 tall and 0.23 deep. Sampled radially the
+  //                      grains FILL it, and the same 0.34 now means what it says.
+  //                      The letters are 0.17 deep, so haze stands in front of them
+  //                      and behind — the feet are wrapped, not curtained.
+  //                      ⚠️ Depth is safe to grow because the plane at cloudTop, not
+  //                      the depth, is what keeps wisps off the letters: nothing is
+  //                      ever placed above that line however deep the roll gets.
   // The densest the bank is ever allowed to be. ⚠️ The old ceiling of 0x1e1e24 —
   // "a shade above the sky and no more" — was CANCELLED by the owner on 13.09.2026
   // in the same breath as the glow: a bank lit by a lit sign has to be lighter than
@@ -905,7 +970,10 @@ function buildSignCloud(o, emWidth) {
   // on the origin so their baseline is -0.5. The group is parented to the sign, so
   // the sign's own scale carries all of it into the world at the right size.
   const rx = emWidth * o.cloudSpread;   // half-width of the bank
-  const rz = o.cloudDepth;              // half-depth
+  const rz = o.cloudDepth;              // depth radius of the section
+  const ry = o.cloudHeight;             // vertical radius of the section
+  const yc = o.cloudTop - o.cloudCore;  // …and where the roll's axis runs under the top
+  const pack = Math.min(1, Math.max(0.5, o.cloudPack));
   const flank = Math.max(1e-3, o.cloudFlank);
 
   // Ends DISSOLVE, they do not stop: over the last `cloudFlank` of the half-width the
@@ -916,10 +984,6 @@ function buildSignCloud(o, emWidth) {
     return t * t * (3 - 2 * t);
   };
 
-  // Bounded stand-in for a normal: three uniforms, so the tails cannot throw a grain
-  // out on its own where it would read as a speck rather than as haze.
-  const bell = (rnd) => (rnd() + rnd() + rnd() - 1.5) / 1.5;
-
   const rnd = mulberry32(0x48584c); // 'HXL'
   const pos = new Float32Array(o.cloudCount * 3);
   // Per-grain share of the SIGN's own light — see the `cloudNear` block in FLIGHT.
@@ -928,36 +992,59 @@ function buildSignCloud(o, emWidth) {
   const col = new Float32Array(o.cloudCount * 3);
   const near = Math.max(1e-3, o.cloudNear);
   for (let i = 0; i < o.cloudCount; i++) {
-    // Along the word: EVEN density end to end. This is the whole difference between
-    // a bank and the ball this used to be — a ball is densest in the middle and has
-    // nothing at the ends, which is exactly how the word came to be standing on one
-    // smear of haze in the centre with both ends hanging in the void.
-    let x; let env;
+    // Along the word: a BELLY, not a plateau and not a ball.
+    //
+    // Even end to end was the answer to the ball this once was — a ball is densest at
+    // its core and has nothing at the ends, which is how the word came to be standing
+    // on one smear of haze in the middle with both ends hanging in the void. Even
+    // fixed that and overshot: measured along its length the body came out flat to
+    // within a few per cent, which reads as an extruded section rather than as a mass
+    // of anything.
+    //
+    // `cloudBelly` puts a gentle swell back — full in the middle, easing off toward
+    // the flanks, in DENSITY and in SECTION together so the roll is fatter there as
+    // well as busier. Gentle is the whole point: at 0.30 the ends of the body still
+    // keep seven tenths of the middle, which is a mass with a waist, not a ball with
+    // tails.
+    let x; let env; let belly;
     do {
       x = rnd() * 2 - 1;
-      env = endEnvelope(Math.abs(x));
-    } while (rnd() > env);            // thins the flanks, leaves the body untouched
-    const section = 0.58 + 0.42 * env; // …and narrows their section with them
+      const ax = Math.abs(x);
+      env = endEnvelope(ax);
+      belly = 1 - o.cloudBelly * ax * ax;
+    } while (rnd() > env * belly);    // flanks dissolve, and the body swells to its middle
+    const section = (0.58 + 0.42 * env) * belly;
 
-    // DOWN FROM A SURFACE, not out from a middle. The top is a level line the word
-    // stands on; everything the shoal has hangs BELOW it. That is the whole
-    // difference from the mound this used to be: a mound is thickest at its core and
-    // its top edge rises with that thickness, so the middle of the word ended up
-    // sitting on a swell while both ends had nothing under them.
+    // A ROLL WITH ITS TOP PLANED OFF, not a slab.
     //
-    // The body is EVEN top to bottom — a slab of haze, not a gradient — and only the
-    // tail under it fades, because down there is open corridor with no floor for a
-    // bank to rest on. `section` thins the flanks from below, so the surface stays
-    // level all the way out and the ends dissolve by getting shallower.
-    const u = rnd();
-    const body = o.cloudBody, tail = o.cloudTail;
-    const BODY_SHARE = 0.78;          // …of the grains hold the slab, the rest trail
-    const depthBelow = u < BODY_SHARE
-      ? body * (u / BODY_SHARE)
-      : body + tail * ((u - BODY_SHARE) / (1 - BODY_SHARE)) ** 1.6;
-    const y = o.cloudTop - rnd() * o.cloudTopJitter - depthBelow * section;
-
-    const z = bell(rnd) * rz * section;
+    // The top stays exactly what it was — a level line the word stands on, with
+    // nothing ever placed above it. Everything under that line changed. It used to
+    // be a rectangle crossed with a spike: height drawn flat from the surface down,
+    // depth drawn from a bell centred on the word's own plane. Four fifths of the
+    // grains therefore landed inside a sheet a fifth as deep as the bank was tall,
+    // so it read as a bank from the front and as a card from the side — and the
+    // corridor is orbited, so the side is on show half the time.
+    //
+    // Now the section is sampled as an ellipse: a RADIUS and an ANGLE, not two
+    // independent draws. The grains fill it, `pack` decides how hard they crowd its
+    // core, and the flank envelope shrinks the whole section rather than only its
+    // height — so the mass is denser in the middle and softer at every edge, across
+    // as well as along, with nothing anywhere for the eye to catch as a boundary.
+    let ey = -1; let ez = 0;
+    for (let tries = 0; tries < 24; tries++) {
+      const rad = pack === 0.5 ? Math.sqrt(rnd()) : rnd() ** pack;
+      const th = rnd() * Math.PI * 2;
+      const cy = rad * Math.sin(th);
+      // Planed off. The guarantee that no wisp reaches the letters lives HERE and
+      // nowhere else, which is what lets the roll be as deep as it likes.
+      if (yc + cy * ry * section > o.cloudTop) continue;
+      ey = cy; ez = rad * Math.cos(th);
+      break;
+    }
+    // The jitter breaks the planed line into a water line. It only ever lowers a
+    // grain, so the highest centre in the bank is cloudTop itself.
+    const y = yc + ey * ry * section - rnd() * o.cloudTopJitter;
+    const z = ez * rz * section;
     pos[i * 3] = x * rx;
     pos[i * 3 + 1] = y;
     pos[i * 3 + 2] = z;
