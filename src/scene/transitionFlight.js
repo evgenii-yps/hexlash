@@ -257,19 +257,32 @@ export const FLIGHT = {
   // The SHAPE of that light, baked per grain at build (see buildSignCloud). The
   // falloff is measured OUT of the letter slab, not from its centre — along the word
   // every grain is beside some letter, so there is nothing to fall off from there.
-  cloudNear: 0.50,     // distance, in cap heights, at which the word's light is down
-  //                      to a quarter. Roughly the depth of the bank itself, so the
-  //                      grains wrapping the feet are lit and the outer flanks are not
+  cloudNear: 0.30,     // distance, in cap heights, at which the word's light is down
+  //                      to a quarter. Roughly the depth of the shoal itself, so the
+  //                      surface right under the letters is lit and the underside is
+  //                      not — which is what makes it read as a lit surface rather
+  //                      than an evenly grey slab. Pulled in from 0.50 with the
+  //                      shoal: the old number was scaled to the old, taller mound.
   cloudNearBase: 0.18, // …and what the far flanks keep anyway. NOT zero: the light
   //                      has to run out smoothly, or the lit part draws its own edge
   //                      and the bank grows the silhouette it was built to avoid
 
   // ── the sign's own cloud ──
-  // The word does not hang in clean black: its bottom third is sunk in a low bank of
-  // haze that it stands in. This is the sign's OWN cloud and it lives with the sign
-  // always — it is not the corridor haze, which is a distance falloff and has no
-  // place (see the fog block), and it is not a title-card effect that arrives with
-  // the flight. Without it the word floats in the void with nothing under it.
+  // The word does not hang in clean black: it STANDS on a low flat shoal of haze,
+  // dipped into it about a tenth of its height. This is the sign's OWN cloud and it
+  // lives with the sign always — it is not the corridor haze, which is a distance
+  // falloff and has no place (see the fog block), and it is not a title-card effect
+  // that arrives with the flight. Without it the word floats in the void with
+  // nothing under it.
+  //
+  // ⚠️ 13.09.2026 the owner CANCELLED "the bottom third is sunk in the haze" (ТЗ v2).
+  // The word stands on the shoal now, it does not wade in it. Two things came with
+  // that: the bank has to have a SURFACE — a level top edge, no swell under the
+  // middle — and nothing of it may be drawn in front of the letters above the
+  // bottom tenth. What used to be a soft mound a whole cap height tall is now a
+  // flat band about a third of one, and the change is in SHAPE, not in density:
+  // v3 raised the density threefold and evenly, and all that did was make the core
+  // of the mound visible while the ends stayed too thin to read.
   //
   // NOT A BILLBOARD. The one thing this must never become is a flat picture turned
   // to face the camera: seen head-on that reads as a disc with an edge and it slides
@@ -284,36 +297,44 @@ export const FLIGHT = {
   // shines through and dirt the word stands behind. Still never additive, and still
   // never warm.
   //
-  // A BANK, NOT A BALL. It was first authored as a squashed ellipsoid with the grains
-  // packed toward its middle, and on a phone that read as one smear of dirt between
-  // two letters in the centre of the word with nothing under either end — the word
-  // still hanging in the void, just with a stain on it. A bank has to run the whole
-  // length of what it is holding up, so the grains now sit at even density from end
-  // to end and the shape only gives way in the last fifth, where it dissolves rather
-  // than stops. Everything below is in EM — the sign's own units, cap height 1 — so
-  // the bank keeps its proportions whatever size or distance the sign is set to.
+  // A SHOAL, NOT A MOUND. Everything below is in EM — the sign's own units, cap
+  // height 1, letters spanning y ∈ [-0.5, +0.5] — so the shoal keeps its proportions
+  // whatever size or distance the sign is set to.
   cloudCount: 3600,    // grains at full quality …
   cloudCountLow: 1250, // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
-  cloudGrain: 0.40,    // grain diameter, in cap heights. Big enough that the grains
-  //                      merge into haze instead of reading as grit on the letters
-  cloudSpread: 0.78,   // half-width, as a share of the word's WIDTH ⇒ the bank runs
+  cloudGrain: 0.22,    // grain diameter, in cap heights. HALVED from 0.40: a surface
+  //                      needs an edge, and an edge cannot be sharper than one grain.
+  //                      At 0.40 the top of the bank was a 0.4-high gradient — there
+  //                      was no line for the word to stand on. The grains still merge
+  //                      into haze rather than reading as grit because the shoal is
+  //                      three times shallower than the mound was, so the same count
+  //                      sits in a third of the volume.
+  cloudSpread: 0.78,   // half-width, as a share of the word's WIDTH ⇒ the shoal runs
   //                      1.56 × the word and carries on past both ends
   cloudFlank: 0.28,    // the outer share of that half-width over which it dissolves
-  cloudCore: -0.40,    // where the densest line sits, in cap heights from the middle
-  //                      of the letters (their baseline is -0.5) — half way up the
-  //                      third that is meant to be swallowed
-  cloudUp: 0.56,       // how far the haze reaches ABOVE the core before it is gone.
-  //                      Core -0.40 + 0.56 lands on +0.16 — two thirds up the
-  //                      letters, which is exactly where it has to have run out. The
-  //                      third line is at -0.167, and the bank is still near full
-  //                      density there, so the bottom third is the part that sinks
-  //                      and the middle third carries the fade
-  cloudDown: 0.50,     // …and below it. Longer, and it fades out rather than ending:
-  //                      there is no floor under the sign for a bank to rest on
-  cloudDepth: 0.55,    // half-depth. The letters are 0.16 deep, so the bank stands
-  //                      both in front of them and behind — the feet are wrapped,
-  //                      not curtained
+  // THE SURFACE. This is the line the word stands on, in cap heights: -0.40 leaves
+  // exactly a tenth of the letters (which end at -0.5) dipped into it.
+  cloudTop: -0.40,
+  cloudTopJitter: 0.05, // …with this much play, so the surface is a water line and
+  //                      not a ruled edge. Small on purpose: it is the only thing
+  //                      between "level" and "wavy".
+  // ⚠️ The guarantee that nothing reaches the letters: the highest a grain's CENTRE
+  // can sit is cloudTop + cloudTopJitter = -0.35, and a grain reaches half its own
+  // diameter past that, so the very top of the haze is -0.35 + 0.11 = -0.24. The
+  // bottom two thirds of the letters end at -0.167. Margin: 0.073 cap heights.
+  // Raising cloudTop, cloudTopJitter or cloudGrain eats that margin directly.
+  cloudBody: 0.20,     // even, full-density body below the surface …
+  cloudTail: 0.16,     // …and a fade under that. Body + tail = 0.36 against letters
+  //                      of 1.0: the shoal is plainly shallower than the word is
+  //                      tall, which is what stops it reading as a cloud. The tail
+  //                      matters because there is no floor down there for a bank to
+  //                      rest on — it has to run out, not stop.
+  cloudDepth: 0.34,    // half-depth. The letters are 0.16 deep, so the shoal still
+  //                      stands both in front of them and behind — the feet are
+  //                      wrapped, not curtained. Pulled in from 0.55 with the rest:
+  //                      a deep bank puts more grains in FRONT of the word, and in
+  //                      front is where they become the wisps this pass is removing.
   // The densest the bank is ever allowed to be. ⚠️ The old ceiling of 0x1e1e24 —
   // "a shade above the sky and no more" — was CANCELLED by the owner on 13.09.2026
   // in the same breath as the glow: a bank lit by a lit sign has to be lighter than
@@ -655,11 +676,23 @@ function buildSignCloud(o, emWidth) {
     } while (rnd() > env);            // thins the flanks, leaves the body untouched
     const section = 0.58 + 0.42 * env; // …and narrows their section with them
 
-    // Up and down are NOT symmetric. Above the core the haze has to be gone by the
-    // time it reaches the top third of the letters — that third must read clean.
-    // Below it there is no floor to rest on, so it runs longer and simply fades.
-    const u = bell(rnd);
-    const y = o.cloudCore + (u >= 0 ? u * o.cloudUp : u * o.cloudDown) * section;
+    // DOWN FROM A SURFACE, not out from a middle. The top is a level line the word
+    // stands on; everything the shoal has hangs BELOW it. That is the whole
+    // difference from the mound this used to be: a mound is thickest at its core and
+    // its top edge rises with that thickness, so the middle of the word ended up
+    // sitting on a swell while both ends had nothing under them.
+    //
+    // The body is EVEN top to bottom — a slab of haze, not a gradient — and only the
+    // tail under it fades, because down there is open corridor with no floor for a
+    // bank to rest on. `section` thins the flanks from below, so the surface stays
+    // level all the way out and the ends dissolve by getting shallower.
+    const u = rnd();
+    const body = o.cloudBody, tail = o.cloudTail;
+    const BODY_SHARE = 0.78;          // …of the grains hold the slab, the rest trail
+    const depthBelow = u < BODY_SHARE
+      ? body * (u / BODY_SHARE)
+      : body + tail * ((u - BODY_SHARE) / (1 - BODY_SHARE)) ** 1.6;
+    const y = o.cloudTop - rnd() * o.cloudTopJitter - depthBelow * section;
 
     const z = bell(rnd) * rz * section;
     pos[i * 3] = x * rx;
