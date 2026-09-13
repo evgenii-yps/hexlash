@@ -30,7 +30,7 @@
 //
 // Exports: FLIGHT (the tuning block), createTransitionFlight.
 import * as THREE from 'three';
-import { FOG_COLOR, MATERIALS } from '../data/sceneTokens.js';
+import { FOG_COLOR, LIGHTING, MATERIALS } from '../data/sceneTokens.js';
 
 // ─────────────────────────────── Tuning ───────────────────────────────
 export const FLIGHT = {
@@ -165,6 +165,45 @@ export const FLIGHT = {
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signOpacity: 0.95,   // at the top of the title beat
   signRest: 0.82,      // …and once it is just a landmark you can turn round and see
+
+  // ── the sign's own cloud ──
+  // The word does not hang in clean black: its bottom third is sunk in a low bank of
+  // haze that it stands in. This is the sign's OWN cloud and it lives with the sign
+  // always — it is not the corridor haze, which is a distance falloff and has no
+  // place (see the fog block), and it is not a title-card effect that arrives with
+  // the flight. Without it the word floats in the void with nothing under it.
+  //
+  // NOT A BILLBOARD. The one thing this must never become is a flat picture turned
+  // to face the camera: seen head-on that reads as a disc with an edge and it slides
+  // against the world when the camera moves. It is a VOLUME — a flattened ball of
+  // many small soft grains, each at a real world position, so the parallax is honest
+  // from every angle the orbit can reach and there is no single edge to catch.
+  //
+  // NOT A LIGHT. It is darker than nothing else in the corridor is: a cold grey a
+  // shade above the sky, never warm, and its colour is driven off the scene's own
+  // ambient + hemisphere (see cloudLitRef) so that killing the lights kills it too.
+  // Points are unlit by nature and would otherwise survive a lights-off check, which
+  // would make the check worthless.
+  cloudCount: 900,     // grains at full quality …
+  cloudCountLow: 300,   // …and once the frame watchdog has seen this device stall.
+  //                      Never zero: a word with no footing reads as a fault.
+  cloudGrain: 0.30,    // world diameter of one grain — big enough to have no edge
+  cloudSink: 0.34,     // how much of the CAP HEIGHT the bank swallows (bottom third)
+  cloudSpread: 0.62,   // horizontal half-extent, as a share of the sign's width …
+  cloudDepth: 0.20,    // …and in depth. Enough volume to parallax, never a slab.
+  cloudRise: 0.62,     // vertical half-extent, as a share of the cap height
+  cloudPack: 0.85,     // <1 pulls the grains toward the core, so the bank has no
+  //                      edge anywhere — it simply runs out
+  cloudLid: 0.62,      // the half above the core is squeezed by this: the letters
+  //                      have to come out of the bank, not be buried by it
+  cloudTint: 0x1e1e24, // the densest the bank is ever allowed to be (owner, 13.09)
+  cloudAlpha: 0.40,    // one grain's share — the mass comes from overlap, not from
+  //                      any single grain being visible on its own
+  // (the reference the lighting is weighed against is DERIVED from the hall's own
+  //  ambient + hemisphere tokens — see litReference(). A number typed here would be
+  //  a second declaration of the lighting and would drift away from it.)
+  cloudTurn: 0.010,    // rad/s — a whole turn takes ten minutes. Rigid, so it cannot
+  //                      open a seam; off under reduced motion.
 
   // ── final MODE framing + the orbit it hands over to ──
   // The framing is computed from the plate pair's bounds so it survives an
@@ -373,8 +412,159 @@ function buildSign(o) {
   return { group, mat, emWidth, dispose };
 }
 
+// ─────────────────────── The cloud the sign stands in ───────────────────────
+// The word is not a caption floating in clean black — it stands in a low bank of
+// haze that swallows the bottom third of its letters. See the cloud block in FLIGHT
+// for the discipline; the two things it must never become are a flat card turned to
+// the camera and a source of light.
+//
+// It is built as a VOLUME of small soft grains. Grains are camera-facing by nature,
+// but that is not what a billboard is: a billboard is ONE quad standing in for a
+// volume, and it betrays itself by having a single silhouette that slides against
+// the world. A hundred grains at a hundred real world positions have no shared
+// silhouette to catch and parallax correctly from any angle, which is exactly the
+// property that was missing last time.
+//
+// Layout is deterministic (a seeded generator, not Math.random): the bank must be
+// the same bank on every load, or the corridor changes shape between sessions.
+function mulberry32(a) {
+  return function next() {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// One grain: a round patch of alpha that fades to nothing well before its own edge.
+// The falloff is squared-smoothstep with NO rim and NO bright centre — a radial
+// gradient with a hot core is the other half of how the old billboards gave
+// themselves away, reading as a core with a halo ringed round it.
+function grainTexture(THREE_) {
+  const S = 64;
+  const cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const g = cv.getContext('2d');
+  const img = g.createImageData(S, S);
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const dx = (x + 0.5) / S * 2 - 1;
+      const dy = (y + 0.5) / S * 2 - 1;
+      const d = Math.min(1, Math.hypot(dx, dy));
+      const k = 1 - d;
+      const a = k * k * k * (3 - 2 * k); // smooth to zero at the edge, flat-ish inside
+      const i = (y * S + x) * 4;
+      img.data[i] = 255; img.data[i + 1] = 255; img.data[i + 2] = 255;
+      img.data[i + 3] = Math.round(255 * a);
+    }
+  }
+  g.putImageData(img, 0, 0);
+  const tex = new THREE_.CanvasTexture(cv);
+  tex.colorSpace = THREE_.SRGBColorSpace;
+  return tex;
+}
+
+// Build the bank → { group, mat, setCount, setLit, dispose }.
+// `capHeight` is the sign's cap height in world units, `width` its world width, and
+// the bank is authored around the sign group's own origin so it can be parented to
+// it and inherit its placement for free.
+function buildSignCloud(o, capHeight, width) {
+  const group = new THREE.Group();
+  const tex = grainTexture(THREE);
+
+  const rx = width * o.cloudSpread;
+  const ry = capHeight * o.cloudRise;
+  const rz = width * o.cloudDepth;
+  // The letters sit centred on the sign origin, so their baseline is -capHeight/2.
+  // The bank's CORE sits at the middle of the band it is meant to swallow — half way
+  // up the bottom third — so the densest haze is exactly where the letters enter it.
+  const centreY = -capHeight / 2 + capHeight * o.cloudSink * 0.5;
+
+  const rnd = mulberry32(0x48584c); // 'HXL'
+  const pos = new Float32Array(o.cloudCount * 3);
+  for (let i = 0; i < o.cloudCount; i++) {
+    // A direction on the unit sphere, then a radius pulled toward the middle. The
+    // bank has to be DENSEST where the letters enter it and thin out in every
+    // direction from there — including downward. There is no floor under the sign
+    // and nothing for a bank to rest on, so a hard bottom would read as a shelf.
+    const th = rnd() * Math.PI * 2;
+    const ph = Math.acos(rnd() * 2 - 1);
+    const sinPh = Math.sin(ph);
+    let sy = Math.cos(ph);
+    const r = Math.pow(rnd(), o.cloudPack); // <1 packs the grains toward the core
+    // Bottom-heavy: the half above the core is squeezed so the top dissolves early
+    // (the letters must come out of it, not be buried), the half below is let run.
+    if (sy > 0) sy *= o.cloudLid;
+    pos[i * 3] = sinPh * Math.cos(th) * r * rx;
+    pos[i * 3 + 1] = centreY + sy * r * ry;
+    pos[i * 3 + 2] = sinPh * Math.sin(th) * r * rz;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setDrawRange(0, o.cloudCount);
+
+  const mat = new THREE.PointsMaterial({
+    size: o.cloudGrain,
+    sizeAttenuation: true,
+    map: tex,
+    color: 0x000000,      // set every frame from the scene's own light — see setLit
+    transparent: true,
+    opacity: o.cloudAlpha,
+    // Writes NO depth, tests against it. That single pair is what sinks the letters:
+    // a grain behind a letter fails the test and is dropped, a grain in front of one
+    // draws over it, and in the gaps between the letters every grain draws. The word
+    // ends up standing IN the bank rather than behind a veil.
+    depthWrite: false,
+    depthTest: true,
+    blending: THREE.NormalBlending, // never additive — additive is how haze glows
+    fog: true,
+  });
+
+  const points = new THREE.Points(geo, mat);
+  points.renderOrder = 1; // after the sign, which is what makes the depth test bite
+  points.frustumCulled = false; // the bank is wider than its own origin implies
+  group.add(points);
+
+  const tint = new THREE.Color(o.cloudTint);
+  const _c = new THREE.Color();
+
+  return {
+    group,
+    mat,
+    /** Drop to the cheap layout once the device has shown it cannot keep up. */
+    setCount(n) { geo.setDrawRange(0, Math.min(n, o.cloudCount)); },
+    /**
+     * The bank is LIT, not self-coloured. Points carry no lighting of their own, so
+     * the ambient + hemisphere the hall actually has is folded into the colour here.
+     * With the lights gone the factor is zero and the bank is black — which is what
+     * makes "kill the lights and look" a real test rather than a formality.
+     */
+    setLit(k) { mat.color.copy(_c.copy(tint).multiplyScalar(k)); },
+    dispose() { geo.dispose(); mat.dispose(); tex.dispose(); },
+  };
+}
+
 // ─────────────────────────── Easing ───────────────────────────
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+// Perceived brightness of a light's colour — used to weigh the hall's ambient
+// and hemisphere into the one number the sign's cloud is coloured by.
+// NB: THREE.Color components are LINEAR, not sRGB — the numbers here are not the
+// ones a colour picker shows, and mixing the two spaces is how the sign's bank came
+// out nearly black the first time.
+const lum = (c) => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+
+// What "fully lit" means for the sign's cloud: the ambient + hemisphere the halls
+// are actually built with. DERIVED from the lighting tokens rather than typed, so it
+// cannot drift away from them — a hall lit dimmer gets a dimmer bank, which is what
+// being lit means. Computed once, lazily, because it needs THREE.Color.
+let _litRef = 0;
+function litReference() {
+  if (!_litRef) {
+    _litRef = LIGHTING.amb.intensity * lum(new THREE.Color(LIGHTING.amb.color))
+      + LIGHTING.hemi.intensity * lum(new THREE.Color(LIGHTING.hemi.sky));
+  }
+  return _litRef;
+}
 // Slow off the mark, builds, then a LONG decel into the arrival — the tail is what
 // makes the camera feel like it has weight rather than snapping to a mark. FLIGHT.
 // easeTail sets how long that decel runs, which is where a slower flight is meant to
@@ -415,10 +605,32 @@ export function createTransitionFlight(deps) {
   // The sign is a FIXED landmark: placed once here and never moved again, so the
   // player can turn round at the plates and find it exactly where they flew past it.
   const sign = buildSign(o);
-  sign.group.scale.setScalar(o.signWidth / sign.emWidth);
+  const signScale = o.signWidth / sign.emWidth;
+  sign.group.scale.setScalar(signScale);
   sign.group.position.set(0, o.signY, -o.modeZ * o.signAt);
   sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
   scene.add(sign.group);
+
+  // The bank the word stands in. PARENTED TO THE SIGN, so it is placed, scaled and
+  // fogged by exactly the same numbers and can never drift away from the letters it
+  // is supposed to be swallowing. Authored in the sign's own em units (cap height 1,
+  // the word `emWidth` wide) because that is the space the sign group is in.
+  const cloud = buildSignCloud(o, 1, sign.emWidth);
+  sign.group.add(cloud.group);
+
+  // The bank is lit by the hall, not by itself: gather whatever ambient and
+  // hemisphere light the scene carries and hand the total to the cloud. Read once
+  // here — lights are added at scene build and do not come and go — and re-read on
+  // demand so a lights-off check is honest.
+  function relight() {
+    let lit = 0;
+    scene.traverse((n) => {
+      if (n.isAmbientLight) lit += n.intensity * lum(n.color);
+      else if (n.isHemisphereLight) lit += n.intensity * lum(n.color);
+    });
+    cloud.setLit(clamp01(lit / litReference()));
+  }
+  relight();
 
   // Remember the scene's own resting fog colour so the flight always hands it back
   // exactly. The DISTANCE of the curve is not remembered — it is derived from
@@ -639,7 +851,21 @@ export function createTransitionFlight(deps) {
     const rest = o.signRest * presence;
     const op = Math.max(rest, o.signOpacity * titleK);
     sign.mat.opacity = op;
+    // The bank shares the sign's fate exactly: they arrive together and leave
+    // together, because a bank with no word in it is weather and a word with no bank
+    // under it is a caption. `sign.group.visible` covers the cloud too — it is a
+    // child of the sign group.
+    cloud.mat.opacity = o.cloudAlpha * op;
     sign.group.visible = op > 0.004;
+  }
+
+  // The bank turns, very slowly and RIGIDLY — the whole volume as one body, so it
+  // cannot open a seam or make a grain pop across the letters. Ten minutes a turn:
+  // it is meant to be a place rather than a picture, not something a player can
+  // watch happen. Off under reduced motion, with the rest of the scene's idle life.
+  function spinCloud(t) {
+    if (reduced || t === undefined) return;
+    cloud.group.rotation.y = t * o.cloudTurn;
   }
 
   /**
@@ -658,6 +884,7 @@ export function createTransitionFlight(deps) {
       // Standing still: the sign is a landmark and the falloff is the weather. Both
       // are simply where the camera is standing.
       applySignOpacity(0);
+      spinCloud(t);
       restFog(t); // the falloff follows the camera down the corridor, flight or no flight
       return false;
     }
@@ -666,6 +893,7 @@ export function createTransitionFlight(deps) {
     if (dur === 0) { finish(); return false; }
 
     const dt = Math.min(Math.max(dtRaw, 0), o.maxDt);
+    spinCloud(t);
 
     // ── riding out a skip ──
     if (settling > 0) {
@@ -693,7 +921,15 @@ export function createTransitionFlight(deps) {
     // where the plates are still waking up) ride it out.
     if (el > o.graceSec) {
       slow = dtRaw > o.lowFpsDt ? slow + 1 : 0;
-      if (slow >= o.lowFpsFrames) { stalled = true; skip(); return true; }
+      if (slow >= o.lowFpsFrames) {
+        stalled = true;
+        // This device has shown it cannot hold the frame. Thin the sign's bank to
+        // its cheap layout for the rest of the session — fewer grains, never none:
+        // a word left with no footing reads as something broken, not as restraint.
+        cloud.setCount(o.cloudCountLow);
+        skip();
+        return true;
+      }
     }
 
     // ── orientation change mid-flight ──
@@ -737,6 +973,7 @@ export function createTransitionFlight(deps) {
   function dispose() {
     restFog();
     scene.remove(sign.group);
+    cloud.dispose();
     sign.dispose();
   }
 
