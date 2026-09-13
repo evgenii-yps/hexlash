@@ -169,7 +169,28 @@ export const FLIGHT = {
   // from the home, which must keep working). So the sign has walked up the corridor
   // to where the home's own air still lets it through, and grown to hold its size in
   // frame from further away at the other end.
-  signAt: 0.50,        // where along the corridor it stands (0 = home, 1 = the plates)
+  // ⚠️ 13.09.2026 — this moved, and the rule that said it could not was retired the
+  // same day. "Do not change the distance" had been standing in for "do not make it
+  // look too close", and those are different things: how big the word LOOKS is set by
+  // its width and the fit rule, while the distance sets how much of its light the air
+  // keeps. Held still, it turned every sideways step into a step further away — which
+  // is exactly how a week of work ended up choosing between a word in the middle of
+  // the frame and a word you could read.
+  //
+  // The three now work together. x takes the word to the middle of the reference
+  // frame, z brings it back inside the fog so the move costs nothing, and the width
+  // comes down so the size on screen does not change. Solved by measurement, each
+  // depth with the x that centres it and the width that holds 17.3 % of the frame:
+  //
+  //     z      x      width   distance   (fog is gone by 26)
+  //   −15   −12.92    9.46      28.3     ← centre, and unreadable
+  //   −13   −11.58    8.75      25.9
+  //   −11    −9.96    7.94      23.4
+  //   −10    −9.10    7.52      22.1     ← here
+  //    −9    −8.28    7.11      20.8
+  //
+  // 0.3333 · 30 = 10. A third of the way down the corridor rather than half.
+  signAt: 0.3333,      // where along the corridor it stands (0 = home, 1 = the plates)
   // WHERE ACROSS the corridor it stands — and this is the one that was wrong for a
   // week. The sign sat on the corridor's own axis, x = 0, which sounds like the only
   // defensible place for it until you trace the start camera: it stands at x = +4.6
@@ -232,10 +253,33 @@ export const FLIGHT = {
   // through that much air. So −6 stands, and the two layouts −9 was bought for —
   // 568×320 and portrait — are served by the no-clipped-word rule instead.
   //
-  // ⚠️ The corridor DISTANCE (signAt, z) is untouched. This is sideways only: the word
-  // does not come closer, and is not allowed to. Sideways costs light all the same —
-  // see signGlow, where the bill is itemised.
-  signX: -6,           // across the corridor — out from under the corner chrome
+  // ⚠️ …and then to −9.10, which is where the start camera's own line of sight crosses
+  // the sign's plane once that plane came closer (see signAt). The word is now in the
+  // MIDDLE of the reference frame — measured offset from frame centre, 0.8 px — and
+  // the depth it was brought to keeps the distance at 22.1 units, well inside the fog.
+  // The earlier attempts at the middle failed because they tried to get there
+  // sideways alone, which walks the word out of the light.
+  //
+  // ⚠️ Accepted by the owner as the price: this centres ONE frame — 844×390, camera
+  // un-turned. Turn the camera or change the screen's proportions and the word moves,
+  // because it is an object standing in a room and not a label pinned to the glass.
+  //
+  // ⚠️ AND THE SAME FACT HAS A SECOND PRICE, which no placement can pay off. The home
+  // orbit is unclamped (minAzimuthAngle = −Infinity), so the camera comes all the way
+  // round, and a world object under a full turn must eventually cross the screen's
+  // top-right corner — which is where SHOP and the cabinet live. Walked round 1° at a
+  // time from the start pose, reference frame:
+  //
+  //                       poses on screen   under the buttons   worst short of 20 px
+  //   x=−6,  z=−15, w=7.0       136                41                  38 px
+  //   x=−9.10, z=−10, w=7.52    147                42                  33 px
+  //
+  // So the "zero samples over the whole orbit" line is not met here — and was not met
+  // before either; the two positions fail it about equally. It is not reachable by
+  // moving the sign at all: clearing the corner needs the word pushed DOWN the screen,
+  // and shrinking to clear it costs 38 % of the size at the worst pose, which is the
+  // size the owner accepted. Reported; the owner's call, not this file's.
+  signX: -9.10,        // across the corridor — the start camera's own axis
   // HEIGHT. Back where v4 left it, and now for a different reason: with the sign out
   // from under the buttons, the chrome no longer has an opinion about its height at
   // all. What is left is the frame's own top edge, and 0.6 keeps thirty-odd pixels of
@@ -250,9 +294,16 @@ export const FLIGHT = {
   //   x = −6, w = 5.4 → 13.7 %     … w = 7.0 → 17.4 %
   //   x = −9, w = 5.4 → 12.4 %     … w = 8.2 → 17.7 %   (measured back out — see signX)
   //
+  // …and then DOWN to 7.52, because the word also came closer. Sideways had been the
+  // only lever and it cost size; with the depth free to move as well, the two cancel:
+  // at z = −10 and x = −9.10 the word is in the middle of the frame AND the same
+  // 17.3 % of it wide as before. The size on screen is what the owner accepted, and
+  // nothing about it has changed — only the object's distance and its world size did,
+  // in opposite directions.
+  //
   // ⚠️ "At full size": the word is no longer one fixed size in every layout — see the
   // fit rule, which is what carries this size onto the screens it will not fit.
-  signWidth: 7.0,
+  signWidth: 7.52,
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
 
   // ── the fit rule ──
@@ -369,7 +420,20 @@ export const FLIGHT = {
   //   2.00 → 66 % · 2.60 → 74 % · 3.00 → 78 % · 3.50 → 83 % · 4.00 → 88 % ✗
   // The run-to-run spread on the peak is about ±3 percentage points (dust crossing
   // the letters), which is what the four points of margin are for.
-  signGlow: 3.30,      // multiplies MATERIALS.sign.emissiveIntensity
+  // ⚠️ …and back DOWN to 1.30 on the same day, when the sign came closer. 3.30 was
+  // what it took to read from 24.4 units through air that ends at 26; from 22.1 the
+  // same word arrives with far more of its light intact, and 3.30 there clips: peak
+  // 255, which is 104 % of the FIGHT button and straight through the ceiling. The
+  // level is set by the ceiling as before — 1.30 lands 79.6 % on the phone reference
+  // and 80.8 % on 1920 — and the word is brighter than it has ever been under it:
+  //
+  //                              peak   mean
+  //   x=−6, z=−15, glow 3.30      200     94
+  //   x=−9.10, z=−10, glow 1.30   196    111     ← here, and centred
+  //
+  // Neighbours at this position, reference frame: 0.80 → 69 %, 1.20 → 77 %,
+  // 1.40 → 83 %, 1.60 → 87 % ✗.
+  signGlow: 1.30,      // multiplies MATERIALS.sign.emissiveIntensity
 
   // ── the contact stutters ──
   // The word flickers like a sign with a bad contact, and it flickers with EXACTLY
