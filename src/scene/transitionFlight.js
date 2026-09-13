@@ -298,6 +298,48 @@ export const FLIGHT = {
   // moving the sign at all: clearing the corner needs the word pushed DOWN the screen,
   // and shrinking to clear it costs 38 % of the size at the worst pose, which is the
   // size the owner accepted. Reported; the owner's call, not this file's.
+  //
+  // ⚠️ 13.09.2026 — AND THE MODE SCREEN IS NOT A SIDEWAYS PROBLEM EITHER. The note
+  // under signAt says a third of the corridor fixed it. Re-measured on the right
+  // question, it did not — and the reason the old pass came back clean is the pass,
+  // not the sign. It counted the word's VISIBLE pixels against the stage's, and the
+  // hexarch stands IN FRONT of the word: every pixel he covers stops belonging to the
+  // word, so the one thing the test was aimed at is the one thing it cannot see.
+  //
+  // Asked the other way — does the word's OWN silhouette, occlusion set aside, cross
+  // the hexarch's — over the mode orbit (azimuth × polar 60-86° × zoom 0.7-1.6, 5°
+  // steps; 220 of those poses have the word on screen at 844×390) it crosses him in
+  // 28 of them, worst 44 px deep across 69 columns, at the closest zoom around
+  // azimuth 200°. 1280×720: 21 poses, 42 px. 1920×1080: 23 poses, 85 px. All three
+  // far past the "8 px across 2 columns" the old metric reported.
+  //
+  // SIDEWAYS CANNOT CLOSE IT, and that was measured across the whole axis rather than
+  // argued — seventeen positions from −20 to +4, same envelope, 844×390:
+  //
+  //     x       −20  −16  −12  −9.10   −6   −2    0   +4
+  //   poses      18   23   26     28    27   25   23   17
+  //   worst px   35   40   43     44    44   44   44   40
+  //
+  // It is geometry, not tuning. Over the window the word is on screen for, the
+  // hexarch's silhouette sweeps ~215 px and the word's ~840 px, so the two cross at
+  // SOME azimuth wherever the word stands; and at every azimuth where they can share
+  // a column the word's lower edge is already 5-48 px below his crown. x only picks
+  // WHICH azimuth the crossing happens at, and −9.10 already picks the shallowest one
+  // at the default zoom.
+  //
+  // Nor is there room to try: clearing him at the worst pose alone needs 3.2 units
+  // one way or 6.4 the other, and the frame rules leave −10.25 … −8.50 (outside that
+  // portrait shrinks the word or cuts it) — ±1 unit, ≈ ±25 px against the ~80 px the
+  // nearest miss wants. Every position in that band measures the same 27-29 poses /
+  // 44 px, and both ends throw away the centring the depth move was bought for: the
+  // gap either side of the word on the home screen goes from 0.9 / 1.4 / 1.3 % out of
+  // true at 844 / 1280 / 1920 to 8-14 %, and in portrait the word ends up 5 px off one
+  // frame edge or 4 px off the other.
+  //
+  // So the word passes BEHIND him, which is what a landmark twenty units further down
+  // the corridor does when somebody stands in front of it. Moving that read needs a
+  // lever this line does not own — the height and the depth together, or the plate
+  // pair's own layout. Reported; the owner's call, not this file's.
   signX: -9.10,        // across the corridor — the start camera's own axis
   // HEIGHT. Back where v4 left it, and now for a different reason: with the sign out
   // from under the buttons, the chrome no longer has an opinion about its height at
