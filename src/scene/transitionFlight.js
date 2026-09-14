@@ -153,28 +153,70 @@ export const FLIGHT = {
 
   // ── HEXLASH sign ──
   //
-  // ⚠️ ВЫКЛЮЧАТЕЛЬ. 14.09.2026 — по решению владельца вывеска и её отмель сняты с
-  // экрана на время демо. Снято ТОЛЬКО отображение: объект по-прежнему собирается,
-  // размещается и живёт своей жизнью, а весь подобранный ниже набор — положение,
-  // ширина, свечение, правило вписывания, вето на обрезку, объём отмели — остаётся
-  // ровно как был. Вернуть на экран = поставить здесь true, и ничего больше.
+  // ВЫКЛЮЧАТЕЛЬ вывески и её отмели. Живой: читается каждый кадр в applySignOpacity
+  // (там и так решается, видна вывеска или нет — вето обрезки + порог прозрачности,
+  // и это третье условие), и он же задаёт состояние, в котором группа РОЖДАЕТСЯ, —
+  // чтобы не было кадра до первой подгонки, когда её могло бы нарисовать.
   //
-  // Почему выключателем, а не удалением: на этот блок ушли недели замеров, и он
-  // документирует не только сегодняшние числа, но и все отвергнутые варианты. Файл,
-  // из которого это вырезано, пришлось бы собирать заново по истории.
-  //
-  // Где он срабатывает — одна строка, в applySignOpacity: там и так решается, видна
-  // вывеска или нет (вето обрезки + порог прозрачности), и туда добавлено третье
-  // условие. Строка выполняется каждый кадр (см. update, ветка «стоим на месте»), так
-  // что флаг живой — переключается без перезапуска сцены.
+  // ИСТОРИЯ. 14.09.2026 владелец снял вывеску с экрана на время демо — выключателем,
+  // а не удалением: на этот блок ушли недели замеров, и он документирует не только
+  // сегодняшние числа, но и все отвергнутые варианты. В тот же день решение было
+  // ОТМЕНЕНО (Decisions Log, пятнадцатая запись): вывеска остаётся на всех экранах.
+  // Выключатель оставлен на месте — он стоит копейку и уже один раз пригодился.
   //
   // Отмель — ребёнок группы вывески, уходит вместе с ней и отдельного выключателя не
   // просит. Больше эта группа в сцену не добавляет НИЧЕГО: ни света, ни тени, ни
   // подсветки пола (в этом файле нет ни одного источника света и ни одного
-  // castShadow), поэтому пол остаётся ровно каким был. И перелёт это не задевает:
-  // его средняя точка взгляда целится в ОСЬ коридора на глубине вывески — см. l2 в
-  // buildPath, там числа отсюда, а не сам объект.
-  signShown: false,
+  // castShadow). И перелёт от неё не зависит: его средняя точка взгляда целится в
+  // ОСЬ коридора на глубине вывески — см. l2 в buildPath, там числа отсюда, а не
+  // сам объект.
+  signShown: true,
+  //
+  // ── ГДЕ МЫ ОСОЗНАННО РАСХОДИМСЯ С ЭТАЛОНОМ ────────────────────────────────────
+  // Эталон вида — docs/design-handoff/hexlash_sign (README + params.json), принят
+  // владельцем 14.09.2026. Он задаёт ВИД и ничего больше: положение, размер в кадре,
+  // дистанция и яркость после тумана меряются здесь и оттуда не берутся.
+  //
+  // Пять расхождений. Каждое — решение, а не недоделка:
+  //
+  //  1. ШРИФТ. Эталон: Saira Condensed 900. Здесь: семь глифов, обведённых руками
+  //     (см. GLYPHS). Загрузчика шрифтов в проекте нет, а завести его значит
+  //     положить новый асинхронный файл на критический путь перелёта. Форма
+  //     повторяет брендовое начертание; это не тот же шрифт и никогда им не станет.
+  //
+  //  2. МЕЖБУКВЕННОЕ. Эталон: +1,5 % em. Здесь: SIGN_TRACK = 0.085 em, и это НЕ
+  //     та же величина. У настоящего шрифта каждый глиф несёт свои боковые поля, и
+  //     +1,5 % добавляется к ним; у обведённых руками контуров полей нет вовсе —
+  //     они идут от 0 до своей ширины, — поэтому весь просвет между буквами несёт
+  //     этот один параметр. 0.085 ≈ два боковых поля (~4 % каждое) плюс те самые
+  //     1,5 %. Поставить сюда 0.015 — слепить буквы, ровно то, от чего эталон и
+  //     предостерегает.
+  //
+  //  3. ГРАДИЕНТЫ НА ГРАНЯХ. Эталон: фронтальная грань светлеет сверху и темнеет
+  //     снизу до #DFE3E9, боковая стенка — градиент #A9AEB8 → #545A63. Здесь их
+  //     нет: это освещённый объект, и тон грани даёт свет зала на фасках
+  //     (flatShading), а не заранее нарисованный переход. Мерено: на опорном кадре
+  //     буквы 47 px высотой, боковая стенка при signDepth 0.07 уже меньше пикселя.
+  //     Красить градиентом нечего.
+  //
+  //  4. ЧЕТЫРЕ КЛОКА НАД ЯДРОМ ОБЛАКА / «верхний контур не прямая линия».
+  //     ⚠️ ЭТО ПРЯМОЙ КОНФЛИКТ ДВУХ РЕШЕНИЙ ВЛАДЕЛЬЦА, суток друг от друга.
+  //     13.09 отменено «нижняя треть утоплена в дымке» и потребовано: у отмели
+  //     ПОВЕРХНОСТЬ — ровный верхний край, без вздутия под серединой, и ничего
+  //     перед буквами выше нижней десятой. Эталон 14.09 просит наверху четыре
+  //     несимметричных клока. Выполнено решение 13.09: оно конкретнее, оно измерено,
+  //     и на нём держится гарантия «ни одна крупинка не достаёт до букв» (см.
+  //     cloudTop). Поднять cloudTopJitter значит эту гарантию сломать. Доложено —
+  //     развилка владельца, не этого файла.
+  //
+  //  5. МЕРЦАНИЕ: «гаснет только ореол, буквы не темнеют». В плоском заголовке
+  //     лендинга ореол — отдельный слой, его и гасят. У объёмного знака отдельного
+  //     слоя нет: его свечение И ЕСТЬ его emissive. Поэтому гаснет emissive, и
+  //     честный здешний эквивалент «буквы сохраняют тело» — дно 0.4, не ноль.
+  //     Мерено на полном цикле: буквы проседают до 0.70 средней яркости и ни на
+  //     пиксель не сдвигаются (силуэт совпадает на всех 28 пробах). Таблица одна на
+  //     лендинг и на вывеску (src/data/signFlicker.js) и здесь не трогалась: она
+  //     общая, и правка отсюда переписала бы заголовок лендинга.
   //
   // ── и дальше, ниже, весь набор вывески как он есть ─────────────────────────────
   //
@@ -388,10 +430,49 @@ export const FLIGHT = {
   // nothing about it has changed — only the object's distance and its world size did,
   // in opposite directions.
   //
+  // ⚠️ 14.09.2026 — and DOWN again to 72 % of that, 7.52 → 5.4144, which is a size
+  // decision and not a framing one. The designer measured the word's own legibility
+  // boundary: at 72 % it still reads as a sign standing over the gates; at 60 % the
+  // bank collapses to a kerb, the halo stops separating the word from the haze, and
+  // the object reads as a caption. Below 70 % it fails reliably. So 72 % is the FLOOR
+  // of the usable band (the reference recommends 72-75 %), and the whole of the
+  // remaining size budget is spent here.
+  //
+  // What it was spent ON was the hexarch on the FORGE plate, and it did not buy him.
+  // Measured on silhouettes, occlusion set aside, over the whole mode orbit
+  // (azimuth 0-355° in 5° steps × polar 60-86° × zoom 0.7-1.6; 1440 poses), the word
+  // against the hexarch, the bob pinned at its top so two runs can agree:
+  //
+  //     of full   844x390            1920x1080
+  //               poses   worst px   poses   worst px
+  //     100 %       43       43        44      105
+  //      85 %       36       36        41       89
+  //      72 %       27       30        35       74     ← here
+  //      60 %       25       25        31       62
+  //      40 %       13       17        19       42
+  //      20 %        9        9         9       21
+  //       5 %        5        3         5        5
+  //
+  // Read the last row. At five per cent the word is a dot a third of a unit across
+  // and it STILL crosses him in five poses: what is left at that size is the word's
+  // own centre, and the centre passes behind him at azimuth ~190° whatever it is
+  // wearing. So the column does not reach zero — there is no size at which it does,
+  // short of no word at all. Shrinking buys a third of the depth and a third of the
+  // poses, and that is the whole of what it can buy. Which lever is left is not this
+  // file's to choose: the plate pair's own layout, or the word's height and depth
+  // together, or the owner deciding the pass-behind is fine. Reported.
+  //
   // ⚠️ "At full size": the word is no longer one fixed size in every layout — see the
   // fit rule, which is what carries this size onto the screens it will not fit.
-  signWidth: 7.52,
-  signDepth: 0.17,     // real thickness — the bevels are what catch the light
+  signWidth: 5.4144,   // 72 % of the 7.52 measured above — the legibility floor
+  // Real thickness, in EM (cap height 1) — the bevels are what catch the light.
+  // ⚠️ 14.09.2026 — 0.17 → 0.07, straight off the approved reference
+  //   (handoff/params.json: geometry.extrusionDepthOfCapHeight = 0.07). The old
+  //   number was never measured against anything; it was picked when the word was a
+  //   slab in the dark and it made the letters a quarter as thick again as the face
+  //   they are cut from. At the distance this sign stands, that shows up as a second
+  //   pale shape beside every stroke rather than as thickness.
+  signDepth: 0.07,
 
   // ── the fit rule ──
   // ONE rule, not a list of exceptions: the word keeps clear air under the top
@@ -430,15 +511,38 @@ export const FLIGHT = {
   // 374 px of room). Portrait is a POSITION problem and this rule is about size. It
   // declines to grind the word to a dot chasing a frame it was never in.
   signFitGapPx: 20,    // clear air the word must keep under the panel, screen px
-  signFitMinScale: 0.30, // …and how far it may shrink chasing that before it stops.
-  //                      Low on purpose: the narrow layouts need deep cuts to clear a
-  //                      chrome that is fixed in pixels while the word is not — the
-  //                      chrome eats 37 % of a 568-wide frame against 25 % of a
-  //                      844-wide one. Below this a word is a smudge, and the floor is
-  //                      there to stop that. ⚠️ Reaching the floor without fitting is
-  //                      NOT a result: the rule then hands the word back at full size
-  //                      (see fitSign) rather than deliver an unreadable one that is
-  //                      still in the wrong place.
+  // …and THE FLOOR: the smallest the rule may ever hand the word back at, in world
+  // units, measured the same way signWidth is.
+  //
+  // ⚠️ 14.09.2026 — this replaced `signFitMinScale: 0.30`, and the change is not a
+  // retune of that number, it is a different quantity. A RATIO floor says "never
+  // below three tenths of whatever size the word happens to be authored at", which
+  // drifts every time signWidth moves and which nothing has ever measured. What the
+  // designer measured is ABSOLUTE: the word reads as a sign over the gates down to
+  // 5.4144 world units, and below about 5.26 it stops reading at all — the bank
+  // collapses to a kerb and the halo no longer separates the word from the haze. So
+  // the floor is stated in the units the boundary was measured in, and signWidth can
+  // move without quietly moving it.
+  //
+  // Why it was needed: the old ratio let the rule shrink to ×0.38 on the narrow
+  // layouts, which is far under that boundary. Those screens were being shown a word
+  // in a state where it does not work as a word — and unlike a clipped word, nothing
+  // caught it, because from the rule's point of view it had succeeded.
+  //
+  // It is currently EQUAL to signWidth, so the rule has no room to shrink at all and
+  // is a yes/no gate: the word appears at its authored size or not at all. That is
+  // not a coincidence and it is not permanent — signWidth was taken down to the same
+  // legibility boundary in the same pass (see signWidth). Raise signWidth and the
+  // rule gets its range back automatically; this number stays put, because it is a
+  // property of the word's legibility and not of today's framing.
+  //
+  // ⚠️ And the branch that used to sit under this is gone with it. Reaching the floor
+  // without fitting used to hand the word back at FULL size and let the clipping veto
+  // decide. It no longer does: a word that cannot be got into the frame at or above
+  // the floor is NOT DRAWN (see signUnfit in fitSign). Both halves of the same rule —
+  // a word sawn off by the frame edge and a word ground down to an unreadable stub
+  // are each a sign that has stopped being a sign, and absence is better than either.
+  signFitFloorWidth: 5.4144,
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signSideBand: 1.6,   // world units either side of the sign's own plane over which
@@ -609,8 +713,17 @@ export const FLIGHT = {
   // A SHOAL, NOT A MOUND. Everything below is in EM — the sign's own units, cap
   // height 1, letters spanning y ∈ [-0.5, +0.5] — so the shoal keeps its proportions
   // whatever size or distance the sign is set to.
-  cloudCount: 11000,   // grains at full quality …
-  cloudCountLow: 3808, // …and once the frame watchdog has seen this device stall.
+  // ⚠️ 14.09.2026 — both up by ×1.44 with the taller section (see cloudHeight). The
+  // section itself grew by ×2.16, so the bank is now two thirds as DENSE per unit of
+  // volume as it was, and the pairing rule below says that is exactly how ends stop
+  // reading. It was taken on measurement rather than on the ratio: at ×1.44 the bank
+  // still reads 1.63 of the word wide on the reference frame against the 1.4 it is
+  // held to, its own peak is unmoved (25.2 → 24.3 against the word's 162), and the
+  // frame share is 1.45 % against a ceiling of 8. Matching the ratio would have meant
+  // 23 800 grains for no measurable gain. If the ends ever start dropping out, this
+  // is the first number to raise and the measurement above is what to check.
+  cloudCount: 15800,   // grains at full quality …
+  cloudCountLow: 5470, // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
   //                      ⚠️ Both went up by the same factor as cloudSpread on
   //                      13.09.2026, and that pairing is the whole point: the shoal
@@ -634,8 +747,23 @@ export const FLIGHT = {
   //                      into haze rather than reading as grit because the shoal is
   //                      three times shallower than the mound was, so the same count
   //                      sits in a third of the volume.
-  cloudSpread: 1.00,   // half-width, as a share of the word's WIDTH ⇒ the shoal runs
-  //                      2.0 × the word and carries on past both ends.
+  cloudSpread: 1.00,   // half-width, as a share of the word's WIDTH ⇒ the bank is
+  //                      2.0 × the word GEOMETRICALLY, and carries on past both ends.
+  //
+  //                      ⚠️ 14.09.2026 — the approved reference asks for a bank 1.6 ×
+  //                      the word (handoff/params.json: cloud.widthOfWordWidth), and
+  //                      this number was taken to 0.80 to give exactly that, and then
+  //                      MEASURED BACK OUT. The reference's 1.6 is a width you can
+  //                      SEE; this knob is a width the bank is BUILT to, and the two
+  //                      are not the same number because the outer `cloudFlank` of it
+  //                      dissolves on purpose. On screen, reference frame:
+  //
+  //                        cloudSpread 1.00 → built 2.0 × the word → reads 1.66
+  //                        cloudSpread 0.80 → built 1.6 × the word → reads 1.42
+  //
+  //                      So 1.00 is what puts the reference's number on the screen,
+  //                      and 0.80 would have undershot it by a quarter while looking
+  //                      like compliance in the source. Left where it is, deliberately.
   //
   //                      ⚠️ 0.78 until 13.09.2026, and the number moved because the
   //                      SIGN did. In the world the shoal is a fixed multiple of the
@@ -693,12 +821,19 @@ export const FLIGHT = {
   // Now the section is an ELLIPSE in (y, z), sampled by radius and planed off level
   // at cloudTop. Same flat top the word stands on; a mass under it instead of a
   // sheet.
-  cloudHeight: 0.46,   // vertical radius of the roll …
-  cloudCore: 0.12,     // …and how far below the planed top its axis runs. The haze
-  //                      therefore reaches cloudCore + cloudHeight = 0.58 below the
-  //                      surface, against letters 1.014 tall — 57 % of the word's
-  //                      height, where the old slab managed 0.36 and read as a line
-  //                      under the feet.
+  // ⚠️ 14.09.2026 — both moved together, to the reference's section
+  // (handoff/params.json: cloud.heightOfCapHeight = 1.25, coreAtHeightFraction = 0.66).
+  // The pair is what sets the body, so they are only ever read together:
+  //     body      = cloudCore + cloudHeight            = 1.25 cap heights
+  //     core sits = (body - cloudCore) / body          = 0.66 of the body up from its
+  //                                                      underside
+  // The old pair gave a body of 0.58 — under half what the reference asks for — and
+  // that is the difference between a mass the word stands on and a bank that reads as
+  // a line under its feet. The top is untouched: everything is still planed off at
+  // cloudTop and the guarantee above is unaffected, because the roll only ever grew
+  // DOWNWARD and away from the letters.
+  cloudHeight: 0.825,  // vertical radius of the roll …
+  cloudCore: 0.425,    // …and how far below the planed top its axis runs.
   cloudPack: 0.62,     // how the grains crowd the section's core. 0.5 spreads them
   //                      evenly over its area; 1.0 piles them on the axis. This is
   //                      the "denser in the middle, softer at the edges" the flat
@@ -965,7 +1100,11 @@ function buildSign(o) {
   for (const s of shapes) {
     let geo = new THREE.ExtrudeGeometry(s.shape, {
       depth: half, bevelEnabled: true,
-      bevelThickness: 0.014, bevelSize: 0.014, bevelSegments: 1, curveSegments: 1,
+      // ⚠️ 14.09.2026 — 0.014 → 0.010 em, the reference's ≈1 % of cap height
+      // (handoff/params.json: geometry.bevelWidthOfCapHeight). One segment, so it is
+      // one facet and catches one highlight along the top edge — which is the only
+      // metal the reference allows anywhere on this object.
+      bevelThickness: 0.010, bevelSize: 0.010, bevelSegments: 1, curveSegments: 1,
     });
     geo = dropBackCap(geo, THREE); // open shell — see the helper
     geo.translate(s.x - emWidth / 2, -0.5, 0); // centre the word on its own origin
@@ -1310,6 +1449,9 @@ export function createTransitionFlight(deps) {
   // Set by the fit rule: the frame cuts this word and no size stops it, so it is not
   // drawn. See fitSign, and applySignOpacity, which is where the veto lands.
   let signClipped = false;
+  // …and the second veto beside it: the frame can hold the whole word, but not at any
+  // size the word is still legible at. See signFitFloorWidth.
+  let signUnfit = false;
   // Where the title swell was left, so a re-fit can re-apply the veto without
   // disturbing it. (It is 1 at rest today — signRest reached the top — but the swell
   // is still the thing that owns this number, so the fit rule borrows it rather than
@@ -1519,25 +1661,31 @@ export function createTransitionFlight(deps) {
 
     let s = full;
     let why = 'full size';
+    // The floor in the same units as `full`, and never above it: a floor over the
+    // authored size would mean "shrink upward", which is not a thing.
+    const floor = Math.min(full, o.signFitFloorWidth / sign.emWidth);
+    signUnfit = false;
     if (!fits(full)) {
-      const floor = full * o.signFitMinScale;
-      if (!fits(floor)) {
-        // Nothing in range clears it — so shrinking buys NOTHING, and the word stays
-        // at full size.
+      if (floor >= full || !fits(floor)) {
+        // Nothing AT OR ABOVE THE FLOOR clears it, so there is no size left that is
+        // both legible and in the right place — and the word is not shown at all.
         //
-        // This branch used to sit on the floor, and that was wrong in the one way that
-        // matters: it made the word a smudge AND left it overlapping whatever it was
-        // overlapping. Shrinking is a lever on the frame's edges and on the chrome
-        // only while the word's own middle is clear of them; once the middle is under
-        // a button, every scale is under that button and a smaller word is just a
-        // smaller word in the same wrong place. Measured on 568×320 with the sign at
-        // its new offset: the floor gave 6.2 % of frame width and still breached the
-        // guard by 29 px, against 21 % and a 52 px breach at full size. Neither fits;
-        // one of them is at least readable.
+        // Two earlier answers to this branch were wrong in opposite directions. It
+        // first sat on the floor, which delivered a smudge that was STILL overlapping
+        // whatever it had been overlapping — shrinking is a lever on the frame's edges
+        // only while the word's own middle is clear of them, and once the middle is
+        // under a button every scale is under that button. Then it handed the word
+        // back at full size and let the clipping veto decide, which was right for the
+        // frame-edge case and wrong for the chrome one: it put a full-size word under
+        // the buttons and called it a result.
         //
-        // It is reported, not hidden — `why` says so, and a layout that lands here is
-        // a thing for the owner to decide about.
-        why = 'cannot fit — left at full size';
+        // Absence is the answer to both. A word sawn off by the frame edge and a word
+        // ground down below the point where it reads are each a sign that has stopped
+        // being a sign, and the owner has already given that answer once, for portrait.
+        //
+        // It is reported, not hidden — `why` and `unfit` both say so.
+        why = 'does not fit at or above the floor — not shown';
+        signUnfit = true;
       } else {
         // Largest scale that still fits, to within a quarter of a percent. Eleven
         // halvings of a range half a unit wide; it runs once per resize.
@@ -1584,6 +1732,8 @@ export function createTransitionFlight(deps) {
       of: s / full,
       why,
       clipped: signClipped,
+      unfit: signUnfit,
+      floorOf: +(Math.min(full, o.signFitFloorWidth / sign.emWidth) / full).toFixed(4),
       need,
       capTop: need !== null ? capTopOver(cams[0], panel.spans, vw, vh) : null,
       box: letterBox(cams[0], vw, vh),
@@ -1881,12 +2031,12 @@ export function createTransitionFlight(deps) {
     // child of the sign group.
     cloud.mat.opacity = o.cloudAlpha * op;
     // …and the fit rule's veto sits on top of both: a word the frame cuts in half is
-    // not shown at all. See signClipped. On top of THAT sits the owner's switch —
-    // see signShown, which is off while the demo runs. It is deliberately the last
-    // word and nothing else reads it: everything above still computes exactly as it
-    // did, so flipping the switch back brings the sign in already fitted and faded
-    // to the right side rather than in some stale state.
-    sign.group.visible = o.signShown && !signClipped && op > 0.004;
+    // not shown at all. See signClipped. On top of THAT sits the switch — see
+    // signShown. It is deliberately the last word and nothing else reads it:
+    // everything above still computes exactly as it did, so flipping the switch
+    // brings the sign in already fitted and faded to the right side rather than in
+    // some stale state.
+    sign.group.visible = o.signShown && !signClipped && !signUnfit && op > 0.004;
   }
 
   // The bank turns, very slowly and RIGIDLY — the whole volume as one body, so it

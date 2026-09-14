@@ -1,0 +1,79 @@
+{
+  "project": "Hexlash",
+  "object": "world_sign_HEXLASH",
+  "version": "v1",
+  "date": "2026-09-14",
+  "note": "Эталон вида. Положение в мире, размер в кадре, дистанцию и яркость после тумана здесь не задаём — они меряются в коде.",
+  "palette": {
+    "worldBackground": "#08080A",
+    "letters": "#F6F4F6",
+    "letterFaceTop": "#FFFFFF",
+    "letterFaceBottom": "#DFE3E9",
+    "extrusionNear": "#A9AEB8",
+    "extrusionFar": "#545A63",
+    "glow": "cold white",
+    "glowInner": "rgba(232,240,250,0.90)",
+    "glowMid": "rgba(206,224,246,0.62)",
+    "glowOuter": "rgba(176,204,238,0.42)",
+    "hazeCore": "rgba(214,228,244,0.52)",
+    "hazeMid": "rgba(198,214,234,0.40)",
+    "hazeLow": "rgba(182,202,224,0.30)",
+    "forbidden": { "#FF0069": "розовый принадлежит только действию (FIGHT, ядро бойца) — на вывеске запрещён навсегда" }
+  },
+  "type": {
+    "family": "Saira Condensed",
+    "weight": 900,
+    "case": "uppercase",
+    "letterSpacingEm": 0.015
+  },
+  "geometry": {
+    "extrusionDepthOfCapHeight": 0.07,
+    "bevelWidthOfCapHeight": 0.01,
+    "bevelHighlights": 1
+  },
+  "cloud": {
+    "widthOfWordWidth": 1.6,
+    "heightOfCapHeight": 1.25,
+    "coreAtHeightFraction": 0.66,
+    "lumps": 4,
+    "selfEmissive": false,
+    "peakBrightnessBelowLetters": true,
+    "edges": "dissolving, no hard rim, no seams",
+    "gapsBetweenLetters": "same density as under letters"
+  },
+  "immersion": {
+    "wordSitsOnCloud": true,
+    "depthOfCapHeight": 0.1,
+    "cleanTopFraction": 0.66
+  },
+  "glow": {
+    "level": "medium",
+    "ceiling": "заметно тусклее кнопки FIGHT"
+  },
+  "flicker": {
+    "cycleSeconds": 13,
+    "eventsPerCycle": 2,
+    "eventsAtSeconds": [2.3, 7.9],
+    "target": "halo only — letters do not dim or move",
+    "steps": [1.0, 0.86, 0.72, 0.58, 0.49, 0.4],
+    "floor": 0.4,
+    "holdSeconds": 0.23,
+    "recoverySeconds": 0.3
+  },
+  "sizeCheck": {
+    "at100": "reads as a sign above the gates",
+    "at60": "fails — reads as small caption",
+    "legibilityBoundary": 0.72,
+    "hardFloor": 0.7,
+    "recommended": [0.72, 0.75]
+  },
+  "forbidden": [
+    "интерфейс, кнопки, HUD вокруг объекта",
+    "второй цвет",
+    "другое начертание или другой логотип",
+    "подложка, рамка, плашка, черта под словом",
+    "обрезка вывески краем кадра",
+    "тёплые оттенки в облаке",
+    "глянец, стекло, неоновая трубка, реализм"
+  ]
+}

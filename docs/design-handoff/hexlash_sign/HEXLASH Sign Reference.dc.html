@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;900&family=Saira:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:#08080A; }
+  a { color:#cfd8e4; text-decoration:none; border-bottom:1px solid rgba(207,216,228,.35); }
+  a:hover { color:#F6F4F6; border-bottom-color:rgba(246,244,246,.7); }
+  @keyframes hexHalo {
+    0%,17.4%{opacity:1}
+    18.1%{opacity:.86} 18.9%{opacity:.72} 19.7%{opacity:.58} 20.5%{opacity:.49} 21.3%{opacity:.4}
+    23.1%{opacity:.4} 24.6%{opacity:.93} 25.6%{opacity:1}
+    60.3%{opacity:1}
+    61%{opacity:.86} 61.8%{opacity:.72} 62.6%{opacity:.58} 63.4%{opacity:.49} 64.2%{opacity:.4}
+    66%{opacity:.4} 67.5%{opacity:.93} 68.5%{opacity:1}
+    100%{opacity:1}
+  }
+</style>
+</helmet>
+<div style="background:#08080A;color:#F6F4F6;font-family:'Saira',system-ui,sans-serif;padding:48px 24px 96px;min-height:100vh;box-sizing:border-box">
+<div style="max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:64px">
+
+  <div style="display:flex;flex-direction:column;gap:10px;border-bottom:1px solid rgba(246,244,246,.1);padding-bottom:24px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#7f8894">Hexlash · эталон вида · v1 · 14.09.2026</div>
+    <div style="font-size:26px;font-weight:600;letter-spacing:.01em">Объёмная вывеска HEXLASH в мире</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;color:#8b949f;max-width:64ch">Эталон характера: пропорции и толщина букв, фаска и блик, форма и плотность облака, сила и холод свечения, характер мерцания. Положение в мире, размер в кадре и дистанцию до камеры этот макет не задаёт.</div>
+  </div>
+
+  <!-- ===== КАДР 1 ===== -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#5f6874">01</div>
+      <div style="font-size:18px;font-weight:600">Геройский кадр</div>
+    </div>
+    <div style="position:relative;border:1px solid rgba(246,244,246,.08);background:#08080A;display:flex;align-items:center;justify-content:center;padding:16% 6%;overflow:hidden;box-sizing:border-box">
+      <div style="position:relative;display:inline-block;font-size:clamp(54px,11.5vw,138px);line-height:.74;white-space:nowrap;transform-style:preserve-3d">
+        <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;opacity:var(--cloud,1);pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(26% 26% at 27% 66%,rgba(198,214,234,.4),rgba(198,214,234,0) 76%),radial-gradient(24% 24% at 73% 64%,rgba(198,214,234,.36),rgba(198,214,234,0) 76%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%),radial-gradient(16% 16% at 44% 54%,rgba(228,240,252,.26),rgba(228,240,252,0) 72%)"></div>
+        <div style="position:absolute;left:0;top:0;opacity:var(--halo,1);pointer-events:none">
+          <div style="animation:hexHalo 13s linear infinite;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+        </div>
+        <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;background:linear-gradient(#ffffff 0 40%,#F6F4F6 40% 72%,#dfe3e9 72% 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.005em rgba(255,255,255,.35);text-shadow:.006em .01em 0 #a9aeb8,.012em .02em 0 #8e949e,.018em .03em 0 #797f89,.024em .04em 0 #666c76,.03em .05em .004em #545a63">HEXLASH</div>
+        <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;opacity:var(--cloud,1);filter:blur(.075em);-webkit-mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));background:radial-gradient(48% 26% at 50% 74%,rgba(222,236,250,.62),rgba(222,236,250,0) 76%),radial-gradient(28% 20% at 26% 78%,rgba(208,224,242,.5),rgba(208,224,242,0) 78%),radial-gradient(26% 20% at 74% 76%,rgba(208,224,242,.46),rgba(208,224,242,0) 78%)"></div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8b949f">Смотреть: холод свечения, отсутствие розового, слово утоплено в дымку на десятую часть высоты букв, верхние две трети чистые.</div>
+  </div>
+
+  <!-- ===== КАДР 2 ===== -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#5f6874">02</div>
+      <div style="font-size:18px;font-weight:600">Три четверти, ≈30°</div>
+    </div>
+    <div style="position:relative;border:1px solid rgba(246,244,246,.08);background:#08080A;display:flex;align-items:center;justify-content:center;padding:15% 6%;overflow:hidden;box-sizing:border-box;perspective:1600px">
+      <div style="transform:rotateY(30deg) rotateX(4deg);transform-style:preserve-3d">
+        <div style="position:relative;display:inline-block;font-size:clamp(50px,10.5vw,126px);line-height:.74;white-space:nowrap;transform-style:preserve-3d">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;opacity:var(--cloud,1);pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(26% 26% at 27% 66%,rgba(198,214,234,.4),rgba(198,214,234,0) 76%),radial-gradient(24% 24% at 73% 64%,rgba(198,214,234,.36),rgba(198,214,234,0) 76%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:var(--halo,1);pointer-events:none">
+            <div style="animation:hexHalo 13s linear infinite;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.6),0 0 .62em rgba(176,204,238,.4),0 0 1.3em rgba(150,184,226,.22)">HEXLASH</div>
+          </div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;background:linear-gradient(100deg,#f1f3f7 0 30%,#ffffff 30% 42%,#F6F4F6 42% 66%,#cfd3db 66% 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.01em rgba(255,255,255,.55);text-shadow:.012em .008em 0 #b3b8c1,.024em .016em 0 #9aa0aa,.036em .024em 0 #868c96,.048em .032em 0 #757b85,.06em .04em 0 #656b75,.072em .048em .004em #565c65,.082em .056em .01em rgba(70,76,85,.9)">HEXLASH</div>
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;opacity:var(--cloud,1);filter:blur(.075em);-webkit-mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));background:radial-gradient(48% 26% at 50% 74%,rgba(222,236,250,.62),rgba(222,236,250,0) 76%),radial-gradient(28% 20% at 26% 78%,rgba(208,224,242,.5),rgba(208,224,242,0) 78%),radial-gradient(26% 20% at 74% 76%,rgba(208,224,242,.46),rgba(208,224,242,0) 78%)"></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8b949f">Смотреть: толщина буквы, матовая боковая стенка, узкая фаска на ребре и один блик по ней — металл только здесь.</div>
+  </div>
+
+  <!-- ===== КАДР 3 ===== -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#5f6874">03</div>
+      <div style="font-size:18px;font-weight:600">Облако в профиль</div>
+    </div>
+    <div style="position:relative;border:1px solid rgba(246,244,246,.08);background:#08080A;display:flex;align-items:center;justify-content:center;padding:13% 6%;overflow:hidden;box-sizing:border-box;perspective:2200px">
+      <div style="position:relative;width:2.3em;height:1.75em;font-size:clamp(58px,12vw,144px)">
+        <div style="position:absolute;inset:0;pointer-events:none;opacity:var(--cloud,1);filter:blur(.1em);background:radial-gradient(33% 29% at 50% 62%,rgba(216,230,246,.5),rgba(216,230,246,0) 74%),radial-gradient(24% 22% at 31% 66%,rgba(202,218,238,.4),rgba(202,218,238,0) 76%),radial-gradient(22% 20% at 69% 64%,rgba(202,218,238,.38),rgba(202,218,238,0) 76%),radial-gradient(17% 13% at 15% 68%,rgba(190,208,230,.28),rgba(190,208,230,0) 78%),radial-gradient(16% 12% at 85% 66%,rgba(190,208,230,.26),rgba(190,208,230,0) 78%),radial-gradient(46% 15% at 50% 63%,rgba(208,224,242,.34),rgba(208,224,242,0) 76%),radial-gradient(28% 8% at 50% 82%,rgba(184,202,224,.2),rgba(184,202,224,0) 78%)"></div>
+        <div style="position:absolute;left:50%;bottom:.59em;width:.42em;height:.9em;transform:translateX(-50%);pointer-events:none;opacity:var(--halo,1);filter:blur(.08em);background:radial-gradient(50% 50% at 50% 46%,rgba(228,240,252,.62),rgba(228,240,252,0) 72%)"></div>
+        <div style="position:absolute;left:50%;bottom:.59em;width:.125em;height:.74em;transform:translateX(-50%);background:linear-gradient(90deg,#6a7079 0 20%,#9399a3 20% 46%,#F6F4F6 46% 74%,#dfe3e9 74% 100%);box-shadow:inset 0 .006em 0 rgba(255,255,255,.85),0 0 .07em rgba(232,240,250,.5),0 0 .26em rgba(190,214,242,.3)"></div>
+        <div style="position:absolute;inset:0;pointer-events:none;opacity:var(--cloud,1);filter:blur(.085em);-webkit-mask-image:linear-gradient(to top,#000 0,#000 calc(31.9% + var(--imm,.1) * 60%),rgba(0,0,0,0) calc(37% + var(--imm,.1) * 60%));mask-image:linear-gradient(to top,#000 0,#000 calc(31.9% + var(--imm,.1) * 60%),rgba(0,0,0,0) calc(37% + var(--imm,.1) * 60%));background:radial-gradient(30% 22% at 50% 74%,rgba(222,236,250,.6),rgba(222,236,250,0) 76%),radial-gradient(22% 17% at 32% 80%,rgba(208,224,242,.46),rgba(208,224,242,0) 78%),radial-gradient(20% 16% at 68% 78%,rgba(208,224,242,.44),rgba(208,224,242,0) 78%)"></div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8b949f">Смотреть: дымка есть и перед буквами, и за ними, «живот» в середине, края растворяются — не плоская карточка, швов нет.</div>
+  </div>
+
+  <!-- ===== КАДР 4 ===== -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#5f6874">04</div>
+      <div style="font-size:18px;font-weight:600">Раскадровка мерцания · цикл 13 с · два события · дно 0,4</div>
+    </div>
+    <div style="border:1px solid rgba(246,244,246,.08);background:#08080A;display:flex;flex-wrap:wrap;gap:4px;padding:14px;box-sizing:border-box">
+      <div style="flex:1 1 150px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 6px 12px">
+        <div style="position:relative;display:inline-block;font-size:clamp(22px,3.2vw,38px);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:1;pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:#F6F4F6;text-shadow:.012em .02em 0 #8e949e,.024em .04em 0 #666c76">HEXLASH</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">100 %</div>
+      </div>
+      <div style="flex:1 1 150px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 6px 12px">
+        <div style="position:relative;display:inline-block;font-size:clamp(22px,3.2vw,38px);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:.86;pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:#F6F4F6;text-shadow:.012em .02em 0 #8e949e,.024em .04em 0 #666c76">HEXLASH</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">86 %</div>
+      </div>
+      <div style="flex:1 1 150px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 6px 12px">
+        <div style="position:relative;display:inline-block;font-size:clamp(22px,3.2vw,38px);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:.72;pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:#F6F4F6;text-shadow:.012em .02em 0 #8e949e,.024em .04em 0 #666c76">HEXLASH</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">72 %</div>
+      </div>
+      <div style="flex:1 1 150px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 6px 12px">
+        <div style="position:relative;display:inline-block;font-size:clamp(22px,3.2vw,38px);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:.58;pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:#F6F4F6;text-shadow:.012em .02em 0 #8e949e,.024em .04em 0 #666c76">HEXLASH</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">58 %</div>
+      </div>
+      <div style="flex:1 1 150px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 6px 12px">
+        <div style="position:relative;display:inline-block;font-size:clamp(22px,3.2vw,38px);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:.4;pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:#F6F4F6;text-shadow:.012em .02em 0 #8e949e,.024em .04em 0 #666c76">HEXLASH</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">40 % · дно</div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8b949f">Смотреть: гаснет ореол, буквы не темнеют и не двигаются. Пять ступеней вниз, дно 0,4, дальше возврат; за 13 с это происходит дважды.</div>
+  </div>
+
+  <!-- ===== КАДР 5 ===== -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#5f6874">05</div>
+      <div style="font-size:18px;font-weight:600">Проверка размера · 100 % и 60 %</div>
+    </div>
+    <div style="border:1px solid rgba(246,244,246,.08);background:#08080A;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-around;gap:24px;padding:9% 4%;box-sizing:border-box">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:22px">
+        <div style="position:relative;display:inline-block;font-size:clamp(40px,7.4vw,88px);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;opacity:var(--cloud,1);pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(26% 26% at 27% 66%,rgba(198,214,234,.4),rgba(198,214,234,0) 76%),radial-gradient(24% 24% at 73% 64%,rgba(198,214,234,.36),rgba(198,214,234,0) 76%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:var(--halo,1);pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;background:linear-gradient(#ffffff 0 40%,#F6F4F6 40% 72%,#dfe3e9 72% 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.005em rgba(255,255,255,.35);text-shadow:.006em .01em 0 #a9aeb8,.012em .02em 0 #8e949e,.018em .03em 0 #797f89,.024em .04em 0 #666c76,.03em .05em .004em #545a63">HEXLASH</div>
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;opacity:var(--cloud,1);filter:blur(.075em);-webkit-mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));background:radial-gradient(48% 26% at 50% 74%,rgba(222,236,250,.62),rgba(222,236,250,0) 76%),radial-gradient(28% 20% at 26% 78%,rgba(208,224,242,.5),rgba(208,224,242,0) 78%)"></div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">100 % · читается как вывеска</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:22px">
+        <div style="position:relative;display:inline-block;font-size:calc(clamp(40px,7.4vw,88px) * .6);line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;opacity:var(--cloud,1);pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(26% 26% at 27% 66%,rgba(198,214,234,.4),rgba(198,214,234,0) 76%),radial-gradient(24% 24% at 73% 64%,rgba(198,214,234,.36),rgba(198,214,234,0) 76%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:var(--halo,1);pointer-events:none;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.62),0 0 .62em rgba(176,204,238,.42),0 0 1.3em rgba(150,184,226,.24)">HEXLASH</div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;background:linear-gradient(#ffffff 0 40%,#F6F4F6 40% 72%,#dfe3e9 72% 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.005em rgba(255,255,255,.35);text-shadow:.006em .01em 0 #a9aeb8,.012em .02em 0 #8e949e,.018em .03em 0 #797f89,.024em .04em 0 #666c76,.03em .05em .004em #545a63">HEXLASH</div>
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;opacity:var(--cloud,1);filter:blur(.075em);-webkit-mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));background:radial-gradient(48% 26% at 50% 74%,rgba(222,236,250,.62),rgba(222,236,250,0) 76%),radial-gradient(28% 20% at 26% 78%,rgba(208,224,242,.5),rgba(208,224,242,0) 78%)"></div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa3ae">60 % · читается как подпись</div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8b949f">Смотреть: на 60 % ореол и облако сжимаются в тонкую кромку — объект перестаёт быть предметом над воротами. Граница проходит около 72 %.</div>
+  </div>
+
+  <!-- ===== КАДР 6 ===== -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#5f6874">06</div>
+      <div style="font-size:18px;font-weight:600">Композиция · 844 × 390</div>
+    </div>
+    <div style="width:100%;max-width:844px;aspect-ratio:844 / 390;container-type:inline-size;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 120%,#0d0f13 0%,#08080A 62%);border:1px solid rgba(246,244,246,.08)">
+      <div style="position:absolute;left:8%;right:8%;bottom:-14%;height:38%;border-radius:50%;background:radial-gradient(58% 62% at 50% 26%,rgba(150,170,196,.16),rgba(150,170,196,0) 72%);filter:blur(6px)"></div>
+      <div style="position:absolute;left:26%;right:26%;bottom:-9%;height:22%;border-radius:50%;background:linear-gradient(#171b21,#0b0c10);box-shadow:inset 0 1px 0 rgba(190,208,228,.18)"></div>
+      <div style="position:absolute;left:0;right:0;top:27%;display:flex;justify-content:center">
+        <div style="position:relative;display:inline-block;font-size:11.5cqw;line-height:.74;white-space:nowrap">
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;opacity:var(--cloud,1);pointer-events:none;filter:blur(.105em);background:radial-gradient(50% 34% at 50% 72%,rgba(214,228,244,.52),rgba(214,228,244,0) 74%),radial-gradient(26% 26% at 27% 66%,rgba(198,214,234,.4),rgba(198,214,234,0) 76%),radial-gradient(24% 24% at 73% 64%,rgba(198,214,234,.36),rgba(198,214,234,0) 76%),radial-gradient(60% 20% at 50% 86%,rgba(182,202,224,.3),rgba(182,202,224,0) 78%),radial-gradient(19% 23% at 37% 60%,rgba(220,232,246,.34),rgba(220,232,246,0) 74%),radial-gradient(15% 19% at 63% 65%,rgba(214,228,244,.3),rgba(214,228,244,0) 74%),radial-gradient(22% 14% at 17% 77%,rgba(198,214,234,.26),rgba(198,214,234,0) 76%),radial-gradient(20% 13% at 85% 75%,rgba(198,214,234,.24),rgba(198,214,234,0) 76%)"></div>
+          <div style="position:absolute;left:0;top:0;opacity:var(--halo,1);pointer-events:none">
+            <div style="animation:hexHalo 13s linear infinite;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;color:rgba(246,244,246,0);text-shadow:0 0 .1em rgba(232,240,250,.9),0 0 .26em rgba(206,224,246,.6),0 0 .62em rgba(176,204,238,.4),0 0 1.3em rgba(150,184,226,.22)">HEXLASH</div>
+          </div>
+          <div style="position:relative;font-family:'Saira Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:.015em;background:linear-gradient(#ffffff 0 40%,#F6F4F6 40% 72%,#dfe3e9 72% 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.005em rgba(255,255,255,.35);text-shadow:.006em .01em 0 #a9aeb8,.012em .02em 0 #8e949e,.018em .03em 0 #797f89,.024em .04em 0 #666c76,.03em .05em .004em #545a63">HEXLASH</div>
+          <div style="position:absolute;left:-32%;right:-32%;bottom:-.55em;height:1.45em;pointer-events:none;opacity:var(--cloud,1);filter:blur(.075em);-webkit-mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));mask-image:linear-gradient(to top,#000 0,#000 calc(38% + var(--imm,.1) * 51%),rgba(0,0,0,0) calc(43.5% + var(--imm,.1) * 51%));background:radial-gradient(48% 26% at 50% 74%,rgba(222,236,250,.62),rgba(222,236,250,0) 76%),radial-gradient(28% 20% at 26% 78%,rgba(208,224,242,.5),rgba(208,224,242,0) 78%)"></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8b949f">Смотреть: слово влезает целиком с запасом по краям, облако не касается рамки, платформа внизу — только силуэт в тумане.</div>
+  </div>
+
+  <!-- ===== РЕШЕНИЯ ===== -->
+  <div style="display:flex;flex-direction:column;gap:18px;border-top:1px solid rgba(246,244,246,.1);padding-top:28px">
+    <div style="font-size:18px;font-weight:600">Решения, принятые самостоятельно</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:20px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5f6874">Пропорции букв</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.65;color:#9aa3ae">Межбуквенное +1,5 % — на 900 в конденсе буквы слипаются, меньше нельзя. Глубина выдавливания ≈ 7 % высоты капители: фронтально почти не видна, на трёх четвертях сразу читается как предмет.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5f6874">Фаска и блик</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.65;color:#9aa3ae">Фаска шириной ≈ 1 % высоты буквы, один блик по верхнему ребру. Больше нельзя — начинается глянец, а язык матовый.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5f6874">Форма облака</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.65;color:#9aa3ae">Сплюснутый эллипсоид: ширина 1,64 × слова, высота 1,25 капители, ядро на 60 % высоты — отсюда «живот» в профиль. Пик облака держится ниже пика букв, свои источники света у него отсутствуют.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5f6874">Граница по размеру</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.65;color:#9aa3ae">60 % не работает: облако сжимается до кромки, ореол перестаёт отделять слово от тумана, объект читается подписью. Граница ≈ 72 % (ниже 70 % ломается устойчиво). Рекомендация: 72–75 % и добирать остаток по наставнику другими рычагами.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;haloStrength&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.4,&quot;max&quot;:1.6,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Свечение&quot;},&quot;cloudDensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.4,&quot;max&quot;:1.5,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Облако&quot;},&quot;immersion&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.1,&quot;min&quot;:0.02,&quot;max&quot;:0.35,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Облако&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this.apply(); }
+  componentDidUpdate() { this.apply(); }
+  apply() {
+    const r = document.documentElement.style;
+    r.setProperty('--halo', String(this.props.haloStrength ?? 1));
+    r.setProperty('--cloud', String(this.props.cloudDensity ?? 1));
+    r.setProperty('--imm', String(this.props.immersion ?? 0.1));
+  }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
