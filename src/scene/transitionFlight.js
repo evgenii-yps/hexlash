@@ -152,6 +152,32 @@ export const FLIGHT = {
   fogBreathW: 0.13,    // rad/s ⇒ ~48 s a cycle
 
   // ── HEXLASH sign ──
+  //
+  // ⚠️ ВЫКЛЮЧАТЕЛЬ. 14.09.2026 — по решению владельца вывеска и её отмель сняты с
+  // экрана на время демо. Снято ТОЛЬКО отображение: объект по-прежнему собирается,
+  // размещается и живёт своей жизнью, а весь подобранный ниже набор — положение,
+  // ширина, свечение, правило вписывания, вето на обрезку, объём отмели — остаётся
+  // ровно как был. Вернуть на экран = поставить здесь true, и ничего больше.
+  //
+  // Почему выключателем, а не удалением: на этот блок ушли недели замеров, и он
+  // документирует не только сегодняшние числа, но и все отвергнутые варианты. Файл,
+  // из которого это вырезано, пришлось бы собирать заново по истории.
+  //
+  // Где он срабатывает — одна строка, в applySignOpacity: там и так решается, видна
+  // вывеска или нет (вето обрезки + порог прозрачности), и туда добавлено третье
+  // условие. Строка выполняется каждый кадр (см. update, ветка «стоим на месте»), так
+  // что флаг живой — переключается без перезапуска сцены.
+  //
+  // Отмель — ребёнок группы вывески, уходит вместе с ней и отдельного выключателя не
+  // просит. Больше эта группа в сцену не добавляет НИЧЕГО: ни света, ни тени, ни
+  // подсветки пола (в этом файле нет ни одного источника света и ни одного
+  // castShadow), поэтому пол остаётся ровно каким был. И перелёт это не задевает:
+  // его средняя точка взгляда целится в ОСЬ коридора на глубине вывески — см. l2 в
+  // buildPath, там числа отсюда, а не сам объект.
+  signShown: false,
+  //
+  // ── и дальше, ниже, весь набор вывески как он есть ─────────────────────────────
+  //
   // A FIXED landmark standing in the corridor, not a title card that follows the
   // camera. It is placed once, at scene init, and never moves again: the player can
   // turn round at the plates and find it still standing there with the home behind
@@ -1292,6 +1318,11 @@ export function createTransitionFlight(deps) {
   sign.group.scale.setScalar(signScale);
   sign.group.position.set(o.signX, o.signY, -o.modeZ * o.signAt);
   sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
+  // The switch also decides the state the group is BORN in, so there is no window
+  // before the first fit in which it could be drawn. Both materials start at zero
+  // opacity anyway, so this is belt and braces — but the two places that own the
+  // sign's visibility should not disagree, even for one frame. See signShown.
+  sign.group.visible = o.signShown;
   scene.add(sign.group);
 
   // The bank the word stands in. PARENTED TO THE SIGN, so it is placed, scaled and
@@ -1850,8 +1881,12 @@ export function createTransitionFlight(deps) {
     // child of the sign group.
     cloud.mat.opacity = o.cloudAlpha * op;
     // …and the fit rule's veto sits on top of both: a word the frame cuts in half is
-    // not shown at all. See signClipped.
-    sign.group.visible = !signClipped && op > 0.004;
+    // not shown at all. See signClipped. On top of THAT sits the owner's switch —
+    // see signShown, which is off while the demo runs. It is deliberately the last
+    // word and nothing else reads it: everything above still computes exactly as it
+    // did, so flipping the switch back brings the sign in already fitted and faded
+    // to the right side rather than in some stale state.
+    sign.group.visible = o.signShown && !signClipped && op > 0.004;
   }
 
   // The bank turns, very slowly and RIGIDLY — the whole volume as one body, so it
