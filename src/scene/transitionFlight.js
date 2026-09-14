@@ -218,6 +218,50 @@ export const FLIGHT = {
   //     лендинг и на вывеску (src/data/signFlicker.js) и здесь не трогалась: она
   //     общая, и правка отсюда переписала бы заголовок лендинга.
   //
+  // ── ⚠️ ОТКАТ 14.09.2026 К СОСТОЯНИЮ ПЕРВОГО КРУГА 13.09 ───────────────────────
+  // Владелец вспомнил, что до второго круга правок вывеска стояла спокойно и ни с
+  // чем не конфликтовала, а конфликт с наставником появился после того, как слово
+  // увеличили и придвинули. Откачены ПЯТЬ чисел — положение, размер, свечение:
+  //
+  //                       было (13-14.09)   стало (откат)   откуда взято
+  //     signAt              0.3333            0.50          500a22f9
+  //     signX              -9.10              0             500a22f9 — см. ниже
+  //     signY               0.6               0.2           500a22f9
+  //     signWidth           5.4144            3.6           500a22f9
+  //     signGlow            1.30              1.0           500a22f9 — см. ниже
+  //
+  // Точка отсчёта — коммит 500a22f9 (13.09 14:46, «Банка дымки под словом стала
+  // плотнее», работа 3 из трёх). Это ПОСЛЕДНИЙ коммит первого круга: следующий за
+  // ним 79c78ba3 (15:52) прямо пишет, что отменяет критерий «слово занимает 10-12 %
+  // ширины кадра», и с него начинается рост.
+  //
+  // ⚠️ ДВА РАСХОЖДЕНИЯ С ОРИЕНТИРАМИ ТЗ. Велено верить коду — код говорит вот что.
+  //
+  //   · СВЕЧЕНИЕ. ТЗ ждало 3,30. В том состоянии его не было: на всём первом круге
+  //     signGlow = 1.0, а 3.30 появилось только в 08c1410a, когда ширина уже была
+  //     7.0, а слово ушло вбок на x = -6 — и поднято оно было ИМЕННО ради того, что
+  //     сдвиг вбок съел половину света (это записано в блоке signGlow ниже). К этой
+  //     глубине и этой оси 3.30 никогда не относилось. Взято 1.0.
+  //
+  //   · ГОРИЗОНТАЛЬ. ТЗ просило найти x, «которого нет в Notion». Его нет и в коде:
+  //     на первом круге ключа signX не существовало вовсе, слово стояло на оси
+  //     коридора — строка была `position.set(0, signY, ...)` буквально. Ключ завёл
+  //     67df6b61 сразу со значением -6. Так что откат по горизонтали — это 0, ось.
+  //
+  // И одно уточнение, не расхождение: «средняя яркость 108» из ТЗ — это ПИК, а не
+  // средняя. Число из eff4940d: «пик яркости 108 при пустом небе 8», причём снято
+  // оно ДО того, как вывеска начала светиться (9b4add7c). Собственный замер
+  // 500a22f9 даёт на том же кадре пик букв 145.6.
+  //
+  // ЧТО НЕ ОТКАЧЕНО, намеренно: геометрия букв (signDepth, фаска) — это сведение к
+  // утверждённому эталону, от размера не зависит; объёмная форма отмели; мерцание;
+  // вето на обрезку. Пол правила вписывания пересчитан от нового размера — см.
+  // signFitFloorWidth, там же ловушка, из-за которой его нельзя было не трогать.
+  //
+  // Историю роста ниже НЕ ВЫЧИЩАЛ. Она описывает, что пробовали и чем платили, и
+  // теперь это запись отвергнутого пути, а не описание текущих чисел. Где число в
+  // тексте расходится с числом в ключе — прав ключ.
+  //
   // ── и дальше, ниже, весь набор вывески как он есть ─────────────────────────────
   //
   // A FIXED landmark standing in the corridor, not a title card that follows the
@@ -277,7 +321,8 @@ export const FLIGHT = {
   //
   // So no height change was made. The brief's remedy was "raise it", and raising it
   // would have had to be paid for at home, where the chrome is overhead.
-  signAt: 0.3333,      // where along the corridor it stands (0 = home, 1 = the plates)
+  signAt: 0.50,        // where along the corridor it stands (0 = home, 1 = the plates)
+  //                      ⚠️ откачено 14.09 с 0.3333 — см. блок отката выше. z = -15.
   // WHERE ACROSS the corridor it stands — and this is the one that was wrong for a
   // week. The sign sat on the corridor's own axis, x = 0, which sounds like the only
   // defensible place for it until you trace the start camera: it stands at x = +4.6
@@ -408,13 +453,15 @@ export const FLIGHT = {
   // the corridor does when somebody stands in front of it. Moving that read needs a
   // lever this line does not own — the height and the depth together, or the plate
   // pair's own layout. Reported; the owner's call, not this file's.
-  signX: -9.10,        // across the corridor — the start camera's own axis
+  signX: 0,            // across the corridor — ⚠️ откачено 14.09 с -9.10 на ОСЬ
+  //                      коридора, где слово и стояло весь первый круг (тогда этого
+  //                      ключа не было вовсе). См. блок отката выше.
   // HEIGHT. Back where v4 left it, and now for a different reason: with the sign out
   // from under the buttons, the chrome no longer has an opinion about its height at
   // all. What is left is the frame's own top edge, and 0.6 keeps thirty-odd pixels of
   // it. The 12.09 answer of −0.35 was the height the buttons forced when the word was
   // still under them; nothing forces it now.
-  signY: 0.6,          // height — clear of the frame's top edge, chrome not involved
+  signY: 0.2,          // height — ⚠️ откачено 14.09 с 0.6. См. блок отката выше.
   // Real world width, at full size. 7.0, up from the 5.4 it held on the axis, and the
   // increase is the PRICE OF THE SIDEWAYS MOVE, not a change of mind about size: a
   // word pushed off the view axis is seen more obliquely, and is further away, so the
@@ -464,7 +511,8 @@ export const FLIGHT = {
   //
   // ⚠️ "At full size": the word is no longer one fixed size in every layout — see the
   // fit rule, which is what carries this size onto the screens it will not fit.
-  signWidth: 5.4144,   // 72 % of the 7.52 measured above — the legibility floor
+  signWidth: 3.6,      // ⚠️ откачено 14.09 с 5.4144 (которое само было 72 % от 7.52).
+  //                      См. блок отката выше.
   // Real thickness, in EM (cap height 1) — the bevels are what catch the light.
   // ⚠️ 14.09.2026 — 0.17 → 0.07, straight off the approved reference
   //   (handoff/params.json: geometry.extrusionDepthOfCapHeight = 0.07). The old
@@ -529,20 +577,28 @@ export const FLIGHT = {
   // in a state where it does not work as a word — and unlike a clipped word, nothing
   // caught it, because from the rule's point of view it had succeeded.
   //
-  // It is currently EQUAL to signWidth, so the rule has no room to shrink at all and
-  // is a yes/no gate: the word appears at its authored size or not at all. That is
-  // not a coincidence and it is not permanent — signWidth was taken down to the same
-  // legibility boundary in the same pass (see signWidth). Raise signWidth and the
-  // rule gets its range back automatically; this number stays put, because it is a
-  // property of the word's legibility and not of today's framing.
+  // ⚠️ И ВОТ ТУТ ЖЕ ЛОВУШКА, из-за которой это число НЕЛЬЗЯ было оставить в покое
+  // при откате 14.09. Оно стояло 5.4144 — то есть было подобрано под ширину 7.52 и
+  // равнялось ей самой после сжатия до 72 %. Откат вернул ширину на 3.6, и слово
+  // оказалось бы НИЖЕ СОБСТВЕННОГО ПОЛА: правило вписывания перестало бы рисовать
+  // его вообще и на всех экранах разом. Пересчитано от нового размера, по тому же
+  // правилу — 72 % от восстановленной ширины: 0.72 × 3.6 = 2.592.
   //
-  // ⚠️ And the branch that used to sit under this is gone with it. Reaching the floor
-  // without fitting used to hand the word back at FULL size and let the clipping veto
-  // decide. It no longer does: a word that cannot be got into the frame at or above
-  // the floor is NOT DRAWN (see signUnfit in fitSign). Both halves of the same rule —
-  // a word sawn off by the frame edge and a word ground down to an unreadable stub
-  // are each a sign that has stopped being a sign, and absence is better than either.
-  signFitFloorWidth: 5.4144,
+  // Ровно поэтому число и сидит здесь в мировых единицах, а не долей: доля молча
+  // уехала бы вместе с signWidth и никто бы не заметил, а абсолют при таком откате
+  // ЛОМАЕТСЯ ГРОМКО — вывеска исчезает, и это видно с первого кадра. Замерено после
+  // отката: на всех раскладках от 320×240 до 1920 слово рисуется в полный рост.
+  //
+  // Сейчас пол составляет 72 % от заведённого размера, так что у правила снова есть
+  // куда сжимать — в отличие от состояния до отката, где пол совпадал с размером и
+  // правило было простым «да/нет».
+  //
+  // ⚠️ What this floor does NOT do is decide whether the word appears. Reaching it
+  // without fitting hands the word back at full size, and the clipping veto then has
+  // the last word — see fitSign. That split matters: the frame's verdict can hide the
+  // sign, the chrome's cannot, and folding the two together hid it from every screen
+  // at once the moment the 13.09 position came back.
+  signFitFloorWidth: 2.592,   // 72 % от signWidth 3.6 — см. ловушку выше
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signSideBand: 1.6,   // world units either side of the sign's own plane over which
@@ -642,7 +698,10 @@ export const FLIGHT = {
   // Left at 1.30 deliberately. Trimming it would cost the mean the last three briefs
   // were spent buying, and it would be trimming against a statistic whose spread is
   // wider than the change. Reported instead — the owner's call.
-  signGlow: 1.30,      // multiplies MATERIALS.sign.emissiveIntensity
+  signGlow: 1.0,       // multiplies MATERIALS.sign.emissiveIntensity
+  //                      ⚠️ откачено 14.09 с 1.30. Это значение первого круга, не
+  //                      3.30 из ТЗ: 3.30 покупало свет, потерянный на сдвиге вбок,
+  //                      а сдвига больше нет. См. блок отката выше.
 
   // ── the contact stutters ──
   // The word flickers like a sign with a bad contact, and it flickers with EXACTLY
@@ -1449,9 +1508,6 @@ export function createTransitionFlight(deps) {
   // Set by the fit rule: the frame cuts this word and no size stops it, so it is not
   // drawn. See fitSign, and applySignOpacity, which is where the veto lands.
   let signClipped = false;
-  // …and the second veto beside it: the frame can hold the whole word, but not at any
-  // size the word is still legible at. See signFitFloorWidth.
-  let signUnfit = false;
   // Where the title swell was left, so a re-fit can re-apply the veto without
   // disturbing it. (It is 1 at rest today — signRest reached the top — but the swell
   // is still the thing that owns this number, so the fit rule borrows it rather than
@@ -1664,28 +1720,28 @@ export function createTransitionFlight(deps) {
     // The floor in the same units as `full`, and never above it: a floor over the
     // authored size would mean "shrink upward", which is not a thing.
     const floor = Math.min(full, o.signFitFloorWidth / sign.emWidth);
-    signUnfit = false;
     if (!fits(full)) {
       if (floor >= full || !fits(floor)) {
-        // Nothing AT OR ABOVE THE FLOOR clears it, so there is no size left that is
-        // both legible and in the right place — and the word is not shown at all.
+        // Nothing AT OR ABOVE THE FLOOR clears it, so shrinking buys nothing that is
+        // still legible — and the word stays at full size. What happens to it next is
+        // the CLIPPING veto's business, a few lines down, and that split is the whole
+        // point of this branch.
         //
-        // Two earlier answers to this branch were wrong in opposite directions. It
-        // first sat on the floor, which delivered a smudge that was STILL overlapping
-        // whatever it had been overlapping — shrinking is a lever on the frame's edges
-        // only while the word's own middle is clear of them, and once the middle is
-        // under a button every scale is under that button. Then it handed the word
-        // back at full size and let the clipping veto decide, which was right for the
-        // frame-edge case and wrong for the chrome one: it put a full-size word under
-        // the buttons and called it a result.
+        // ⚠️ 14.09.2026 — this branch was briefly made to hide the word outright, and
+        // that was wrong. It read "does not fit" as one thing when it is two, because
+        // `fits` asks two questions at once: does the frame hold the whole word, and
+        // does the word keep clear of the chrome. Hiding on the second one contradicts
+        // the rule stated three paragraphs down — a word beside a button is still a
+        // word — and it was caught the moment the 13.09 position was restored: back on
+        // the corridor axis the word lands under SHOP on the phone reference, and the
+        // sign vanished from every screen at once.
         //
-        // Absence is the answer to both. A word sawn off by the frame edge and a word
-        // ground down below the point where it reads are each a sign that has stopped
-        // being a sign, and the owner has already given that answer once, for portrait.
+        // So: the frame's verdict hides the word (via signClipped, which is what the
+        // owner already decided for portrait), the chrome's verdict does not. The floor
+        // keeps its one job — the rule may never hand back a scale below it.
         //
-        // It is reported, not hidden — `why` and `unfit` both say so.
-        why = 'does not fit at or above the floor — not shown';
-        signUnfit = true;
+        // It is reported, not hidden — `why` says which of the two it was.
+        why = 'cannot fit at or above the floor — left at full size';
       } else {
         // Largest scale that still fits, to within a quarter of a percent. Eleven
         // halvings of a range half a unit wide; it runs once per resize.
@@ -1732,7 +1788,6 @@ export function createTransitionFlight(deps) {
       of: s / full,
       why,
       clipped: signClipped,
-      unfit: signUnfit,
       floorOf: +(Math.min(full, o.signFitFloorWidth / sign.emWidth) / full).toFixed(4),
       need,
       capTop: need !== null ? capTopOver(cams[0], panel.spans, vw, vh) : null,
@@ -2036,7 +2091,7 @@ export function createTransitionFlight(deps) {
     // everything above still computes exactly as it did, so flipping the switch
     // brings the sign in already fitted and faded to the right side rather than in
     // some stale state.
-    sign.group.visible = o.signShown && !signClipped && !signUnfit && op > 0.004;
+    sign.group.visible = o.signShown && !signClipped && op > 0.004;
   }
 
   // The bank turns, very slowly and RIGIDLY — the whole volume as one body, so it
