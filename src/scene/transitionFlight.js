@@ -171,6 +171,34 @@ export const FLIGHT = {
   // ОСЬ коридора на глубине вывески — см. l2 в buildPath, там числа отсюда, а не
   // сам объект.
   signShown: true,
+
+  // ⚠️ ВЫКЛЮЧАТЕЛЬ ОТМЕЛИ. 14.09.2026 — по решению владельца дымовая отмель под
+  // словом с экрана снята: остаётся только объёмная надпись, светящаяся и мерцающая,
+  // без опоры под ногами. Вернуть = поставить true, и ничего больше.
+  //
+  // Выключателем, а не удалением, по прямому требованию: на эту отмель ушло ТРИ
+  // круга правок 13.09 (пятно → банка во всю длину → мягкий холм → плоская отмель с
+  // поверхностью → объёмный клуб с животом и ядром), и каждый её числовой параметр
+  // ниже — результат замера, а не вкуса. Если отмель понадобится обратно, добывать
+  // это заново нельзя.
+  //
+  // Где срабатывает — одна строка в applySignOpacity, рядом с той, что и так каждый
+  // кадр решает прозрачность банки. Флаг живой: переключается без перезапуска сцены.
+  // Плюс то же значение задаёт состояние, в котором группа рождается, — чтобы не
+  // было кадра до первой подгонки, когда её могло бы нарисовать.
+  //
+  // ЧТО ОСТАЁТСЯ РАБОТАТЬ ВХОЛОСТУЮ, осознанно: зёрна по-прежнему СТРОЯТСЯ при сборке
+  // сцены (cloudCount позиций и цветов ≈ 380 КБ на два Float32Array), освещение банки
+  // по-прежнему считается каждый кадр. Невидимый объект Three не рисует — в кадр он не
+  // стоит ничего, — а вот память занимает. Не стал городить пустышку и восемь проверок
+  // по местам вызова ради этих килобайт: цена ошибки там выше цены памяти. Если отмель
+  // будет выключена надолго и килобайты понадобятся — правильное место сэкономить их
+  // ровно одно, buildSignCloud.
+  //
+  // ⚠️ И ЧТО ЭТО ЗА СОБОЙ ТЯНЕТ, замерено на опорном кадре: слово стояло утопленным в
+  // отмель на десятую часть высоты букв, и без неё эта десятая становится видимой —
+  // нижняя кромка букв опускается. Число и контраст против фона — в отчёте к правке.
+  cloudShown: false,
   //
   // ── ГДЕ МЫ ОСОЗНАННО РАСХОДИМСЯ С ЭТАЛОНОМ ────────────────────────────────────
   // Эталон вида — docs/design-handoff/hexlash_sign (README + params.json), принят
@@ -218,49 +246,40 @@ export const FLIGHT = {
   //     лендинг и на вывеску (src/data/signFlicker.js) и здесь не трогалась: она
   //     общая, и правка отсюда переписала бы заголовок лендинга.
   //
-  // ── ⚠️ ОТКАТ 14.09.2026 К СОСТОЯНИЮ ПЕРВОГО КРУГА 13.09 ───────────────────────
-  // Владелец вспомнил, что до второго круга правок вывеска стояла спокойно и ни с
-  // чем не конфликтовала, а конфликт с наставником появился после того, как слово
-  // увеличили и придвинули. Откачены ПЯТЬ чисел — положение, размер, свечение:
+  // ── ОТВЕРГНУТЫЙ ПУТЬ: возврат к положению первого круга 13.09 ─────────────────
+  // 14.09 владелец вспомнил, что до второго круга правок вывеска стояла спокойно, и
+  // положение первого круга было ВОССТАНОВЛЕНО И ЗАМЕРЕНО целиком (коммит fdb591e2,
+  // отменён этим). Записываю результат — он дорого стоил и второй раз его добывать
+  // незачем.
   //
-  //                       было (13-14.09)   стало (откат)   откуда взято
-  //     signAt              0.3333            0.50          500a22f9
-  //     signX              -9.10              0             500a22f9 — см. ниже
-  //     signY               0.6               0.2           500a22f9
-  //     signWidth           5.4144            3.6           500a22f9
-  //     signGlow            1.30              1.0           500a22f9 — см. ниже
+  // Возвращали пять чисел из 500a22f9 (13.09 14:46, последний коммит первого круга;
+  // следующий за ним 79c78ba3 прямо отменяет критерий «слово занимает 10-12 %
+  // ширины кадра»): signAt 0.50, signX 0 (ключа тогда не было вовсе — слово стояло
+  // на ОСИ коридора, `position.set(0, …)` буквально), signY 0.2, signWidth 3.6,
+  // signGlow 1.0. ⚠️ Не 3.30: 3.30 появилось позже, вместе со сдвигом вбок, и
+  // покупало именно тот свет, который сдвиг съел.
   //
-  // Точка отсчёта — коммит 500a22f9 (13.09 14:46, «Банка дымки под словом стала
-  // плотнее», работа 3 из трёх). Это ПОСЛЕДНИЙ коммит первого круга: следующий за
-  // ним 79c78ba3 (15:52) прямо пишет, что отменяет критерий «слово занимает 10-12 %
-  // ширины кадра», и с него начинается рост.
+  // ЧТО ПОКАЗАЛ ЗАМЕР. Наставник — силуэт букв против его силуэта, вся орбита
+  // (1440 поз), покачивание закреплено на верхней точке:
   //
-  // ⚠️ ДВА РАСХОЖДЕНИЯ С ОРИЕНТИРАМИ ТЗ. Велено верить коду — код говорит вот что.
+  //                      844x390      1280x720     1920x1080     портрет
+  //     первый круг     23 / 27 px   19 / 44 px   17 / 65 px   12 / 35 px
+  //     здесь           27 / 30      31 / 49      35 / 73      13 / 42
   //
-  //   · СВЕЧЕНИЕ. ТЗ ждало 3,30. В том состоянии его не было: на всём первом круге
-  //     signGlow = 1.0, а 3.30 появилось только в 08c1410a, когда ширина уже была
-  //     7.0, а слово ушло вбок на x = -6 — и поднято оно было ИМЕННО ради того, что
-  //     сдвиг вбок съел половину света (это записано в блоке signGlow ниже). К этой
-  //     глубине и этой оси 3.30 никогда не относилось. Взято 1.0.
+  // То есть первый круг чище — но НЕ ЧИСТ: слово пересекает наставника на каждой
+  // ширине. «Раньше стояло нормально» оказалось «стояло лучше, но не мимо», и мимо
+  // не было никогда — на 1280 и 1920 то состояние против наставника не мерили ни
+  // разу, весь его приёмочный набор снят только на 844x390.
   //
-  //   · ГОРИЗОНТАЛЬ. ТЗ просило найти x, «которого нет в Notion». Его нет и в коде:
-  //     на первом круге ключа signX не существовало вовсе, слово стояло на оси
-  //     коридора — строка была `position.set(0, signY, ...)` буквально. Ключ завёл
-  //     67df6b61 сразу со значением -6. Так что откат по горизонтали — это 0, ось.
+  // А заплатить за эти четыре пикселя пришлось бы всем остальным: расхождение
+  // просветов 0,27 % → 69,8 % (слово уходит в правый верхний угол), просвет до
+  // панели 163 px → 11 px при пороге 20, и в ПОРТРЕТЕ вывески нет вовсе — на оси
+  // коридора слово проецируется целиком за кадр. На оси оно приходит ровно под
+  // SHOP, ради чего signX когда-то и завели.
   //
-  // И одно уточнение, не расхождение: «средняя яркость 108» из ТЗ — это ПИК, а не
-  // средняя. Число из eff4940d: «пик яркости 108 при пустом небе 8», причём снято
-  // оно ДО того, как вывеска начала светиться (9b4add7c). Собственный замер
-  // 500a22f9 даёт на том же кадре пик букв 145.6.
-  //
-  // ЧТО НЕ ОТКАЧЕНО, намеренно: геометрия букв (signDepth, фаска) — это сведение к
-  // утверждённому эталону, от размера не зависит; объёмная форма отмели; мерцание;
-  // вето на обрезку. Пол правила вписывания пересчитан от нового размера — см.
-  // signFitFloorWidth, там же ловушка, из-за которой его нельзя было не трогать.
-  //
-  // Историю роста ниже НЕ ВЫЧИЩАЛ. Она описывает, что пробовали и чем платили, и
-  // теперь это запись отвергнутого пути, а не описание текущих чисел. Где число в
-  // тексте расходится с числом в ключе — прав ключ.
+  // Отвергнуто владельцем по этим числам. Сюда же относится и то, что ловушка
+  // «правило вписывания ужимает до ×0,38» — про ТО положение, а не про это: на оси
+  // правило просит ×0,018 на 568x320 и ×0,67 на 844x390, здесь не просит ничего.
   //
   // ── и дальше, ниже, весь набор вывески как он есть ─────────────────────────────
   //
@@ -321,8 +340,7 @@ export const FLIGHT = {
   //
   // So no height change was made. The brief's remedy was "raise it", and raising it
   // would have had to be paid for at home, where the chrome is overhead.
-  signAt: 0.50,        // where along the corridor it stands (0 = home, 1 = the plates)
-  //                      ⚠️ откачено 14.09 с 0.3333 — см. блок отката выше. z = -15.
+  signAt: 0.3333,      // where along the corridor it stands (0 = home, 1 = the plates)
   // WHERE ACROSS the corridor it stands — and this is the one that was wrong for a
   // week. The sign sat on the corridor's own axis, x = 0, which sounds like the only
   // defensible place for it until you trace the start camera: it stands at x = +4.6
@@ -453,15 +471,13 @@ export const FLIGHT = {
   // the corridor does when somebody stands in front of it. Moving that read needs a
   // lever this line does not own — the height and the depth together, or the plate
   // pair's own layout. Reported; the owner's call, not this file's.
-  signX: 0,            // across the corridor — ⚠️ откачено 14.09 с -9.10 на ОСЬ
-  //                      коридора, где слово и стояло весь первый круг (тогда этого
-  //                      ключа не было вовсе). См. блок отката выше.
+  signX: -9.10,        // across the corridor — the start camera's own axis
   // HEIGHT. Back where v4 left it, and now for a different reason: with the sign out
   // from under the buttons, the chrome no longer has an opinion about its height at
   // all. What is left is the frame's own top edge, and 0.6 keeps thirty-odd pixels of
   // it. The 12.09 answer of −0.35 was the height the buttons forced when the word was
   // still under them; nothing forces it now.
-  signY: 0.2,          // height — ⚠️ откачено 14.09 с 0.6. См. блок отката выше.
+  signY: 0.6,          // height — clear of the frame's top edge, chrome not involved
   // Real world width, at full size. 7.0, up from the 5.4 it held on the axis, and the
   // increase is the PRICE OF THE SIDEWAYS MOVE, not a change of mind about size: a
   // word pushed off the view axis is seen more obliquely, and is further away, so the
@@ -511,8 +527,7 @@ export const FLIGHT = {
   //
   // ⚠️ "At full size": the word is no longer one fixed size in every layout — see the
   // fit rule, which is what carries this size onto the screens it will not fit.
-  signWidth: 3.6,      // ⚠️ откачено 14.09 с 5.4144 (которое само было 72 % от 7.52).
-  //                      См. блок отката выше.
+  signWidth: 5.4144,   // 72 % of the 7.52 measured above — the legibility floor
   // Real thickness, in EM (cap height 1) — the bevels are what catch the light.
   // ⚠️ 14.09.2026 — 0.17 → 0.07, straight off the approved reference
   //   (handoff/params.json: geometry.extrusionDepthOfCapHeight = 0.07). The old
@@ -577,28 +592,23 @@ export const FLIGHT = {
   // in a state where it does not work as a word — and unlike a clipped word, nothing
   // caught it, because from the rule's point of view it had succeeded.
   //
-  // ⚠️ И ВОТ ТУТ ЖЕ ЛОВУШКА, из-за которой это число НЕЛЬЗЯ было оставить в покое
-  // при откате 14.09. Оно стояло 5.4144 — то есть было подобрано под ширину 7.52 и
-  // равнялось ей самой после сжатия до 72 %. Откат вернул ширину на 3.6, и слово
-  // оказалось бы НИЖЕ СОБСТВЕННОГО ПОЛА: правило вписывания перестало бы рисовать
-  // его вообще и на всех экранах разом. Пересчитано от нового размера, по тому же
-  // правилу — 72 % от восстановленной ширины: 0.72 × 3.6 = 2.592.
+  // ⚠️ ЛОВУШКА, из-за которой это число нельзя оставлять в покое при смене размера.
+  // Оно какое-то время стояло равным самой signWidth — то есть у правила не было ни
+  // миллиметра хода, и оно было простым «да/нет». Когда 14.09 ширину пробовали
+  // вернуть на 3.6, слово оказалось НИЖЕ СОБСТВЕННОГО ПОЛА, и вывеска пропала со
+  // всех экранов разом. Держим правило: пол = 0,72 × фактическая ширина, и он
+  // пересчитывается вместе с ней. Сейчас 0.72 × 5.4144 = 3.898368.
   //
-  // Ровно поэтому число и сидит здесь в мировых единицах, а не долей: доля молча
-  // уехала бы вместе с signWidth и никто бы не заметил, а абсолют при таком откате
-  // ЛОМАЕТСЯ ГРОМКО — вывеска исчезает, и это видно с первого кадра. Замерено после
-  // отката: на всех раскладках от 320×240 до 1920 слово рисуется в полный рост.
-  //
-  // Сейчас пол составляет 72 % от заведённого размера, так что у правила снова есть
-  // куда сжимать — в отличие от состояния до отката, где пол совпадал с размером и
-  // правило было простым «да/нет».
+  // Ровно поэтому число сидит здесь в мировых единицах, а не долей. Доля тихо уехала
+  // бы вслед за signWidth и никто бы не заметил; абсолют при рассогласовании ломается
+  // ГРОМКО — вывеска исчезает, и это видно с первого кадра.
   //
   // ⚠️ What this floor does NOT do is decide whether the word appears. Reaching it
   // without fitting hands the word back at full size, and the clipping veto then has
   // the last word — see fitSign. That split matters: the frame's verdict can hide the
   // sign, the chrome's cannot, and folding the two together hid it from every screen
   // at once the moment the 13.09 position came back.
-  signFitFloorWidth: 2.592,   // 72 % от signWidth 3.6 — см. ловушку выше
+  signFitFloorWidth: 3.898368, // 72 % от signWidth 5.4144 — см. ловушку выше
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
   signSideBand: 1.6,   // world units either side of the sign's own plane over which
@@ -698,10 +708,7 @@ export const FLIGHT = {
   // Left at 1.30 deliberately. Trimming it would cost the mean the last three briefs
   // were spent buying, and it would be trimming against a statistic whose spread is
   // wider than the change. Reported instead — the owner's call.
-  signGlow: 1.0,       // multiplies MATERIALS.sign.emissiveIntensity
-  //                      ⚠️ откачено 14.09 с 1.30. Это значение первого круга, не
-  //                      3.30 из ТЗ: 3.30 покупало свет, потерянный на сдвиге вбок,
-  //                      а сдвига больше нет. См. блок отката выше.
+  signGlow: 1.30,      // multiplies MATERIALS.sign.emissiveIntensity
 
   // ── the contact stutters ──
   // The word flickers like a sign with a bad contact, and it flickers with EXACTLY
@@ -1529,6 +1536,9 @@ export function createTransitionFlight(deps) {
   // the word `emWidth` wide) because that is the space the sign group is in.
   const cloud = buildSignCloud(o, sign.emWidth);
   cloud.setGrainScale(camera.fov, signScale);
+  // The switch decides the state the bank is BORN in, exactly as signShown does for
+  // the sign — so there is no window before the first fit in which it could be drawn.
+  cloud.group.visible = o.cloudShown;
   sign.group.add(cloud.group);
 
   // ───────────────────────────── the fit rule ──────────────────────────────
@@ -2085,6 +2095,12 @@ export function createTransitionFlight(deps) {
     // under it is a caption. `sign.group.visible` covers the cloud too — it is a
     // child of the sign group.
     cloud.mat.opacity = o.cloudAlpha * op;
+    // …and on top of the bank's own opacity sits the owner's switch. Deliberately the
+    // last word and nothing else reads it: everything above still computes exactly as
+    // it did, so flipping it back brings the bank in already lit, already scaled to
+    // the fit and already faded to the right side, rather than in some stale state.
+    // See cloudShown.
+    cloud.group.visible = o.cloudShown;
     // …and the fit rule's veto sits on top of both: a word the frame cuts in half is
     // not shown at all. See signClipped. On top of THAT sits the switch — see
     // signShown. It is deliberately the last word and nothing else reads it:
