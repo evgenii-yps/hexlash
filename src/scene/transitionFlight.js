@@ -199,6 +199,56 @@ export const FLIGHT = {
   // отмель на десятую часть высоты букв, и без неё эта десятая становится видимой —
   // нижняя кромка букв опускается. Число и контраст против фона — в отчёте к правке.
   cloudShown: false,
+
+  // ── куда вывеска не доезжает: экран выбора режима ──
+  // ⚠️ 14.09.2026, решение владельца. На домашнем экране и НА ПЕРЕЛЁТЕ вывеска
+  // остаётся — перелёт её главный кадр, игрок пролетает мимо неё. А на экране
+  // режимов, когда камера уже припарковалась у плит, её нет.
+  //
+  // Почему именно так, а не подбором положения: у плит слово проходит СКВОЗЬ фигуру
+  // наставника над FORGE. Это меряно по силуэтам на всей орбите (27 поз / 30 px на
+  // телефоне, 35 / 73 на 1920) и видно на снимке экрана — слово читается «HEXL SH».
+  // Четыре рычага закрыты замерами: горизонталь, высота, размер, глубина. Пятого нет.
+  // Единственный оставшийся ход — убрать объект из того единственного кадра, где он
+  // ломается, и оставить его во всех, где он работает.
+  //
+  // ЧЕМ УПРАВЛЯЕТСЯ. Долей пути по дуге перелёта (`param`: 0 — дом, 1 — плиты), а не
+  // временем и не «стадией». Стадия дала бы щелчок в момент прибытия; время
+  // разъехалось бы с траекторией, как только изменится хронометраж. Доля пути — то же
+  // самое число, по которому едет камера, поэтому угасание намертво привязано к месту
+  // в коридоре и одинаково в обе стороны: туда слово гаснет, обратно теми же кадрами
+  // проявляется.
+  //
+  // ⚠️ И ПОЧЕМУ НЕ presence, который для этого выглядит созданным. Он расстоянием до
+  // плит, а камера проходит его полосу (34 → 14 единиц) в самом конце дуги и очень
+  // быстро: мерено на живом перелёте — 0.05 держится первые 1,6 с, потом за 0,5 с
+  // уходит в 1.00. Угасание по нему было бы щелчком в последний момент, ровно тем,
+  // чего просили избежать. presence годится только там, где камера СТОИТ (см. ниже) —
+  // на месте он однозначно говорит, у какого конца коридора мы припарковались.
+  // Окно подобрано замером, а не назначено. Мерено пошаговым прогоном перелёта
+  // (шаг 1/60 с, внутри одного вызова — цикл сцены вклиниться не может, поэтому
+  // выборка одинаково плотная на любой раскладке), в обе стороны, на четырёх
+  // раскладках. Что оно показало:
+  //
+  //   · слово УХОДИТ ИЗ КАДРА на param 0.52 (844, 1280, 1920) и 0.25 (портрет) и
+  //     до парковки больше не возвращается — камера к этому моменту проходит над
+  //     ним и дальше смотрит на плиты;
+  //   · обратно оно ПОЯВЛЯЕТСЯ на param 0.54 / 0.50 / 0.22 соответственно;
+  //   · перелёт туда длится 3,72 с, обратно 1,87 с.
+  //
+  // Отсюда окно и выбрано так, чтобы целиком лечь в эту щель: угасание начинается
+  // ПОСЛЕ того, как слово ушло из кадра, и заканчивается ЗАДОЛГО до парковки. То
+  // есть игрок не видит ни угасания, ни щелчка — он видит слово в полную силу, пока
+  // оно в кадре, и не видит его на экране режимов. Это строго лучше видимого
+  // угасания, и оно вырождается в него мягко: если на какой-то раскладке слово в
+  // кадре задержится, там будет плавная рампа примерно в полсекунды, а не скачок.
+  signFadeFrom: 0.58,  // доля дуги, на которой слово начинает гаснуть …
+  signFadeTo: 0.88,    // …и на которой его уже нет.
+  // Когда камера стоит, доля пути не определена, и конец коридора называет presence.
+  // Окно широкое нарочно: припаркованные значения — 0.05 у дома и 1.00 у плит, так что
+  // попасть В окно камера может только в полёте, где её ведёт param, а не эта пара.
+  signFadeRestFrom: 0.35,
+  signFadeRestTo: 0.75,
   //
   // ── ГДЕ МЫ ОСОЗНАННО РАСХОДИМСЯ С ЭТАЛОНОМ ────────────────────────────────────
   // Эталон вида — docs/design-handoff/hexlash_sign (README + params.json), принят
@@ -1448,6 +1498,8 @@ function buildSignCloud(o, emWidth) {
 
 // ─────────────────────────── Easing ───────────────────────────
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** Плавная ступенька на уже нормированном 0…1 — без рывка на обоих концах. */
+const smoothstep01 = (x) => x * x * (3 - 2 * x);
 // Perceived brightness of a light's colour — used to weigh the hall's ambient
 // and hemisphere into the one number the sign's cloud is coloured by.
 // NB: THREE.Color components are LINEAR, not sRGB — the numbers here are not the
@@ -1515,6 +1567,14 @@ export function createTransitionFlight(deps) {
   // Set by the fit rule: the frame cuts this word and no size stops it, so it is not
   // drawn. See fitSign, and applySignOpacity, which is where the veto lands.
   let signClipped = false;
+  // Где вывеска в своём угасании: 1 — на экране, 0 — её нет. Живёт отдельно от
+  // прозрачности титульного такта, потому что отвечает на другой вопрос — не
+  // «насколько ярко», а «в этом ли кадре она вообще». См. signFadeFrom.
+  let signFade = 1;
+  const fadeByParam = (pm) => 1 - smoothstep01(
+    clamp01((pm - o.signFadeFrom) / Math.max(1e-4, o.signFadeTo - o.signFadeFrom)));
+  const fadeByPresence = (pr) => 1 - smoothstep01(
+    clamp01((pr - o.signFadeRestFrom) / Math.max(1e-4, o.signFadeRestTo - o.signFadeRestFrom)));
   // Where the title swell was left, so a re-fit can re-apply the veto without
   // disturbing it. (It is 1 at rest today — signRest reached the top — but the swell
   // is still the thing that owns this number, so the fit rule borrows it rather than
@@ -2088,13 +2148,17 @@ export function createTransitionFlight(deps) {
     // comes no nearer than z ≈ -21.6.
     const side = clamp01((camera.position.z - sign.group.position.z) / o.signSideBand * 0.5 + 0.5);
     const k = side * side * (3 - 2 * side);
-    sign.matFront.opacity = op * k;
-    sign.matBack.opacity = op * (1 - k);
+    // …и поверх всего — угасание к плитам. Отдельным множителем, а не через `op`,
+    // чтобы титульный такт и это решение не перепутались: op отвечает «насколько
+    // ярко», signFade — «в этом ли кадре она вообще». См. signFadeFrom.
+    const vis = op * signFade;
+    sign.matFront.opacity = vis * k;
+    sign.matBack.opacity = vis * (1 - k);
     // The bank shares the sign's fate exactly: they arrive together and leave
     // together, because a bank with no word in it is weather and a word with no bank
     // under it is a caption. `sign.group.visible` covers the cloud too — it is a
     // child of the sign group.
-    cloud.mat.opacity = o.cloudAlpha * op;
+    cloud.mat.opacity = o.cloudAlpha * vis;
     // …and on top of the bank's own opacity sits the owner's switch. Deliberately the
     // last word and nothing else reads it: everything above still computes exactly as
     // it did, so flipping it back brings the bank in already lit, already scaled to
@@ -2107,7 +2171,7 @@ export function createTransitionFlight(deps) {
     // everything above still computes exactly as it did, so flipping the switch
     // brings the sign in already fitted and faded to the right side rather than in
     // some stale state.
-    sign.group.visible = o.signShown && !signClipped && op > 0.004;
+    sign.group.visible = o.signShown && !signClipped && vis > 0.004;
   }
 
   // The bank turns, very slowly and RIGIDLY — the whole volume as one body, so it
@@ -2149,7 +2213,9 @@ export function createTransitionFlight(deps) {
     presence = clamp01(mix ?? presence);
     if (!active) {
       // Standing still: the sign is a landmark and the falloff is the weather. Both
-      // are simply where the camera is standing.
+      // are simply where the camera is standing. Which END the camera is standing at
+      // is what decides whether the sign is in this frame at all — see signFadeFrom.
+      signFade = fadeByPresence(presence);
       applySignOpacity(0);
       spinCloud(t);
       restFog(t); // the falloff follows the camera down the corridor, flight or no flight
@@ -2173,6 +2239,10 @@ export function createTransitionFlight(deps) {
       camera.lookAt(_lastLook);
       const fade = 1 - s;
       applyFog(envelope(clamp01(el / dur), o.fogPeakAt, o.fogPower) * fade, t);
+      // Пропуск ведёт камеру прямиком в конечную позу, поэтому и угасание едет туда
+      // же: к 0 у плит, к 1 у дома, тем же смягчением, что и сама поза.
+      const destFade = dir === 'toMode' ? 0 : 1;
+      signFade = signFade + (destFade - signFade) * s;
       applySignOpacity(withTitle ? ramp(clamp01(el / dur), o.signIn, o.signHold) * fade : 0);
       if (k >= 1) finish();
       return true;
@@ -2231,6 +2301,9 @@ export function createTransitionFlight(deps) {
     const env = envelope(u, o.fogPeakAt, o.fogPower);
     applyFog(env, t);
 
+    // Угасание идёт по ДОЛЕ ПУТИ, той же, что ведёт камеру, — поэтому оно привязано к
+    // месту в коридоре, а не ко времени, и одинаково в обе стороны. См. signFadeFrom.
+    signFade = fadeByParam(param);
     applySignOpacity(withTitle ? ramp(u, o.signIn, o.signHold) : 0);
 
     if (u >= 1) {
