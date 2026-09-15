@@ -77,7 +77,12 @@ const verifyEmail = async () => {
         'master/setInfoMessage',
         InfoMessageModel.withoutButton('Email verified successfully ✓', 4000)
       );
-      router.push('/play');
+      // ДОМОЙ, а не на выбор состава (15.09.2026). Человек пришёл по ссылке из
+      // письма — он подтверждал почту, а не собирался драться. Раньше этот адрес
+      // вёл на выбор ядра и был вторым входом туда; когда там встал выбор
+      // состава, ссылка из письма бросала бы человека прямиком в подготовку к
+      // бою. Дом — то место, откуда он сам решит, куда идти.
+      router.push('/play/home');
     }, 2000);
   } catch (err) {
     // Failure (expired/invalid token) — NO redirect; user stays on page

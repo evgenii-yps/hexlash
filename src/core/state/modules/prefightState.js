@@ -1,14 +1,17 @@
 // Pre-fight state — WHAT GOES INTO THE FIGHT. The arena reads this and nothing
 // else when it builds the player's fighter.
 //
-// TWO WAYS IN, one shape out:
-//   • the FORGE hall (/play/pve) sends a ROSTER FIGHTER. `fighterId` POINTS at
-//     him; his core and his lit facets are read THROUGH the roster, so the record
-//     there stays the one source of truth. Upgrade him and the next fight uses
-//     the new grades, with nothing to re-sync.
-//   • core select (/play) picks a bare core with no fighter behind it.
-//     `selectedCoreId` carries alone and the fight runs on that core's own
-//     untouched facets.
+// ДВА ВХОДА, одна форма на выходе — состав (`squad`), список идентификаторов:
+//   • экран выбора состава (/play) — игрок сам ставит бойцов в состав;
+//   • зал FORGE (/play/pve) — кнопка FIGHT отправляет одного напрямую. Этот вход
+//     живёт до работы D, после которой останется один.
+// Оба кладут ИДЕНТИФИКАТОРЫ. Ядро и зажжённые грани читаются ЧЕРЕЗ список
+// бойцов, поэтому запись там остаётся единственным источником правды: прокачал —
+// и следующий бой идёт с новыми гранями, пересобирать нечего.
+//
+// Выбор голого ядра, без бойца за ним, отсюда ушёл вместе со своим экраном
+// (15.09.2026). `selectedCoreId` остался отметкой в сейфе и запасным путём для
+// арены, но сам по себе больше никем не выбирается.
 //
 // WHY A POINTER AND NOT A COPY (15.09.2026). Until this pass the fight was handed
 // a core id plus a `lit` cell that NOTHING ever wrote — the screen that used to
@@ -35,15 +38,27 @@ import { readSection, writeSection } from '@/services/playerProgress.js';
 
 const SECTION = 'prefight';
 
-// --- save shape: { core, fighter? } ------------------------------------------
-// `fighter` is one id and only appears when a roster fighter was sent. The `lit`
-// cell that used to sit here was removed on 15.09.2026: it was always empty (see
-// the header) and a permanently-empty store of facets is worse than none — the
-// next reader takes it for the real one.
+// ───────────────────── Размер состава ─────────────────────
+// Сколько бойцов игрок ведёт в бой. Сегодня один: движок умеет только «один на
+// один». Это ОДНА подписанная величина нарочно — когда появится командный бой,
+// меняется она, а не логика вокруг. Поэтому состав хранится списком уже сейчас,
+// хотя список из одного элемента выглядит избыточным: список из трёх потом не
+// потребует переписывать ни состояние, ни экран, ни стража арены.
+export const SQUAD_SIZE = 1;
+
+// --- save shape: { core, squad? } --------------------------------------------
+// `squad` — список идентификаторов бойцов, которых игрок ведёт в бой. Раньше на
+// его месте было одно поле `fighter`: старые сейфы с ним читаются (см. restore),
+// новые пишутся списком.
+//
+// `lit` тут когда-то тоже лежал и был удалён 15.09.2026: он всегда оставался
+// пустым, а вечно пустое хранилище граней хуже, чем никакого — следующий
+// читатель примет его за настоящее.
 function snapshotOf(s) {
-    if (!s.selectedCoreId) return null;
-    const out = { core: s.selectedCoreId };
-    if (s.fighterId) out.fighter = s.fighterId;
+    if (!s.selectedCoreId && !s.squad.length) return null;
+    const out = {};
+    if (s.selectedCoreId) out.core = s.selectedCoreId;
+    if (s.squad.length) out.squad = [...s.squad];
     return out;
 }
 
@@ -54,18 +69,24 @@ function persist(s) {
 // --- restore, synchronously, at module load ---------------------------------
 function restore() {
     const saved = readSection(SECTION);
-    if (!saved) return { selectedCoreId: null, fighterId: null };
+    if (!saved) return { selectedCoreId: null, squad: [] };
 
     const coreId = typeof saved.core === 'string' && CORES.some((c) => c.id === saved.core)
         ? saved.core
         : null;
-    if (!coreId) return { selectedCoreId: null, fighterId: null }; // unknown core → start clean
 
-    // The id is taken at face value here; it is checked against the live roster
-    // at READ time (sentFighter) instead. Checking it now would mean depending on
-    // whether the roster module happened to be evaluated first.
-    const fighterId = typeof saved.fighter === 'string' ? saved.fighter : null;
-    return { selectedCoreId: coreId, fighterId };
+    // Идентификаторы берутся как есть; живы ли они, проверяется при ЧТЕНИИ
+    // (sentFighter). Проверять здесь значило бы зависеть от того, успел ли
+    // раньше подняться список бойцов.
+    //
+    // `saved.fighter` — форма сейфа до появления состава. Читается, чтобы игрок,
+    // у которого вкладка открыта с прошлой версии, не потерял выбранного бойца.
+    let squad = Array.isArray(saved.squad)
+        ? saved.squad.filter((x) => typeof x === 'string')
+        : (typeof saved.fighter === 'string' ? [saved.fighter] : []);
+    if (squad.length > SQUAD_SIZE) squad = squad.slice(0, SQUAD_SIZE);
+
+    return { selectedCoreId: coreId, squad };
 }
 
 const restored = restore();
@@ -75,17 +96,17 @@ const restored = restore();
 // happened to be evaluated (the route guard, above all) can call this and be
 // certain it is looking at the truth. Cheap: synchronous storage, ~60 bytes.
 export function restoreIfEmpty(s) {
-    if (s.selectedCoreId) return;
+    if (s.squad.length || s.selectedCoreId) return;
     const r = restore();
     s.selectedCoreId = r.selectedCoreId;
-    s.fighterId = r.fighterId;
+    s.squad = r.squad;
 }
 
 const state = {
     selectedCoreId: restored.selectedCoreId,
-    // The roster fighter this fight was handed, as an id. Null on the core-select
-    // path (no fighter behind the pick).
-    fighterId: restored.fighterId,
+    // Состав боя — идентификаторы бойцов, которых игрок ведёт драться. Пустой,
+    // пока состав не набран; страж арены смотрит именно сюда.
+    squad: restored.squad,
     // SHOWCASE (?showcase=1) — the live arena embedded in the investor deck page.
     // It is a DIFFERENT document in an iframe, but the same origin and the same
     // tab, so it restores this tab's save: without this flag a deck opened in a
@@ -99,10 +120,12 @@ const state = {
 // fighter was sent, when the stored id no longer matches anybody (dismissed
 // since), or in showcase mode.
 function sentFighter(s, rootState) {
-    if (s.showcase || !s.fighterId) return null;
+    if (s.showcase || !s.squad.length) return null;
     const list = rootState && rootState.roster && rootState.roster.fighters;
     if (!Array.isArray(list)) return null;
-    return list.find((f) => f.id === s.fighterId) || null;
+    // Дерётся первый в составе: движок умеет одного. Когда появится командный
+    // бой, читателей у списка станет больше — сам список менять не придётся.
+    return list.find((f) => f.id === s.squad[0]) || null;
 }
 
 const getters = {
@@ -124,26 +147,22 @@ const getters = {
         const f = sentFighter(s, rootState);
         return f ? f.id : null;
     },
+    // Состав — как он лежит в состоянии. Список идентификаторов, не бойцов:
+    // единственный источник правды о бойце остаётся в списке бойцов.
+    squad: (s) => [...s.squad],
+    inSquad: (s) => (id) => s.squad.includes(id),
+    squadFull: (s) => s.squad.length >= SQUAD_SIZE,
+    // Сколько ещё выбрать. Экран говорит это игроку словами.
+    squadLeft: (s) => Math.max(0, SQUAD_SIZE - s.squad.length),
 };
 
 const mutations = {
-    // A bare core pick has no fighter behind it, so it drops the pointer —
-    // otherwise the pick would be silently overruled by the fighter's own core.
-    SET_CORE(s, id) {
-        s.selectedCoreId = id;
-        s.fighterId = null;
-        persist(s);
-    },
-    CLEAR_CORE(s) {
-        s.selectedCoreId = null;
-        s.fighterId = null;
-        persist(s);
-    },
-    // Send one roster fighter into the fight. The core is written alongside the
-    // pointer in the SAME write, because the route guard reads it from state.
-    SEND_FIGHTER(s, { id, core }) {
-        s.fighterId = id;
-        s.selectedCoreId = core;
+    // Положить состав целиком. Ядро пишется той же записью: арена читает его
+    // через геттер с запасным путём, а в сейфе он остаётся отметкой, по которой
+    // старая версия вкладки поймёт, что выбор был.
+    SET_SQUAD(s, { ids, core }) {
+        s.squad = ids.slice(0, SQUAD_SIZE);
+        s.selectedCoreId = core || null;
         persist(s);
     },
     // Used by the route guard before it decides whether to let the player in.
@@ -155,23 +174,48 @@ const mutations = {
     },
 };
 
+// Собрать состав из идентификаторов, выбросив тех, кого в списке бойцов уже нет.
+// Одно место, где список сверяется с реальностью: и экран выбора, и зал FORGE
+// проходят через него, поэтому в состав не может попасть призрак.
+function resolveSquad(rootState, ids) {
+    const list = (rootState.roster && rootState.roster.fighters) || [];
+    const alive = ids.filter((id) => list.some((f) => f.id === id)).slice(0, SQUAD_SIZE);
+    const first = alive.length ? list.find((f) => f.id === alive[0]) : null;
+    return { ids: alive, core: first ? first.core : null };
+}
+
 const actions = {
-    selectCore({ commit }, id) {
-        commit('SET_CORE', id);
+    /**
+     * Поставить бойца в состав или снять его оттуда.
+     * Возвращает true, если состав изменился.
+     */
+    toggleSquad({ state: s, commit, rootState }, id) {
+        const has = s.squad.includes(id);
+        let ids;
+        if (has) ids = s.squad.filter((x) => x !== id);
+        else if (s.squad.length >= SQUAD_SIZE) return false;  // состав полон — молча отказываем
+        else ids = [...s.squad, id];
+        const r = resolveSquad(rootState, ids);
+        commit('SET_SQUAD', r);
+        return true;
     },
-    clearCore({ commit }) {
-        commit('CLEAR_CORE');
+    /** Убрать из состава тех, кого больше нет в списке бойцов (распустили). */
+    pruneSquad({ state: s, commit, rootState }) {
+        const r = resolveSquad(rootState, s.squad);
+        if (r.ids.length === s.squad.length) return false;
+        commit('SET_SQUAD', r);
+        return true;
     },
     /**
-     * Hand this roster fighter to the fight. Refused (no-op) when the id matches
-     * nobody — the arena must never be entered pointing at a ghost.
-     * Returns true when the fight was actually handed a fighter.
+     * Отправить одного бойца в бой напрямую — путь кнопки FIGHT из зала FORGE.
+     * Он живёт до работы D, когда эта кнопка уйдёт и вход останется один.
+     * Отказ (no-op), если такого бойца нет: на арену нельзя входить, указывая
+     * на призрака.
      */
     sendFighter({ commit, rootState }, id) {
-        const list = (rootState.roster && rootState.roster.fighters) || [];
-        const f = list.find((x) => x.id === id);
-        if (!f) return false;
-        commit('SEND_FIGHTER', { id: f.id, core: f.core });
+        const r = resolveSquad(rootState, [id]);
+        if (!r.ids.length) return false;
+        commit('SET_SQUAD', r);
         return true;
     },
 };

@@ -62,6 +62,12 @@ function makeFighter(callsign, core) {
         createdAt: Date.now(),
         upgrade: null,        // working upgrade tree, built on demand (see ensureTree)
         record: null,         // ← fights / wins land here
+        // Занят ли боец. Сегодня всегда false и меняться ему негде: тренировки в
+        // игре ещё нет. Поле заведено заранее, потому что экран выбора состава
+        // уже обязан показывать «на тренировке» затемнённой карточкой, а читать
+        // этот признак ему иначе неоткуда. Появится тренировка — она пишет сюда,
+        // и экран оживает сам, без правок.
+        busy: false,
     };
 }
 
@@ -90,6 +96,7 @@ function snapshotOf(s) {
             const row = { id: f.id, callsign: f.callsign, core: f.core, createdAt: f.createdAt };
             const lit = litIdsOf(f.upgrade);
             if (Object.keys(lit).length) row.lit = lit;
+            if (f.busy) row.busy = true;   // пишется, только когда боец правда занят
             return row;
         }),
     };
@@ -129,6 +136,7 @@ function restore() {
             createdAt: typeof f.createdAt === 'number' ? f.createdAt : 0,
             upgrade: lit ? buildTree(f.core, lit) : null,
             record: null,
+            busy: f.busy === true,
         });
     }
     // The saved selection is kept ONLY if it still points at somebody who
