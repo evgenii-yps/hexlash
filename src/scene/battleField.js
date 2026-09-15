@@ -1,0 +1,180 @@
+// battleField.js — ПОЛЕ БОЯ. Кто сейчас на плите, кто кому враг, кто по кому бьёт
+// и когда бой кончился.
+//
+// ЗАЧЕМ ОТДЕЛЬНЫЙ ФАЙЛ. До фундамента бой держали две переменные в сцене арены —
+// «мой боец» и «его боец», — и каждая ниточка между ними (где враг, сколько у
+// него сил, что он сейчас делает) была написана дважды, зеркально. Пока бойцов
+// двое, это короче любой абстракции; на троих такая запись не расширяется вообще
+// — её пришлось бы написать девять раз. Здесь лежит ОДИН список и ОДНО правило
+// выбора цели, а сцена только показывает то, что решено тут.
+//
+// ЧТО ЭТО НЕ ДЕЛАЕТ. Здесь нет ни Three.js, ни урона, ни намерений. Поле не знает,
+// как боец дерётся, — только кто он, за кого он и жив ли. Расчёт урона остаётся
+// внутри бойца и этой правкой не тронут: поле лишь отвечает на вопрос «кто мой
+// враг прямо сейчас», а бьёт по нему боец сам, как бил всегда.
+//
+// СТОРОНА — ЭТО КОМАНДА, А НЕ ЧЕЛОВЕК. На одной стороне могут стоять бойцы игрока
+// и боты-союзники (так устроен RAID). Поэтому признак «бот» лежит НА БОЙЦЕ, а не
+// на стороне.
+//
+// Экспортирует: createBattleField.
+
+import { COMBAT_BALANCE } from '@/data/combatBalance.js';
+
+/** Ядра, у каждого своё правило выбора цели. Ключи — те же, что в upgradeData. */
+const ONSLAUGHT = 'natisk';
+const BULWARK = 'skala';
+const AMBUSH = 'zasada';
+// RAIDER ('nalet') отдельной веткой не нужен — он и есть запасной путь «наугад».
+
+/**
+ * @typedef {object} Unit
+ * @property {object}  f       собранный боец (то, что вернул buildFighter)
+ * @property {string}  sideId  за какую команду дерётся
+ * @property {boolean} isBot   ведёт не игрок. Игроку не показывается — см. ТЗ
+ * @property {string?} coreId  ядро: оно задаёт правило выбора цели
+ */
+
+export function createBattleField() {
+  /** @type {Unit[]} */
+  let units = [];
+  // Порядок выбывания. Нужен ровно для одного случая: если на поле не осталось
+  // НИ ОДНОЙ живой стороны (последние бойцы погибли в одном кадре), победа
+  // отдаётся той, чей боец выбыл ПОЗЖЕ. Ничья невозможна — так решено в ТЗ.
+  let eliminatedOrder = 0;
+
+  // Живым считается только СОБРАННЫЙ боец: тело появляется на кадр позже записи
+  // в поле, и без проверки `u.f` первый же запрос цели пришёл бы к пустому месту.
+  const alive = (u) => !!u && !!u.f && !u.dead;
+  const living = () => units.filter(alive);
+
+  /** Живые враги для бойца: все, кто жив и стоит за другую команду. */
+  const enemiesOf = (u) => units.filter((o) => alive(o) && o.sideId !== u.sideId);
+
+  const dist = (a, b) => {
+    const pa = a.f.group.position;
+    const pb = b.f.group.position;
+    return Math.hypot(pa.x - pb.x, pa.z - pb.z);
+  };
+
+  // --- ВЫБОР ЦЕЛИ ------------------------------------------------------------
+  // Правило ядра применяется ОДИН РАЗ — в момент, когда цели нет. Дальше цель
+  // ДЕРЖИТСЯ ДО ВЫБЫВАНИЯ: боец не перескакивает на другого, пока текущий на
+  // поле. Без этого правила ONSLAUGHT метался бы между врагами на каждом
+  // попадании (самый слабый по здоровью меняется постоянно), и бой читался бы
+  // как дёрганье, а не как охота.
+  //
+  // Исключение одно — ЗАСАДА: она и есть «поймать момент», поэтому переключается
+  // на того, кто начал замах у неё под носом.
+  const pickByCore = (u, foes) => {
+    if (!foes.length) return null;
+    switch (u.coreId) {
+      case ONSLAUGHT:
+        // Добивает: самый слабый по ОСТАВШЕМУСЯ здоровью.
+        return foes.reduce((a, b) => (b.f.getHp() < a.f.getHp() ? b : a));
+      case BULWARK:
+        // Держит опасного: самый сильный по СИЛЕ УДАРА бойца. Не по нанесённому
+        // урону — в начале боя он у всех ноль, и такое правило молча выродилось
+        // бы в «первый попавшийся».
+        return foes.reduce((a, b) => (strikePower(b) > strikePower(a) ? b : a));
+      case AMBUSH:
+        // Ближайший — пока никто не замахнулся (замах ловится в noteWindup).
+        return foes.reduce((a, b) => (dist(u, b) < dist(u, a) ? b : a));
+      default:
+        // RAIDER и всё незнакомое — наугад.
+        return foes[Math.floor(Math.random() * foes.length)];
+    }
+  };
+
+  const strikePower = (u) => (u.f.stats && u.f.stats.strikePower) || 0;
+
+  /**
+   * Цель бойца прямо сейчас. Это единственный ответ на вопрос «кто мой враг» —
+   * все ниточки бойца (где враг, сколько у него сил, что он делает) идут отсюда.
+   * @returns {Unit|null}
+   */
+  function targetFor(u) {
+    if (!alive(u)) return null;
+    const foes = enemiesOf(u);
+    if (!foes.length) { u.target = null; return null; }
+    // Держим прежнюю, пока она на поле и всё ещё враг.
+    if (u.target && alive(u.target) && u.target.sideId !== u.sideId) return u.target;
+    u.target = pickByCore(u, foes);
+    return u.target;
+  }
+
+  /**
+   * Кто-то начал замах. ЗАСАДА, у которой этот боец в пределах досягаемости,
+   * бросает текущую цель и разворачивается на него — это и есть «срыв замаха»,
+   * та самая механика сбива, которая у бойца уже построена.
+   */
+  function noteWindup(attacker) {
+    if (!alive(attacker)) return;
+    const reach = COMBAT_BALANCE.field.ambushSwitchReach;
+    for (const u of units) {
+      if (!alive(u) || u.coreId !== AMBUSH) continue;
+      if (u.sideId === attacker.sideId) continue;      // своих не ловим
+      if (u.target === attacker) continue;
+      if (dist(u, attacker) <= reach) u.target = attacker;
+    }
+  }
+
+  // --- ЖИЗНЬ И СМЕРТЬ --------------------------------------------------------
+
+  function add(unit) {
+    const u = { target: null, dead: false, ...unit };
+    units.push(u);
+    return u;
+  }
+
+  /** Боец выбыл. Возвращает его запись — сцене она нужна, чтобы убрать тело. */
+  function kill(u) {
+    if (!u || u.dead) return u;
+    u.dead = true;
+    u.order = ++eliminatedOrder;   // кто раньше, кто позже — для правила «ничьих нет»
+    // Те, кто дрался с ним, остаются без цели и выберут новую по своему ядру.
+    for (const o of units) if (o.target === u) o.target = null;
+    return u;
+  }
+
+  /** Живые стороны. Сторона жива, пока на поле есть хоть один её боец. */
+  const livingSides = () => [...new Set(living().map((u) => u.sideId))];
+
+  /**
+   * Победитель — когда живой осталась ровно одна сторона.
+   * Если живых сторон НЕТ (последние погибли вместе), побеждает та, чей боец
+   * выбыл позже: ничья в этой игре не предусмотрена.
+   * @returns {string|null} ключ стороны или null, пока бой идёт
+   */
+  function winnerSide() {
+    const sides = livingSides();
+    if (sides.length > 1) return null;   // бой идёт
+    if (sides.length === 1) return sides[0];
+    const last = units.filter((u) => u.dead).sort((a, b) => b.order - a.order)[0];
+    return last ? last.sideId : null;
+  }
+
+  /** Убрать запись совсем. Нужно служебному респауну: там боец не погибает в
+   *  бою, а пересобирается заново, и прежняя запись не должна копиться. */
+  function drop(u) {
+    units = units.filter((x) => x !== u);
+  }
+
+  function reset() {
+    units = [];
+    eliminatedOrder = 0;
+  }
+
+  return {
+    add, kill, drop, reset,
+    units: () => units,
+    living,
+    livingSides,
+    enemiesOf,
+    targetFor,
+    noteWindup,
+    winnerSide,
+    /** Бой кончился, когда живой стороне не с кем драться. */
+    isOver: () => livingSides().length <= 1,
+  };
+}

@@ -54,6 +54,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
+import { createBattleField } from './battleField.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -63,7 +64,7 @@ import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { t } from '@/locales/index.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
@@ -169,6 +170,12 @@ const sigRight = ref('raider');
 const neutralColor = ref(false);
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
+// ПОЛЕ БОЯ — кто на плите, кто кому враг, кончился ли бой (см. battleField.js).
+// `fighter` и `opponent` выше остались: на них висит вся служебная панель, и они
+// показывают ПЕРВОГО бойца игрока и ПЕРВОГО чужого. В бою один на один это те же
+// двое, что и раньше; на большем поле панель показывает первую пару.
+let field = createBattleField();
+let playerUnit = null;
 let onVisibility, onKeydown;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
@@ -230,6 +237,8 @@ let lastExchangeT = 0;
 const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
 
 const router = useRouter();
+// Служебный признак ?field= — временный вход на большое поле до экрана режимов.
+const route = useRoute();
 // Дверь наружу из несобравшейся сцены — домой, а не «назад»: назад может вести
 // на тот же адрес арены, и игрок закольцуется на той же поломке.
 function onFailedBack() { router.push('/play/home'); }
@@ -454,101 +463,203 @@ onMounted(() => {
     x: arena.refs.W / 2 - NAV_MARGIN,
     z: arena.refs.totalDepth / 2 - NAV_MARGIN,
   };
+  // Развести пересёкшиеся тела. Симметрично: каждого сдвигаем на половину
+  // нехватки, чтобы никто не имел преимущества в пересчёте.
+  const GAP = COMBAT_BALANCE.field.bodyGap;
+  const separateBodies = (list) => {
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i].f.group.position;
+        const b = list[j].f.group.position;
+        let dx = a.x - b.x, dz = a.z - b.z;
+        let d = Math.hypot(dx, dz);
+        if (d >= GAP - 1e-4) continue;          // уже врозь — не трогаем
+        if (d < 1e-4) { dx = (i % 2 ? 1 : -1) * 1e-3; dz = 1e-3; d = Math.hypot(dx, dz); } // совпали точка в точку
+        const push = (GAP - d) / 2;
+        const ux = dx / d, uz = dz / d;
+        a.x = THREE.MathUtils.clamp(a.x + ux * push, -navBounds.x, navBounds.x);
+        a.z = THREE.MathUtils.clamp(a.z + uz * push, -navBounds.z, navBounds.z);
+        b.x = THREE.MathUtils.clamp(b.x - ux * push, -navBounds.x, navBounds.x);
+        b.z = THREE.MathUtils.clamp(b.z - uz * push, -navBounds.z, navBounds.z);
+      }
+    }
+  };
+
   const endFight = () => {
     fightActive = false;
     aiPlayer = false;
     aiOpponent = false;
-    fighter?.setAI(false); // winner stops attacking → settles to idle
-    opponent?.setAI(false);
+    for (const u of field.living()) u.f.setAI(false); // победители перестают бить → оседают в стойку
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
   };
-  const spawnFighter = () => {
-    fighter = buildFighter(playerColor, {
-      side: 'player',
-      coreId: playerCoreId,
-      behavior: behaviorFor('player'),
+
+  // Служебная панель и все её показания висят на ПЕРВОМ бойце игрока и ПЕРВОМ
+  // чужом. В бою один на один это ровно та же пара, что и раньше, поэтому панель
+  // работает как работала; на большем поле она показывает первую пару.
+  const refreshDevAliases = () => {
+    playerUnit = field.living().find((u) => u.sideId === 'player') || null;
+    fighter = playerUnit ? playerUnit.f : null;
+    const foeU = field.living().find((u) => u.sideId !== 'player');
+    opponent = foeU ? foeU.f : null;
+  };
+
+  // --- ВЫХОД НА ПЛИТУ. Одна функция на любого бойца. Раньше их было две,
+  //     зеркальные, и каждая ниточка к врагу была написана дважды — на троих
+  //     такую запись пришлось бы писать девять раз.
+  //
+  //     Враг больше не «тот, второй», а ТЕКУЩАЯ ЦЕЛЬ, которую выдаёт поле боя.
+  //     В бою один на один цель ровно одна — тот самый единственный второй, —
+  //     поэтому пара дерётся в точности как дралась: ни одна ниточка не меняет
+  //     смысла, меняется только способ узнать, к кому она ведёт.
+  //
+  //     Расчёт урона не тронут: onImpact передаёт то же, что передавал.
+  const spawnUnit = (spec) => {
+    const unit = field.add({ sideId: spec.sideId, isBot: !!spec.isBot, coreId: spec.coreId });
+    unit.spec = spec; // служебный респаун пересобирает бойца по этой же записи
+    // Цель прямо сейчас. Спрашивается на каждое обращение, поэтому смена цели
+    // доходит до тела в тот же кадр.
+    const foe = () => { const tu = field.targetFor(unit); return tu ? tu.f : null; };
+    unit.f = buildFighter(spec.color, {
+      side: spec.side,
+      coreId: spec.coreId,
+      behavior: spec.behavior,
       bounds: navBounds,
       neutralColor: neutralColor.value,
-      getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: (raw, pen, intr, pt, w) => { if (opponent?.takeDamage(raw * escalationMult(), pen, intr, pt, w) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus, pt = contact point, w = move weight → foe flash + zone reaction). Real HP dealt → clean exchange → накал resets
-      onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
-      onMiss: () => opponent?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
-      getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
-      getFightContext: () => ({ escalation: escalationMult(), escalation01: escalation01(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker + body накал pull
-      getFoeStamina: () => (opponent ? opponent.getStamina01() : null), // foe wind (break detector + word memory)
-      getFoeHp01: () => (opponent ? opponent.getHp() / opponent.maxHp : null), // foe health (break detector)
-      getFoePhase: () => (opponent && opponent.getActionPhase ? opponent.getActionPhase() : 'neutral'), // foe action phase → the read subsystem (сбив / контра)
-      brain: brainMode.value, // 'spinal' (default) | 'model' — dev toggle, prod is spinal
-      portrait: portraitFor('player'), // character in words for the model brain
-      requestModelIntention, // async backend call (model brain) — key stays server-side
+      getFoePos: () => { const x = foe(); return x ? x.group.position : null; },
+      onImpact: (raw, pen, intr, pt, w) => { const x = foe(); if (x?.takeDamage(raw * escalationMult(), pen, intr, pt, w) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block. Real HP dealt → clean exchange → накал resets
+      onAttackStart: () => { field.noteWindup(unit); foe()?.noteIncomingAttack?.(); }, // замах: ЗАСАДА рядом разворачивается на него, цель поднимает блок
+      onMiss: () => foe()?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
+      getFoeReacting: () => { const x = foe(); return !!(x && (x.isBlocking?.() || x.isDodging?.())); }, // foe took the bait? (feint payoff)
+      getFightContext: () => ({ escalation: escalationMult(), escalation01: escalation01(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }),
+      getFoeStamina: () => { const x = foe(); return x ? x.getStamina01() : null; }, // foe wind (break detector + word memory)
+      getFoeHp01: () => { const x = foe(); return x ? x.getHp() / x.maxHp : null; }, // foe health (break detector)
+      getFoePhase: () => { const x = foe(); return x && x.getActionPhase ? x.getActionPhase() : 'neutral'; }, // foe action phase → the read subsystem (сбив / контра)
+      // БОТ ВСЕГДА НА СПИННОМ МОЗГЕ. Правило ТЗ: боты не добавляют обращений к
+      // думающей модели сверх нынешнего боя один на один. Единственное место, где
+      // это можно гарантировать, — здесь, на выходе бойца на плиту.
+      brain: spec.isBot ? 'spinal' : brainMode.value,
+      portrait: spec.portrait,
+      requestModelIntention,
       onEliminated: () => {
-        scene.remove(fighter.group);
-        fighter.dispose();
-        fighter = null;
-        if (sigCycle) { if (!sigRestartAt) sigRestartAt = lastFrameT + SIG_RESTART_DELAY; } // A/B auto-cycle
-        else if (fightActive) endFight(); // opponent wins; freeze
-        else spawnFighter(); // dev respawn
+        scene.remove(unit.f.group);
+        unit.f.dispose();
+        if (sigCycle) {                       // служебный стенд A/B — перезапуск круга
+          field.kill(unit);
+          refreshDevAliases();
+          if (!sigRestartAt) sigRestartAt = lastFrameT + SIG_RESTART_DELAY;
+          return;
+        }
+        if (fightActive) {                    // настоящий бой: сторона могла кончиться
+          field.kill(unit);
+          refreshDevAliases();
+          if (field.isOver()) endFight();
+          return;
+        }
+        field.drop(unit);                     // вне боя — служебный респаун тем же составом
+        spawnUnit(spec);
+        refreshDevAliases();
       },
     });
-    fighter.group.position.set(0.45, arena.refs.topY, 1.3); // off-centre, asymmetric to the opponent
-    fighter.setReducedMotion(reducedMotion);
-    fighter.setAI(aiPlayer); // keep AI on across respawn
-    if (lockedIntention.value) fighter.setIntentionLock(lockedIntention.value); // keep dev intention lock across respawn
-    if (blockDev.value) fighter.setBlock(true); // keep a dev block stance across respawn
-    scene.add(fighter.group);
+    unit.f.group.position.set(spec.pos.x, arena.refs.topY, spec.pos.z);
+    unit.f.setReducedMotion(reducedMotion);
+    unit.f.setAI(spec.sideId === 'player' ? aiPlayer : aiOpponent); // keep AI on across respawn
+    if (lockedIntention.value) unit.f.setIntentionLock(lockedIntention.value);
+    if (blockDev.value && spec.sideId === 'player') unit.f.setBlock(true);
+    scene.add(unit.f.group);
+    return unit;
   };
-  const spawnOpponent = () => {
-    opponent = buildFighter(pink, {
-      side: 'opponent',
-      coreId: opponentCoreId,
-      behavior: behaviorFor('opponent'),
-      bounds: navBounds,
-      neutralColor: neutralColor.value,
-      getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: (raw, pen, intr, pt, w) => { if (fighter?.takeDamage(raw * escalationMult(), pen, intr, pt, w) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus, pt = contact point, w = move weight → foe flash + zone reaction). Real HP dealt → clean exchange → накал resets
-      onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
-      onMiss: () => fighter?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
-      getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
-      getFightContext: () => ({ escalation: escalationMult(), escalation01: escalation01(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker + body накал pull
-      getFoeStamina: () => (fighter ? fighter.getStamina01() : null), // foe wind (break detector + word memory)
-      getFoeHp01: () => (fighter ? fighter.getHp() / fighter.maxHp : null), // foe health (break detector)
-      getFoePhase: () => (fighter && fighter.getActionPhase ? fighter.getActionPhase() : 'neutral'), // foe action phase → the read subsystem (сбив / контра)
-      brain: brainMode.value, // 'spinal' (default) | 'model' — dev toggle, prod is spinal
-      portrait: portraitFor('opponent'), // character in words for the model brain
-      requestModelIntention, // async backend call (model brain) — key stays server-side
-      onEliminated: () => {
-        scene.remove(opponent.group);
-        opponent.dispose();
-        opponent = null;
-        if (sigCycle) { if (!sigRestartAt) sigRestartAt = lastFrameT + SIG_RESTART_DELAY; } // A/B auto-cycle
-        else if (fightActive) endFight(); // player wins; freeze
-        else spawnOpponent(); // dev respawn
-      },
-    });
-    opponent.group.position.set(-0.65, arena.refs.topY, -1.4); // off-centre, not a mirror of the player
-    opponent.setReducedMotion(reducedMotion);
-    opponent.setAI(aiOpponent); // keep AI on across respawn
-    if (lockedIntention.value) opponent.setIntentionLock(lockedIntention.value); // keep dev intention lock across respawn
-    scene.add(opponent.group);
-    load.stage('fighters');
+
+  // --- СОСТАВ БОЯ. Сколько сторон и сколько бойцов на сторону.
+  //
+  //     По умолчанию — один на один, ровно как было: сторона игрока и одна чужая,
+  //     по бойцу в каждой, на тех же исторических точках. Это не «частный случай
+  //     для совместимости», это обычный бой сегодняшней игры.
+  //
+  //     Служебный признак в адресе (?field=3x3 / 4x1 / 8) поднимает поле больше —
+  //     он нужен владельцу, чтобы проверить фундамент на телефоне ДО того, как
+  //     появится экран режимов. Игроку он не виден и по ссылке не встречается.
+  const HISTORIC_POS = { player: { x: 0.45, z: 1.3 }, foe: { x: -0.65, z: -1.4 } };
+  const buildRoster = () => {
+    const raw = String(route.query.field || '').toLowerCase();
+    // сколько сторон и сколько бойцов на сторону
+    let sides = 2, per = 1;
+    let m = raw.match(/^(\d+)v(\d+)$/) || raw.match(/^(\d+)x(\d+)$/);
+    if (m) { sides = 2; per = Math.max(1, Math.min(4, +m[1])); }
+    else if (/^4s$/.test(raw)) { sides = 4; per = 1; }
+    else if (/^\d+$/.test(raw)) { const n = Math.max(2, Math.min(8, +raw)); sides = 2; per = Math.ceil(n / 2); }
+
+    const specs = [];
+    const oneOnOne = sides === 2 && per === 1;
+    for (let sIdx = 0; sIdx < sides; sIdx++) {
+      const isPlayerSide = sIdx === 0;
+      const sideId = isPlayerSide ? 'player' : `foe${sIdx}`;
+      for (let k = 0; k < per; k++) {
+        // Сторона игрока: первым идёт сам игрок, остальные — боты-союзники.
+        // Чужие стороны — боты целиком. Внешне бот от игрока не отличается.
+        const isBot = !(isPlayerSide && k === 0);
+        const coreId = isPlayerSide && k === 0
+          ? playerCoreId
+          : (sIdx === 1 && k === 0 ? opponentCoreId : CORES[Math.floor(Math.random() * CORES.length)].id);
+        const own = isPlayerSide && k === 0;
+        const pos = oneOnOne
+          ? (isPlayerSide ? HISTORIC_POS.player : HISTORIC_POS.foe)
+          : spreadPos(sIdx, sides, k, per);
+        specs.push({
+          sideId, isBot, coreId,
+          side: isPlayerSide ? 'player' : 'opponent',
+          color: own ? playerColor : (coreId ? getCore(coreId).hue : pink),
+          behavior: own ? behaviorFor('player')
+            : (sIdx === 1 && k === 0 ? behaviorFor('opponent')
+              : resolveBehavior(coreId, collectLit(CRYSTALS[coreId]))),
+          portrait: own ? portraitFor('player') : portraitFor('opponent'),
+          pos,
+        });
+      }
+    }
+    return specs;
   };
-  spawnFighter();
-  spawnOpponent();
+
+  // Точки выхода: стороны по кругу, бойцы стороны — по дуге. Просвет держится
+  // заведомо больше рабочего (COMBAT_BALANCE.field.spawnGap), иначе первый же
+  // кадр начинался бы с расталкивания тел.
+  function spreadPos(sIdx, sides, k, per) {
+    const R = Math.min(navBounds.x, navBounds.z) * 0.72;
+    const base = (sIdx / sides) * Math.PI * 2;
+    const spread = per > 1 ? COMBAT_BALANCE.field.spawnGap / Math.max(R, 0.001) : 0;
+    const a = base + (k - (per - 1) / 2) * spread;
+    return { x: Math.cos(a) * R, z: Math.sin(a) * R };
+  }
+
+  // Убрать с плиты всех — перед новым боем.
+  const clearField = () => {
+    for (const u of field.units()) {
+      if (!u.f) continue;
+      scene.remove(u.f.group);
+      u.f.dispose();
+    }
+    field.reset();
+    fighter = null;
+    opponent = null;
+    playerUnit = null;
+  };
+
+  for (const spec of buildRoster()) spawnUnit(spec);
+  refreshDevAliases();
+  load.stage('fighters');
 
   // FIGHT (key F / button): clean re-run — dispose both, respawn fresh at full
   // HP + neutral, then both fight autonomously until one is eliminated.
   runFight = () => {
     cancelSig(); // a normal bout uses core behaviour, not the A/B presets
-    if (fighter) { scene.remove(fighter.group); fighter.dispose(); fighter = null; }
-    if (opponent) { scene.remove(opponent.group); opponent.dispose(); opponent = null; }
+    clearField();
     aiPlayer = true;
     aiOpponent = true;
     fightActive = true;
     fightStartT = lastFrameT; // arm the stalemate safeguard (gate)
     lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
-    spawnFighter();
-    spawnOpponent();
+    for (const spec of buildRoster()) spawnUnit(spec);
+    refreshDevAliases();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
 
@@ -558,8 +669,7 @@ onMounted(() => {
   // back-to-back. fightActive stays off — sigCycle owns the end-handling
   // (auto-cycle), not the win-and-freeze path.
   runSigFight = () => {
-    if (fighter) { scene.remove(fighter.group); fighter.dispose(); fighter = null; }
-    if (opponent) { scene.remove(opponent.group); opponent.dispose(); opponent = null; }
+    clearField();
     sigCycle = true;
     fightActive = false;
     sigRestartAt = 0;
@@ -567,8 +677,8 @@ onMounted(() => {
     lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
     aiPlayer = true;
     aiOpponent = true;
-    spawnFighter();
-    spawnOpponent();
+    for (const spec of buildRoster()) spawnUnit(spec);
+    refreshDevAliases();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
 
@@ -600,8 +710,19 @@ onMounted(() => {
 
     controls.update();
     presence.update(t);
-    fighter?.update(t, camera); // may be null after a fight ends, until next FIGHT
-    opponent?.update(t, camera);
+    // Обход поля в порядке выхода на плиту: сторона игрока первой, чужие следом —
+    // ровно тот порядок, в котором раньше стояли два вызова подряд. Порядок важен:
+    // в одном кадре первым разрешается удар того, кто обновился раньше.
+    const onPlate = field.living();
+    for (const u of onPlate) u.f.update(t, camera);
+
+    // РАСТАЛКИВАНИЕ ТЕЛ. Боец сам держит дистанцию только от СВОЕЙ цели, поэтому
+    // на плите с шестью телами остальные прошли бы друг сквозь друга. Этот проход
+    // разводит любые две пересёкшиеся пары.
+    //
+    // При двух телах он НЕ ВЫПОЛНЯЕТСЯ ВОВСЕ: пару и так держит врозь сам боец,
+    // и лишний проход означал бы, что бой один на один стал считаться иначе.
+    if (onPlate.length > 2) separateBodies(onPlate);
 
     // Dev readout (throttled ~5/s) — live stamina + charge of both fighters.
     if (panelVisible.value && t - lastStaReadout > 0.2) {
