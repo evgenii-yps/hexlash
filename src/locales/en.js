@@ -157,7 +157,22 @@ export default {
   // а не оформление, и раздваивать их между двумя файлами нечем.
   gate: {
     soon: "SOON",
-    lockedNote: "NOT OPEN YET",
+    // Боец на тренировке: остров затемнён и не нажимается. До демо не
+    // встречается — ставить бойца на тренировку пока некому.
+    forge: "FORGE",
+    inForge: "IN THE FORGE",
+    // Строка шага на выборе бойцов.
+    pickOne: "Pick one fighter.",
+    pickMore: "Pick {n} more fighters.",
+    squadReady: "Squad ready.",
+    // Пустой ростер — честное состояние, а не пустое поле. Те же слова, что на
+    // плоском экране состава: игрок встречает одно и то же сообщение, откуда бы
+    // он ни пришёл.
+    emptyTitle: "No fighters left.",
+    emptyNote: "Your roster is empty — there is nobody to send in. Recruit in the shop, then come back.",
+    noFighters: "No fighters to send. Recruit in the shop.",
+    // ⚠️ временная плоская кнопка — её место займёт объёмная (работа 4)
+    toArena: "To arena",
   },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.

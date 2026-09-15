@@ -54,6 +54,21 @@ import { FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';
 // 'dive-start' — камера тронулась внутрь острова: виду пора растворить свой хром.
 // 'pick' — камера доехала внутрь острова, режим выбран: виду пора менять адрес.
 // 'refused' — клик по запертому острову: перехода нет, вид только отзывается.
+// Что стоит на островах, решает ВИД: он знает и таблицу режимов, и список
+// бойцов. Сцена умеет разложить любой список и ничего не знает о том, что на
+// нём написано. Смена списка = смена шага; менять его надо под чёрным кадром,
+// и это тоже забота вида (см. ArenaGateView).
+const props = defineProps({
+  items: { type: Array, default: () => [] },
+  // Идентификаторы выбранных островов — они горят и без курсора.
+  selected: { type: Array, default: () => [] },
+  // Уводит ли выбор ДАЛЬШЕ. На выборе режима — да: клик это переход, и камера
+  // летит внутрь острова. На выборе бойцов — нет: там клик это отметка, состав
+  // набирают из нескольких, и улететь в лицо одному значило бы спрятать
+  // остальных ровно в тот момент, когда их сравнивают.
+  diveOnPick: { type: Boolean, default: true },
+});
+
 const emit = defineEmits(['arrived', 'dive-start', 'pick', 'refused']);
 
 // ───────────────────────── CONFIG (ручки приёмки) ─────────────────────────
@@ -88,15 +103,32 @@ const LIGHT = {
 // орбита. Клампы обязательны (hexlash-3d §4): под пол не заглянуть, зум в
 // коридоре, цель орбиты неподвижна — панорамы здесь нет.
 const CAM = {
-  // Поза покоя — то, к чему привозит подлёт. Их две, по раскладке островов:
+  // Поза покоя — то, к чему привозит подлёт. Две базовые, по раскладке островов:
   // лёжа пара стоит поперёк кадра, стоя уходит в глубину, и с лежачей позы
-  // ближний остров упирался в нижнюю кромку экрана, а дальний терялся.
+  // ближний остров упирался в нижнюю кромку экрана, а дальний терялся. Обе
+  // выверены глазами на ДВУХ островах режима.
+  //
+  // Когда островов больше (бойцов может быть сколько угодно), поза не
+  // придумывается заново: та же камера ОТЪЕЗЖАЕТ по своему лучу во столько раз,
+  // во сколько разложенное шире или глубже пары. Так раскладка и кадр не могут
+  // разойтись — второе выводится из первого.
   rest:         [0, 5.4, 12.5],
   restPortrait: [0, 9.6, 17.5],
+  // Габарит, под который эти две позы выверены, — пара островов режима.
+  baseHalfW: 5.1,           // лёжа: шаг 5.8 между двумя + полплиты 2.2
+  baseHalfD: 6.1,           // стоя: шаг 8.8 между двумя + полплиты 1.7
+  maxPull: 3.0,             // дальше не отъезжаем: острова станут марками
   portraitAspect: 1.0,      // уже этого — портретная поза (тот же порог, что у островов)
   look:   [0, 1.1, 0],      // цель орбиты
   polarMin: 0.60,
   polarMax: 1.38,
+  // Коридор зума. Числа выверены на ПАРЕ островов — как и позы покоя, — поэтому
+  // и едут они вместе с позой: когда островов больше и камера отъезжает, потолок
+  // обязан отъехать во столько же раз. Пока он стоял на месте, отъезда не было
+  // вовсе: поза покоя стоя лежит на луче длиной 19.5, потолок был 20, и любой
+  // отъезд орбита возвращала назад в тот же кадр. Троих в глубину это роняло за
+  // нижнюю кромку экрана (замерено: подписи легли на 355, 546 и 1007 при высоте
+  // окна 844), и никакая правка самой позы этого не лечила — лечился симптом.
   distMin: 7,
   distMax: 20,
 };
@@ -111,6 +143,7 @@ let onPointerMove = null, onPointerDown = null, onPointerUp = null;
 let reduced = false;
 let arrived = false;
 let diving = false;
+let departRef = null;   // ссылка на depart() из onMounted — её дёргает вид
 // Откуда начался клик — чтобы отличить выбор от вращения камеры. Порог тот же,
 // что на островах дома: 5 пикселей.
 let downAt = null;
@@ -162,6 +195,18 @@ function buildField(maxAniso) {
   return { group, dispose };
 }
 
+// Собрать острова по списку. Старые разбираются целиком: переиспользовать
+// половину плит и дорисовать недостающие значило бы держать в сцене два разных
+// способа оказаться на месте, а собрать их заново стоит доли кадра и происходит
+// под чёрным кадром, где этого всё равно не видно.
+function buildPlates(items, aspect) {
+  if (plates) { scene.remove(plates.group); plates.dispose(); plates = null; }
+  plates = buildGatePlates({ items, maxAniso: renderer.capabilities.getMaxAnisotropy() });
+  plates.setSelected(props.selected);
+  scene.add(plates.group);
+  plates.layout(aspect);
+}
+
 onMounted(() => {
   load = beginSceneLoad(['renderer', 'field', 'plates', 'camera']);
 
@@ -197,14 +242,35 @@ onMounted(() => {
   scene.add(backdrop.mesh);
   load.stage('field');
 
-  plates = buildGatePlates({ maxAniso: renderer.capabilities.getMaxAnisotropy() });
-  scene.add(plates.group);
-  plates.layout(w / h);
+  buildPlates(props.items, w / h);
   load.stage('plates');
 
-  const restFor = (a) => new THREE.Vector3(...(a < CAM.portraitAspect ? CAM.restPortrait : CAM.rest));
-  let rest = restFor(w / h);
   const look = new THREE.Vector3(...CAM.look);
+  // Поза покоя = базовая поза этой ориентации, отодвинутая по своему же лучу во
+  // столько раз, во сколько разложенное больше пары. Меньше единицы не бывает:
+  // подъезжать ближе выверенной позы незачем.
+  // Во сколько раз разложенное больше пары, под которую мерили позы. Меньше
+  // единицы не бывает: подъезжать ближе выверенной позы незачем.
+  let pull = 1;
+  function pullFor() {
+    const b = plates ? plates.bounds() : null;
+    if (!b) return 1;
+    return Math.min(CAM.maxPull, Math.max(1, b.halfW / CAM.baseHalfW, b.halfD / CAM.baseHalfD));
+  }
+  function restFor(a) {
+    const base = new THREE.Vector3(...(a < CAM.portraitAspect ? CAM.restPortrait : CAM.rest));
+    if (!plates) return base;
+    pull = pullFor();
+    return look.clone().addScaledVector(base.clone().sub(look), pull);
+  }
+  // Коридор зума живёт на том же множителе, что и поза: иначе потолок съедает
+  // отъезд и кадр не вмещает то, ради чего камера отъезжала (см. CAM.distMax).
+  function applyZoomRange() {
+    if (!controls) return;
+    controls.minDistance = CAM.distMin * pull;
+    controls.maxDistance = CAM.distMax * pull;
+  }
+  let rest = restFor(w / h);
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.target.copy(look);
@@ -213,8 +279,7 @@ onMounted(() => {
   controls.enablePan = false;            // цель неподвижна — уезжать некуда
   controls.minPolarAngle = CAM.polarMin;
   controls.maxPolarAngle = CAM.polarMax;
-  controls.minDistance = CAM.distMin;
-  controls.maxDistance = CAM.distMax;
+  applyZoomRange();
 
   approach = createGateApproach({ camera, controls });
   // Тот же режиссёр, что увозит камеру внутрь острова на экране режимов. Ворота
@@ -251,6 +316,8 @@ onMounted(() => {
       },
     });
   };
+
+  departRef = depart;
 
   if (!loadingState.active) {
     // Экрана загрузки нет вовсе (лёгкий путь — например, прямой заход без
@@ -291,6 +358,8 @@ onMounted(() => {
   // же причине — чернеть и менять адрес можно лишь когда камера доехала.
   function choose(id) {
     if (diving || !plates) return;
+    // Выбор-отметка: камера остаётся на месте, хром не растворяется.
+    if (!props.diveOnPick) { emit('pick', id); return; }
     diving = true;
     emit('dive-start');
     const aim = (!reduced && dive) ? plates.aimFor(id) : null;
@@ -324,6 +393,27 @@ onMounted(() => {
   canvasEl.value.addEventListener('pointermove', onPointerMove);
   canvasEl.value.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointerup', onPointerUp);
+
+  // ── смена шага ──────────────────────────────────────────────────────────
+  // Вид меняет список под ЧЁРНЫМ кадром и потом просит тронуться. Здесь только
+  // пересборка и возврат камеры в начало дороги: когда ехать — решает вид, у
+  // него занавес.
+  watch(() => props.items, (next) => {
+    if (!renderer || !next) return;
+    const cw = el.clientWidth || w, ch = el.clientHeight || h;
+    diving = false;
+    arrived = false;
+    applyHover(null);
+    clearGatePlateTags();     // прошлые острова ушли — их подписи тоже
+    buildPlates(next, cw / ch);
+    rest = restFor(cw / ch);
+    applyZoomRange();
+    if (reduced) { camera.position.copy(rest); camera.lookAt(look); controls.target.copy(look); controls.update(); }
+    else approach.park(rest, look);
+    load?.unsettle();
+  });
+
+  watch(() => props.selected, (ids) => plates?.setSelected(ids || []), { deep: true });
 
   const clock = new THREE.Clock();
   const loop = () => {
@@ -373,6 +463,7 @@ onMounted(() => {
     // во время поездки у неё есть владелец, а после — игрок, который сам её
     // повернул, и отменять его поворот сменой размера окна нельзя.
     const next = restFor(cw / ch);
+    applyZoomRange();
     if (!next.equals(rest)) {
       rest = next;
       if (!arrived && approach && !reduced) approach.park(rest, look);
@@ -382,6 +473,11 @@ onMounted(() => {
   });
   resizeObserver.observe(el);
 });
+
+// Вид зовёт это, когда занавес начал уходить: растемнение и подлёт обязаны идти
+// вместе. На первом входе в пространство эту роль играет экран загрузки, и там
+// момент сцена ловит сама (см. depart ниже по коду).
+defineExpose({ depart: () => departRef && departRef() });
 
 onBeforeUnmount(() => {
   // Порядок: сначала оборвать обе поездки — их отложенные вызовы не должны

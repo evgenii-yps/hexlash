@@ -1,4 +1,13 @@
-// gatePlates.js — ПЕРВЫЕ ОСТРОВА ВОРОТ: выбор режима боя. DUEL и SQUAD.
+// gatePlates.js — ОСТРОВА ВОРОТ. Один предмет на два вопроса.
+//
+// В воротах выбирают дважды: сначала режим боя (DUEL / SQUAD), потом бойцов в
+// состав. Остров при этом один и тот же — плита с ядром, именем под ней и тремя
+// состояниями: обычное, подсвеченное, запертое. Поэтому здесь не две постройки,
+// а одна, которой ДАЮТ СПИСОК: режимы на первом шаге, бойцы на втором.
+//
+// Второй файл был бы копией этого с другим списком внутри — и разошёлся бы с ним
+// на первой же правке подсветки или раскладки. Разное у шагов только содержимое
+// списка, и оно приходит снаружи.
 //
 // ФОРМА ТА ЖЕ, ОТДЕЛКА СВОЯ. Геометрия острова берётся готовой из modePlates
 // (`buildSlab`): язык островов в игре один, и рисовать вторую такую же плиту
@@ -9,9 +18,15 @@
 //
 // ЭМБЛЕМ НЕТ. На островах дома стоят фигуры — гексарх с учениками, разлом с
 // перчатками. Здесь их нет намеренно (решение владельца, ТЗ v7 §5): новую
-// геометрию под первую сборку не лепим. Режим несут подпись и цвет ядра. Если
-// на приёмке окажется, что этого мало, — рисуем эмблемы отдельной работой, уже
-// зная, чего именно не хватило.
+// геометрию под первую сборку не лепим. Что это за остров, несут подпись и цвет
+// ядра. Если на приёмке окажется, что этого мало, — рисуем эмблемы отдельной
+// работой, уже зная, чего именно не хватило.
+//
+// РАСКЛАДКА ПЕРЕНОСОМ, А НЕ СЕТКОЙ. Режимов всегда два, а бойцов сколько купит
+// игрок. Поэтому острова не расставляются по заранее назначенным местам: они
+// укладываются рядами, ряд переносится, неполный ряд встаёт по центру, а камера
+// отъезжает ровно настолько, чтобы вместить получившееся (bounds). Так десять
+// островов не потребуют переписывать раскладку — только отодвинут камеру.
 //
 // ОДНО СВЕЧЕНИЕ. Оба острова светиться не могут никогда: горит только тот, на
 // который наведён курсор, второй в это время притухает. Запертый остров не
@@ -25,7 +40,6 @@
 import * as THREE from 'three';
 import { buildSlab } from './modePlates.js';
 import { makeHexGridTexture } from './arenaTextures.js';
-import { ARENA_MODES } from '@/data/arenaModes.js';
 
 // ───────────────────────────── Настройки ─────────────────────────────
 export const GATE_PLATES = {
@@ -35,13 +49,36 @@ export const GATE_PLATES = {
   halfW: 2.2,
   halfD: 1.7,
   height: 0.42,
-  spreadX: 2.9,        // ±X каждого острова (лёжа) — зазор 2.9−2.2−2.2 ≈ −1.5?
-                       // нет: halfW 2.2 при ±2.9 даёт зазор 1.4, острова стоят врозь
-  // Стоя разносим ЗАМЕТНО сильнее: острова уходят в глубину, и перспектива
-  // съедает расстояние между ними. При ±3.0 они почти соприкасались — пара
-  // читалась одной длинной плитой, а подпись дальнего ложилась на ближний.
-  spreadZ: 4.4,        // ±Z каждого острова (стоя), halfD 1.7 → зазор 1.0
+  // Шаг между центрами островов. Поперёк — ширина плиты плюс воздух; в глубину
+  // — ЗАМЕТНО больше: перспектива съедает расстояние, и при шаге поперёк пара
+  // в глубину читалась одной длинной плитой, а подпись дальнего ложилась на
+  // ближний остров.
+  stepX: 5.8,
+  stepZ: 8.8,
+  // Сколько островов в ряду. Больше — ряд переносится. Лёжа кадр широкий, стоя
+  // узкий, поэтому чисел два.
+  colsLandscape: 3,
+  // Стоя — по одному в ряд, то есть в глубину. Кадр узкий: два острова поперёк
+  // заставили бы камеру отъехать так далеко, что оба стали бы марками. Глубина в
+  // портрете — дешёвая ось, ширина — дорогая.
+  colsPortrait: 1,
   portraitAspect: 1.0, // уже этого соотношения — раскладка «в глубину»
+  // ПРЕДЕЛ ГЛУБИНЫ. Глубина дешёвая, но не бесплатная: перспектива разгоняет
+  // ближние острова по экрану куда быстрее дальних, и третий ряд уезжал под
+  // нижнюю кромку целиком — отъезд камеры это не лечит, потому что отъезд идёт
+  // по лучу и ближнюю кромку поднимает слабо (замерено в портрете 390×844:
+  // подписи рядов легли на 355, 546 и 1007 при высоте окна 844).
+  //
+  // Два — это НЕ новое число: обе позы покоя камеры выверены глазами ровно на
+  // двух островах в глубину, и `baseHalfD` в сцене — тот же габарит. Больше двух
+  // рядов — начинаем второй столбец, и трое встают ровно в тот прямоугольник,
+  // под который позы и мерили.
+  //
+  // Когда островов столько, что предел не удержать даже всеми столбцами (лёжа —
+  // больше шести), побеждают ряды: лучше глубокий кадр, чем острова за краем
+  // экрана. Отъезд камеры там упрётся в свой потолок, и раскладку придётся
+  // пересматривать заново — это разговор про большой ростер, а не про троих.
+  maxRows: 2,
 
   // Отделка. Холоднее и темнее островов дома: ворота — преддверие боя, а не
   // развилка. Обводка матовая, своего света у неё нет.
@@ -51,10 +88,10 @@ export const GATE_PLATES = {
   chamfer: 0.34,       // скос угла — тот же, что у островов дома: форма общая
   hexTile: 4.2,        // мировой размер одной ячейки решётки на крышке
 
-  // Цвет ядра каждого режима. Розовый не берём: он принадлежит интерфейсу и
-  // деньгам, а здесь предметы. Холодный для дуэли, тёплый для команды.
-  duelCore: '#4DD9FF',
-  squadCore: '#FFB21D',
+  // Цвет ядра приходит СО СПИСКОМ: у режима он свой, у бойца — цвет его ядра.
+  // Розовый не берём ни там, ни там: он принадлежит интерфейсу и деньгам, а
+  // здесь предметы.
+  fallbackCore: '#7184B0',
 
   dimLevel: 0.5,       // яркость НЕподсвеченного острова, пока горит другой
   litLerp: 6.5,        // 1/с сглаживания подсветки — без щелчка
@@ -100,21 +137,25 @@ function buildCore(colorHex, topY) {
 
 /**
  * @param {object} opts
+ * @param {Array<{id:string, core?:string, locked?:boolean}>} opts.items
+ *        что стоит на островах: режимы на первом шаге, бойцы на втором.
+ *        `core` — цвет ядра, `locked` — остров виден, но не выбирается.
  * @param {number} [opts.maxAniso]
  * @returns {object} острова + их общий контракт
  */
 export function buildGatePlates(opts = {}) {
   const o = GATE_PLATES;
+  const items = opts.items || [];
   const group = new THREE.Group();
   const hexTex = makeHexGridTexture(opts.maxAniso || 1);
   hexTex.repeat.set(1, 1);
 
-  const make = (mode) => {
+  const make = (item) => {
     const root = new THREE.Group();
     const slab = buildSlab(o.halfW, o.halfD, o.height, hexTex, o);
     root.add(slab.group);
 
-    const core = buildCore(mode.id === 'duel' ? o.duelCore : o.squadCore, slab.topY);
+    const core = buildCore(item.core || o.fallbackCore, slab.topY);
     root.add(core.mesh);
 
     // Одна невидимая коробка на остров — дешёвая цель для луча, и заодно она
@@ -123,45 +164,85 @@ export function buildGatePlates(opts = {}) {
     const pickGeo = new THREE.BoxGeometry(o.halfW * 2, o.height * 2.2, o.halfD * 2);
     const pick = new THREE.Mesh(pickGeo, new THREE.MeshBasicMaterial({ visible: false }));
     pick.position.y = o.height * 0.6;
-    pick.userData.gatePlate = mode.id;
+    pick.userData.gatePlate = item.id;
     root.add(pick);
 
     group.add(root);
     return {
-      id: mode.id,
-      locked: mode.locked,
+      id: item.id,
+      locked: !!item.locked,
       root, slab, core, pick, pickGeo,
       lit: 0,        // 0…1 — собственная подсветка
       level: 1,      // 1…dimLevel — насколько его топит свет соседа
+      picked: false, // выбран в состав — горит и без курсора
       baseX: 0, baseZ: 0,   // поза без дрожания (ставит layout)
       shakeUntil: 0,
     };
   };
 
   const plates = {};
-  for (const m of ARENA_MODES) plates[m.id] = make(m);
+  for (const it of items) plates[it.id] = make(it);
   const list = Object.values(plates);
   const pickables = list.map((p) => p.pick);
 
   let hovered = null;
   let portrait = false;
+  // Габарит разложенных островов — по нему сцена считает, откуда смотреть.
+  const extent = { halfW: o.halfW, halfD: o.halfD };
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-  /** Разложить пару под текущее соотношение кадра. */
+  /**
+   * Разложить острова рядами под текущее соотношение кадра.
+   *
+   * Ряд переносится, когда в нём кончились места; НЕПОЛНЫЙ РЯД встаёт по центру.
+   * Последнее — не украшение: тройка в ряду по двое легла бы как 2+1 с дырой
+   * справа, и это читается как «одного острова не хватает», хотя все на месте.
+   * Та же беда была на плоском экране состава, и решается тем же способом.
+   */
   function layout(aspect) {
     portrait = aspect < o.portraitAspect;
+    // Столбцов — сколько разрешает ориентация, но не меньше, чем нужно, чтобы
+    // уложиться в предел глубины (см. maxRows в настройках).
+    const maxCols = Math.max(1, Math.min(list.length, portrait ? o.colsPortrait : o.colsLandscape));
+    // Предел глубины держим только ЛЁЖА. Стоя кадр узкий, и второй столбец там
+    // стоит дороже третьего ряда: чтобы вместить два острова поперёк, камере
+    // пришлось бы отъехать за свой же потолок зума (замерено — см. maxRows).
+    const needCols = portrait ? 1 : Math.ceil(list.length / Math.max(1, o.maxRows));
+    const cols = Math.max(1, Math.min(list.length, Math.max(maxCols, needCols)));
+    const rows = Math.ceil(list.length / cols);
+
     list.forEach((p, i) => {
-      const sign = i === 0 ? -1 : 1;
-      p.baseX = portrait ? 0 : sign * o.spreadX;
-      p.baseZ = portrait ? sign * o.spreadZ : 0;
+      const row = Math.floor(i / cols);
+      const inRow = Math.min(cols, list.length - row * cols);   // сколько в ЭТОМ ряду
+      const col = i - row * cols;
+      p.baseX = (col - (inRow - 1) / 2) * o.stepX;
+      p.baseZ = (row - (rows - 1) / 2) * o.stepZ;
       p.root.position.set(p.baseX, 0, p.baseZ);
     });
+
+    extent.halfW = ((cols - 1) * o.stepX) / 2 + o.halfW;
+    extent.halfD = ((rows - 1) * o.stepZ) / 2 + o.halfD;
+  }
+
+  /** Габарит разложенного — сцене, чтобы отодвинуть камеру ровно настолько. */
+  function bounds() {
+    return { halfW: extent.halfW, halfD: extent.halfD, height: o.height };
   }
 
   /** Подсветить остров. Запертый не подсвечивается — у него это и есть признак. */
   function setHover(id) {
     const p = id ? plates[id] : null;
     hovered = (p && !p.locked) ? id : null;
+  }
+
+  /**
+   * Отметить выбранные острова. Выбор держится сам, без курсора: игрок должен
+   * видеть свой состав, убрав руку с мыши. Невыбранные притухают — так же, как
+   * на плоском экране состава, откуда этот шаг и переехал.
+   */
+  function setSelected(ids) {
+    const set = new Set(ids || []);
+    for (const p of list) p.picked = set.has(p.id);
   }
 
   /** Отказать: коротко дрогнуть островом. Возвращает false, если острова нет. */
@@ -214,8 +295,14 @@ export function buildGatePlates(opts = {}) {
     const tNow = now();
 
     for (const p of list) {
-      const wantLit = p.locked ? o.lockedLit : (hovered === p.id ? 1 : 0);
-      const wantLevel = (hovered && hovered !== p.id) ? o.dimLevel : 1;
+      // Горит выбранный ИЛИ тот, на который наведён курсор. Выбор сильнее: убрав
+      // руку, игрок должен видеть состав, а не пустую комнату.
+      const wantLit = p.locked ? o.lockedLit : ((p.picked || hovered === p.id) ? 1 : 0);
+      // Притухают соседи того, что сейчас горит: и подсвеченного курсором, и
+      // выбранного. Если выбран хоть кто-то — притухают все невыбранные.
+      const anyPicked = list.some((x) => x.picked);
+      const standsOut = p.picked || hovered === p.id;
+      const wantLevel = ((hovered || anyPicked) && !standsOut) ? o.dimLevel : 1;
       p.lit += (wantLit - p.lit) * k;
       p.level += (wantLevel - p.level) * k;
 
@@ -230,8 +317,7 @@ export function buildGatePlates(opts = {}) {
         const left = (p.shakeUntil - tNow) / o.shakeMs;      // 1 → 0
         const a = o.shakeAmp * left;
         const ph = Math.sin((tNow / 1000) * Math.PI * 2 * o.shakeHz);
-        p.root.position.x = p.baseX + (portrait ? a * ph : a * ph);
-        p.root.position.z = p.baseZ + (portrait ? 0 : 0);
+        p.root.position.x = p.baseX + a * ph;
       } else if (p.root.position.x !== p.baseX || p.root.position.z !== p.baseZ) {
         p.root.position.set(p.baseX, 0, p.baseZ);
       }
@@ -256,7 +342,7 @@ export function buildGatePlates(opts = {}) {
 
   return {
     group, plates, list, pickables,
-    layout, setHover, refuse, aimFor, captionScreen, update, shaking, dispose,
+    layout, bounds, setHover, setSelected, refuse, aimFor, captionScreen, update, shaking, dispose,
     get hovered() { return hovered; },
   };
 }

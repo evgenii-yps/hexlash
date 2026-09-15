@@ -1,14 +1,17 @@
-// gatePlateTags.js — мост между островами режима в воротах (ArenaGateScene) и их
+// gatePlateTags.js — мост между островами в воротах (ArenaGateScene) и их
 // подписями (ArenaGateView). Та же форма, что у modePlateTags.js: одна
 // module-scoped reactive запись, в которую сцена ПИШЕТ каждый кадр, а вид ЧИТАЕТ.
 // Так подпись остаётся чётким DOM-текстом, приклеенным к настоящему острову в 3D,
 // и на это не тратится событие Vue на каждый кадр.
 //
-// ПОЧЕМУ СВОЙ ФАЙЛ, А НЕ ОБЩИЙ С ДОМОМ. modePlateTags знает ровно два ключа —
-// `pve` и `pvp`, — и знает их поимённо, а не списком. Добавить в него ещё два
-// значит завести файл, который обслуживает две разные двери и молча переживает
-// обе; разойдутся они на первой же правке. В проекте это уже принятое решение:
-// один предмет — один модуль (так живут мешок зала и мешок тренировки).
+// КЛЮЧИ ЗДЕСЬ НЕ ПЕРЕЧИСЛЕНЫ, И ЭТО ГЛАВНОЕ ОТЛИЧИЕ ОТ ДОМА. modePlateTags знает
+// ровно два ключа поимённо — `pve` и `pvp`, — потому что дверей в доме ровно две
+// и других не будет. В воротах острова МЕНЯЮТСЯ: сначала режимы, потом бойцы, а
+// бойцов столько, сколько их у игрока, и зовут их случайными идентификаторами.
+// Первая сборка этого файла была скопирована с домашней, с двумя зашитыми
+// ключами, — и молча выбрасывала все подписи бойцов: `tags[id]` для чужого ключа
+// возвращал ничего, и запись просто не происходила. Отсюда `items` как обычный
+// словарь, который заполняется на ходу.
 //
 // x/y — экранные точки в CSS-пикселях канваса, куда встаёт ВЕРХ подписи.
 // `visible` — false, пока остров за камерой или сцена ещё не показана.
@@ -17,20 +20,21 @@
 import { reactive } from 'vue';
 
 export const gatePlateTags = reactive({
-  duel:  { x: 0, y: 0, visible: false },
-  squad: { x: 0, y: 0, visible: false },
-  hovered: null,  // 'duel' | 'squad' | null
+  /** @type {Record<string, {x:number, y:number, visible:boolean}>} */
+  items: {},
+  hovered: null,
   // Остров, который сейчас дрожит после отказа. Вид смотрит сюда, чтобы
   // дрогнуть подписью заодно с островом: дрожит предмет целиком, а не его часть.
-  refused: null,  // 'duel' | 'squad' | null
+  refused: null,
 });
 
 export function setGatePlateTag(id, x, y, visible) {
-  const tag = gatePlateTags[id];
-  if (!tag) return;
-  tag.x = x;
-  tag.y = y;
-  tag.visible = visible;
+  if (!id) return;
+  const tag = gatePlateTags.items[id];
+  if (tag) { tag.x = x; tag.y = y; tag.visible = visible; return; }
+  // Новый остров — заводим запись. Присваивание в reactive-объект видно виду:
+  // Vue 3 следит за добавлением ключей, и отдельного «зарегистрируй» не нужно.
+  gatePlateTags.items[id] = { x, y, visible };
 }
 
 export function setGatePlateHover(id) {
@@ -41,10 +45,13 @@ export function setGatePlateRefused(id) {
   gatePlateTags.refused = id || null;
 }
 
-/** Скрыть обе подписи (ушли со сцены), не трогая того, что ведёт сцена. */
+/**
+ * Забыть острова, которых больше нет. Зовётся при смене шага: старые ключи
+ * иначе копились бы за сеанс, а вид, читая их по имени, не заметил бы разницы —
+ * то есть беда была бы тихой.
+ */
 export function clearGatePlateTags() {
-  gatePlateTags.duel.visible = false;
-  gatePlateTags.squad.visible = false;
+  gatePlateTags.items = {};
   gatePlateTags.hovered = null;
   gatePlateTags.refused = null;
 }
