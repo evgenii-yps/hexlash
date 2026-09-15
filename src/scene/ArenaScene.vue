@@ -463,6 +463,67 @@ onMounted(() => {
     x: arena.refs.W / 2 - NAV_MARGIN,
     z: arena.refs.totalDepth / 2 - NAV_MARGIN,
   };
+  // --- СВОИ ОТЛИЧИМЫ ОТ ЧУЖИХ. Тонкое белое кольцо на плите под бойцами самого
+  //     игрока. Не под всей его стороной: союзные боты в RAID не метятся — метка
+  //     отвечает на вопрос «где мои», а не «где моя команда».
+  //
+  //     Почему белое и не светится. Цвет бойца принадлежит ядру, розовый —
+  //     действию; кольцо не имеет права забрать ни то, ни другое. И свечение на
+  //     экране одно — разлом, — поэтому кольцо рисуется плоским, обычным
+  //     смешиванием: это метка на полу, а не второй источник света.
+  const RING_Y = 0.012;  // над плитой, чтобы не тонуть в ней
+  let ringGeo = null, ringMat = null;
+  const makeOwnRing = () => {
+    if (!ringGeo) {
+      ringGeo = new THREE.RingGeometry(0.42, 0.47, 40);
+      ringGeo.rotateX(-Math.PI / 2);
+      ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.34, depthWrite: false });
+    }
+    const m = new THREE.Mesh(ringGeo, ringMat);   // геометрия и материал общие на всех
+    m.renderOrder = 1;
+    scene.add(m);
+    return m;
+  };
+  const dropRing = (u) => { if (u && u.ring) { scene.remove(u.ring); u.ring = null; } };
+
+  // --- КАДР ПО ЖИВЫМ. Камера держит в кадре всех, кто ещё дерётся, и сжимается
+  //     по мере выбывания. Углы не трогаем — их крутит игрок; двигаем только
+  //     точку, вокруг которой он крутит, и удаление от неё.
+  //
+  //     В бою ОДИН НА ОДИН не включается вовсе: кадр там выставлен и принят
+  //     глазами, и менять его — значит менять бой, который должен остаться
+  //     прежним. Признак ставится на весь бой, а не по числу живых, иначе на
+  //     последней паре кадр дёрнулся бы обратно.
+  let multiBout = false;
+  // Запас кадра. Считать один разброс по плите мало: у бойца есть рост, а над
+  // головой висит плашка здоровья, и по горизонтали они в габарит не входят.
+  // HEADROOM добавляется к радиусу, иначе кадр садится бойцам на макушки.
+  const FRAME_MARGIN = 1.25;
+  const FRAME_HEADROOM = 1.8;
+  const _cen = new THREE.Vector3();
+  const frameLiving = (list) => {
+    if (!multiBout || !list.length) return;
+    _cen.set(0, 0, 0);
+    for (const u of list) _cen.add(u.f.group.position);
+    _cen.divideScalar(list.length);
+    let r = 0.9;
+    for (const u of list) r = Math.max(r, _cen.distanceTo(u.f.group.position));
+    r += FRAME_HEADROOM;
+    const half = THREE.MathUtils.degToRad(camera.fov) / 2;
+    const need = Math.max(r / Math.tan(half), r / (Math.tan(half) * camera.aspect)) * FRAME_MARGIN;
+    const want = THREE.MathUtils.clamp(need, controls.minDistance, controls.maxDistance);
+
+    // Точка вращения плавно едет к середине живых.
+    controls.target.lerp(new THREE.Vector3(_cen.x, 0.2, _cen.z), 0.04);
+    // Удаление подгоняем вдоль ТЕКУЩЕГО направления — угол остаётся игроков.
+    const dir = camera.position.clone().sub(controls.target);
+    const cur = dir.length();
+    if (cur > 1e-3) {
+      dir.multiplyScalar(THREE.MathUtils.lerp(cur, want, 0.04) / cur);
+      camera.position.copy(controls.target).add(dir);
+    }
+  };
+
   // Развести пересёкшиеся тела. Симметрично: каждого сдвигаем на половину
   // нехватки, чтобы никто не имел преимущества в пересчёте.
   const GAP = COMBAT_BALANCE.field.bodyGap;
@@ -544,6 +605,7 @@ onMounted(() => {
       onEliminated: () => {
         scene.remove(unit.f.group);
         unit.f.dispose();
+        dropRing(unit);
         if (sigCycle) {                       // служебный стенд A/B — перезапуск круга
           field.kill(unit);
           refreshDevAliases();
@@ -561,6 +623,7 @@ onMounted(() => {
         refreshDevAliases();
       },
     });
+    if (spec.sideId === 'player' && !spec.isBot) unit.ring = makeOwnRing(); // свой — отмечаем кольцом
     unit.f.group.position.set(spec.pos.x, arena.refs.topY, spec.pos.z);
     unit.f.setReducedMotion(reducedMotion);
     unit.f.setAI(spec.sideId === 'player' ? aiPlayer : aiOpponent); // keep AI on across respawn
@@ -634,6 +697,7 @@ onMounted(() => {
   // Убрать с плиты всех — перед новым боем.
   const clearField = () => {
     for (const u of field.units()) {
+      dropRing(u);
       if (!u.f) continue;
       scene.remove(u.f.group);
       u.f.dispose();
@@ -644,7 +708,9 @@ onMounted(() => {
     playerUnit = null;
   };
 
-  for (const spec of buildRoster()) spawnUnit(spec);
+  const startRoster = buildRoster();
+  multiBout = startRoster.length > 2;
+  for (const spec of startRoster) spawnUnit(spec);
   refreshDevAliases();
   load.stage('fighters');
 
@@ -658,7 +724,9 @@ onMounted(() => {
     fightActive = true;
     fightStartT = lastFrameT; // arm the stalemate safeguard (gate)
     lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
-    for (const spec of buildRoster()) spawnUnit(spec);
+    const roster = buildRoster();
+    multiBout = roster.length > 2;
+    for (const spec of roster) spawnUnit(spec);
     refreshDevAliases();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
@@ -677,7 +745,9 @@ onMounted(() => {
     lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
     aiPlayer = true;
     aiOpponent = true;
-    for (const spec of buildRoster()) spawnUnit(spec);
+    const roster = buildRoster();
+    multiBout = roster.length > 2;
+    for (const spec of roster) spawnUnit(spec);
     refreshDevAliases();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
@@ -723,6 +793,13 @@ onMounted(() => {
     // При двух телах он НЕ ВЫПОЛНЯЕТСЯ ВОВСЕ: пару и так держит врозь сам боец,
     // и лишний проход означал бы, что бой один на один стал считаться иначе.
     if (onPlate.length > 2) separateBodies(onPlate);
+
+    // Кольцо едет за своим бойцом; кадр подбирается под живых.
+    for (const u of onPlate) {
+      if (!u.ring) continue;
+      u.ring.position.set(u.f.group.position.x, arena.refs.topY + RING_Y, u.f.group.position.z);
+    }
+    frameLiving(onPlate);
 
     // Dev readout (throttled ~5/s) — live stamina + charge of both fighters.
     if (panelVisible.value && t - lastStaReadout > 0.2) {
