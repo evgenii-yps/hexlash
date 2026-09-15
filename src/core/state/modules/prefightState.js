@@ -1,84 +1,71 @@
-// Pre-fight state — the core the player picked on /play plus a working face-tree
-// (deep copy of CRYSTALS). Read by the arena when it builds the fighter.
+// Pre-fight state — WHAT GOES INTO THE FIGHT. The arena reads this and nothing
+// else when it builds the player's fighter.
 //
-// The screen that EDITED that tree (/play/upgrade) was retired on 25.08.2026 —
-// upgrading moved into the FORGE hall, where each fighter has their own tree and
-// their own pool (see rosterState). Everything here stays: a player who already
-// lit facets keeps them on the arena fighter, and the writers below (initUpgradeTree
-// / setFaceState) are left in place on purpose — they are exactly what the fight
-// path will need when it gets its own upgrade step back. Right now nothing calls
-// them, so a fresh player simply fights the untouched tree (ArenaScene falls back
-// to CRYSTALS[core]).
+// TWO WAYS IN, one shape out:
+//   • the FORGE hall (/play/pve) sends a ROSTER FIGHTER. `fighterId` POINTS at
+//     him; his core and his lit facets are read THROUGH the roster, so the record
+//     there stays the one source of truth. Upgrade him and the next fight uses
+//     the new grades, with nothing to re-sync.
+//   • core select (/play) picks a bare core with no fighter behind it.
+//     `selectedCoreId` carries alone and the fight runs on that core's own
+//     untouched facets.
 //
-// PERSISTED (guest level, 24.08.2026). It used to live in tab memory only, so a
-// refresh on /play/arena dropped the pick and the route guard
-// bounced the player back to core select — losing every lit facet. Now the pick
-// and the lit facets are written to per-tab storage on every change and restored
-// synchronously below, at module load: that is BEFORE the router's requireCore
-// guard runs, so a refresh mid-fight no longer throws the player out.
+// WHY A POINTER AND NOT A COPY (15.09.2026). Until this pass the fight was handed
+// a core id plus a `lit` cell that NOTHING ever wrote — the screen that used to
+// fill it (/play/upgrade) was retired on 25.08.2026 — so the arena always fell
+// back to the CRYSTALS defaults, where not one facet is lit. Every point the
+// player spent in the FORGE hall was invisible in the fight. A copy taken at
+// FIGHT-time would have fixed that and then drifted the first time the fighter
+// was re-upgraded. A pointer cannot drift, and it cannot become a second place
+// where facets live.
 //
-// What is saved is the SMALLEST honest thing — the core id and the ids of the
-// lit facets, not the whole tree (see src/services/playerProgress.js). The tree
-// is rebuilt from CRYSTALS on restore, so changing facet content in
-// upgradeData.js can never resurrect a stale copy of it.
-import { CORES, CRYSTALS, RESOURCE } from '@/data/upgradeData.js';
+// `selectedCoreId` IS STILL WRITTEN when a fighter is sent, even though the
+// getter below resolves the core from the roster. The arena's route guard reads
+// `store.state.prefight.selectedCoreId` DIRECTLY (see requireCore in the router):
+// it deliberately does not depend on getters, on module evaluation order, or on
+// the roster having been restored. Leaving it empty would bounce the player
+// straight back out of the arena on every trip in from the hall.
+//
+// PERSISTED (guest level, 24.08.2026). Written to per-tab storage on every change
+// and restored synchronously at module load — that is BEFORE the route guard runs,
+// so a refresh mid-fight no longer throws the player out. Only IDS are stored
+// (see src/services/playerProgress.js); a tree is never written here.
+import { CORES } from '@/data/upgradeData.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
 
 const SECTION = 'prefight';
 
-// --- save shape: { core, lit: { crystalId: [faceId, ...] } } -----------------
+// --- save shape: { core, fighter? } ------------------------------------------
+// `fighter` is one id and only appears when a roster fighter was sent. The `lit`
+// cell that used to sit here was removed on 15.09.2026: it was always empty (see
+// the header) and a permanently-empty store of facets is worse than none — the
+// next reader takes it for the real one.
 function snapshotOf(s) {
     if (!s.selectedCoreId) return null;
-    const lit = {};
-    (s.upgradeTree || []).forEach((cr) => {
-        const ids = cr.faces.filter((f) => f.state === 'lit').map((f) => f.id);
-        if (ids.length) lit[cr.id] = ids;
-    });
-    return { core: s.selectedCoreId, lit };
+    const out = { core: s.selectedCoreId };
+    if (s.fighterId) out.fighter = s.fighterId;
+    return out;
 }
 
 function persist(s) {
     writeSection(SECTION, snapshotOf(s));
 }
 
-// Rebuild the working tree from the CURRENT data + the saved lit ids. Anything
-// that no longer exists (renamed branch, removed facet) is simply ignored, and
-// the pool caps are re-applied — a save can never over-spend the resource.
-function rebuildTree(coreId, lit) {
-    const source = CRYSTALS[coreId];
-    if (!source || !lit || typeof lit !== 'object') return null;
-
-    const tree = JSON.parse(JSON.stringify(source));
-    let spent = 0;
-    tree.forEach((cr) => {
-        const ids = Array.isArray(lit[cr.id]) ? lit[cr.id] : [];
-        cr.faces.forEach((f) => {
-            if (spent >= RESOURCE) return;                              // global pool cap
-            if (litCount(cr) >= cr.limit) return;                       // per-crystal cap
-            if (f.state !== 'open') return;                             // locked stays locked
-            if (!ids.includes(f.id)) return;
-            f.state = 'lit';
-            spent += 1;
-        });
-    });
-    return spent ? tree : null; // nothing lit → let the screen build a fresh tree
-}
-
-function litCount(cr) {
-    return cr.faces.filter((f) => f.state === 'lit').length;
-}
-
 // --- restore, synchronously, at module load ---------------------------------
 function restore() {
     const saved = readSection(SECTION);
-    if (!saved) return { selectedCoreId: null, upgradeTree: null };
+    if (!saved) return { selectedCoreId: null, fighterId: null };
 
     const coreId = typeof saved.core === 'string' && CORES.some((c) => c.id === saved.core)
         ? saved.core
         : null;
-    if (!coreId) return { selectedCoreId: null, upgradeTree: null }; // unknown core → start clean
+    if (!coreId) return { selectedCoreId: null, fighterId: null }; // unknown core → start clean
 
-    return { selectedCoreId: coreId, upgradeTree: rebuildTree(coreId, saved.lit) };
+    // The id is taken at face value here; it is checked against the live roster
+    // at READ time (sentFighter) instead. Checking it now would mean depending on
+    // whether the roster module happened to be evaluated first.
+    const fighterId = typeof saved.fighter === 'string' ? saved.fighter : null;
+    return { selectedCoreId: coreId, fighterId };
 }
 
 const restored = restore();
@@ -86,71 +73,106 @@ const restored = restore();
 // Re-read the save on demand. The module-load restore above already covers the
 // normal boot, but ANY consumer that must not depend on when this module
 // happened to be evaluated (the route guard, above all) can call this and be
-// certain it is looking at the truth. Cheap: the save layer keeps the parsed
-// snapshot in memory, so this is a couple of property reads.
+// certain it is looking at the truth. Cheap: synchronous storage, ~60 bytes.
 export function restoreIfEmpty(s) {
     if (s.selectedCoreId) return;
     const r = restore();
     s.selectedCoreId = r.selectedCoreId;
-    s.upgradeTree = r.upgradeTree;
+    s.fighterId = r.fighterId;
 }
 
 const state = {
     selectedCoreId: restored.selectedCoreId,
-    // Working copy of the active core's crystals/faces ([{ id, name, limit,
-    // faces:[{ id, name, state }] }]). Built lazily on the upgrade screen; reset
-    // whenever a new core is picked so each pick starts fresh.
-    upgradeTree: restored.upgradeTree,
+    // The roster fighter this fight was handed, as an id. Null on the core-select
+    // path (no fighter behind the pick).
+    fighterId: restored.fighterId,
+    // SHOWCASE (?showcase=1) — the live arena embedded in the investor deck page.
+    // It is a DIFFERENT document in an iframe, but the same origin and the same
+    // tab, so it restores this tab's save: without this flag a deck opened in a
+    // tab that had already played would quietly fight with that player's facets.
+    // The deck must always show the same default bout. Set by the arena's route
+    // guard, never saved (see snapshotOf).
+    showcase: false,
 };
 
+// The fighter this fight was handed, resolved through the roster. Null when no
+// fighter was sent, when the stored id no longer matches anybody (dismissed
+// since), or in showcase mode.
+function sentFighter(s, rootState) {
+    if (s.showcase || !s.fighterId) return null;
+    const list = rootState && rootState.roster && rootState.roster.fighters;
+    if (!Array.isArray(list)) return null;
+    return list.find((f) => f.id === s.fighterId) || null;
+}
+
 const getters = {
-    selectedCoreId: (s) => s.selectedCoreId,
-    upgradeTree: (s) => s.upgradeTree,
+    // The core the fight runs on: the sent fighter's own, else the bare pick.
+    selectedCoreId: (s, g, rootState) => {
+        const f = sentFighter(s, rootState);
+        return f ? f.core : s.selectedCoreId;
+    },
+    // The sent fighter's working tree — the lit facets the arena resolves his
+    // behaviour from. Null when nobody was sent, and the arena then falls back to
+    // the core's untouched facets (which is the core-select path).
+    upgradeTree: (s, g, rootState) => {
+        const f = sentFighter(s, rootState);
+        return f ? f.upgrade || null : null;
+    },
+    // Who is fighting — identity, for anything that names him.
+    fighter: (s, g, rootState) => sentFighter(s, rootState),
+    fighterId: (s, g, rootState) => {
+        const f = sentFighter(s, rootState);
+        return f ? f.id : null;
+    },
 };
 
 const mutations = {
+    // A bare core pick has no fighter behind it, so it drops the pointer —
+    // otherwise the pick would be silently overruled by the fighter's own core.
     SET_CORE(s, id) {
         s.selectedCoreId = id;
-        s.upgradeTree = null; // a fresh pick starts a fresh tree
+        s.fighterId = null;
         persist(s);
     },
     CLEAR_CORE(s) {
         s.selectedCoreId = null;
-        s.upgradeTree = null;
+        s.fighterId = null;
         persist(s);
     },
-    SET_UPGRADE_TREE(s, tree) {
-        s.upgradeTree = tree;
+    // Send one roster fighter into the fight. The core is written alongside the
+    // pointer in the SAME write, because the route guard reads it from state.
+    SEND_FIGHTER(s, { id, core }) {
+        s.fighterId = id;
+        s.selectedCoreId = core;
         persist(s);
     },
     // Used by the route guard before it decides whether to let the player in.
     RESTORE_IF_EMPTY(s) {
         restoreIfEmpty(s);
     },
-    SET_FACE_STATE(s, {crystalId, faceId, faceState}) {
-        if (!s.upgradeTree) return;
-        const cr = s.upgradeTree.find((c) => c.id === crystalId);
-        const f = cr && cr.faces.find((x) => x.id === faceId);
-        if (f) f.state = faceState;
-        persist(s);
+    SET_SHOWCASE(s, on) {
+        s.showcase = !!on;
     },
 };
 
 const actions = {
-    selectCore({commit}, id) {
+    selectCore({ commit }, id) {
         commit('SET_CORE', id);
     },
-    clearCore({commit}) {
+    clearCore({ commit }) {
         commit('CLEAR_CORE');
     },
-    // Build the working tree from the given crystals once (deep copy). No-op if
-    // already present — so a restored tree, and a trip to the arena and back,
-    // both keep their lit faces.
-    initUpgradeTree({state: s, commit}, crystals) {
-        if (!s.upgradeTree) commit('SET_UPGRADE_TREE', JSON.parse(JSON.stringify(crystals)));
-    },
-    setFaceState({commit}, payload) {
-        commit('SET_FACE_STATE', payload);
+    /**
+     * Hand this roster fighter to the fight. Refused (no-op) when the id matches
+     * nobody — the arena must never be entered pointing at a ghost.
+     * Returns true when the fight was actually handed a fighter.
+     */
+    sendFighter({ commit, rootState }, id) {
+        const list = (rootState.roster && rootState.roster.fighters) || [];
+        const f = list.find((x) => x.id === id);
+        if (!f) return false;
+        commit('SEND_FIGHTER', { id: f.id, core: f.core });
+        return true;
     },
 };
 

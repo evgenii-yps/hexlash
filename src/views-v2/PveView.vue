@@ -6,13 +6,15 @@
      tree pinned to the other edge — and it adds the thing the room was missing
      entirely: you can leave for the arena from here.
 
-     The scene owns the 3D (camera framings, hover light, who stands where); this
-     view owns the panel and the decision of who is selected — including the case
-     where that fighter is deleted from another tab while he is open.
+     The scene owns the 3D (camera framings, hover light, who stands where); the
+     roster owns WHO IS SELECTED (it is saved — see rosterState); this view owns
+     the panel, and the cases in between: applying a selection on entry, and the
+     open fighter being dismissed from somewhere else.
 
-     LEAVING FOR THE ARENA. The arena's own guard asks `prefight/selectedCoreId`,
-     not the roster, so FIGHT hands it the picked fighter's core before it goes.
-     Until that wiring is a real "send THIS fighter", the core is what carries.
+     LEAVING FOR THE ARENA. FIGHT hands the arena the SELECTED FIGHTER
+     (prefight/sendFighter) — his core AND his lit facets, read through the roster
+     record. Until 15.09.2026 only the core went, so every point spent in this
+     hall was invisible in the fight.
 
      Chrome: the shared .hs-strip (home.css) without the brand block — BACK left,
      SHOP + cabinet right. Its tokens are mirrored on the root so the strip is
@@ -100,8 +102,13 @@ const panelRef = ref(null);
 
 // ── the roster, and who is being worked on ────────────────────────────────
 const fighters = computed(() => store.getters['roster/fighters']);
-const pickedId = ref(null);
-const picked = computed(() => fighters.value.find((f) => f.id === pickedId.value) || null);
+// WHO IS SELECTED is saved, not component state (15.09.2026). It used to be a
+// plain ref here, so a refresh — or a trip to the arena and back — dropped the
+// choice and the hall silently re-picked the oldest fighter. It now lives in the
+// roster's own section of the per-tab save (rosterState), which also means the
+// hall and anything else reading the selection can never disagree.
+const pickedId = computed(() => store.getters['roster/pickedId']);
+const picked = computed(() => store.getters['roster/picked']);
 // No stand-in core when nobody is picked: getCore falls back to one of the four,
 // and a stand-in colour is a second declaration of a colour that is declared
 // once, in tokens.css. With nobody picked the hall simply carries no tint.
@@ -127,7 +134,7 @@ function onHover(payload) { tag.value = payload; }
 // Picking now comes from two places — a tap on a body in the hall, and a tap on
 // a row in the panel's list. Both land here, so the two never disagree.
 function onPick(id) {
-  pickedId.value = id;
+  store.dispatch('roster/pick', id);
   tag.value = null;
   buildTreeFor(id);
   sceneRef.value?.select(id);
@@ -156,7 +163,7 @@ function onRetry() {
   try { buildTreeFor(pickedId.value); } finally { retrying.value = false; }
 }
 function exitWork() {
-  pickedId.value = null;
+  store.dispatch('roster/pick', null);
   tag.value = null;
   sceneRef.value?.exitWork();
 }
@@ -182,13 +189,18 @@ const retrying = ref(false);
 
 // ── leaving for the arena ─────────────────────────────────────────────────
 // The arena guard (requireCore in the router) asks `prefight/selectedCoreId`.
-// Without a picked fighter there is nothing to hand it, and that — not a grey
+// Without a selected fighter there is nothing to hand it, and that — not a grey
 // rectangle — is what the button's reason line says.
 const canFight = computed(() => status.value === 'ready' && !!picked.value);
+// sendFighter stores a POINTER to this fighter, so the arena reads his core and
+// his lit facets straight off the roster record — no copy to drift, and the
+// grades he was just given are the grades he fights with. It also writes the
+// core into prefight state in the same step, which is what the route guard
+// reads; the navigation only happens if the fighter was actually accepted.
 function onFight() {
   if (!canFight.value) return;
-  store.dispatch('prefight/selectCore', picked.value.core);
-  router.push('/play/arena');
+  Promise.resolve(store.dispatch('prefight/sendFighter', picked.value.id))
+    .then((sent) => { if (sent) router.push('/play/arena'); });
 }
 
 // The roster is empty and the player is standing in an empty hall: give them the
@@ -198,10 +210,15 @@ function onNewFighter() {
   Promise.resolve(f).then((made) => { if (made && made.id) onPick(made.id); });
 }
 
-// Deleted from somewhere else (the DEV console in another tab) while he is
-// open → fall back to the overview instead of showing a card for nobody.
-watch(fighters, (list) => {
-  if (pickedId.value && !list.some((f) => f.id === pickedId.value)) exitWork();
+// Dismissed from somewhere else (the shop's roster list) while he is open →
+// fall back to the overview instead of showing a card for nobody.
+//
+// It watches the RESOLVED fighter, not the id: the roster clears the selection in
+// the same write that removes him (rosterState REMOVE), so by the time this runs
+// the id is already null and comparing ids would never fire. What the store
+// cannot do is put the hall's 3D back into the overview — that is this job.
+watch(picked, (now, was) => {
+  if (was && !now) { tag.value = null; sceneRef.value?.exitWork(); }
 });
 
 // Esc walks back: first up the tree, then out of the work state.
@@ -211,28 +228,28 @@ function onKeydown(e) {
   if (panelRef.value?.stepBack()) return;
   exitWork();
 }
-// ── the hall opens with somebody already picked ───────────────────────────
+// ── the hall opens with somebody already selected ─────────────────────────
 // Walking in used to give a dark room with nothing lit: both of the screen's
 // glows belong to a selection, and there was no selection, so the first thing
-// the player saw said nothing about where to press. The first fighter of the
-// roster — first in the same order the panel lists them — is picked for him.
+// the player saw said nothing about where to press.
 //
-// Only when there is NO selection. A choice already made in this visit wins; so
-// would one that survived a reload, if anything survived a reload (see below).
-// This is a selection and nothing else: no resource is spent, no facet is lit,
-// nothing is written that picking by hand would not write.
-//
-// ⚠️ Today it always fires. `pickedId` is plain component state and this route
-// has no keep-alive, so leaving the hall and coming back — or reloading — starts
-// it at null every time. Nothing about the selection is saved, and this work is
-// explicitly not allowed to start saving it.
-function autoPick() {
-  if (pickedId.value) return;              // a choice already exists — leave it alone
-  const first = fighters.value[0];
-  if (!first) return;                      // empty roster: the panel says so, the hall stays empty
-  onPick(first.id);
+// TWO cases, and both end with a selection that is fully APPLIED — his tree
+// built and the hall framed on him:
+//   • a saved choice (refresh, or back from the arena) → re-apply THAT one. The
+//     save carries the id only; the tree and the camera live in this visit and
+//     have to be re-established, which is why this re-runs onPick instead of
+//     returning early. Writing the same id back is a no-op for the save.
+//   • nothing selected (first visit, or the player deselected on purpose, or the
+//     saved fighter has since been dismissed) → the oldest fighter, first in the
+//     same order the panel lists them.
+// Either way this is a selection and nothing else: no resource is spent, no
+// facet is lit, nothing is written that picking by hand would not write.
+function openWithSelection() {
+  const id = pickedId.value || fighters.value[0]?.id;
+  if (!id) return;                         // empty roster: the panel says so, the hall stays empty
+  onPick(id);
 }
-onMounted(autoPick);
+onMounted(openWithSelection);
 
 onMounted(() => document.addEventListener('keydown', onKeydown));
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
