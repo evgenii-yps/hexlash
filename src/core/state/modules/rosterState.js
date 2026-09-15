@@ -37,6 +37,20 @@ export const ROSTER_MAX = 10;
 const SECTION = 'roster';
 const CORE_IDS = CORES.map((c) => c.id);
 
+// ───────────────────── Стартовая тройка ─────────────────────
+// Новому гостю выдаётся три бойца РАЗНЫХ ядер. До этого ростер был пуст, и зал
+// FORGE встречал новичка пустотой — сравнивать нечего, качать некого, идти в бой
+// не с кем.
+//
+// Почему три, а не один и не все четыре (решение владельца). Одного бойца не с
+// чем сравнить: игрок не поймёт, что ядро вообще на что-то влияет. Четыре — это
+// весь набор сразу, и в магазине становится нечего покупать. Три разных ядра
+// дают контраст характеров — таран, стена, засада — и оставляют RAIDER поводом
+// вернуться в магазин.
+//
+// Порядок здесь — порядок в зале: ниже он закрепляется временем создания.
+const STARTER_CORES = ['natisk', 'skala', 'zasada']; // ONSLAUGHT · BULWARK · AMBUSH
+
 /** A fighter as the rest of the app sees it. `upgrade` / `record` are the seats
  *  kept for the next passes (per-fighter progression, fight history); they are
  *  null today and are NOT written to storage while they stay null. */
@@ -58,13 +72,19 @@ function newId() {
     return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-// --- save shape: { fighters: [{ id, callsign, core, createdAt, lit? }], picked? }
+// --- save shape: { fighters: [...], picked?, seeded? }
 // `lit` is the small form of the upgrade tree ({ crystalId: [faceId] }) and is
 // written only once something is lit — an untouched fighter costs nothing.
 // `picked` is one id and is written only while somebody IS selected; "nobody
 // selected" is the absence of the key, not a stored null.
+// `seeded` — стартовая тройка уже выдана. См. ниже, почему она не может быть
+// просто «ростер не пуст».
 function snapshotOf(s) {
-    if (!s.fighters.length) return null;   // empty roster → drop the section entirely
+    // ⚠️ Пустой ростер БОЛЬШЕ НЕ СТИРАЕТ секцию. Раньше стирал — и это ровно то,
+    // что ломало бы обещание «распустил всех → тройка заново не выдаётся»:
+    // стёртая секция на следующей загрузке неотличима от первого входа. Теперь
+    // в секции остаётся отметка о выдаче, даже когда бойцов ноль.
+    if (!s.fighters.length && !s.seeded) return null;
     const out = {
         fighters: s.fighters.map((f) => {
             const row = { id: f.id, callsign: f.callsign, core: f.core, createdAt: f.createdAt };
@@ -74,6 +94,7 @@ function snapshotOf(s) {
         }),
     };
     if (s.pickedId) out.picked = s.pickedId;
+    if (s.seeded) out.seeded = true;
     return out;
 }
 
@@ -118,16 +139,45 @@ function restore() {
         && out.some((f) => f.id === saved.picked)
         ? saved.picked
         : null;
-    return { fighters: out, pickedId };
+    return { fighters: out, pickedId, seeded: saved ? saved.seeded === true : false };
 }
 
 const restored = restore();
 
+/** Три бойца разных ядер, имена — существующим раздатчиком позывных. */
+function makeStarterRoster() {
+    const taken = [];
+    return STARTER_CORES.map((core, i) => {
+        const f = makeFighter(pickCallsign(taken), core);
+        taken.push(f.callsign);
+        // Порядок в зале — по времени создания (см. геттер fighters). Три бойца,
+        // рождённые в одну миллисекунду, встали бы в произвольном порядке;
+        // сдвиг на индекс делает его тем, что объявлен в STARTER_CORES.
+        f.createdAt += i;
+        return f;
+    });
+}
+
+// Выдаём ТОЛЬКО когда отметки нет И бойцов нет. Два условия, а не одно:
+//   • нет отметки, но бойцы есть — это игрок, чей сейф записан до появления
+//     тройки. Выдать ему тройку значит стереть его ростер;
+//   • отметка есть, бойцов нет — игрок распустил всех. Пустой ростер остаётся
+//     пустым, экраны показывают честное пустое состояние.
+const needStarter = !restored.seeded && restored.fighters.length === 0;
+
 const state = {
-    fighters: restored.fighters,
+    fighters: needStarter ? makeStarterRoster() : restored.fighters,
     // Who the FORGE hall is working on. An id, not a fighter (see the header).
     pickedId: restored.pickedId,
+    // Отметка ставится и тому, кто тройку получил, и тому, у кого ростер уже был:
+    // оба — не новички, и обоим выдавать больше нечего.
+    seeded: true,
 };
+
+// Записываем сразу, а не ждём первой правки ростера. Иначе игрок, обновивший
+// страницу до первого действия, получил бы ДРУГУЮ тройку — с другими позывными
+// и другими идентификаторами.
+if (needStarter) writeSection(SECTION, snapshotOf(state));
 
 const getters = {
     // Oldest first: the list then has a natural order that never reshuffles.
