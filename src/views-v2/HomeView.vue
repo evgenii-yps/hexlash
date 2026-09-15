@@ -274,7 +274,9 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 // scene's picking — but what the player reads is FORGE and ARENA (see en.js `mode`).
 const MODE_DOORS = [
   { id: 'pve', name: t.value.mode.pveName, desc: t.value.mode.pveDesc, to: '/play/pve' },    // FORGE
-  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play' },        // ARENA
+  // ARENA ведёт в ВОРОТА — отдельное пространство, а не на плоский экран
+  // подготовки. Дом отсюда выгружается: это и есть «другое место».
+  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play/gate' },  // ARENA
 ];
 
 // Browser back / forward (and any other push at these two paths) moves the camera:

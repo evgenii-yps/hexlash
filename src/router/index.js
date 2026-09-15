@@ -63,6 +63,7 @@ const publicRoutes = [
 
 // /play hosts the temporary pre-fight flow (Stage 1 visualization):
 //   /play       → выбор состава (SquadSelectView) → сразу на арену
+//   /play/gate  → ворота арены — пространство за дверью ARENA (ArenaGateScene)
 //   /play/arena → the 3D arena    (ArenaScene via PlayStubView)
 // There is no upgrade STEP any more: upgrading moved into the FORGE hall
 // (/play/pve), where each fighter has their own tree, so the pre-fight screen
@@ -192,6 +193,23 @@ const v2Routes = [
                 // Back-compat: old /play/training links → /play/pve.
                 path: 'training',
                 redirect: { name: 'V2Pve' },
+            },
+            {
+                // ВОРОТА АРЕНЫ — пространство за дверью ARENA (ArenaGateScene).
+                // Не «ещё один экран подготовки», а другое МЕСТО: дом и острова
+                // режимов при входе сюда выгружаются, пространство собирается с
+                // нуля под экраном загрузки, и растемнение идёт вместе с подлётом
+                // камеры. Здесь встанут острова выбора режима, потом острова
+                // выбора бойцов, потом объёмная кнопка старта.
+                //
+                // Стража нет намеренно: состав здесь ещё не набран — его и
+                // набирают дальше по дороге. Сторож стоит там, где он нужен, —
+                // на самой арене (requireSquad).
+                path: 'gate',
+                name: 'V2ArenaGate',
+                // meta.scene3d — тяжёлый вход, экран загрузки держится до готовности
+                meta: { scene3d: true },
+                component: () => import('@/views-v2/ArenaGateView.vue'),
             },
             {
                 // The pre-fight upgrade screen was retired (25.08.2026) — upgrading
