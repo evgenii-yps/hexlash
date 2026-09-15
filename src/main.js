@@ -10,6 +10,11 @@ import * as directives from 'vuetify/directives'
 import router from '@/router/index.js'
 import store from "@/core/state/store.js";
 import {loadingState, noteSceneError, openLoading} from "@/services/sceneLoading.js";
+// Служебный режим (?dev=1) читается ЗДЕСЬ — при загрузке страницы, до всякой
+// навигации. Роутер успевает отбить прямой заход на арену и увести на адрес без
+// признака ещё до того, как сцена смонтируется; если читать признак в ней, он
+// туда никогда не доедет. Разбор — в самом файле.
+import '@/services/devMode.js';
 import {
     VAlert,
     VBtn,

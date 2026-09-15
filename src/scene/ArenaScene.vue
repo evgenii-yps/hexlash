@@ -22,10 +22,11 @@
       <p class="af-note">{{ t.arena.failedNote }}</p>
       <button type="button" class="af-back" @click="onFailedBack">{{ t.arena.failedBack }}</button>
     </div>
-    <!-- Always-on dev-panel show/hide toggle (small corner). The panel auto-hides
-         when a bout starts (clean player view) + returns when it ends; in the SIG
-         auto-cycle the bout never ends, so this is the only way back. -->
-    <button v-if="!showcase" type="button" class="arena-panel-toggle" :class="{ on: panelVisible }" @click="panelVisible = !panelVisible" :aria-pressed="panelVisible" title="Toggle dev panel">DEV</button>
+    <!-- Переключатель служебной панели. Существует ТОЛЬКО в служебном режиме
+         (?dev=1) — игроку его видеть незачем. Панель сама прячется на время боя
+         и возвращается по его концу; в бесконечном прогоне SIG бой не кончается,
+         поэтому эта кнопка — единственный путь назад. -->
+    <button v-if="DEV_MODE && !showcase" type="button" class="arena-panel-toggle" :class="{ on: panelVisible }" @click="panelVisible = !panelVisible" :aria-pressed="panelVisible" title="Toggle dev panel">DEV</button>
     <!-- Dev readability stand (preview only): FIGHT + the L/R signature A/B stand
          + GRAY. Hidden during a bout; brought back via the DEV corner toggle. -->
     <div v-if="panelVisible" class="arena-actions">
@@ -61,6 +62,7 @@ import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.j
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
+import { DEV_MODE } from '@/services/devMode.js';
 import { useRouter } from 'vue-router';
 import { t } from '@/locales/index.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
@@ -100,10 +102,14 @@ const postShowcase = (phase) => {
   catch (_) { /* окно закрыто или чужой домен — молча пропускаем */ }
 };
 
-// Dev-panel visibility — true at rest, auto-hidden during a bout, flipped by the
-// always-on DEV corner toggle (the only way back during the SIG auto-cycle).
-// В режиме показа остаётся false навсегда → панель и телеметрия не создаются.
-const panelVisible = ref(!showcase);
+// Служебный режим (?dev=1) — видны ли органы разработчика. Решается при ЗАГРУЗКЕ
+// СТРАНИЦЫ, а не здесь: страж арены отбивает прямой заход и уводит на адрес без
+// признака, так что к монтажу этой сцены его в строке уже нет. Разбор — в самом
+// файле services/devMode.js.
+// Dev-panel visibility — auto-hidden during a bout, flipped by the DEV corner
+// toggle (the only way back during the SIG auto-cycle). Без служебного режима и
+// в режиме показа остаётся false навсегда → панель и телеметрия не создаются.
+const panelVisible = ref(DEV_MODE && !showcase);
 // Dev readout — both fighters' stamina (силы) + charge (заряд), refreshed live
 // (throttled) in the loop so the spend / recover can be watched. Temporary.
 const staReadout = ref('STA  P —  ·  O —');
@@ -454,7 +460,7 @@ onMounted(() => {
     aiOpponent = false;
     fighter?.setAI(false); // winner stops attacking → settles to idle
     opponent?.setAI(false);
-    if (!showcase) panelVisible.value = true; // bout over → bring the dev panel back
+    if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
   };
   const spawnFighter = () => {
