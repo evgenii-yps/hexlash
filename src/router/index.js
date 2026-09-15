@@ -62,7 +62,7 @@ const publicRoutes = [
 ];
 
 // /play hosts the temporary pre-fight flow (Stage 1 visualization):
-//   /play       → core selection (CoreSelectView) → straight to the arena
+//   /play       → выбор состава (SquadSelectView) → сразу на арену
 //   /play/arena → the 3D arena    (ArenaScene via PlayStubView)
 // There is no upgrade STEP any more: upgrading moved into the FORGE hall
 // (/play/pve), where each fighter has their own tree, so the pre-fight screen
@@ -71,30 +71,28 @@ const publicRoutes = [
 // fighter. The .app-v2 CSS namespace and src/views-v2/ directory are preserved
 // from the rebuild. /play is public (reached after login and via "Play as Guest").
 //
-// requireCore guards the arena: without a pick (e.g. a hard refresh straight
-// onto /play/arena) bounce back to selection.
-const requireCore = (to, from, next) => {
-    // Режим показа (?showcase=1) — вход на арену со страницы-деки. Выбора ядра
-    // там нет и быть не может: инвестор открывает окно, а не проходит поток.
-    // Оба бойца в этом режиме назначены жёстко внутри самой сцены.
-    // ⚠️ Признак управляет ТОЛЬКО подачей. Он НИКОГДА не включает думающий мозг
-    // модели и ничего платного — его подставит кто угодно из адресной строки.
-    // Полное правило — рядом с самим признаком в src/scene/ArenaScene.vue.
+// requireSquad guards the arena: без набранного состава (например, обновление
+// страницы прямо на /play/arena) возвращаем на экран выбора состава.
+//
+// Раньше сторож спрашивал «выбрано ли ядро». Ядро больше не выбирают — выбирают
+// бойцов, — поэтому спрашивает он теперь «есть ли в составе хоть кто-то».
+const requireSquad = (to, from, next) => {
+    // Режим показа (?showcase=1) — вход на арену со страницы-деки. Состава там
+    // нет и быть не может: инвестор открывает окно, а не проходит поток. Оба
+    // бойца в этом режиме назначены жёстко внутри самой сцены.
     //
-    // Флаг уходит и в состояние боя (15.09.2026): окно деки — отдельный документ
-    // в iframe, но тот же origin и та же вкладка, поэтому он поднимает сейф этой
-    // вкладки. Без флага дека, открытая в уже игравшей вкладке, тихо драла бы
-    // бойца игрока с его гранями вместо дефолтного показа. Флаг не сохраняется.
-    store.commit('prefight/SET_SHOWCASE', to.query.showcase === '1');
-    if (to.query.showcase === '1') return next();
+    // Сам признак ставится и СНИМАЕТСЯ выше, в общей проверке на каждый переход
+    // (см. beforeEach) — здесь он только читается.
+    if (store.state.prefight?.showcase) return next();
 
-    // Ask the save layer here rather than trusting that the store module was
-    // evaluated first. This guard is the ONE place that decides whether a
-    // refresh keeps the player where they are, so it must not depend on module
-    // /chunk evaluation order — in-memory snapshot, no I/O cost when already
-    // restored. Still bounces when the tab genuinely has nothing saved.
+    // ⚠️ Спрашиваем СЛОЙ СОХРАНЕНИЯ, а не живой экран, и не полагаемся на то,
+    // что модуль состояния успел подняться раньше. Этот сторож — единственное
+    // место, решающее, останется ли игрок на месте после обновления страницы,
+    // поэтому он не должен зависеть от порядка загрузки экранов и кусков кода.
+    // Снимок уже в памяти, стоит он ноль. Возвращает только тогда, когда во
+    // вкладке действительно ничего не сохранено.
     store.commit('prefight/RESTORE_IF_EMPTY');
-    if (store.state.prefight?.selectedCoreId) next();
+    if (store.state.prefight?.squad?.length) next();
     else next({ name: 'PrefightSelect' });
 };
 
@@ -114,9 +112,15 @@ const v2Routes = [
         component: () => import('@/AppV2.vue'),
         children: [
             {
+                // Выбор СОСТАВА — кого игрок ведёт в бой. До 15.09.2026 здесь
+                // стоял выбор ядра; он ушёл из потока целиком (см. заголовок
+                // SquadSelectView). Адрес и имя маршрута оставлены прежними
+                // нарочно: по этому имени сюда возвращает сторож арены, и по
+                // этому адресу сюда приходят старые ссылки и закладки — обе
+                // дороги ведут на новый экран сами, без отдельного перенаправления.
                 path: '',
                 name: 'PrefightSelect',
-                component: () => import('@/views-v2/CoreSelectView.vue'),
+                component: () => import('@/views-v2/SquadSelectView.vue'),
             },
             {
                 // Player home ("дом игрока"): calm 3D stage (arena slab + idle
@@ -168,7 +172,7 @@ const v2Routes = [
                 // match). Since Ground Select went, NOTHING in the app links here: it
                 // is reachable by direct URL only, on purpose — the scene is finished
                 // work and is kept, the door into it is not. A heavy 3D route →
-                // meta.scene3d so the load layer covers it; no requireCore (preview).
+                // meta.scene3d so the load layer covers it; no requireSquad (preview).
                 path: 'space',
                 name: 'V2Space',
                 meta: { scene3d: true },
@@ -177,7 +181,7 @@ const v2Routes = [
             {
                 // PVE space — a standalone 3D scene (PveScene): the club roster walks
                 // the plate, the trainer-legend floats above. Visual only. A normal
-                // pre-fight screen (no meta.arena, no requireCore).
+                // pre-fight screen (no meta.arena, no requireSquad).
                 path: 'pve',
                 name: 'V2Pve',
                 // meta.scene3d — see /play/home note.
@@ -202,7 +206,7 @@ const v2Routes = [
                 // splash until the WebGL arena emits its first-frame signal,
                 // instead of hiding on first DOM paint like non-arena routes.
                 meta: { arena: true },
-                beforeEnter: requireCore,
+                beforeEnter: requireSquad,
                 component: () => import('@/views-v2/PlayStubView.vue'),
             },
         ],
@@ -269,6 +273,20 @@ const router = createRouter({
 const isHomeStageHop = (to, from) => HOME_STAGE_PATHS.includes(to.path) && HOME_STAGE_PATHS.includes(from.path);
 
 router.beforeEach((to, from, next) => {
+    // ── Признак показа для деки ──
+    // Ставится и СНИМАЕТСЯ на каждом переходе, по адресу того экрана, куда идём.
+    // Раньше он ставился только в стороже арены, то есть при ВХОДЕ на арену. Для
+    // всех сегодняшних путей это одно и то же, но переход арена→арена со сменой
+    // одного адреса сторож не перезапускает — и признак пережил бы такой переход.
+    // Здесь же проверка общая: она срабатывает на любом переходе, включая смену
+    // адреса без пересборки экрана. Обновление страницы снимает признак само —
+    // состояние живёт в памяти вкладки и рождается заново.
+    //
+    // ⚠️ Признак управляет ТОЛЬКО подачей. Он НИКОГДА не включает думающий мозг
+    // модели и ничего платного — его подставит кто угодно из адресной строки.
+    // Полное правило — рядом с самим признаком в src/scene/ArenaScene.vue.
+    store.commit('prefight/SET_SHOWCASE', to.name === 'V2Arena' && to.query.showcase === '1');
+
     if (window.__hexBootstrapped && !isHomeStageHop(to, from)) {
         if (to.meta?.arena || to.meta?.scene3d) {
             openLoading(to.name);

@@ -1,19 +1,26 @@
-<!-- /play — Core Select (pre-fight step 01). Stripped/minimal variant: the
-     production handoff was ported 1:1, then the service chrome was removed per
-     owner — on screen now: headline + 4 cards (icon + name) + CTA.
+<!-- /play — ВЫБОР СОСТАВА. Кого игрок ведёт в бой.
 
-     Kept from the handoff (untouched): card flat/hover/selected states, siblings
-     dimmed via .has-sel, per-core rhythms of light, --core tint + scene wash.
+     Заменил экран выбора ядра, стоявший здесь до 15.09.2026. Тот спрашивал, за
+     какое ядро драться, — вопрос, на который в игре уже нет ответа: бойцы живут
+     в списке и рождаются со своим ядром, выбирать его заново нечего. Выбор ядра
+     разошёлся со связкой «выбрал → прокачал → повёл в бой» и уехал отсюда.
+     Разбор — ТЗ v2, работа C.
 
-     Data — single source src/data/upgradeData.js (CORES: ids natisk/nalet/skala/
-     zasada, our palette, EN names). Icon — coreSVG() reused from
-     upgradeGeometry.js. Tint --core/--core-sup written on the scene root from
-     prefight.selectedCoreId (same write-site/vars as the upgrade screen).
-     Pick → store; CTA «TO ARENA» → /play/arena. It used to stop at an upgrade
-     screen in between; that screen was retired (25.08.2026) when upgrading moved
-     into the FORGE hall, where each fighter has their own tree. -->
+     Экран собран ИЗ ТОГО ЖЕ оформления, а не написан заново: карточка уже умела
+     нести ядро — его цвет, знак, ритм света и приглушение соседей, — а боец это
+     имя плюс ядро. Поэтому от прежнего экрана осталось всё, кроме содержимого
+     карточки: `data-core` теперь берётся у бойца, под именем стоит его позывной,
+     а под ним — имя ядра либо отметка «в кузнице».
+
+     Размер состава — одна величина SQUAD_SIZE в состоянии боя (сегодня 1).
+     Кнопка загорается только когда состав набран целиком; пока нет — под ней
+     словами сказано, сколько ещё выбрать.
+
+     Состояние «на тренировке» нарисовано и живёт по полю `busy` у бойца. До
+     демо оно всегда пустое: тренировки в игре ещё нет и ставить его некому.
+     Посмотреть, как выглядит, можно в служебном режиме — см. `previewForge`. -->
 <template>
-  <div class="scene" :style="coreVars" data-screen-label="Core Select">
+  <div class="scene" :style="coreVars" data-screen-label="Squad Select">
 
     <!-- centered composition column -->
     <main class="stage">
@@ -22,23 +29,32 @@
         <!-- HEADLINE -->
         <header class="headline">
           <div class="ttl">
-            <h1>CHOOSE YOUR <em>CORE.</em></h1>
+            <h1>CHOOSE YOUR <em>SQUAD.</em></h1>
           </div>
         </header>
 
-        <!-- GRID -->
-        <div class="grid" :class="{ 'has-sel': !!selectedId }">
+        <!-- ПУСТОЙ СОСТАВ — честное состояние, а не пустая сетка.
+             Встречается, только если игрок распустил всех: новому гостю тройка
+             выдаётся при первом входе, но заново после роспуска не выдаётся. -->
+        <div v-if="!fighters.length" class="empty">
+          <p class="e-ttl">NO FIGHTERS LEFT.</p>
+          <p class="e-note">Your roster is empty — there is nobody to send in. Recruit in the shop, then come back.</p>
+        </div>
+
+        <!-- GRID — карточки бойцов -->
+        <div v-else class="grid" :class="{ 'has-sel': squad.length > 0 }">
           <button
-            v-for="core in cores"
-            :key="core.id"
+            v-for="f in fighters"
+            :key="f.id"
             type="button"
-            class="core-card"
-            :class="{ sel: selectedId === core.id }"
-            :data-core="core.id"
-            :style="{ '--c': core.hue, '--c-sup': core.sup }"
-            :aria-pressed="selectedId === core.id"
-            :aria-label="`Core ${core.ix} · ${core.name} · ${core.sig}`"
-            @click="select(core)"
+            class="f-card"
+            :class="{ sel: inSquad(f.id), forge: busy(f) }"
+            :data-core="f.core"
+            :style="{ '--c': hueOf(f), '--c-sup': supOf(f) }"
+            :disabled="busy(f)"
+            :aria-pressed="inSquad(f.id)"
+            :aria-label="`${f.callsign} · ${nameOf(f)}${busy(f) ? ' · in forge' : ''}`"
+            @click="toggle(f)"
           >
             <span class="tick tl" aria-hidden="true"></span>
             <span class="tick tr" aria-hidden="true"></span>
@@ -46,29 +62,32 @@
             <div class="stage-i">
               <div class="halo" aria-hidden="true"></div>
               <div class="ring" aria-hidden="true"></div>
-              <div class="icon" v-html="glyphs[core.id]"></div>
+              <div class="icon" v-html="glyphs[f.core]"></div>
             </div>
 
             <div class="body">
-              <div class="nm">{{ core.name }}</div>
+              <div class="nm">{{ f.callsign }}</div>
+              <div class="sub">{{ busy(f) ? 'IN FORGE' : nameOf(f) }}</div>
             </div>
 
             <span class="bar" aria-hidden="true"></span>
           </button>
         </div>
 
-        <!-- FOOT — primary CTA -->
+        <!-- FOOT — кнопка и причина, если она не горит -->
         <footer class="foot">
           <button
             class="cta"
-            :class="{ 'is-ready': selected }"
-            :disabled="!selected"
+            :class="{ 'is-ready': ready }"
+            :disabled="!ready"
             aria-label="Proceed to the arena"
             @click="toArena"
           >
             <span>TO ARENA</span>
             <span class="arr" aria-hidden="true">→</span>
           </button>
+          <!-- Кнопка не объясняет себя серым цветом: причина стоит словами. -->
+          <p v-if="!ready" class="why">{{ why }}</p>
         </footer>
 
       </div>
@@ -106,12 +125,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { CORES, getCore } from '@/data/upgradeData.js';
 import { coreSVG } from '@/data/upgradeGeometry.js';
 import { t } from '@/locales/index.js';
+import { DEV_MODE } from '@/services/devMode.js';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import '@/styles/home.css';     // общая полоса .hs-strip
 import '@/styles/cabinet.css';  // выдвижная панель кабинета
@@ -121,43 +141,79 @@ const router = useRouter();
 
 const cabinetOpen = ref(false);
 
-const cores = CORES;
+// ── Бойцы ──
+// Список из хранилища, а не своя копия: боец живёт в одном месте, и его ядро,
+// грани и занятость читаются оттуда же. Порядок — как в зале: по времени
+// появления, чтобы он никогда не перетасовывался под рукой.
+const fighters = computed(() => store.getters['roster/fighters']);
 
-// Core icons — same silhouettes as the upgrade screen (reuse coreSVG, no dup).
-// Pure strings, computed once; rendered via v-html (trusted source, no user input).
+// Знак ядра — тот же, что на экране прокачки. Считается один раз на ядро, не на
+// бойца: у четырёх бойцов одного ядра знак один и тот же.
 const glyphs = Object.fromEntries(CORES.map((c) => [c.id, coreSVG(c.id, { seed: true })]));
+const coreOf = (f) => getCore(f.core);
+const hueOf = (f) => coreOf(f)?.hue;
+const supOf = (f) => coreOf(f)?.sup;
+const nameOf = (f) => coreOf(f)?.name || '';
 
-// --- Selection (exactly one card lit; siblings dim via .has-sel) --------------
-// Seeded from the store so a refresh shows the core the player already picked
-// (the pick itself survives a refresh — see prefightState / playerProgress).
-const selectedId = ref(store.getters['prefight/selectedCoreId']);
-const selected = computed(() => (selectedId.value ? getCore(selectedId.value) : null));
+// ── Состав ──
+const squad = computed(() => store.getters['prefight/squad']);
+const inSquad = (id) => store.getters['prefight/inSquad'](id);
+const ready = computed(() => store.getters['prefight/squadFull']);
+const left = computed(() => store.getters['prefight/squadLeft']);
 
-// Scene tint — same --core/--core-sup write-site + var names as the upgrade
-// screen. Pre-select: no override, so the CSS default (brand-pink) keeps the
-// chrome neutral; on pick the scene shifts to the core hue (flows to upgrade).
-const coreVars = computed(() =>
-  selected.value ? { '--core': selected.value.hue, '--core-sup': selected.value.sup } : {},
-);
+// Причина, по которой кнопка не горит. Словами, а не серым цветом.
+const why = computed(() => {
+  if (!fighters.value.length) return 'No fighters to send.';
+  const n = left.value;
+  return n === 1 ? 'Pick one fighter to send in.' : `Pick ${n} more fighters to send in.`;
+});
 
-function select(core) {
-  selectedId.value = core.id; // single glow — siblings dim via .has-sel
-  store.dispatch('prefight/selectCore', core.id); // id → store (read by the arena)
+// ── «На тренировке» ──
+// Признак берётся у самого бойца. Сегодня он всегда пуст: тренировки в игре ещё
+// нет, писать его некому. Чтобы владелец увидел, КАК это выглядит, в служебном
+// режиме (?dev=1) адрес принимает ?forge=N — столько первых карточек показать
+// занятыми. Это ТОЛЬКО показ: в данные ничего не пишется, обновление страницы
+// без этого адреса вернёт всё как было.
+const previewForge = (() => {
+  if (!DEV_MODE) return 0;
+  try {
+    const n = parseInt(new URLSearchParams(window.location.search).get('forge') || '0', 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch (_) { return 0; }
+})();
+const busy = (f) => f.busy === true || fighters.value.indexOf(f) < previewForge;
+
+// Нажатие по карточке ставит бойца в состав или снимает оттуда. Занятый не
+// нажимается вовсе — у кнопки стоит disabled, это второй заслон после вида.
+function toggle(f) {
+  if (busy(f)) return;
+  store.dispatch('prefight/toggleSquad', f.id);
 }
 
-// Карточка кабинета — как в зале FORGE и на доме: значения по умолчанию, пока
-// ядро не выбрано.
-const coreName = computed(() => selected.value?.name || 'ONSLAUGHT');
-const coreSig = computed(() => selected.value?.sig || 'PRESSURE');
+// Боец мог исчезнуть из списка, пока состав лежал в сейфе (распустили в зале, а
+// потом вернулись сюда). Такой из состава молча вылетает — кнопка сама погаснет.
+onMounted(() => { store.dispatch('prefight/pruneSquad'); });
+
+// Карточка кабинета — как в зале FORGE и на доме. Показывает ядро первого в
+// составе; пока состав пуст — значения по умолчанию.
+const firstCore = computed(() => {
+  const f = fighters.value.find((x) => inSquad(x.id));
+  return f ? coreOf(f) : null;
+});
+const coreName = computed(() => firstCore.value?.name || 'ONSLAUGHT');
+const coreSig = computed(() => firstCore.value?.sig || 'PRESSURE');
+const coreVars = computed(() =>
+  firstCore.value ? { '--core': firstCore.value.hue, '--core-sup': firstCore.value.sup } : {},
+);
 const balance = '2,480';
 // Магазин живёт состоянием дома, поэтому ведём туда адресом (см. setView в HomeView).
 function goShop() { router.push({ path: '/play/home', query: { view: 'shop' } }); }
 
-// CTA «TO ARENA» — navigation contract: pick is already in the store, the
-// route guard (requireCore) lets it through. Brief beat so the press reads.
+// Кнопка в бой. Состав уже в состоянии, сторож арены (requireSquad) пропустит.
+// Короткая пауза — чтобы нажатие успело прочитаться.
 let navigating = false;
 function toArena() {
-  if (!selected.value || navigating) return;
+  if (!ready.value || navigating) return;
   navigating = true;
   setTimeout(() => router.push({ name: 'V2Arena' }), 180);
 }
@@ -301,21 +357,31 @@ function toArena() {
 }
 
 /* ============================================================
-   GRID — 2×2 cores
+   GRID — ряд, который переносится и центрирует последнюю строку
+   ------------------------------------------------------------
+   Здесь была сетка 2×2 под ЧЕТЫРЕ ядра — ровно четыре, всегда четыре.
+   Бойцов не четыре: сегодня трое, завтра сколько купит игрок. В жёсткой
+   сетке троица ложилась как 2+1, и одинокая карточка прижималась влево, а
+   справа зияла дыра ровно её размера — читалось как «одной карточки не
+   хватает», хотя всё на месте.
+   Перенос по строкам с центрированием решает это при ЛЮБОМ числе: неполная
+   строка всегда стоит по центру. Ширина карточки считается от доли колонки,
+   поэтому ряд выглядит той же сеткой, что и раньше, пока карточек чётное
+   число.
    ============================================================ */
 .grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--sp-4);
 }
-@media (min-width: 1024px) {
-  .grid { gap: var(--sp-4); }
-}
+/* 0 — не растягиваться: карточка держит свою долю, а не заполняет строку. */
+.grid > .f-card { flex: 0 1 calc((100% - var(--sp-4)) / 2); }
 
 /* ============================================================
    CORE CARD — weighty container, three distinguishable states
    ============================================================ */
-.core-card {
+.f-card {
   --c: var(--ink-dim);
   --c-sup: color-mix(in srgb, var(--c) 55%, transparent);
   --c-faint: color-mix(in srgb, var(--c) 12%, transparent);
@@ -342,26 +408,26 @@ function toArena() {
     opacity .35s var(--e-weight),
     transform .15s var(--e-weight);
 }
-.core-card:hover { border-color: var(--line-strong); background:
+.f-card:hover { border-color: var(--line-strong); background:
   linear-gradient(180deg, var(--fill-2), var(--fill-1)), var(--carbon); }
-.core-card:active { transform: scale(.985); }
-.core-card:focus-visible { outline: 1px solid var(--c-sup); outline-offset: 3px; }
+.f-card:active { transform: scale(.985); }
+.f-card:focus-visible { outline: 1px solid var(--c-sup); outline-offset: 3px; }
 
 /* corner ticks — subtle "tap target" hints */
-.core-card .tick { position: absolute; width: 10px; height: 10px; pointer-events: none;
+.f-card .tick { position: absolute; width: 10px; height: 10px; pointer-events: none;
   border: 1px solid var(--ink-off); transition: border-color .3s var(--e-weight); }
-.core-card .tick.tl { top: 9px; left: 9px; border-right: 0; border-bottom: 0; }
-.core-card .tick.tr { top: 9px; right: 9px; border-left: 0; border-bottom: 0; }
+.f-card .tick.tl { top: 9px; left: 9px; border-right: 0; border-bottom: 0; }
+.f-card .tick.tr { top: 9px; right: 9px; border-left: 0; border-bottom: 0; }
 
 /* ICON STAGE — backplate gives the icon a defined zone */
-.core-card .stage-i {
+.f-card .stage-i {
   position: relative;
   flex: 1; display: grid; place-items: center;
   margin: var(--sp-2) 0 var(--sp-2);
   min-height: 96px;
 }
 /* subtle backplate hex behind icon, almost invisible by default */
-.core-card .stage-i::before {
+.f-card .stage-i::before {
   content: ""; position: absolute;
   width: 118px; height: 104px;
   background:
@@ -369,7 +435,7 @@ function toArena() {
       color-mix(in srgb, var(--c) 8%, transparent), transparent 70%);
   opacity: .7; transition: opacity .35s var(--e-weight);
 }
-.core-card .halo {
+.f-card .halo {
   position: absolute; inset: -12%; border-radius: var(--r-round); z-index: 1; pointer-events: none;
   opacity: 0; transition: opacity .35s var(--e-weight);
   background:
@@ -382,43 +448,67 @@ function toArena() {
   filter: blur(18px);
   mix-blend-mode: screen;
 }
-.core-card .ring {
+.f-card .ring {
   position: absolute; width: 128px; height: 128px; border: 1px solid var(--c-sup);
   border-radius: var(--r-round); z-index: 1; opacity: 0;
 }
-.core-card .icon { width: 96px; height: 96px; position: relative; z-index: 2;
+.f-card .icon { width: 96px; height: 96px; position: relative; z-index: 2;
   transition: transform .4s var(--e-settle); }
-.core-card .icon :deep(svg) { width: 100%; height: 100%; overflow: visible; }
+.f-card .icon :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 
 /* FLAT-state strokes — muted, with a hint of hue so silhouettes
    stay distinguishable without lighting up */
-.core-card .icon :deep(.hex-line) {
+.f-card .icon :deep(.hex-line) {
   stroke: color-mix(in srgb, var(--c) 30%, var(--ink-off));
   fill: none; stroke-width: 1.6; transition: stroke .35s var(--e-weight);
 }
-.core-card .icon :deep(.facet) {
+.f-card .icon :deep(.facet) {
   stroke: color-mix(in srgb, var(--c) 20%, var(--ink-off));
   fill: none; stroke-width: 1.1; transition: stroke .35s var(--e-weight);
 }
-.core-card .icon :deep(.seed) {
+.f-card .icon :deep(.seed) {
   fill: color-mix(in srgb, var(--c) 46%, var(--ink-off));
   transition: fill .35s var(--e-weight);
 }
 
 /* NAME */
-.core-card .body {
+.f-card .body {
   display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
   position: relative; z-index: 3; padding-bottom: var(--sp-3);
 }
-.core-card .nm {
+.f-card .nm {
   font-family: var(--font-display); font-weight: 800;
   font-size: clamp(20px, 2.4vw, 26px);
   letter-spacing: var(--ls-tight); text-transform: uppercase; line-height: 1;
   color: var(--ink); transition: color .35s var(--e-weight);
 }
 
+/* Подпись под именем: ядро бойца, либо отметка «в кузнице». Мелкая моноширинная
+   строка — она поясняет имя, а не спорит с ним. */
+.f-card .sub {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; line-height: 1;
+  color: var(--ink-off); transition: color .35s var(--e-weight);
+}
+.f-card.sel .sub { color: var(--ink-dim); }
+
+/* НА ТРЕНИРОВКЕ — карточка тусклая и не отвечает: ни наведения, ни нажатия.
+   Отдельного цвета у состояния нет и не надо: «недоступно» в системе читается
+   приглушением, а что именно происходит — сказано словом в подписи. */
+.f-card.forge {
+  opacity: .38;
+  cursor: default;
+  filter: grayscale(.7);
+}
+.f-card.forge:hover { border-color: var(--line); background: var(--fill-1); }
+.f-card.forge:active { transform: none; }
+.f-card.forge .sub { color: var(--ink-off); }
+/* приглушение соседей не должно делать занятую карточку ещё тусклее */
+.grid.has-sel .f-card.forge:not(.sel) { opacity: .38; }
+
 /* ACCENT BAR — anchors the card visually */
-.core-card .bar {
+.f-card .bar {
   position: absolute; left: 0; right: 18px; bottom: 0; height: 3px;
   background: var(--ink-off);
   transform-origin: left center;
@@ -426,7 +516,7 @@ function toArena() {
 }
 
 /* ---------- SELECTED ---------- */
-.core-card.sel {
+.f-card.sel {
   border-color: var(--c-sup);
   /* Свечение выбора — тот же токен, что у метки BEST VALUE (Правка 1.3 §3).
      Он собран на currentColor, поэтому цвет задаётся здесь: у имени ядра
@@ -439,37 +529,37 @@ function toArena() {
       color-mix(in srgb, var(--c) 2%, transparent) 100%),
     var(--carbon);
 }
-.core-card.sel .tick.tl, .core-card.sel .tick.tr { border-color: var(--c-sup); }
-.core-card.sel .stage-i::before { opacity: 1; }
-.core-card.sel .halo { opacity: .9; }
-.core-card.sel .icon { transform: scale(1.06); }
+.f-card.sel .tick.tl, .f-card.sel .tick.tr { border-color: var(--c-sup); }
+.f-card.sel .stage-i::before { opacity: 1; }
+.f-card.sel .halo { opacity: .9; }
+.f-card.sel .icon { transform: scale(1.06); }
 /* selected strokes lift to near-white tinted with hue — stays crisp
    on top of the halo bloom instead of dissolving into it */
-.core-card.sel .icon :deep(.hex-line) {
+.f-card.sel .icon :deep(.hex-line) {
   stroke: color-mix(in srgb, var(--c) 18%, var(--ink));
   stroke-width: 1.9;
 }
-.core-card.sel .icon :deep(.facet) {
+.f-card.sel .icon :deep(.facet) {
   stroke: color-mix(in srgb, var(--c) 30%, var(--ink));
   stroke-width: 1.4;
 }
-.core-card.sel .icon :deep(.seed) { fill: var(--ink);
+.f-card.sel .icon :deep(.seed) { fill: var(--ink);
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 80%, transparent)); }
-.core-card.sel .nm { color: var(--ink);
+.f-card.sel .nm { color: var(--ink);
   text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
-.core-card.sel .bar { background: var(--c);
+.f-card.sel .bar { background: var(--c);
   box-shadow: 0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
 
 /* ---------- DIMMED (siblings of selection) ---------- */
-.grid.has-sel .core-card:not(.sel) { opacity: .5; }
-.grid.has-sel .core-card:not(.sel):hover { opacity: .82; }
+.grid.has-sel .f-card:not(.sel) { opacity: .5; }
+.grid.has-sel .f-card:not(.sel):hover { opacity: .82; }
 
 /* ============================================================
    RHYTHMS OF LIGHT — each picked core breathes with character.
    Active only on .sel — flat cards are silent.
    ============================================================ */
 /* ============================================================
-   PHONE ON ITS SIDE — four cores in one row
+   PHONE ON ITS SIDE — ряд бойцов поперёк, до четырёх в строке
    ------------------------------------------------------------
    The grid is two columns at every width, and the card carries a
    `min-height: clamp(184px, 25vh, 230px)`. On a short screen the clamp's
@@ -490,22 +580,23 @@ function toArena() {
   .headline { padding-bottom: var(--sp-2); gap: var(--sp-2) var(--sp-4); }
   .headline h1 { font-size: clamp(20px, 3.2vw, 30px); white-space: nowrap; }
 
-  .grid { grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
+  .grid { gap: var(--sp-3); }
+  .grid > .f-card { flex-basis: calc((100% - 3 * var(--sp-3)) / 4); }
 
-  .core-card { min-height: 0; padding: var(--sp-3) var(--sp-3) 0;
+  .f-card { min-height: 0; padding: var(--sp-3) var(--sp-3) 0;
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%); }
-  .core-card .tick { width: 8px; height: 8px; top: 7px; }
-  .core-card .tick.tl { left: 7px; }
-  .core-card .tick.tr { right: 7px; }
+  .f-card .tick { width: 8px; height: 8px; top: 7px; }
+  .f-card .tick.tl { left: 7px; }
+  .f-card .tick.tr { right: 7px; }
 
-  .core-card .stage-i { min-height: 0; margin: var(--sp-1) 0 var(--sp-1); }
-  .core-card .stage-i::before { width: 82px; height: 72px; }
-  .core-card .icon { width: clamp(44px, 17vh, 78px); height: clamp(44px, 17vh, 78px); }
-  .core-card .ring { width: clamp(60px, 23vh, 104px); height: clamp(60px, 23vh, 104px); }
+  .f-card .stage-i { min-height: 0; margin: var(--sp-1) 0 var(--sp-1); }
+  .f-card .stage-i::before { width: 82px; height: 72px; }
+  .f-card .icon { width: clamp(44px, 17vh, 78px); height: clamp(44px, 17vh, 78px); }
+  .f-card .ring { width: clamp(60px, 23vh, 104px); height: clamp(60px, 23vh, 104px); }
 
-  .core-card .body { padding-bottom: var(--sp-2); gap: var(--sp-1); }
-  .core-card .nm { font-size: clamp(13px, 1.9vw, 18px); }
-  .core-card .bar { right: 11px; }
+  .f-card .body { padding-bottom: var(--sp-2); gap: var(--sp-1); }
+  .f-card .nm { font-size: clamp(13px, 1.9vw, 18px); }
+  .f-card .bar { right: 11px; }
 
   .foot { gap: var(--sp-2); }
   .cta { padding: var(--sp-3) var(--sp-4); font-size: clamp(14px, 1.8vw, 19px); gap: var(--sp-4); }
@@ -525,20 +616,20 @@ function toArena() {
      засада, скала: от рваного к неподвижному. */
 
   /* Натиск — частый ровный пульс, давление не отпускает */
-  .core-card.sel[data-core="natisk"] .halo { animation: rhythm-onslaught var(--d-pulse-natisk) ease-in-out infinite; }
-  .core-card.sel[data-core="natisk"] .ring { animation: ring-onslaught var(--d-pulse-natisk) ease-out infinite; }
+  .f-card.sel[data-core="natisk"] .halo { animation: rhythm-onslaught var(--d-pulse-natisk) ease-in-out infinite; }
+  .f-card.sel[data-core="natisk"] .ring { animation: ring-onslaught var(--d-pulse-natisk) ease-out infinite; }
 
   /* Налёт — рваные всплески: удар, отход, удар */
-  .core-card.sel[data-core="nalet"] .halo { animation: rhythm-raider var(--d-pulse-nalet) linear infinite; }
-  .core-card.sel[data-core="nalet"] .ring { animation: ring-raider var(--d-pulse-nalet) linear infinite; }
+  .f-card.sel[data-core="nalet"] .halo { animation: rhythm-raider var(--d-pulse-nalet) linear infinite; }
+  .f-card.sel[data-core="nalet"] .ring { animation: ring-raider var(--d-pulse-nalet) linear infinite; }
 
   /* Засада — долгая тишина, один удар */
-  .core-card.sel[data-core="zasada"] .halo { animation: rhythm-ambush var(--d-pulse-zasada) cubic-bezier(.7, 0, .2, 1) infinite; }
-  .core-card.sel[data-core="zasada"] .ring { animation: ring-ambush var(--d-pulse-zasada) cubic-bezier(.7, 0, .2, 1) infinite; }
+  .f-card.sel[data-core="zasada"] .halo { animation: rhythm-ambush var(--d-pulse-zasada) cubic-bezier(.7, 0, .2, 1) infinite; }
+  .f-card.sel[data-core="zasada"] .ring { animation: ring-ambush var(--d-pulse-zasada) cubic-bezier(.7, 0, .2, 1) infinite; }
 
   /* Скала — медленный вдох, самое неподвижное из четырёх */
-  .core-card.sel[data-core="skala"] .halo { animation: rhythm-bulwark var(--d-pulse-skala) ease-in-out infinite; }
-  .core-card.sel[data-core="skala"] .ring { animation: ring-bulwark var(--d-pulse-skala) ease-out infinite; }
+  .f-card.sel[data-core="skala"] .halo { animation: rhythm-bulwark var(--d-pulse-skala) ease-in-out infinite; }
+  .f-card.sel[data-core="skala"] .ring { animation: ring-bulwark var(--d-pulse-skala) ease-out infinite; }
 }
 
 @keyframes rhythm-onslaught {
@@ -587,6 +678,35 @@ function toArena() {
 .foot {
   display: flex; flex-direction: column;
   gap: var(--sp-4);
+}
+
+/* Причина, по которой кнопка не горит. Стоит под ней, тем же моношрифтом, что
+   и прочие пояснения в игре. Своего цвета у причины нет — это не тревога. */
+.why {
+  margin: 0; text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-off);
+}
+
+/* ПУСТОЙ СОСТАВ. Встречается только после роспуска всех бойцов, поэтому экран не
+   извиняется и не кричит — говорит, что случилось и куда идти. */
+.empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+  padding: clamp(32px, 8vh, 72px) var(--sp-4);
+  text-align: center;
+}
+.e-ttl {
+  margin: 0;
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(20px, 2.6vw, 28px);
+  letter-spacing: var(--ls-tight); text-transform: uppercase;
+  color: var(--ink);
+}
+.e-note {
+  margin: 0; max-width: 46ch;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm); line-height: 1.5; color: var(--ink-dim);
 }
 
 /* CTA — notched primary, fight-card chevron. Disabled = ghost
@@ -646,22 +766,22 @@ function toArena() {
    ============================================================ */
 @media (min-width: 1024px) and (min-height: 820px) {
   .col { max-width: 840px; }
-  .core-card { min-height: 218px; padding: var(--sp-5) var(--sp-5) 0; }
-  .core-card .icon { width: 108px; height: 108px; }
-  .core-card .stage-i { min-height: 114px; }
-  .core-card .stage-i::before { width: 132px; height: 118px; }
+  .f-card { min-height: 218px; padding: var(--sp-5) var(--sp-5) 0; }
+  .f-card .icon { width: 108px; height: 108px; }
+  .f-card .stage-i { min-height: 114px; }
+  .f-card .stage-i::before { width: 132px; height: 118px; }
 }
 @media (min-width: 1024px) and (min-height: 920px) {
   .col { max-width: 900px; }
-  .core-card { min-height: 240px; }
+  .f-card { min-height: 240px; }
 }
 
 /* Short viewports: collapse to ultra-tight */
 @media (max-height: 720px) {
-  .core-card { min-height: 168px; padding: var(--sp-4) var(--sp-4) 0; }
-  .core-card .icon { width: 84px; height: 84px; }
-  .core-card .stage-i { min-height: 86px; margin: var(--sp-1) 0 var(--sp-2); }
-  .core-card .body { padding-bottom: var(--sp-3); }
+  .f-card { min-height: 168px; padding: var(--sp-4) var(--sp-4) 0; }
+  .f-card .icon { width: 84px; height: 84px; }
+  .f-card .stage-i { min-height: 86px; margin: var(--sp-1) 0 var(--sp-2); }
+  .f-card .body { padding-bottom: var(--sp-3); }
   .headline h1 { font-size: clamp(32px, 5vw, 52px); }
 }
 </style>
