@@ -1,6 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
-import {cancelLoading, loadingState, openLoading} from "@/services/sceneLoading.js";
+import {cancelLoading, curtainUp, dropCurtain, loadingState, openLoading} from "@/services/sceneLoading.js";
 
 
 export const authRoutes = [
@@ -277,6 +277,23 @@ router.beforeEach((to, from, next) => {
         }
     }
     next();
+});
+
+// Занавес — чёрный кадр, под которым уехали с прошлого экрана (пролёт камеры
+// внутрь острова, см. islandDive.js). Снимается ЗДЕСЬ, а не тем, кто его поднял:
+// поднявший к этому моменту размонтирован вместе со своим экраном.
+//
+// Два кадра ожидания, а не ноль: afterEach срабатывает, когда адрес уже сменился,
+// но следующий вид ещё не нарисован. Снять занавес в этот миг — показать пустоту
+// между экранами, то есть ровно то, что он закрывает. Первый кадр отдаёт Vue на
+// монтаж, второй — браузеру на отрисовку.
+//
+// Экран загрузки при этом не трогается: на тяжёлых маршрутах он уже стоит ПОВЕРХ
+// занавеса (beforeEach выше поднял его), и снятие занавеса под ним невидимо. На
+// лёгких маршрутах экрана загрузки нет, и занавес уходит, открывая новый вид.
+router.afterEach(() => {
+    if (!curtainUp()) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => dropCurtain()));
 });
 
 

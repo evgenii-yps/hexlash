@@ -32,6 +32,7 @@ import { createHomeWanderDirector } from './homeWander.js';
 import { setHomeFighterTag, clearHomeFighterTag } from './homeFighterTag.js';
 import { buildModePlates, MODE_PLATES } from './modePlates.js';
 import { createTransitionFlight, FLIGHT } from './transitionFlight.js';
+import { createIslandDive, DIVE } from './islandDive.js';
 import { setModePlateTag, setModePlateHover, clearModePlateTags } from './modePlateTags.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { LIGHTING, FOV, CAMERA } from '@/data/sceneTokens.js';;
@@ -55,7 +56,11 @@ const props = defineProps({
 // arrived('home'|'select') — the camera is on the final framing and the 2D chrome
 //   for that stage may come back.
 // pick('pve'|'pvp')        — a mode plate was chosen.
-const emit = defineEmits(['arrived', 'pick']);
+// 'dive-start' — игрок выбрал остров, камера ТОЛЬКО ЧТО тронулась. Отдельное
+// событие от 'pick' потому, что это два разных момента: по первому вид гасит свой
+// интерфейс, по второму — уже приехали, можно чернить кадр и менять адрес. Одним
+// событием их не покрыть: между ними две секунды.
+const emit = defineEmits(['arrived', 'pick', 'dive-start']);
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -89,6 +94,8 @@ let lampHaze = null;   // soft warm haze halos at the lamp shades (additive spri
 let modePlates = null; // the PVE / PVP plates, far down -Z in the SAME world
 let flight = null;     // the home ↔ mode camera flight director
 let stage = 'home';    // the stage the camera is actually ON (props.stage is the wish)
+let dive = null;       // режиссёр пролёта внутрь острова (islandDive.js)
+let diving = false;    // пролёт идёт — остров уже выбран, второй выбор невозможен
 let modeIdleSince = null; // clock time the mode-stage orbit went idle (auto-return)
 let modeReturning = false;
 let modeHomePose = null;  // the default mode framing, for the idle auto-return
@@ -781,7 +788,10 @@ function setHover(id) {
   if (canvasEl.value) canvasEl.value.style.cursor = id ? 'pointer' : '';
 }
 
-const modeSelectable = () => stage === 'select' && flight && !flight.active;
+// Пока идёт пролёт внутрь острова, выбирать больше нечего: остров уже выбран,
+// камера едет, и любое второе нажатие по ТЗ игнорируется. Поэтому `diving` гасит
+// и наведение, и клик — одним признаком, а не двумя проверками в разных местах.
+const modeSelectable = () => stage === 'select' && flight && !flight.active && !diving;
 
 function onPointerMove(e) {
   if (coarsePointer || !modeSelectable()) return;
@@ -791,6 +801,11 @@ function onPointerMove(e) {
 function onPointerDown(e) {
   downX = e.clientX; downY = e.clientY;
   // A tap ANYWHERE mid-flight rides the camera out to the end pose (see skip()).
+  // ⚠️ Пролёт ВНУТРЬ острова сюда не попадает нарочно: перелёт дом⇄острова можно
+  // подгонять пальцем, потому что он возит между двумя стоянками и подгонка лишь
+  // приближает прибытие. Пролёт внутрь острова — уход со сцены, и его конец
+  // запускает смену экрана; дать по нему тыкать значит разрешить игроку
+  // выстрелить переходом раньше, чем кадр почернел.
   if (flight && flight.active) flight.skip();
 }
 
@@ -806,7 +821,41 @@ function onPointerUp(e) {
   }
   setHover(id); // hold the plate lit through the exit
   touchArmed = null;
-  emit('pick', id);
+  startDive(id);
+}
+
+// ── Пролёт внутрь выбранного острова ────────────────────────────────────────
+// Клик по плите больше не меняет адрес сам. Он запускает поездку камеры, и только
+// её прибытие отдаёт наверх 'pick' — по которому вид чернит кадр и уходит на
+// следующий экран. Разрыв сделан здесь, а не в виде, потому что владелец камеры —
+// сцена: вид не знает ни где стоит камера, ни куда целиться.
+//
+// Выбранная плита остаётся ПОДСВЕЧЕННОЙ на всю поездку (setHover выше её не
+// снимает, а кадр плит не гасится — см. вызов modePlates.update в цикле): игрок
+// летит в тот остров, который зажёгся у него под пальцем.
+function startDive(id) {
+  if (diving) return;                      // второе нажатие по ТЗ игнорируется
+  diving = true;
+  modeIdleSince = null;                    // мягкий возврат к рамке по умолчанию больше не нужен
+  modeReturning = false;
+  if (controls) controls.enabled = false;
+  emit('dive-start', id);
+
+  // При выключенных анимациях камера не едет вовсе — вид накрывает смену своим
+  // коротким затемнением. Сообщаем о «прибытии» сразу же: ехать нечему.
+  const aim = (!reduced && dive && modePlates) ? modePlates.aimFor(id) : null;
+  if (!aim || !dive.play(aim, { onArrive: () => emit('pick', id) })) {
+    emit('pick', id);
+  }
+}
+
+// Бросить поездку и вернуть сцену в рабочее состояние. Зовётся, когда игрок ушёл
+// с экрана мимо пролёта: «назад» в браузере, размонтирование. Камера остаётся где
+// застали — откатывать нечего, пролёт ничего не гасил (см. islandDive.js).
+function cancelDive() {
+  if (!diving) return;
+  diving = false;
+  dive?.cancel();
 }
 
 function onKeyDown() {
@@ -837,6 +886,9 @@ function onFlightArrive(where) {
 // /play/mode load, or reduced motion, where the caller covers the swap with a dim).
 function goStage(next, animated) {
   if (!flight || !controls) return;
+  // «Назад» в браузере посреди пролёта внутрь острова: поездка отменяется, камера
+  // остаётся где была, и дальше обычный перелёт уводит её отсюда сам.
+  cancelDive();
   const want = next === 'select' ? 'select' : 'home';
   if (want === stage && !flight.active) return;
   if (want === 'select') {
@@ -1106,6 +1158,10 @@ onMounted(() => {
   //     camera passes through and the HEXLASH sign standing in the corridor.
   flight = createTransitionFlight({ scene, camera, poseFor, reduced });
   flight.setLookHint(controls.target);
+  // Второй режиссёр камеры — пролёт внутрь острова. Одновременно с перелётом он
+  // работать не может: клик по плите возможен только когда перелёт уже сел
+  // (modeSelectable), а начавшийся пролёт снимает выбор до конца жизни экрана.
+  dive = createIslandDive({ camera, controls });
   refitSign();
   load.stage('stages');
 
@@ -1154,7 +1210,21 @@ onMounted(() => {
     // end fades with it — see farPresence / homeGlowGate.
     const presence = farPresence(); // plates / sign / haze
     const flying = flight ? flight.update(dt, t, presence) : false;
-    if (!flying) {
+    // Пролёт внутрь острова владеет камерой так же, как перелёт, но это ДРУГАЯ
+    // поездка: перелёт возит между двумя стоянками одного мира, эта уезжает со
+    // сцены навсегда. Общее у них только одно — пока едет любая, орбиту надо
+    // припарковать, иначе демпфирование OrbitControls тянет камеру назад каждый
+    // кадр и движение читается как дрожь.
+    const diveMoving = dive ? dive.update(dt) : false;
+    // ⚠️ `diving`, а не только `diveMoving`. Пролёт внутрь острова — билет в один
+    // конец: приехали и стоим до смены экрана. Без этого условия в тот же кадр,
+    // где поездка кончилась, просыпаются оба здешних хозяина камеры — мягкий
+    // возврат к рамке островов (modeIdleReturn) и демпфирование OrbitControls,
+    // у которого своя, ещё доотлётная, поза, — и камера уезжает из острова
+    // обратно. Под занавесом это читается как отскок: игрок долетел и его
+    // выдернуло. Замерено: камера доходила до цели ровно и уходила от неё за
+    // те же полсекунды, что поднимается чёрный.
+    if (!flying && !diveMoving && !diving) {
       if (stage === 'select') modeIdleReturn(t); // soft drift back to the default framing
       if (swayOn && stage === 'home') applyHomeSway(dt); // дыхание вокруг стартовой позы
       controls.update(); // damping (покачивание уже внесено выше)
@@ -1167,6 +1237,8 @@ onMounted(() => {
     glow?.follow(fighter.group.position); // ease the warm pool under the fighter
     // Plates only respond (hover light / emblem life) once the camera has landed —
     // and they cost nothing at all while the home is on screen, where they are hidden.
+    // Сторожит ТОЛЬКО перелёт. Плита, в которую летим, обязана держать свой свет до
+    // последнего кадра: погасить её здесь значит въехать в тёмный остров.
     modePlates?.update(t, dt, stage === 'select' && !flying, presence);
     // AFTER fighter.update() / dust.tick(), both of which rewrite what this gates.
     applyHomeGlowGate(homeGlowGate());
@@ -1268,6 +1340,10 @@ watch(
 );
 
 onBeforeUnmount(() => {
+  // Первым делом: поездка камеры, если она шла, обрывается здесь. Её обещание
+  // ('pick' по прибытии) дошло бы до уже размонтированного вида и увело бы адрес
+  // из-под следующего экрана. Отмена ничего не откатывает — см. islandDive.js.
+  cancelDive();
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }

@@ -8,7 +8,7 @@
      the design reference, NOT player data. Glow discipline: the only glows are
      the 3D fighter core + the FIGHT button — every other pink mark is matte. -->
 <template>
-  <div class="home-root" :class="{ 'hs-anim-in': introPlaying, 'is-away': stage !== 'home' }">
+  <div class="home-root" :class="{ 'hs-anim-in': introPlaying, 'is-away': stage !== 'home', 'is-diving': diving }">
     <!-- 3D stage (behind the chrome) -->
     <HomeScene
       :core-hue="coreHue"
@@ -19,6 +19,7 @@
       :ghost="ghost"
       :stage="stage"
       @arrived="onArrived"
+      @dive-start="onDiveStart"
       @pick="onPickMode"
     />
 
@@ -187,7 +188,7 @@
         :style="{ transform: `translate3d(${modePlateTags[door.id].x}px, ${modePlateTags[door.id].y}px, 0)` }"
         aria-hidden="true"
       >
-        <div class="mc-card" :class="{ 'is-shown': !flying && modePlateTags[door.id].visible }">
+        <div class="mc-card" :class="{ 'is-shown': !flying && !diving && modePlateTags[door.id].visible }">
           <span class="mc-name">{{ door.name }}</span>
           <span class="mc-desc">{{ door.desc }}</span>
         </div>
@@ -242,6 +243,7 @@ import { HexlashMark } from '@/components/brand/hexlashMark.js';
 import { homeFighterTag } from '@/scene/homeFighterTag.js';
 import { modePlateTags } from '@/scene/modePlateTags.js';
 import { PERF_ON, perfState } from '@/scene/perfProbe.js';
+import { raiseCurtain, LOADING } from '@/services/sceneLoading.js';
 import '@/styles/home.css';
 import '@/styles/cabinet.css';
 
@@ -259,6 +261,11 @@ const HOME_PATH = '/play/home';
 const routeStage = computed(() => (route.path === MODE_PATH ? 'select' : 'home'));
 const stage = ref(routeStage.value);
 const flying = ref(false);
+// Пролёт внутрь острова идёт: остров выбран, камера едет, интерфейс этого экрана
+// растворяется. Живёт отдельно от `flying` (перелёт дом⇄острова), потому что это
+// разные поездки с разным концом: после перелёта игрок остаётся здесь, после
+// пролёта — уходит на следующий экран.
+const diving = ref(false);
 const dim = ref(false);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -278,6 +285,9 @@ watch(routeStage, (v) => { if (v !== stage.value) goStage(v); });
 // the swap with a short dim rather than letting the world jump.
 async function goStage(next) {
   if (next === stage.value) return;
+  // «Назад» посреди пролёта: интерфейс возвращается вместе с камерой. Сама
+  // поездка отменяется в сцене — она владелец камеры (см. HomeScene.cancelDive).
+  diving.value = false;
   if (!reducedMotion) {
     flying.value = true;
     stage.value = next;
@@ -318,11 +328,38 @@ function onModeShop() {
   router.push({ path: HOME_PATH, query: { ...route.query, view: 'shop' } });
 }
 
-// A plate was chosen in 3D. These ARE screen changes (a different scene each way),
-// so they navigate normally and the transition cover handles them.
-function onPickMode(id) {
+// ── Выбран остров: растворение → пролёт → чёрный кадр → следующий экран ──────
+//
+// Три доли одной последовательности, и владельцы у них разные. Интерфейс гасит
+// этот вид (он им владеет), камеру везёт сцена (она владеет камерой), чёрный кадр
+// держит оболочка (он должен пережить смену адреса, а этот вид её не переживает).
+// Поэтому события два: 'dive-start' в начале и 'pick' по прибытии.
+
+// Камера тронулась. Гасим свой интерфейс — по классу, чтобы он растворился, а не
+// пропал: пропажа в кадр читается как сбой, растворение — как уход.
+function onDiveStart() {
+  diving.value = true;
+}
+
+// Камера приехала внутрь острова. ТОЛЬКО ТЕПЕРЬ чернеем и меняем адрес.
+//
+// ⚠️ Порядок здесь — требование ТЗ, а не вкус. Сборка следующей сцены не смеет
+// начаться, пока кадр не почернел полностью: она идёт в те же кадры, что и
+// движение камеры, и на телефоне пролёт от этого дёргается. Поэтому сначала
+// дожидаемся чёрного, и только потом router.push — он и запускает сборку.
+//
+// Занавес снимет роутер, когда следующий экран уже нарисован (см. afterEach).
+async function onPickMode(id) {
   const door = MODE_DOORS.find((d) => d.id === id);
-  if (door) router.push(door.to);
+  if (!door) return;
+  const black = await raiseCurtain({
+    // При выключенных анимациях пролёта не было вовсе, и держать полное затемнение
+    // не за чем — гасим короче.
+    ms: reducedMotion ? LOADING.CURTAIN_REDUCED_MS : LOADING.CURTAIN_MS,
+  });
+  // Занавес перебили (ушли отсюда мимо пролёта) — решать уже нечего.
+  if (!black) return;
+  router.push(door.to);
 }
 
 // View + state. The home renders a single fixed state (the empty floor — no
@@ -487,6 +524,26 @@ function onArrangePlace() { arrange.value = false; }
 .home-root.is-away .hs-dock,
 .home-root.is-away .edit-space,
 .home-root.is-away .fighter-tag {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--d-hover) var(--e-weight), visibility 0s linear var(--d-hover);
+}
+
+/* ───────── выбран остров: интерфейс уходит раньше камеры ─────────
+   Первая доля последовательности «растворение → пролёт → чёрный кадр» (ТЗ). Гасим
+   ИМЕННО полосу этого экрана: подписи островов уходят сами, у .mc-card своё
+   растворение по признаку is-shown, и оно снято тем же `diving`.
+
+   Почему классом, а не v-show, которым полоса снимается на время перелёта: v-show
+   убирает элемент в тот же кадр, и полоса исчезает щелчком. На перелёте это не
+   видно — там кадр и так уезжает, — а здесь камера ещё стоит, и щелчок читается
+   как сбой. Нужно растворение.
+
+   visibility следом за непрозрачностью и по той же причине, что у правила выше:
+   кнопки полосы несут pointer-events:auto, и просто прозрачная полоса продолжала
+   бы ловить нажатия поверх сцены, в которую игрок уже летит. */
+.home-root.is-diving .mode-strip {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
