@@ -261,7 +261,20 @@ function plateShape(halfW, halfD, chamfer) {
 
 // One plate slab: faceted extruded body + the shared hex-grid top + a MATTE rim
 // outline. Returns the meshes whose brightness the lit/dim level drives.
-function buildSlab(halfW, halfD, height, hexTex, o) {
+/**
+ * Экспортируется, потому что форму острова переиспользуют ворота арены
+ * (gatePlates.js): язык островов в игре один, и вторая копия этой геометрии
+ * означала бы, что скос, шестигранная крышка и обводка могут разойтись между
+ * двумя дверями. Оформление при этом СВОЁ у каждого — всё, что красит, берётся
+ * из `o`, а не зашито здесь.
+ *
+ * @param {number} halfW  половина ширины плиты
+ * @param {number} halfD  половина глубины
+ * @param {number} height толщина
+ * @param {THREE.Texture} hexTex тайл шестигранной решётки для крышки
+ * @param {object} o      оформление: chamfer, body, hexTile, rim, rimOpacity
+ */
+export function buildSlab(halfW, halfD, height, hexTex, o) {
   const group = new THREE.Group();
   const { shape, pts } = plateShape(halfW, halfD, o.chamfer);
 

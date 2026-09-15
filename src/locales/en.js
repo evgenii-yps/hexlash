@@ -152,6 +152,13 @@ export default {
     // строка гостя
     guestLine: "GUEST · WORK IS KEPT WHILE THIS TAB IS OPEN",
   },
+  // Ворота арены — пространство за дверью ARENA. Имена и строки самих режимов
+  // лежат в data/arenaModes.js рядом с их размерами состава: они игровые данные,
+  // а не оформление, и раздваивать их между двумя файлами нечем.
+  gate: {
+    soon: "SOON",
+    lockedNote: "NOT OPEN YET",
+  },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.
     chipHandle: "GHOST_0xA4",

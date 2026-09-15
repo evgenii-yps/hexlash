@@ -13,9 +13,14 @@
      самая лёгкая из сцен — пол, купол, три источника света, ноль фигур, ноль
      частиц, — и две сцены никогда не живут в памяти одновременно.
 
-     ПУСТО — ЭТО ПОКА ЧЕСТНО. Острова выбора режима и бойцов ставит следующая
-     работа. Сейчас здесь нужно проверить одно: дорогу. Пол и туман дают ей
-     землю и глубину, без них подлёт камеры некуда мерить.
+     ЧТО В НЁМ СТОИТ. Первые острова — выбор режима боя: DUEL живой, SQUAD
+     заперт с подписью SOON (gatePlates.js). Форма острова взята готовой от
+     островов дома, отделка своя. Дальше здесь встанут острова выбора бойцов и
+     объёмная кнопка старта — их ставят следующие работы.
+
+     ДОРОГА ВНУТРЬ ОСТРОВА — ТА ЖЕ. Клик по живому острову увозит камеру внутрь
+     тем же режиссёром (islandDive), что и на экране режимов: своей поездки
+     ворота не заводят. Клик по запертому не ведёт никуда и коротко дрожит.
 
      ПОДЛЁТ КАМЕРЫ. Сцена собирается с камерой в отодвинутой позе и НЕ трогает её,
      пока стоит экран загрузки. В тот кадр, когда экран НАЧИНАЕТ растворяться,
@@ -39,10 +44,17 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { makeHexGridTexture } from './arenaTextures.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { createGateApproach } from './gateApproach.js';
+import { createIslandDive } from './islandDive.js';
+import { buildGatePlates } from './gatePlates.js';
+import { setGatePlateTag, setGatePlateHover, setGatePlateRefused, clearGatePlateTags } from './gatePlateTags.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';
 
-const emit = defineEmits(['arrived']);
+// 'arrived' — подлёт доехал, игрок может выбирать.
+// 'dive-start' — камера тронулась внутрь острова: виду пора растворить свой хром.
+// 'pick' — камера доехала внутрь острова, режим выбран: виду пора менять адрес.
+// 'refused' — клик по запертому острову: перехода нет, вид только отзывается.
+const emit = defineEmits(['arrived', 'dive-start', 'pick', 'refused']);
 
 // ───────────────────────── CONFIG (ручки приёмки) ─────────────────────────
 // Пол. Одно ровное гекс-поле от края до края — без центральной плиты и без шва:
@@ -76,7 +88,12 @@ const LIGHT = {
 // орбита. Клампы обязательны (hexlash-3d §4): под пол не заглянуть, зум в
 // коридоре, цель орбиты неподвижна — панорамы здесь нет.
 const CAM = {
-  rest:   [0, 5.4, 12.5],   // поза покоя
+  // Поза покоя — то, к чему привозит подлёт. Их две, по раскладке островов:
+  // лёжа пара стоит поперёк кадра, стоя уходит в глубину, и с лежачей позы
+  // ближний остров упирался в нижнюю кромку экрана, а дальний терялся.
+  rest:         [0, 5.4, 12.5],
+  restPortrait: [0, 9.6, 17.5],
+  portraitAspect: 1.0,      // уже этого — портретная поза (тот же порог, что у островов)
   look:   [0, 1.1, 0],      // цель орбиты
   polarMin: 0.60,
   polarMax: 1.38,
@@ -88,10 +105,18 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer = null, scene = null, camera = null, controls = null;
-let backdrop = null, field = null, approach = null, load = null;
+let backdrop = null, field = null, approach = null, load = null, plates = null, dive = null;
 let resizeObserver = null, onVisibility = null, stopVeilWatch = null;
+let onPointerMove = null, onPointerDown = null, onPointerUp = null;
 let reduced = false;
 let arrived = false;
+let diving = false;
+// Откуда начался клик — чтобы отличить выбор от вращения камеры. Порог тот же,
+// что на островах дома: 5 пикселей.
+let downAt = null;
+const CLICK_SLOP = 5;
+const _ray = new THREE.Raycaster();
+const _ptr = new THREE.Vector2();
 
 function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
@@ -138,7 +163,7 @@ function buildField(maxAniso) {
 }
 
 onMounted(() => {
-  load = beginSceneLoad(['renderer', 'field', 'camera']);
+  load = beginSceneLoad(['renderer', 'field', 'plates', 'camera']);
 
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
@@ -172,7 +197,13 @@ onMounted(() => {
   scene.add(backdrop.mesh);
   load.stage('field');
 
-  const rest = new THREE.Vector3(...CAM.rest);
+  plates = buildGatePlates({ maxAniso: renderer.capabilities.getMaxAnisotropy() });
+  scene.add(plates.group);
+  plates.layout(w / h);
+  load.stage('plates');
+
+  const restFor = (a) => new THREE.Vector3(...(a < CAM.portraitAspect ? CAM.restPortrait : CAM.rest));
+  let rest = restFor(w / h);
   const look = new THREE.Vector3(...CAM.look);
 
   controls = new OrbitControls(camera, renderer.domElement);
@@ -186,6 +217,10 @@ onMounted(() => {
   controls.maxDistance = CAM.distMax;
 
   approach = createGateApproach({ camera, controls });
+  // Тот же режиссёр, что увозит камеру внутрь острова на экране режимов. Ворота
+  // не заводят своего: дорога внутрь острова в игре одна, и вести её должен один
+  // файл — иначе две одинаковые на вид поездки разойдутся на первой же правке.
+  dive = createIslandDive({ camera, controls });
 
   // Камера ставится ЗАРАНЕЕ и сразу в НАЧАЛО дороги, а не в позу покоя: пока
   // стоит экран загрузки, кадры всё равно рисуются, и камера должна досчитывать
@@ -228,14 +263,92 @@ onMounted(() => {
     );
   }
 
+  // ── наведение и выбор ──────────────────────────────────────────────────
+  // Луч бьётся в невидимые коробки островов, а не в их геометрию: остров должен
+  // быть ОДНИМ предметом, иначе наведение зависит от того, попал курсор в крышку
+  // или в бок.
+  function pickAt(clientX, clientY) {
+    if (!plates || !canvasEl.value) return null;
+    const r = canvasEl.value.getBoundingClientRect();
+    _ptr.x = ((clientX - r.left) / r.width) * 2 - 1;
+    _ptr.y = -((clientY - r.top) / r.height) * 2 + 1;
+    _ray.setFromCamera(_ptr, camera);
+    const hit = _ray.intersectObjects(plates.pickables, false)[0];
+    return hit ? hit.object.userData.gatePlate : null;
+  }
+
+  function applyHover(id) {
+    if (!plates) return;
+    plates.setHover(id);
+    setGatePlateHover(plates.hovered);
+    // Курсор-палец — только там, где клик что-то делает. На запертом острове
+    // палец обещал бы переход, которого не будет.
+    canvasEl.value.style.cursor = (id && !plates.plates[id].locked) ? 'pointer' : '';
+  }
+
+  // Выбор живого острова: гасим свой интерфейс, везём камеру внутрь и только по
+  // прибытии отдаём выбор наружу. Порядок тот же, что на экране режимов, и по той
+  // же причине — чернеть и менять адрес можно лишь когда камера доехала.
+  function choose(id) {
+    if (diving || !plates) return;
+    diving = true;
+    emit('dive-start');
+    const aim = (!reduced && dive) ? plates.aimFor(id) : null;
+    // Прицела нет (выключены анимации) — переход мгновенный, без поездки.
+    if (!aim || !dive.play(aim, { onArrive: () => emit('pick', id) })) emit('pick', id);
+  }
+
+  function refuse(id) {
+    if (!plates) return;
+    plates.refuse(id);
+    setGatePlateRefused(id);
+    emit('refused', id);
+    setTimeout(() => setGatePlateRefused(null), 420);
+  }
+
+  onPointerMove = (e) => {
+    if (diving || !arrived) return;
+    if (downAt) return;                 // тянут камеру — наведение не трогаем
+    applyHover(pickAt(e.clientX, e.clientY));
+  };
+  onPointerDown = (e) => { downAt = { x: e.clientX, y: e.clientY }; };
+  onPointerUp = (e) => {
+    const from = downAt; downAt = null;
+    if (!from || diving || !arrived) return;
+    if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > CLICK_SLOP) return;  // это было вращение
+    const id = pickAt(e.clientX, e.clientY);
+    if (!id) return;
+    if (plates.plates[id].locked) refuse(id);
+    else choose(id);
+  };
+  canvasEl.value.addEventListener('pointermove', onPointerMove);
+  canvasEl.value.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointerup', onPointerUp);
+
   const clock = new THREE.Clock();
   const loop = () => {
     const dt = Math.min(clock.getDelta(), 0.05);
 
-    // Пока камера едет, орбита к ней не прикасается: два владельца одной камеры
-    // в одном кадре — это дёрганье, которое потом ищут в самой поездке.
-    const moving = approach ? approach.update(dt) : false;
-    if (!moving) controls.update();
+    const t = clock.elapsedTime;
+
+    // Пока камера едет — подлётом или пролётом внутрь острова, — орбита к ней не
+    // прикасается: два владельца одной камеры в одном кадре дают дёрганье,
+    // которое потом ищут в самой поездке.
+    const approaching = approach ? approach.update(dt) : false;
+    const divingNow = dive ? dive.update(dt) : false;
+    if (!approaching && !divingNow) controls.update();
+
+    if (plates) {
+      plates.update(t, dt);
+      // Подписи пишутся каждый кадр — они приклеены к настоящим островам, а не
+      // стоят в углу. Пока камера едет внутрь острова, подписи скрыты: вид их в
+      // это время растворяет, и считать для них место незачем.
+      const cw = el.clientWidth, ch = el.clientHeight;
+      for (const p of plates.list) {
+        const sc = plates.captionScreen(p.id, camera, cw, ch);
+        setGatePlateTag(p.id, sc.x, sc.y, sc.visible && arrived && !diving);
+      }
+    }
 
     renderer.render(scene, camera);
     load.frame();
@@ -254,26 +367,43 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
+    plates?.layout(cw / ch);
+    // Сменилась ориентация — сменилась и поза покоя: пара разложилась иначе, и
+    // кадр обязан её вместить. Двигаем камеру, только если она сейчас ничья:
+    // во время поездки у неё есть владелец, а после — игрок, который сам её
+    // повернул, и отменять его поворот сменой размера окна нельзя.
+    const next = restFor(cw / ch);
+    if (!next.equals(rest)) {
+      rest = next;
+      if (!arrived && approach && !reduced) approach.park(rest, look);
+      else if (!arrived) { camera.position.copy(rest); camera.lookAt(look); }
+    }
     load?.unsettle();
   });
   resizeObserver.observe(el);
 });
 
 onBeforeUnmount(() => {
-  // Порядок: сначала оборвать поездку — её отложенный вызов не должен догнать
-  // уже снятый экран, — и только потом разбирать сцену.
+  // Порядок: сначала оборвать обе поездки — их отложенные вызовы не должны
+  // догнать уже снятый экран, — и только потом разбирать сцену.
   approach?.cancel();
+  dive?.cancel();
   stopVeilWatch?.();
+  clearGatePlateTags();
   load?.dispose();
   resizeObserver?.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
+  if (onPointerMove) canvasEl.value?.removeEventListener('pointermove', onPointerMove);
+  if (onPointerDown) canvasEl.value?.removeEventListener('pointerdown', onPointerDown);
+  if (onPointerUp) window.removeEventListener('pointerup', onPointerUp);
   renderer?.setAnimationLoop(null);
   controls?.dispose();
+  plates?.dispose();
   field?.dispose();
   backdrop?.dispose();
   renderer?.dispose();
   renderer = scene = camera = controls = null;
-  field = backdrop = approach = load = null;
+  field = backdrop = approach = dive = plates = load = null;
 });
 </script>
 
