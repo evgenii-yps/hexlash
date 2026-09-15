@@ -342,6 +342,13 @@ export default {
     successMsg: "Your email has been successfully verified! Thank you for confirming. You can continue using the service as usual.",
     errorMsg: "There was an issue verifying your email. Please check the code and try again. If the problem persists, please contact support.",
   },
+  // Arena — the fight scene. Only the failure state speaks here: everything else
+  // in the arena is 3D, and the dev panel is not player-facing copy.
+  arena: {
+    failedTitle: "The arena didn't open",
+    failedNote: "The scene failed to build. This is on us, not on your connection. Head home and step back in.",
+    failedBack: "Back to home",
+  },
   errors: {
     pageNotFound: "Page not found",
     error404Code: "ERROR 404",

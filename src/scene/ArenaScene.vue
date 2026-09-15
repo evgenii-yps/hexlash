@@ -14,6 +14,14 @@
   <div ref="wrap" class="arena-wrap">
     <canvas ref="canvasEl" class="arena-canvas" />
     <div class="arena-vignette" />
+    <!-- Сцена не собралась за отведённое время. Честная причина и дверь наружу
+         вместо боя в недостроенной сцене. Матовое, без розового и без свечения:
+         это сообщение о поломке, а не призыв к действию. -->
+    <div v-if="sceneFailed" class="arena-failed">
+      <p class="af-title">{{ t.arena.failedTitle }}</p>
+      <p class="af-note">{{ t.arena.failedNote }}</p>
+      <button type="button" class="af-back" @click="onFailedBack">{{ t.arena.failedBack }}</button>
+    </div>
     <!-- Always-on dev-panel show/hide toggle (small corner). The panel auto-hides
          when a bout starts (clean player view) + returns when it ends; in the SIG
          auto-cycle the bout never ends, so this is the only way back. -->
@@ -53,6 +61,8 @@ import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.j
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
+import { useRouter } from 'vue-router';
+import { t } from '@/locales/index.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // Model-brain request (hybrid intention layer). Injected into each fighter; it
@@ -171,6 +181,28 @@ let runFight = null;
 // Режим показа: бой запускается один раз за загрузку окна. Повтор делает
 // страница-дека, перезагружая окно, — своей кнопки повтора у арены нет.
 let showcaseStarted = false;
+
+// ── Автозапуск боя в обычном пути игрока ────────────────────────────────────
+// До этой правки бой начинался сам ТОЛЬКО в режиме показа для деки: игрок,
+// доведённый до арены, видел двух неподвижных бойцов, а запускала их кнопка
+// служебной панели или клавиша. То есть путь в бой заканчивался ничем.
+//
+// Ждём ГОТОВНОСТЬ СЦЕНЫ, а не таймер от начала загрузки. Признак готовности —
+// снятый экран загрузки: он уходит, когда собраны все объявленные этапы И три
+// кадра подряд нарисовались одинаковыми (см. services/sceneLoading.js). Таймер
+// от начала загрузки на медленном телефоне выстрелил бы в пустую сцену.
+const AUTO_START_MS = 1500; // пауза между «сцена готова» и первым ударом
+// Полторы секунды — не произвол: мгновенный старт не даёт разглядеть, кто вышел
+// драться, а пауза длиннее читается как зависание. Подбирается глазом.
+let autoStarted = false;    // один заход на арену — один запуск, повтора нет
+let autoTimer = null;       // отменяется при уходе со страницы
+
+// Сцена не собралась. Молча запускать бой в такой сцене нельзя — игрок получит
+// пустой экран и решит, что игра сломалась; поэтому показываем честную причину
+// и дверь наружу.
+const SCENE_TIMEOUT_MS = 10000;
+let sceneTimer = null;
+const sceneFailed = ref(false);
 // SIG dev stand: sigCycle owns the auto-restart-on-KO loop (distinct from the
 // normal FIGHT win-and-freeze). runSigFight assigned in onMounted. sigRestartAt
 // is loop time the next bout fires; lastFrameT is the live loop time (so an
@@ -190,6 +222,11 @@ let fightStartT = 0;
 // fresh bout begins with no накал.
 let lastExchangeT = 0;
 const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
+
+const router = useRouter();
+// Дверь наружу из несобравшейся сцены — домой, а не «назад»: назад может вести
+// на тот же адрес арены, и игрок закольцуется на той же поломке.
+function onFailedBack() { router.push('/play/home'); }
 
 function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
@@ -264,6 +301,21 @@ const noteExchange = () => { if (fightStartT) lastExchangeT = lastFrameT; };
 onMounted(() => {
   // Build stages, in the order they happen below.
   load = beginSceneLoad(['renderer', 'arena', 'fighters', 'controls']);
+
+  // Сторож сборки. Если за SCENE_TIMEOUT_MS сцена так и не объявила готовность,
+  // бой НЕ запускаем и говорим об этом вслух. Своя страховка загрузки снимает
+  // экран позже (15 с) и просто пускает игрока внутрь — в недостроенную сцену;
+  // раньше неё мы успеваем сказать правду и дать дверь наружу.
+  //
+  // Вкладка в фоне — не отказ: кадры там не идут вовсе, готовности взяться
+  // неоткуда. В этом случае сторож заводится заново, а не обвиняет сцену.
+  const watch = () => {
+    sceneTimer = null;
+    if (autoStarted || !loadingState.active) return; // успели, сторож не нужен
+    if (document.hidden) { sceneTimer = setTimeout(watch, SCENE_TIMEOUT_MS); return; }
+    sceneFailed.value = true;
+  };
+  sceneTimer = setTimeout(watch, SCENE_TIMEOUT_MS);
 
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
@@ -600,6 +652,16 @@ onMounted(() => {
       postShowcase('ready');
       runFight();
     }
+
+    // Обычный путь игрока: то же условие готовности, но с паузой, чтобы игрок
+    // успел увидеть, кто вышел драться. Флаг ставится СРАЗУ, а не в таймере, —
+    // иначе следующие кадры успеют завести ещё один таймер, и бой перезапустится
+    // сам собой через полторы секунды после начала.
+    if (!showcase && !autoStarted && !sceneFailed.value && !loadingState.active) {
+      autoStarted = true;
+      if (sceneTimer) { clearTimeout(sceneTimer); sceneTimer = null; } // успели — сторож больше не нужен
+      autoTimer = setTimeout(() => { autoTimer = null; runFight(); }, AUTO_START_MS);
+    }
   };
   renderer.setAnimationLoop(loop);
 
@@ -637,6 +699,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  // Первым делом — отложенный запуск боя и сторож сборки. Игрок мог уйти внутри
+  // тех полутора секунд; без отмены таймер разбудил бы уже разобранную сцену.
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+  if (sceneTimer) { clearTimeout(sceneTimer); sceneTimer = null; }
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
@@ -745,6 +811,52 @@ onBeforeUnmount(() => {
   color: #fff;
   border-color: var(--pink);
 }
+.arena-failed {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  text-align: center;
+  background: var(--void);
+}
+.af-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-2xl);
+  letter-spacing: var(--ls-title);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.af-note {
+  margin: 0;
+  max-width: 46ch;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.af-back {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  letter-spacing: var(--ls-meta);
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--e-settle), color var(--d-hover) var(--e-settle);
+}
+.af-back:hover { border-color: var(--line-strong); }
+
 .arena-panel-toggle.on {
   color: var(--pink);
   border-color: var(--pink);
