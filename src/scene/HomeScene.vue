@@ -342,6 +342,74 @@ function followFighter(dt) {
 
 const HOME_ORBIT = { minDist: 3.5, maxDist: 12, polarMin: 0.3, polarMax: 1.4 };
 
+// ── Домашнее покачивание ──
+// ⚠️ 14.09.2026, решение владельца. Раньше камера дома уходила в БЕСКОНЕЧНЫЙ обход
+// (`controls.autoRotate`) и не останавливалась никогда — только от касания пальцем.
+// Замерено на живой странице: 25 секунд прогона, камера всё ещё едет. Следствие —
+// вывеска стоит в мире неподвижно, а по кадру уползает вместе с камерой: разрыв
+// между центром слова и центром платформы за полный оборот гулял от −293 до +275 px,
+// то есть 67 % ширины кадра. Настроить горизонталь вывески под это нельзя — это
+// подбор константы для величины, которая не константа (см. signX в transitionFlight).
+//
+// Поэтому обход заменён покачиванием ВОКРУГ СТАРТОВОЙ ПОЗЫ: камера уходит на
+// amplitudeDeg в одну сторону, возвращается, уходит в другую. Сцена остаётся живой,
+// но слово никогда не уезжает далеко от места.
+//
+// ⚠️ АМПЛИТУДА ПОДОБРАНА ЗАМЕРОМ, а не назначена. Её держит ПОРТРЕТ, где слово
+// занимает 57 % ширины кадра: поля до краёв там 82 px слева и 85 справа, и каждый
+// градус съедает ~13.7 px. На ±4° остаётся 27 / 34 px — слово целиком в кадре с
+// запасом; на ±6° поле уходит в ноль, на ±6.5° слово уже режется краем. В альбомных
+// раскладках запас огромный (312…426 px на ±9°), они не ограничивают.
+// Вторым счётом та же ±4° даёт уход слова от места покоя на 2.5 % ширины кадра
+// (844), 3.05 % (1280 и 1920) — то есть ровно тот порог, который просили.
+// Расширяется одним числом, если на телефоне покажется мёртвым.
+//
+// ⚠️ ПЕРИОД — полный цикл (туда, обратно, в другую сторону, обратно). На 40 с
+// наибольшая угловая скорость выходит 0.63°/с против ~3.6°/с у прежнего обхода на
+// шестидесяти кадрах — вшестеро медленнее, читается как дыхание, а не как качели.
+// Синус сам даёт замедление у краёв дуги: быстрее всего он идёт через середину и
+// останавливается на концах.
+const HOME_SWAY = {
+  amplitudeDeg: 4,  // половина дуги: столько камера уходит в каждую сторону
+  periodSec: 40,    // полный цикл покачивания
+};
+// Живо до первого касания — ровно как жил прежний автоповорот.
+let swayOn = false;
+let swayPhase = 0;    // фаза синуса; растёт по dt, а не по часам (см. ниже)
+let swayApplied = 0;  // сколько радиан покачивания уже внесено в камеру
+const _swayOff = new THREE.Vector3();
+const _swaySph = new THREE.Spherical();
+
+/**
+ * Один кадр покачивания. Поворачивает камеру вокруг ТЕКУЩЕГО пивота на разницу
+ * между тем, где покачивание должно быть сейчас, и тем, сколько уже внесено.
+ *
+ * Именно разницу, а не абсолютный угол: пивот дома не стоит на месте — он лениво
+ * тянется за бродящим бойцом (followFighter). Выставлять азимут абсолютно означало
+ * бы каждый кадр отменять этот увод и дёргать камеру.
+ *
+ * ⚠️ И фаза идёт по dt, а не по `clock.getElapsedTime()`. Часы сцены не тикают,
+ * пока вкладка в фоне, и первый же кадр после возвращения приносит всю паузу разом —
+ * по абсолютному времени покачивание прыгнуло бы в случайную точку дуги. Шаг по
+ * ограниченному dt переживает это незаметно. Он же делает покачивание независимым
+ * от частоты кадров: у прежнего автоповорота её не было — OrbitControls звали без
+ * deltaTime, и обход шёл per-frame, то есть на телефоне вчетверо быстрее, чем в
+ * замере.
+ */
+function applyHomeSway(dt) {
+  if (!controls || !camera) return;
+  swayPhase += Math.min(Math.max(dt, 0), 0.1) * (2 * Math.PI / HOME_SWAY.periodSec);
+  const want = THREE.MathUtils.degToRad(HOME_SWAY.amplitudeDeg) * Math.sin(swayPhase);
+  const delta = want - swayApplied;
+  if (delta === 0) return;
+  swayApplied = want;
+  _swayOff.copy(camera.position).sub(controls.target);
+  _swaySph.setFromVector3(_swayOff);
+  _swaySph.theta += delta;
+  _swayOff.setFromSpherical(_swaySph);
+  camera.position.copy(controls.target).add(_swayOff);
+}
+
 // The home pose the player left when they pressed FIGHT — the way back lands
 // exactly there rather than on some canonical framing.
 let homeReturnPose = null;
@@ -497,9 +565,9 @@ function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(
  *
  * ⚠️ And not the drift envelope either, which was tried and measured and does not
  * work. This camera does not hold still: the pivot trails the wandering fighter by up
- * to a unit either way (followFighter), it auto-orbits until the player first touches
- * it (controls.autoRotate), and after that the player owns it outright. A unit of
- * pivot at this distance swings the word some sixty screen pixels — against a word
+ * to a unit either way (followFighter), it sways about the opening pose until the
+ * player first touches it (HOME_SWAY), and after that the player owns it outright.
+ * A unit of pivot at this distance swings the word some sixty screen pixels — against a word
  * forty-six pixels tall and a guard of twenty. Sizing for the worst corner of that
  * drift left the word at five per cent of the frame on every layout, which is not a
  * word. So the guard is held at the frame the screen opens on, and the drift is what
@@ -576,7 +644,7 @@ function applyHomeOrbit() {
   controls.maxPolarAngle = HOME_ORBIT.polarMax;
   controls.minAzimuthAngle = -Infinity;
   controls.maxAzimuthAngle = Infinity;
-  controls.autoRotate = false; // the intro auto-orbit is a first-visit thing only
+  swayOn = false; // покачивание, как и прежний автоповорот, — дело первого захода
 }
 
 // …and at the mode stage: a FULL circle around the pair. The plates stand in the
@@ -1001,10 +1069,11 @@ onMounted(() => {
   controls.minPolarAngle = 0.3; // ~17° from vertical
   controls.maxPolarAngle = 1.4; // ~80° — just above horizontal, never under
   // Horizontal: full 360° (no azimuth limit — no underside sideways).
-  // Gentle intro auto-orbit that hands control to the player on first interaction.
-  controls.autoRotate = !reduced;
-  controls.autoRotateSpeed = 0.6;
-  controls.addEventListener('start', () => { controls.autoRotate = false; });
+  // Покачивание вокруг стартовой позы, отдающее камеру игроку с первого касания.
+  // Раньше здесь был бесконечный обход — см. HOME_SWAY, почему заменён.
+  // При системной «уменьшить движение» камера просто стоит в стартовой позе.
+  swayOn = !reduced;
+  controls.addEventListener('start', () => { swayOn = false; });
   controls.update();
 
   // --- The MODE stage. Two smaller plates standing a long way down -Z in the SAME
@@ -1058,7 +1127,7 @@ onMounted(() => {
     flight.snapTo('mode');
     applyModeOrbit();
     modeIdleSince = 0;
-    controls.autoRotate = false;
+    swayOn = false;
     controls.update();
   }
   emit('arrived', stage);
@@ -1087,7 +1156,8 @@ onMounted(() => {
     const flying = flight ? flight.update(dt, t, presence) : false;
     if (!flying) {
       if (stage === 'select') modeIdleReturn(t); // soft drift back to the default framing
-      controls.update(); // damping + intro auto-orbit (until first interaction)
+      if (swayOn && stage === 'home') applyHomeSway(dt); // дыхание вокруг стартовой позы
+      controls.update(); // damping (покачивание уже внесено выше)
     }
     if (!reduced) director?.update(t, dt); // pick targets + feed the lure / idle actions
     fighter?.update(t, camera); // the body walks the lure / idles (its own footwork)
