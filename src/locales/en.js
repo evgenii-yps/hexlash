@@ -147,9 +147,8 @@ export default {
     rosterEmptyTitle: "YOUR ROSTER IS EMPTY",
     rosterEmptyBody: "A FIGHTER IS BORN WITH A CORE. TAKE ONE AND THE HALL OPENS.",
     newFighter: "NEW FIGHTER",
-    // кнопка боя
-    fight: "FIGHT",
-    fightBlocked: "ARENA UNREACHABLE · CANNOT ENTER",
+    // подписи кнопки боя (fight / fightBlocked) сняты 15.09.2026 вместе с самой
+    // кнопкой: из зала в бой больше не уходят, см. ForgePanel.vue
     // строка гостя
     guestLine: "GUEST · WORK IS KEPT WHILE THIS TAB IS OPEN",
   },

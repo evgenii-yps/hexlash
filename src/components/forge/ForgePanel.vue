@@ -1,23 +1,29 @@
 <!-- ForgePanel — the FORGE hall's panel: everything the player reads and touches
      beside the 3D hall, in one column.
 
-     Six blocks, top to bottom:
+     Five blocks, top to bottom:
        head    — who is selected: name, his core in the core's own colour, fights
        tree    — the existing upgrade mechanic (ForgeTree), unchanged
        style   — what he is built out of, in words
        roster  — the whole roster as a list, so picking never depends on hitting a
                  body in the 3D hall (that still works; it is no longer the only way)
-       fight   — the way OUT of the hall. The screen's one hero glow
        guest   — the honesty line, kept quiet
 
-     WHAT SCROLLS. The head and the foot (fight + guest) are pinned; the tree, the
-     style line and the roster share what is left and scroll. The main action is
-     never below the fold, in any of the three layouts.
+     ОТСЮДА БОЛЬШЕ НЕ УХОДЯТ В БОЙ (15.09.2026, работа D). Здесь стояла плита
+     FIGHT — шестой блок и главное действие экрана. Пока она была, в игре жили
+     два входа в бой, и этот минул выбор состава: он отправлял драться того, кто
+     открыт в зале. Сегодня это незаметно, потому что боец всегда один, — но в
+     тот день, когда состав потребует двоих, вход из зала молча увёл бы одного.
+     Вход теперь один: дом → FIGHT → остров ARENA → выбор состава → арена. Зал
+     остаётся мастерской: сюда приходят работать над бойцом и уходят полосой
+     наверху (← BACK).
 
-     WHAT GLOWS. Exactly two things, and both are spoken for: the FIGHT plate
-     carries --glow-hero, the core sign in the head carries --glow-select. The
-     tree's core used to have a third (a blurred, endlessly breathing halo) — it
-     is gone, see ForgeTree.vue.
+     WHAT SCROLLS. The head is pinned and so is the guest line; the tree, the
+     style line and the roster share what is left and scroll.
+
+     WHAT GLOWS. Одно: знак ядра в шапке несёт --glow-select. Вторым свечением
+     была плита FIGHT, и она ушла вместе с работой D. У дерева когда-то было
+     третье (размытый бесконечно дышащий ореол) — его нет, см. ForgeTree.vue.
 
      OWNS NOTHING. Roster, selection, spend and status all arrive as props; every
      change leaves as an event. Whose roster it is and where it is stored is the
@@ -135,20 +141,13 @@
       </section>
     </div>
 
-    <!-- ── 5 · the way out — the screen's one hero glow ──────────────────── -->
-    <footer class="fp-foot">
-      <button
-        type="button" class="fp-fight" :disabled="!canFight"
-        :aria-describedby="canFight ? null : 'fp-why'"
-        @click="$emit('fight')"
-      >
-        <span class="plinth" aria-hidden="true"></span>
-        <span class="face">{{ t.forge.fight }}</span>
-      </button>
-      <p v-if="!canFight" id="fp-why" class="fp-why">{{ t.forge.fightBlocked }}</p>
-
-      <!-- ── 6 · guest ──────────────────────────────────────────────────── -->
-      <p v-if="isGuest" class="fp-guest">{{ t.forge.guestLine }}</p>
+    <!-- ── 5 · guest ─────────────────────────────────────────────────────
+         Подвал существует, только когда в нём есть что сказать. Раньше в нём
+         стояла плита FIGHT и он был всегда; без неё у зарегистрированного
+         игрока остался бы пустой отчёркнутый поясок под списком — дыра ровно
+         на месте снятой кнопки. Пустого подвала нет: место забирает список. -->
+    <footer v-if="isGuest" class="fp-foot">
+      <p class="fp-guest">{{ t.forge.guestLine }}</p>
     </footer>
   </aside>
 </template>
@@ -167,7 +166,6 @@ const props = defineProps({
   resource: { type: Number, required: true },
   rosterMax: { type: Number, required: true },
   isGuest: { type: Boolean, default: false },
-  canFight: { type: Boolean, default: false },
   // 'ready' | 'loading' | 'error' — what the HEAD knows about the picked fighter
   status: { type: String, default: 'ready' },
   // the same three for the TREE, which can fail on its own while the head is fine
@@ -177,7 +175,7 @@ const props = defineProps({
   retrying: { type: Boolean, default: false },
 });
 
-defineEmits(['pick', 'toggle', 'fight', 'new-fighter', 'retry']);
+defineEmits(['pick', 'toggle', 'new-fighter', 'retry']);
 
 const treeRef = ref(null);
 

@@ -18,11 +18,6 @@
      тёмным залом стоит реальных кадров на телефоне и выглядит так же. */
   --core: var(--core-skala);                 /* заменяется на цвет выбранного бойца */
   --core-sup: color-mix(in srgb, var(--core) var(--core-sup-mix), var(--ink));
-
-  /* Форма плиты FIGHT — это ГЕОМЕТРИЯ компонента (Документ А 4.1), а не
-     значение палитры: она вычисляется от собственной высоты и потому живёт
-     здесь, как та же форма живёт в home.css. Скруглений нет, срезаны углы. */
-  --fp-hex: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
 }
 
 /* ── hovered fighter's callsign — follows the body on screen ─────────────── */
@@ -62,10 +57,11 @@
      · phone, upright  → a band along the BOTTOM, full width
 
    WHAT SCROLLS. Head and foot are pinned; only the middle (tree, style, roster)
-   moves. The way out of the hall is never below the fold.
+   moves.
 
-   WHAT GLOWS. Two things. The FIGHT plate carries --glow-hero, the core sign in
-   the head carries --glow-select. Nothing else in this file lights up.
+   WHAT GLOWS. Одно: знак ядра в шапке несёт --glow-select. Вторым свечением
+   была плита FIGHT — она снята 15.09.2026 вместе со вторым входом в бой
+   (работа D). Больше в этом файле не светится ничто.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── the column ──────────────────────────────────────────────────────────── */
@@ -237,86 +233,17 @@
 /* the selected one — marked by its own core down the left edge, no glow */
 .fp-row.on { color: var(--ink); background: var(--fill-2); border-left-color: var(--core); }
 
-/* ── 5 · the way out ─────────────────────────────────────────────────────── */
+/* ── 5 · guest ───────────────────────────────────────────────────────────
+   Подвал держал плиту FIGHT и строку причины под ней — они сняты 15.09.2026
+   (работа D): из зала в бой больше не уходят. Осталась строка гостя, и подвал
+   рисуется только вместе с ней (см. ForgePanel.vue), иначе под списком висел
+   бы пустой отчёркнутый поясок ровно на месте снятой кнопки. */
 .fp-foot {
   flex: none; padding: var(--sp-4);
   border-top: 1px solid var(--line);
   display: flex; flex-direction: column; gap: var(--sp-2);
 }
 
-/* FIGHT — a hex plate by the house rule: a dark plinth with a lit face over it,
-   the face sinking into the plinth on press. Glow #1 of 2: --glow-hero, pulsing
-   on the one loop tempo the system has.
-
-   NOT built the way the home's plate is: that one puts its glow on a separate
-   blurred layer, and a continuously animated blur over a live 3D canvas costs
-   real frames on a phone. Here the glow is a box-shadow — same look, no
-   compositing layer, no filter. */
-.fp-fight {
-  position: relative; width: 100%; height: var(--h-btn-md);
-  display: block; padding: 0; border: 0; background: none;
-  /* a button does not inherit type by itself — without this it sits at the
-     browser's own 13.33px, which is not on the scale */
-  font: inherit;
-  border-radius: var(--r-none); cursor: pointer;
-}
-.fp-fight .plinth {
-  position: absolute; inset: 0; z-index: var(--z-scene); pointer-events: none;
-  clip-path: var(--fp-hex);
-  background: linear-gradient(180deg, var(--pink-deep) 0%,
-    color-mix(in srgb, var(--pink-deep) 55%, var(--void)) 100%);
-  transform: translateY(5px);
-  transition: transform var(--d-hover) var(--e-weight);
-}
-/* the face carries the fill AND the label in flow — they are deliberately not
-   split across layers (Документ А §5.9: that is how live labels have gone
-   missing before). */
-.fp-fight .face {
-  position: relative; z-index: var(--z-ui);
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 100%;
-  clip-path: var(--fp-hex);
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--pink) 82%, var(--ink)) 0%, var(--pink) 42%,
-    color-mix(in srgb, var(--pink) 89%, var(--void)) 100%);
-  font-family: var(--font-display); font-weight: 900; font-size: var(--t-lg);
-  letter-spacing: var(--ls-title); text-transform: uppercase; line-height: 1;
-  color: var(--ink);
-  transition: transform var(--d-hover) var(--e-weight), filter var(--d-hover) var(--e-weight);
-}
-/* the hero glow, on the plate itself */
-.fp-fight:not(:disabled) { box-shadow: var(--glow-hero); animation: fpHero var(--d-loop) ease-in-out infinite; }
-/* 0% and 100% are the same frame, so under "reduce motion" the plate rests at
-   the quiet end instead of freezing mid-pulse. */
-@keyframes fpHero {
-  0%, 100% { box-shadow: var(--glow-hero); }
-  50%      { box-shadow: 0 0 26px rgba(var(--pink-rgb), .75),
-                         0 0 56px rgba(var(--pink-rgb), .5); }
-}
-.fp-fight:not(:disabled):hover .face { transform: translateY(-3px); filter: brightness(1.05); }
-.fp-fight:not(:disabled):hover .plinth { transform: translateY(8px); }
-/* press — 120ms, and the loop is muted so it cannot fight the short response */
-.fp-fight:not(:disabled):active {
-  animation: none; box-shadow: 0 0 10px rgba(var(--pink-rgb), .45);
-  transition-duration: var(--d-press);
-}
-.fp-fight:not(:disabled):active .face {
-  transform: translateY(4px) scale(0.994); filter: brightness(0.97);
-  transition-duration: var(--d-press);
-}
-.fp-fight:not(:disabled):active .plinth { transform: translateY(2px); transition-duration: var(--d-press); }
-.fp-fight:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
-
-/* unavailable — the glow is taken away and the reason is printed underneath */
-.fp-fight:disabled { cursor: default; box-shadow: none; animation: none; }
-.fp-fight:disabled .plinth { background: var(--fill-1); transform: translateY(3px); }
-.fp-fight:disabled .face { background: var(--carbon); color: var(--ink-off); border: 1px solid var(--line); }
-.fp-why {
-  font-size: var(--t-micro); letter-spacing: var(--ls-title);
-  text-transform: uppercase; color: var(--ink-off); text-align: center;
-}
-
-/* ── 6 · guest ───────────────────────────────────────────────────────────── */
 .fp-guest {
   font-size: var(--t-micro); line-height: 1.3; letter-spacing: var(--ls-tight);
   color: var(--ink-off); text-transform: uppercase; text-align: center;
@@ -368,8 +295,5 @@
   .fp-fade-enter-from, .fp-fade-leave-to { transform: translateY(14px); }
 }
 
-/* ── reduce motion: the hero loop does not start; the waiting indicator does
-      keep turning (a stopped one reads as a frozen game). ─────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .fp-fight:not(:disabled) { animation: none; }
-}
+/* Блок «уменьшить движение» стоял здесь ради петли свечения плиты FIGHT. Плита
+   снята (работа D), петли в этом файле больше нет, и гасить нечего. */

@@ -1,20 +1,20 @@
 <!-- PveView — the FORGE hall (/play/pve): the 3D hall (PveScene) under its 2D layer.
 
      ONE panel, always there (ForgePanel): who is selected, his tree, what he is
-     built out of, the whole roster as a list, and the way OUT of the hall. It
-     replaces what used to float over the scene — a card in one corner and the
-     tree pinned to the other edge — and it adds the thing the room was missing
-     entirely: you can leave for the arena from here.
+     built out of, and the whole roster as a list. It replaces what used to float
+     over the scene — a card in one corner and the tree pinned to the other edge.
 
      The scene owns the 3D (camera framings, hover light, who stands where); the
      roster owns WHO IS SELECTED (it is saved — see rosterState); this view owns
      the panel, and the cases in between: applying a selection on entry, and the
      open fighter being dismissed from somewhere else.
 
-     LEAVING FOR THE ARENA. FIGHT hands the arena the SELECTED FIGHTER
-     (prefight/sendFighter) — his core AND his lit facets, read through the roster
-     record. Until 15.09.2026 only the core went, so every point spent in this
-     hall was invisible in the fight.
+     ОТСЮДА НЕ УХОДЯТ В БОЙ (15.09.2026, работа D). Здесь была кнопка FIGHT: она
+     отправляла драться открытого в зале бойца и уводила прямо на арену, минуя
+     выбор состава. Это был второй вход в бой, и он ломался бы ровно в тот день,
+     когда состав потребует больше одного. Зал — мастерская: сюда приходят
+     работать над бойцом, уходят полосой наверху (← BACK), а дерутся через
+     дом → FIGHT → остров ARENA → выбор состава.
 
      Chrome: the shared .hs-strip (home.css) without the brand block — BACK left,
      SHOP + cabinet right. Its tokens are mirrored on the root so the strip is
@@ -39,14 +39,12 @@
         :resource="resource"
         :roster-max="rosterMax"
         :is-guest="isGuest"
-        :can-fight="canFight"
         :status="status"
         :tree-status="treeStatus"
         :load-step="loadStep"
         :retrying="retrying"
         @pick="onPick"
         @toggle="onToggle"
-        @fight="onFight"
         @new-fighter="onNewFighter"
         @retry="onRetry"
       />
@@ -186,22 +184,6 @@ const status = ref('ready');
 const treeStatus = ref('ready');
 const loadStep = ref(null);      // { n, total } for the honest loading line
 const retrying = ref(false);
-
-// ── leaving for the arena ─────────────────────────────────────────────────
-// The arena guard (requireCore in the router) asks `prefight/selectedCoreId`.
-// Without a selected fighter there is nothing to hand it, and that — not a grey
-// rectangle — is what the button's reason line says.
-const canFight = computed(() => status.value === 'ready' && !!picked.value);
-// sendFighter stores a POINTER to this fighter, so the arena reads his core and
-// his lit facets straight off the roster record — no copy to drift, and the
-// grades he was just given are the grades he fights with. It also writes the
-// core into prefight state in the same step, which is what the route guard
-// reads; the navigation only happens if the fighter was actually accepted.
-function onFight() {
-  if (!canFight.value) return;
-  Promise.resolve(store.dispatch('prefight/sendFighter', picked.value.id))
-    .then((sent) => { if (sent) router.push('/play/arena'); });
-}
 
 // The roster is empty and the player is standing in an empty hall: give them the
 // one move that opens it. Same call the DEV console makes.
