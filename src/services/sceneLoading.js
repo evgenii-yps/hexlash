@@ -34,6 +34,9 @@ export const LOADING = {
   FADE_OUT_MS: 220,    // opacity leave — both surfaces. РАВНО --d-hover в токенах
                        // (src/styles/tokens.css) и .2s→.22s в #hx-load в index.html.
   SAFETY_MS: 15000,    // hard release; logs which stage never finished
+  CURTAIN_MS: 400,     // подъём занавеса в чёрный (см. блок «Занавес» ниже)
+  CURTAIN_OUT_MS: 320, // и его уход, когда за ним уже стоит следующий экран
+  CURTAIN_REDUCED_MS: 200, // при выключенных анимациях: пролёта нет, гасим быстрее
 };
 
 // Stages own 0..95. The last 5 belong to stabilisation, so the bar is still
@@ -62,6 +65,10 @@ export const loadingState = reactive({
   active: false,
   surface: null,
   progress: 0,
+  // Занавес — см. блок «Занавес» в конце файла. Живёт ОТДЕЛЬНО от `active`:
+  // он поднимается раньше экрана загрузки и переживает смену адреса.
+  curtain: false,
+  curtainMs: LOADING.CURTAIN_MS,
 });
 
 // ── Session state. Plain module locals — only `loadingState` needs to be
@@ -326,4 +333,73 @@ export function beginSceneLoad(stageNames) {
       cancelLoading();       // (also clears a pending track, so it is never adopted)
     },
   };
+}
+
+// ─────────────────────────────── Занавес ───────────────────────────────
+//
+// Чистый чёрный слой, который поднимается САМ ПО СЕБЕ, до и независимо от экрана
+// загрузки. Нужен ровно одному сценарию: пролёту камеры внутрь острова, где по
+// ТЗ сборка следующей сцены не смеет начаться, пока кадр не почернел полностью.
+// Начать раньше — значит строить сцену в те же кадры, в которых едет камера, и
+// на телефоне пролёт дёргается.
+//
+// ПОЧЕМУ ЗДЕСЬ, А НЕ ОТДЕЛЬНЫМ МОДУЛЕМ. В проекте уже было два разных прикрытия
+// экрана, и они расходились — их свели в один файл именно потому, что «что сейчас
+// закрывает экран» должно иметь одного владельца. Занавес — третье прикрытие;
+// заводить ему собственный модуль значит заново развести то, что сводили.
+// Поэтому состояние живёт тут, рядом с `active`, а рисуется той же поверхностью
+// (SceneLoadingOverlay.vue), что и экран загрузки, — слоем НИЖЕ него.
+//
+// ПОЧЕМУ ОН ПЕРЕЖИВАЕТ СМЕНУ АДРЕСА. Он должен: экран, с которого уезжают,
+// размонтируется в момент перехода, и занавес, живущий внутри него, исчез бы
+// вместе с ним — то есть ровно тогда, когда он и нужен. Поэтому он на уровне
+// оболочки и снимается отдельным вызовом, когда следующий экран уже нарисован.
+//
+// ЗАНАВЕС НИЧЕГО НЕ ЗНАЕТ О ПЕРЕХОДАХ. Он не трогает адрес и не ждёт сцену — он
+// только чернеет и снимается, когда скажут. Кто и когда говорит — дело
+// вызывающего (роутер снимает его в afterEach, см. router/index.js).
+
+let curtainToken = 0;   // обрывает обещание прошлого подъёма, если начался новый
+let curtainTimer = null;
+
+/**
+ * Поднять занавес и дождаться ПОЛНОГО чёрного.
+ *
+ * @param {object} [opts]
+ * @param {number} [opts.ms] длительность подъёма; по умолчанию LOADING.CURTAIN_MS
+ * @returns {Promise<boolean>} true — чёрный достигнут; false — подъём перебит
+ *                             другим подъёмом или снятием (тогда решать нечего)
+ */
+export function raiseCurtain({ ms } = {}) {
+  const token = (curtainToken += 1);
+  const dur = Math.max(0, ms ?? LOADING.CURTAIN_MS);
+  if (curtainTimer) { clearTimeout(curtainTimer); curtainTimer = null; }
+  loadingState.curtainMs = dur;
+  loadingState.curtain = true;
+  return new Promise((resolve) => {
+    // +40 мс поверх длительности перехода — тот же запас, с каким этот файл
+    // убирает экран загрузки. Обещание должно разрешаться ПОСЛЕ последнего кадра
+    // перехода, а не в тот же миг, иначе «полностью чёрный» окажется почти чёрным.
+    curtainTimer = setTimeout(() => {
+      curtainTimer = null;
+      resolve(token === curtainToken && loadingState.curtain === true);
+    }, dur + 40);
+  });
+}
+
+/**
+ * Снять занавес. Звать, когда за ним УЖЕ стоит следующий экран: либо нарисованный
+ * кадр нового вида, либо экран загрузки, который его накрыл.
+ */
+export function dropCurtain() {
+  curtainToken += 1;
+  if (curtainTimer) { clearTimeout(curtainTimer); curtainTimer = null; }
+  if (!loadingState.curtain) return;
+  loadingState.curtainMs = LOADING.CURTAIN_OUT_MS;
+  loadingState.curtain = false;
+}
+
+/** Поднят ли занавес прямо сейчас (для тех, кто решает, гасить ли ещё раз). */
+export function curtainUp() {
+  return loadingState.curtain === true;
 }

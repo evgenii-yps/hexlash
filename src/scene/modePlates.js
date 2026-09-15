@@ -106,6 +106,16 @@ export const MODE_PLATES = {
     pedGap: 0.03,
     pedEdge: 0.22,      // amber facet-edge opacity (fogged — see the fog note below)
     pedGlow: 0.5,       // amber contact-glow disc on the pedestal top (LIT only)
+
+    // Кадр, в котором останавливается пролёт внутрь острова (см. islandDive.js).
+    // Доля кадра, которую занимает гексарх целиком. ТЗ просит 55–65 % высоты;
+    // взято посередине. Подбирается глазом на приёмке — это вопрос композиции,
+    // а не арифметики.
+    aimFill: 0.60,
+    // Ближе этого камера не подъезжает ни при каком подборе доли. Забор от одной
+    // конкретной беды: доля, заданная чуть смелее, ставит камеру ВНУТРЬ предмета,
+    // и кадр выходит чёрным (изнанка граней не рисуется). Замерено, не придумано.
+    aimMinDist: 0.9,
   },
 
   // ── ARENA emblem (plate id 'pvp') — gloves floating over a torn rift ──
@@ -149,6 +159,23 @@ export const MODE_PLATES = {
                         // It lifts the whole hand, not only the underside — a brighter
                         // plate throws more bounce — so keep it small: at this value
                         // the dark tops do not visibly move and the pink does.
+
+    // Кадр, в котором останавливается пролёт внутрь острова (см. islandDive.js).
+    //
+    // Кадрируем ВСЮ композицию острова целиком — от разлома на плите до макушек
+    // перчаток, — а не одну пару. Прицел поэтому стоит в середине её высоты, а не
+    // на перчатках: с прицелом на перчатках разлом уходит вниз за край кадра.
+    //
+    // Доля близка к единице, потому что предмет должен подпирать края. И он их
+    // подпирает даже сильнее, чем следует из плоского счёта: камера подходит
+    // низко и БЛИЖНЯЯ перчатка оказывается заметно ближе прицела, так что
+    // перспектива растит её сверх расчётной доли. Замерено на всех четырёх
+    // раскладках — перчатки выходят за края, разлом светится по нижнему краю,
+    // то есть кадр из ТЗ. Считать эту долю «сколько процентов ширины займёт
+    // пара» нельзя: это ручка, а не предсказание.
+    aimFill: 0.92,
+    // Забор: ближе этого не подъезжаем ни при каком подборе доли (см. FORGE).
+    aimMinDist: 1.1,
   },
 
   // Touch has no hover, so the plate has to be lit some other way. false → a single
@@ -672,6 +699,7 @@ function buildArenaEmblem(o, halfW, halfD, topY) {
  *             captionSlots, pickables, dispose }}
  *   layout(aspect)     — side-by-side (landscape) vs stacked-in-depth (portrait)
  *   bounds()           — { spanX, spanZ, topY, emblemTop } of the CURRENT layout
+ *   aimFor(id)         — { point, halfW, halfH, fill, minDist } — цель пролёта внутрь острова
  *   setHover(id|null)  — light exactly one plate; the other sinks to dimLevel
  *   captionScreen(id, camera, w, h) — CSS-pixel anchor under the plate's silhouette
  *   captionSlots(camera, w, h)      — the same, pinned to fixed screen slots
@@ -750,6 +778,60 @@ export function buildModePlates(opts) {
       spanZ: portrait ? o.spreadZ * 2 + halfD * 2 : halfD * 2,
       topY: height,
       emblemTop: height + emblemAir,
+    };
+  }
+
+  // ── Прицел пролёта внутрь острова ────────────────────────────────────────
+  // Куда едет камера, когда игрок выбрал остров (см. islandDive.js). Точка и
+  // размер живут ЗДЕСЬ, а не у режиссёра пролёта, по той же причине, по которой
+  // здесь живёт captionScreen: только этот файл знает, на какой высоте парит
+  // гексарх и как широко разведены перчатки. Режиссёр получает готовый ответ и
+  // не заводит у себя вторую копию этих чисел, которая разойдётся с первой.
+  //
+  // Возвращается МИРОВАЯ точка: `root` уже унесён layout'ом в свою половину
+  // сцены, а вся группа — на -modeZ, поэтому локальные числа без пересчёта
+  // ничего не значат. localToWorld берёт на себя обе подвижки разом.
+  //
+  // `half` — половина того размера предмета, по которому кадрируем, и `by` —
+  // какого именно: FORGE кадрируется по ВЫСОТЕ (фигура должна занять свою долю
+  // кадра), ARENA по ШИРИНЕ (пара должна из кадра ВЫЙТИ). Доля — aimFill своего
+  // острова.
+  const _aimV = new THREE.Vector3();
+  function aimFor(id) {
+    const plate = plates[id === 'pve' ? 'pve' : 'pvp'];
+    if (!plate) return null;
+    const top = height / 2; // верх плиты в системе root — как его видят эмблемы
+
+    if (id === 'pve') {
+      // Предмет — сам гексарх: от подошв до макушки. Кольцо учеников под ним в
+      // кадр намеренно не входит, ТЗ просит увести его вниз за край.
+      const f = o.forge;
+      const figH = f.hexScale * FIGURE_H;
+      _aimV.set(0, top + f.hover + figH / 2, 0);
+      return {
+        point: plate.root.localToWorld(_aimV.clone()),
+        // Ширина силуэта к высоте — замер по кадру пролёта (фигура с руками
+        // заняла 230 px при 460 px роста), а не глазомер. Держит портрет: без
+        // этого числа узкий кадр отводил камеру дальше, чем просит ТЗ.
+        halfW: (figH / 2) * 0.5,
+        halfH: figH / 2,
+        fill: f.aimFill,
+        minDist: f.aimMinDist,
+      };
+    }
+
+    // Предмет — вся композиция острова: от разлома на плите до макушек перчаток.
+    // Прицел стоит в её середине по высоте, а не на перчатках, — иначе разлом
+    // уходит вниз за край (см. расхождение, описанное у arena.aimFill).
+    const a = o.arena;
+    const halfH = (a.gloveHover + a.gloveR * 1.3) / 2;
+    _aimV.set(0, top + halfH, 0);
+    return {
+      point: plate.root.localToWorld(_aimV.clone()),
+      halfW: a.gloveGap + a.gloveR, // внешний край дальней перчатки
+      halfH,
+      fill: a.aimFill,
+      minDist: a.aimMinDist,
     };
   }
 
@@ -879,7 +961,7 @@ export function buildModePlates(opts) {
   layout(1.6);
 
   return {
-    group, layout, bounds, setHover, update, captionScreen, captionSlots, pickables, dispose,
+    group, layout, bounds, aimFor, setHover, update, captionScreen, captionSlots, pickables, dispose,
     get hovered() { return hovered; },
   };
 }

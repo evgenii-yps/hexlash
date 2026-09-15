@@ -12,6 +12,21 @@
      Discipline: this screen is the documented brandbook carve-out from the
      one-pink / one-glow rule (see CLAUDE.md). -->
 <template>
+  <!-- Занавес — чистый чёрный, БЕЗ знака, числа и полосы. Он не экран загрузки,
+       а темнота перед ним: пролёт камеры внутрь острова гасит кадр в чёрный и
+       только после этого разрешает строить следующую сцену (см. islandDive.js и
+       блок «Занавес» в services/sceneLoading.js). Стоит слоем НИЖЕ экрана
+       загрузки, поэтому тот появляется поверх уже почерневшего кадра, как и
+       просит ТЗ. Живёт здесь, а не внутри экрана, с которого уезжают: тот
+       размонтируется в момент перехода и унёс бы занавес с собой ровно тогда,
+       когда он нужен. -->
+  <div
+    class="hx-curtain"
+    :class="{ 'is-up': loadingState.curtain }"
+    :style="{ '--curtain-ms': loadingState.curtainMs + 'ms' }"
+    aria-hidden="true"
+  ></div>
+
   <Transition name="hxo">
     <div v-if="show" class="hx-loading" aria-hidden="true">
       <div class="hxo-hud"><i class="tl" /><i class="tr" /><i class="bl" /><i class="br" /></div>
@@ -154,6 +169,31 @@ onBeforeUnmount(stopTips);
 .hxo-tag { flex: none; font-size: 2.3vmin; letter-spacing: var(--ls-meta); color: var(--pink);
   border: 1px solid rgba(var(--pink-rgb), .4); padding: .8vmin 1.6vmin; text-transform: uppercase; }
 .hxo-line { font-size: 2.6vmin; letter-spacing: var(--ls-title); color: var(--ink-soft); text-transform: uppercase; }
+
+/* ── Занавес ──
+   Чёрный из --void (фон всех экранов), поэтому под ним и над ним один и тот же
+   тон и стыка не видно. Ниже экрана загрузки на один слой: --z-load держит
+   экран, занавес встаёт под него.
+
+   pointer-events переключается вместе с непрозрачностью: пока занавес снят, он
+   не должен перехватывать нажатия у экрана под собой, а пока поднят — наоборот,
+   обязан, иначе игрок ткнёт в невидимую кнопку за чёрным кадром.
+
+   Длительность приходит переменной из состояния: подъём и снятие у него разные,
+   и при выключенных анимациях подъём короче. Число живёт в sceneLoading.js. */
+.hx-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-load) - 1);
+  background: var(--void);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--curtain-ms, 400ms) var(--e-weight);
+}
+.hx-curtain.is-up {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* Leave — opacity only. Must match LOADING.FADE_OUT_MS in sceneLoading.js. */
 .hxo-enter-active, .hxo-leave-active { transition: opacity var(--d-hover) var(--e-settle); }
