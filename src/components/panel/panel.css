@@ -1,0 +1,30 @@
+/* Кнопки панелей арены — общие для всех, кто её ставит (итог боя, забег).
+   Живут отдельным файлом, а не в самой панели: панель не знает, какие кнопки на
+   ней будут, а Vue не пускает стили родителя внутрь содержимого слота.
+
+   ДВА ВИДА, И БОЛЬШЕ НЕ ЗАВОДИТЬ:
+     .ap-go   — главное действие. ЕДИНСТВЕННОЕ розовое место на экране.
+     .ap-back — уйти. Матовая, как весь хром: звать ею никуда не нужно. */
+.ap-go,
+.ap-back {
+  padding: var(--sp-3) var(--sp-5);
+  font-family: var(--font-display); font-weight: 900; font-size: var(--t-md);
+  letter-spacing: var(--ls-title); text-transform: uppercase;
+  color: var(--ink); cursor: pointer;
+}
+
+.ap-go {
+  background: var(--pink); border: 1px solid var(--pink);
+  transition: filter var(--d-hover) var(--e-weight);
+}
+.ap-go:hover { filter: brightness(1.08); }
+.ap-go:active { filter: brightness(0.94); transition-duration: var(--d-press); }
+
+.ap-back {
+  background: transparent; border: 1px solid var(--line-strong);
+  transition: border-color var(--d-hover) var(--e-weight);
+}
+.ap-back:hover { border-color: var(--ink-dim); }
+
+.ap-go:focus-visible,
+.ap-back:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }

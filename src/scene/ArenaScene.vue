@@ -70,6 +70,7 @@ import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
 import { chainState, ROUNDS, startRun, clearRunState, winRound, loseRound, hasStaleRun } from '@/services/chainRun.js';
+import { showFightResult, hideFightResult, bindFightAgain } from '@/services/fightResult.js';
 import { useRouter, useRoute } from 'vue-router';
 import { t } from '@/locales/index.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
@@ -269,6 +270,8 @@ const chainMode = !showcase && route.query.chain === '1';
 let chainLastCore = null;   // ядро прошлого раунда — подряд не повторяем
 let chainPanelTimer = null; // пауза между замиранием боя и панелью
 let chainStartHp = null;    // здоровье бойца игрока на старте раунда (абсолют)
+let resultTimer = null;     // пауза между замиранием боя и панелью итога
+let unbindFightAgain = null; // отвязать кнопку «драться снова» при уходе
 // Дверь наружу из несобравшейся сцены — домой, а не «назад»: назад может вести
 // на тот же адрес арены, и игрок закольцуется на той же поломке.
 function onFailedBack() { router.push('/play/home'); }
@@ -509,6 +512,17 @@ onMounted(() => {
   //     плиту. В DUEL эта ветка не работает вовсе: соперник остаётся таким, каким
   //     его выбрали при открытии страницы, — без граней и без поправок.
   const playerLit = countLit(playerTree);
+
+  // НОВЫЙ СОПЕРНИК ДЛЯ ПОВТОРНОГО БОЯ. Ядро соперника выбирается один раз при
+  // открытии страницы, поэтому кнопка «драться снова» без этого выводила бы на
+  // плиту ТОГО ЖЕ бойца, что и в прошлый раз. Правила те же, по которым он
+  // рождается при входе на арену: случайное ядро, без граней.
+  const rollDuelFoe = () => {
+    opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
+    opponentTree = CRYSTALS[opponentCoreId];
+    opponentBehavior = resolveBehavior(opponentCoreId, collectLit(opponentTree));
+  };
+
   const rollChainFoe = (round) => {
     const foe = composeChainFoe({ round, litCount: playerLit, lastCoreId: chainLastCore });
     chainLastCore = foe.coreId;
@@ -650,7 +664,19 @@ onMounted(() => {
     for (const u of field.living()) u.f.setAI(false); // победители перестают бить → оседают в стойку
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
-    if (chainMode) closeChainRound();
+    if (chainMode) { closeChainRound(); return; }
+    // ИТОГ БОЯ. У забега свои панели и свой счёт раундов — там победа означает
+    // «идём дальше», а не «бой выигран», поэтому общая панель туда не ходит.
+    // Дека тоже мимо: там своя подача, и своё «ЕЩЁ РАЗ» ей даёт окно страницы.
+    if (showcase) return;
+    // Пауза, как в забеге: без неё панель выскакивает поверх ещё не осевшего боя
+    // и читается как случившаяся посреди него.
+    if (resultTimer) clearTimeout(resultTimer);
+    const won = field.winnerSide() === 'player';
+    resultTimer = setTimeout(() => {
+      resultTimer = null;
+      showFightResult(won);
+    }, COMBAT_BALANCE.panelDelaySec * 1000);
   };
 
   // ЗАБЕГ: раунд кончился. Своего показа исхода у арены нет — бой просто замирает,
@@ -674,7 +700,7 @@ onMounted(() => {
       const nextRound = chainState.round + 1;
       const next = nextRound <= ROUNDS ? rollChainFoe(nextRound) : {};
       winRound(hp01, next);
-    }, COMBAT_BALANCE.chain.panelDelaySec * 1000);
+    }, COMBAT_BALANCE.panelDelaySec * 1000);
   };
 
   // Служебная панель и все её показания висят на ПЕРВОМ бойце игрока и ПЕРВОМ
@@ -860,6 +886,8 @@ onMounted(() => {
   runFight = () => {
     cancelSig(); // a normal bout uses core behaviour, not the A/B presets
     if (chainPanelTimer) { clearTimeout(chainPanelTimer); chainPanelTimer = null; }
+    if (resultTimer) { clearTimeout(resultTimer); resultTimer = null; }
+    hideFightResult(); // новый бой начался — старому итогу на экране не место
     clearField();
     aiPlayer = true;
     aiOpponent = true;
@@ -872,6 +900,13 @@ onMounted(() => {
     refreshDevAliases();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
+
+  // ИТОГ БОЯ: отдаём панели способ начать новый бой. Панель про сцену не знает,
+  // сцена про кнопки — тоже; знание встречается здесь. В забеге кнопки «драться
+  // снова» нет, поэтому и связывать нечего.
+  if (!chainMode && !showcase) {
+    unbindFightAgain = bindFightAgain(() => { rollDuelFoe(); runFight(); });
+  }
 
   // ЗАБЕГ: игрок нажал NEXT на панели. Панель живёт снаружи сцены и внутрь не
   // лезет — она только переводит забег на следующий раунд, а сцена замечает смену
@@ -1065,6 +1100,9 @@ onBeforeUnmount(() => {
   if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
   if (sceneTimer) { clearTimeout(sceneTimer); sceneTimer = null; }
   if (chainPanelTimer) { clearTimeout(chainPanelTimer); chainPanelTimer = null; } // панель забега — туда же
+  if (resultTimer) { clearTimeout(resultTimer); resultTimer = null; }  // и панель итога
+  hideFightResult();   // уходим с арены — панель итога уходит с нами
+  unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);

@@ -370,6 +370,16 @@ export default {
     failedNote: "The scene failed to build. This is on us, not on your connection. Head home and step back in.",
     failedBack: "Back to home",
   },
+  // ИТОГ БОЯ — панель после любого боя, кроме забега. До неё арена не сообщала
+  // исход никак: бой замирал, и на экране не оставалось ни одной кнопки.
+  fight: {
+    victory: "Victory",
+    victoryNote: "Your side is the last one standing.",
+    defeat: "Defeat",
+    defeatNote: "Your side fell.",
+    again: "Fight again",
+    toGate: "Back to the gate",
+  },
   // ЗАБЕГ (CHAIN) — три боя подряд одним бойцом. Панель между раундами, итог
   // забега и сообщение о брошенном забеге. Больше про забег нигде не говорится:
   // над головой соперника по-прежнему YOU / FOE, как в обычном бою.
