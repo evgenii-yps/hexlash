@@ -376,7 +376,7 @@ export default {
   chain: {
     round: "Round {n} / {of}",
     hp: "HP",
-    next: "Next",
+    foe: "Foe",
     stake: "Stake",
     nextBtn: "Next",
     complete: "Chain complete",

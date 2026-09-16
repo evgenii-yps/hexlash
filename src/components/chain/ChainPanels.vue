@@ -23,7 +23,7 @@
           <dd><span class="cp-was">{{ hpBefore }}</span> <span class="cp-arrow">&rarr;</span> <span class="cp-now">{{ hpAfter }}</span></dd>
         </div>
         <div class="cp-row">
-          <dt>{{ t.chain.next }}</dt>
+          <dt>{{ t.chain.foe }}</dt>
           <dd>{{ nextName }}</dd>
         </div>
         <div class="cp-row">
