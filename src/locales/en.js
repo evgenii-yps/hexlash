@@ -173,6 +173,13 @@ export default {
     noFighters: "No fighters to send. Recruit in the shop.",
     // ⚠️ временная плоская кнопка — её место займёт объёмная (работа 4)
     toArena: "To arena",
+    // Командный бой: сколько бойцов с каждой стороны. Переключатель стоит только
+    // в SQUAD — у дуэли выбора нет.
+    sizeLabel: "{n} v {n}",
+    // Бойцов в ростере меньше, чем просит выбранный размер. Честное состояние:
+    // размер выбрать можно, но в бой не выйти, пока некого поставить.
+    needOne: "Need 1 more fighter",
+    needMany: "Need {n} more fighters",
   },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.

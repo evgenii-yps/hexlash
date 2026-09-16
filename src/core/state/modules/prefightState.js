@@ -36,7 +36,7 @@
 // so a refresh mid-fight no longer throws the player out. Only IDS are stored
 // (see src/services/playerProgress.js); a tree is never written here.
 import { CORES } from '@/data/upgradeData.js';
-import { MODE_IDS, DEFAULT_MODE_ID, squadSizeOf } from '@/data/arenaModes.js';
+import { MODE_IDS, DEFAULT_MODE_ID, squadSizeOf, sizesOf, clampSize } from '@/data/arenaModes.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
 
 const SECTION = 'prefight';
@@ -51,8 +51,15 @@ const SECTION = 'prefight';
 // Состав хранится списком и хранился им с самого начала, хотя список из одного
 // выглядел избыточно. Ровно затем: переход на двоих не требует переписывать ни
 // состояние, ни экран выбора, ни стража арены — меняется одно число в таблице.
+// Размер состава: сколько бойцов игрок ведёт в бой.
+//
+// У дуэли он задан режимом и выбора нет. У команды игрок выбирает сам — 2 на 2
+// или 3 на 3, — и выбор живёт рядом с составом, в той же памяти вкладки.
+// Незнакомое число (сейф от прошлой версии, правка адреса) приводится к
+// допустимому: дорога в бой не должна обрываться из-за мусора в сейфе.
 function sizeOf(s) {
-  return squadSizeOf(s.modeId);
+  if (!sizesOf(s.modeId).length) return squadSizeOf(s.modeId);
+  return clampSize(s.modeId, s.squadN);
 }
 
 // --- save shape: { core, squad?, mode? } --------------------------------------
@@ -73,6 +80,7 @@ function snapshotOf(s) {
     if (s.selectedCoreId) out.core = s.selectedCoreId;
     if (s.squad.length) out.squad = [...s.squad];
     if (s.modeId) out.mode = s.modeId;
+    if (s.squadN) out.n = s.squadN;
     return out;
 }
 
@@ -83,7 +91,7 @@ function persist(s) {
 // --- restore, synchronously, at module load ---------------------------------
 function restore() {
     const saved = readSection(SECTION);
-    if (!saved) return { selectedCoreId: null, squad: [], modeId: null };
+    if (!saved) return { selectedCoreId: null, squad: [], modeId: null, squadN: 0 };
 
     const coreId = typeof saved.core === 'string' && CORES.some((c) => c.id === saved.core)
         ? saved.core
@@ -92,6 +100,10 @@ function restore() {
     // Незнакомый ключ режима (сейф от прошлой версии, правка адреса) — не ошибка:
     // getMode отдаст режим по умолчанию, и дорога в бой не оборвётся.
     const modeId = MODE_IDS.includes(saved.mode) ? saved.mode : null;
+
+    // Выбранный размер состава. Проверяется при ЧТЕНИИ (sizeOf), поэтому здесь
+    // достаточно взять число как есть.
+    const squadN = Number.isFinite(saved.n) ? saved.n : 0;
 
     // Идентификаторы берутся как есть; живы ли они, проверяется при ЧТЕНИИ
     // (sentFighter). Проверять здесь значило бы зависеть от того, успел ли
@@ -102,10 +114,14 @@ function restore() {
     let squad = Array.isArray(saved.squad)
         ? saved.squad.filter((x) => typeof x === 'string')
         : (typeof saved.fighter === 'string' ? [saved.fighter] : []);
-    const max = squadSizeOf(modeId);
+    // ⚠️ Подрезать состав НАДО ПО ВЫБРАННОМУ РАЗМЕРУ, а не по размеру режима.
+    //    У команды размер режима — это лишь значение по умолчанию (двойка), и
+    //    подрезка по нему молча выбрасывала третьего бойца из состава, выбранного
+    //    как тройка: игрок собирал троих, а на плиту выходили двое.
+    const max = sizesOf(modeId).length ? clampSize(modeId, squadN) : squadSizeOf(modeId);
     if (squad.length > max) squad = squad.slice(0, max);
 
-    return { selectedCoreId: coreId, squad, modeId };
+    return { selectedCoreId: coreId, squad, modeId, squadN };
 }
 
 const restored = restore();
@@ -120,6 +136,7 @@ export function restoreIfEmpty(s) {
     s.selectedCoreId = r.selectedCoreId;
     s.squad = r.squad;
     s.modeId = r.modeId;
+    s.squadN = r.squadN;
 }
 
 const state = {
@@ -130,6 +147,10 @@ const state = {
     // Выбранный режим боя. null — выбора ещё не было; читатели спрашивают размер
     // через таблицу режимов, и она в этом случае отдаёт режим по умолчанию.
     modeId: restored.modeId,
+    // Выбранный размер состава. 0 — выбора ещё не было, и размер спрашивают у
+    // режима. Значение по умолчанию ставят ворота: оно зависит от того, сколько
+    // у игрока бойцов, а состояние про ростер знать не должно.
+    squadN: restored.squadN,
     // SHOWCASE (?showcase=1) — the live arena embedded in the investor deck page.
     // It is a DIFFERENT document in an iframe, but the same origin and the same
     // tab, so it restores this tab's save: without this flag a deck opened in a
@@ -170,6 +191,15 @@ const getters = {
         const f = sentFighter(s, rootState);
         return f ? f.id : null;
     },
+    // ВЕСЬ состав как бойцы, а не как идентификаторы. Нужен командному бою: там
+    // на плиту выходит не один боец, а все выбранные, каждый со своим ядром и
+    // своими гранями. Порядок — тот, в котором игрок их выбирал. Призраки
+    // (распустили, пока состав лежал в сейфе) отсеиваются здесь же.
+    squadFighters: (s, g, rootState) => {
+        if (s.showcase) return [];
+        const list = (rootState && rootState.roster && rootState.roster.fighters) || [];
+        return s.squad.map((id) => list.find((f) => f.id === id)).filter(Boolean);
+    },
     // Состав — как он лежит в состоянии. Список идентификаторов, не бойцов:
     // единственный источник правды о бойце остаётся в списке бойцов.
     squad: (s) => [...s.squad],
@@ -181,6 +211,8 @@ const getters = {
     // это игроку словами, поэтому размер спрашивают здесь, а не считают заново.
     modeId: (s) => s.modeId || DEFAULT_MODE_ID,
     squadSize: (s) => sizeOf(s),
+    // Из чего игрок выбирает размер. Пустой список — переключателя нет.
+    squadSizes: (s) => sizesOf(s.modeId),
 };
 
 const mutations = {
@@ -203,6 +235,16 @@ const mutations = {
         const max = sizeOf(s);
         if (s.squad.length > max) s.squad = s.squad.slice(0, max);
         persist(s);
+    },
+    // Выбрать размер состава. Состав подрезается той же записью: переход на
+    // размер поменьше не должен оставить в составе лишних — они бы поехали в бой
+    // молча. Снимается ПОСЛЕДНИЙ выбранный: игрок помнит, кого поставил только
+    // что, и терять первого выбранного было бы неожиданно.
+    SET_SQUAD_SIZE(s, n) {
+      s.squadN = clampSize(s.modeId, n);
+      const max = sizeOf(s);
+      if (s.squad.length > max) s.squad = s.squad.slice(0, max);
+      persist(s);
     },
     SET_SHOWCASE(s, on) {
         s.showcase = !!on;

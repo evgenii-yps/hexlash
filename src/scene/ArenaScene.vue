@@ -58,11 +58,12 @@ import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
 import { createBattleField } from './battleField.js';
+import { declutterPlates } from './hpStagger.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { countLit } from '@/data/upgradeTree.js';
-import { composeChainFoe } from '@/data/chainFoe.js';
+import { composeChainFoe, composeSquadFoes } from '@/data/foeCompose.js';
 import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
@@ -507,17 +508,36 @@ onMounted(() => {
     return side === 'player' ? playerBehavior : opponentBehavior;
   };
   // ─── СОПЕРНИК ЗАБЕГА ──────────────────────────────────────────────────────
-  //     Кто выходит драться в раунде N, решает data/chainFoe.js — там же, где
+  //     Кто выходит драться в раунде N, решает data/foeCompose.js — там же, где
   //     живут ядра и грани. Сцена только принимает готового бойца и ставит его на
   //     плиту. В DUEL эта ветка не работает вовсе: соперник остаётся таким, каким
   //     его выбрали при открытии страницы, — без граней и без поправок.
   const playerLit = countLit(playerTree);
+
+  // ─── КОМАНДНЫЙ БОЙ (SQUAD) ────────────────────────────────────────────────
+  //     Игрок выводит на плиту НЕСКОЛЬКО своих бойцов, каждого со своим ядром и
+  //     своими гранями. Чужая сторона — столько же ботов.
+  //
+  //     Режим включается выбором в воротах, а не признаком в адресе: остров SQUAD
+  //     там живой. Служебный ?field= сильнее — им проверяют поле само по себе, и
+  //     он не должен зависеть от того, что игрок выбрал.
+  const squadFighters = showcase ? [] : (store.getters['prefight/squadFighters'] || []);
+  const squadMode = !showcase && !chainMode
+    && store.getters['prefight/modeId'] === 'squad'
+    && squadFighters.length > 1;
+  // Чужая сторона. Собирается заново на каждый бой — «драться снова» должно
+  // выводить новую команду, а не ту же.
+  let squadFoes = [];
+  const rollSquadFoes = () => {
+    squadFoes = composeSquadFoes(squadFighters.length, squadFighters.map((f) => countLit(f.upgrade)));
+  };
 
   // НОВЫЙ СОПЕРНИК ДЛЯ ПОВТОРНОГО БОЯ. Ядро соперника выбирается один раз при
   // открытии страницы, поэтому кнопка «драться снова» без этого выводила бы на
   // плиту ТОГО ЖЕ бойца, что и в прошлый раз. Правила те же, по которым он
   // рождается при входе на арену: случайное ядро, без граней.
   const rollDuelFoe = () => {
+    if (squadMode) { rollSquadFoes(); return; }   // командный бой — новая чужая команда
     opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
     opponentTree = CRYSTALS[opponentCoreId];
     opponentBehavior = resolveBehavior(opponentCoreId, collectLit(opponentTree));
@@ -810,6 +830,9 @@ onMounted(() => {
     if (m) { sides = 2; per = Math.max(1, Math.min(4, +m[1])); }
     else if (/^4s$/.test(raw)) { sides = 4; per = 1; }
     else if (/^\d+$/.test(raw)) { const n = Math.max(2, Math.min(8, +raw)); sides = 2; per = Math.ceil(n / 2); }
+    // Командный бой: столько бойцов на сторону, сколько игрок выбрал в воротах.
+    // Служебный признак выше сильнее — им проверяют поле само по себе.
+    else if (squadMode) { sides = 2; per = squadFighters.length; }
 
     const specs = [];
     const oneOnOne = sides === 2 && per === 1;
@@ -817,6 +840,30 @@ onMounted(() => {
       const isPlayerSide = sIdx === 0;
       const sideId = isPlayerSide ? 'player' : `foe${sIdx}`;
       for (let k = 0; k < per; k++) {
+        const pos = oneOnOne
+          ? (isPlayerSide ? HISTORIC_POS.player : HISTORIC_POS.foe)
+          : spreadPos(sIdx, sides, k, per);
+
+        // КОМАНДНЫЙ БОЙ. Сторона игрока — ЕГО бойцы, все до одного: каждый со
+        // своим ядром, своими гранями и своим белым кольцом. Чужая сторона —
+        // столько же ботов, собранных общим сборщиком.
+        if (squadMode) {
+          const mine = isPlayerSide ? squadFighters[k] : null;
+          const foe = isPlayerSide ? null : squadFoes[k];
+          const core = mine ? getCore(mine.core) : null;
+          specs.push({
+            sideId,
+            isBot: !isPlayerSide,             // свои — не боты, у каждого кольцо
+            coreId: mine ? mine.core : foe.coreId,
+            side: isPlayerSide ? 'player' : 'opponent',
+            color: mine ? (core ? core.hue : pink) : getCore(foe.coreId).hue,
+            behavior: mine ? resolveBehavior(mine.core, collectLit(mine.upgrade)) : foe.behavior,
+            portrait: mine ? [core ? `${core.name} — ${core.manner}` : ''] : [],
+            pos,
+          });
+          continue;
+        }
+
         // Сторона игрока: первым идёт сам игрок, остальные — боты-союзники.
         // Чужие стороны — боты целиком. Внешне бот от игрока не отличается.
         const isBot = !(isPlayerSide && k === 0);
@@ -824,9 +871,6 @@ onMounted(() => {
           ? playerCoreId
           : (sIdx === 1 && k === 0 ? opponentCoreId : CORES[Math.floor(Math.random() * CORES.length)].id);
         const own = isPlayerSide && k === 0;
-        const pos = oneOnOne
-          ? (isPlayerSide ? HISTORIC_POS.player : HISTORIC_POS.foe)
-          : spreadPos(sIdx, sides, k, per);
         specs.push({
           sideId, isBot, coreId,
           // Забег: со второго раунда боец игрока выходит с остатком прошлого боя.
@@ -869,6 +913,10 @@ onMounted(() => {
     opponent = null;
     playerUnit = null;
   };
+
+  // Командный бой: чужую команду собираем ДО первого состава — иначе на плиту
+  // выйти будет некому.
+  if (squadMode) rollSquadFoes();
 
   // Забег: первого соперника собираем ДО первого состава — иначе на плиту выйдет
   // тот, кого выбрали при открытии страницы, то есть боец без граней и без
@@ -985,6 +1033,11 @@ onMounted(() => {
     // При двух телах он НЕ ВЫПОЛНЯЕТСЯ ВОВСЕ: пару и так держит врозь сам боец,
     // и лишний проход означал бы, что бой один на один стал считаться иначе.
     if (onPlate.length > 2) separateBodies(onPlate);
+
+    // ПЛАШКИ ЗДОРОВЬЯ: развести по экрану (scene/hpStagger.js). Проход по тем же
+    // живым телам и с тем же условием «больше двух» — при двух телах он не
+    // выполняется вовсе, и бой один на один считается ровно как считался.
+    declutterPlates(onPlate, camera);
 
     // Кольцо едет за своим бойцом; кадр подбирается под живых.
     for (const u of onPlate) {

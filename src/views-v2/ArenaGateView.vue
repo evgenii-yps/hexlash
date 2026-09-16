@@ -83,6 +83,21 @@
       <button type="button" class="gate-go ge-go" @click="goShop">{{ t.home.shop }}</button>
     </div>
 
+    <!-- КОМАНДНЫЙ БОЙ: сколько бойцов с каждой стороны. Стоит только там, где
+         выбор есть, — у дуэли его нет вовсе. Матовый, как весь хром: светятся
+         острова, а не переключатель над ними. -->
+    <div v-if="!diving && stage === 'squad' && sizes.length && fighters.length" class="gate-size" role="group">
+      <button
+        v-for="n in sizes"
+        :key="n"
+        type="button"
+        class="gs-btn"
+        :class="{ 'is-on': n === size }"
+        :aria-pressed="n === size"
+        @click="pickSize(n)"
+      >{{ interpolate(t.gate.sizeLabel, { n }) }}</button>
+    </div>
+
     <!-- Строка шага: чего сейчас ждут от игрока. Матовая, без свечения —
          светятся острова, а не текст про них. -->
     <p v-if="!diving && stage === 'squad' && fighters.length" class="gate-hint">{{ hint }}</p>
@@ -168,6 +183,13 @@ const fighters = computed(() => store.getters['roster/fighters']);
 const squad = computed(() => store.getters['prefight/squad']);
 const squadFull = computed(() => store.getters['prefight/squadFull']);
 const squadLeft = computed(() => store.getters['prefight/squadLeft']);
+// Размер состава: из чего выбирать и что выбрано. У дуэли список пуст — тогда
+// переключателя нет.
+const sizes = computed(() => store.getters['prefight/squadSizes']);
+const size = computed(() => store.getters['prefight/squadSize']);
+// Бойцов в ростере меньше, чем просит размер. Считаем по РОСТЕРУ, а не по
+// составу: «не хватает» — это про то, кого вообще некем поставить.
+const shortBy = computed(() => Math.max(0, size.value - fighters.value.length));
 
 const modeItems = computed(() => ARENA_MODES.map((m) => ({
   id: m.id, name: m.name, tagline: m.tagline, locked: m.locked,
@@ -209,6 +231,13 @@ const EMPTY_TAG = { x: 0, y: 0, visible: false };
 function tagOf(id) { return tags.items[id] || EMPTY_TAG; }
 
 const hint = computed(() => {
+  // Нехватка бойцов важнее просьбы выбрать: просить выбрать того, кого нет, —
+  // значит послать игрока искать несуществующий остров.
+  if (shortBy.value > 0) {
+    return shortBy.value === 1
+      ? t.value.gate.needOne
+      : interpolate(t.value.gate.needMany, { n: shortBy.value });
+  }
   const n = squadLeft.value;
   if (n <= 0) return t.value.gate.squadReady;
   return n === 1
@@ -231,6 +260,13 @@ function onPick(id) {
 // Режим выбран. Кладём его в сейф ДО перехода — размер состава спрашивают у него.
 async function pickMode(id) {
   store.commit('prefight/SET_MODE', id);
+  // РАЗМЕР ПО УМОЛЧАНИЮ. Ставится здесь, а не в состоянии: он зависит от того,
+  // сколько у игрока бойцов, а состояние про ростер знать не должно. Трёшка,
+  // если есть кого поставить, иначе двойка — предлагаем то, во что можно выйти.
+  // Уже сделанный выбор не трогаем: игрок его помнит.
+  if (store.getters['prefight/squadSizes'].length && !store.state.prefight.squadN) {
+    store.commit('prefight/SET_SQUAD_SIZE', fighters.value.length >= 3 ? 3 : 2);
+  }
   if (stay) { diving.value = false; return; }
   if (flat) { router.push('/play'); return; }
 
@@ -258,6 +294,11 @@ async function pickMode(id) {
 function pickFighter(id) {
   diving.value = false;
   store.dispatch('prefight/toggleSquad', id);
+}
+
+// Размер состава выбран. Состав подрезается той же записью — см. SET_SQUAD_SIZE.
+function pickSize(n) {
+  store.commit('prefight/SET_SQUAD_SIZE', n);
 }
 
 function onRefused() {}
@@ -380,6 +421,29 @@ const coreSig = computed(() => core.value?.sig || '');
   .gate-cap.is-refused .gc-card { animation: none; }
 }
 
+/* ── переключатель размера состава ───────────────────────────────────────────
+   Матовый, как весь хром: розовым здесь ничего не зовут — зовут острова. Выбранный
+   отличается рамкой и цветом текста, а не заливкой: заливка читалась бы как
+   кнопка действия. */
+.gate-size {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  top: calc(var(--sp-6) + 44px);
+  z-index: 10; display: flex; gap: var(--sp-2);
+  pointer-events: auto;
+}
+.gs-btn {
+  padding: var(--sp-2) var(--sp-4);
+  font-family: var(--font-mono); font-size: var(--t-xs);
+  letter-spacing: var(--ls-meta); text-transform: uppercase;
+  color: var(--ink-off); cursor: pointer;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border: 1px solid var(--line);
+  transition: color var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
+}
+.gs-btn:hover { color: var(--ink-dim); border-color: var(--line-strong); }
+.gs-btn.is-on { color: var(--ink); border-color: var(--ink-dim); }
+.gs-btn:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+
 /* ── строка шага ─────────────────────────────────────────────────────────── */
 .gate-hint {
   position: fixed; left: 50%; transform: translateX(-50%);
@@ -448,7 +512,7 @@ const coreSig = computed(() => core.value?.sig || '');
    Заодно имена мельче: острова в низком кадре стоят теснее, и подписи полного
    размера читались одной фразой — «THORN NETTLE» вместо двух имён. */
 @media (max-height: 460px) and (orientation: landscape) {
-  .gate-hint { top: calc(var(--sp-6) + 44px); bottom: auto; }
+  .gate-hint { top: calc(var(--sp-6) + 88px); bottom: auto; }  /* под переключателем */
   .gc-name { font-size: var(--t-xl); }
   .gc-desc { font-size: var(--t-micro); letter-spacing: var(--ls-title); }
 }
