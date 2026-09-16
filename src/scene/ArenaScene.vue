@@ -310,12 +310,36 @@ function onDevCharge() {
 //     escalateMax), so the forced clash bites (накал = злее И больнее).
 // noteExchange() — any landed hit (real HP dealt, by either side) re-stamps the clock
 //   → накал snaps to 0, so an actively-trading bout never heats up.
+// НАКАЛ — ДВА СТОРОЖА, БЕРЁТСЯ БÓЛЬШИЙ. Они закрывают РАЗНЫЕ случаи, и снимать
+// один, починяя другой, нельзя — этим уже один раз сломали длину боя.
+//
+//  1. ЧАСЫ ТИШИНЫ (заведены 19.06.2026, правка 4b63c95d). Против вечной
+//     гляделки: двое терпеливых могли стоять друг против друга бесконечно, а
+//     прежний накал умножал урон — умножать было нечего. Считают время БЕЗ
+//     чистого размена и сбрасываются на каждом попадании.
+//
+//  2. ЧАСЫ ДЛИНЫ БОЯ (решение владельца 16.06.2026; сняты той же правкой 19.06,
+//     возвращены 16.09.2026). Гарантия вилки 45–50 с. Считают время С НАЧАЛА БОЯ
+//     и НЕ сбрасываются на попаданиях — иначе активный, но вязкий бой не
+//     кончается никогда: замер 16.09 показал 78–136 с по парам, а двое стойких
+//     не добились вовсе.
+//
+// Первый сторож не ловит второй случай (размены идут — тишины нет), второй не
+// ловит первый достаточно рано (гляделка длится дольше порога длины). Поэтому
+// оба, и берётся тот, что горячее.
+//
+// Часы длины отмеряются от fightStartT, а он ставится заново на каждый бой —
+// значит в череде боёв (раунды CHAIN) каждый раунд получает свой отсчёт.
 const escalation01 = () => {
   if (!fightStartT) return 0; // no bout running → no накал
-  const silence = lastFrameT - lastExchangeT; // seconds since the last clean exchange
-  const over = silence - COMBAT_BALANCE.escalateSilenceSec;
-  if (over <= 0) return 0; // still within the quiet threshold (засада waits as usual)
-  return Math.min(1, over / COMBAT_BALANCE.escalateRampSec);
+  // 1. тишина: время без чистого размена, сбрасывается попаданием
+  const silence = lastFrameT - lastExchangeT;
+  const quietOver = silence - COMBAT_BALANCE.escalateSilenceSec;
+  const bySilence = quietOver <= 0 ? 0 : Math.min(1, quietOver / COMBAT_BALANCE.escalateRampSec);
+  // 2. длина: время с начала боя, не сбрасывается ничем
+  const lengthOver = (lastFrameT - fightStartT) - COMBAT_BALANCE.escalateStartSec;
+  const byLength = lengthOver <= 0 ? 0 : Math.min(1, lengthOver / COMBAT_BALANCE.escalateLengthRampSec);
+  return Math.max(bySilence, byLength);
 };
 const escalationMult = () => 1 + escalation01() * (COMBAT_BALANCE.escalateMax - 1);
 // A clean exchange landed (real HP dealt) → reset the silence clock so накал cools.
