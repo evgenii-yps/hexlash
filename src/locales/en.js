@@ -384,6 +384,10 @@ export default {
     victoryNote: "Your side is the last one standing.",
     defeat: "Defeat",
     defeatNote: "Your side fell.",
+    // РЕЙД. Заголовки те же — исход у боя один, — а строка под ними другая:
+    // рейд выигран падением босса, а не тем, что своя сторона осталась одна.
+    victoryNoteRaid: "The boss is down.",
+    defeatNoteRaid: "Your team fell.",
     again: "Fight again",
     toGate: "Back to the gate",
   },

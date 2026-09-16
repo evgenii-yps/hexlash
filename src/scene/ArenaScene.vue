@@ -59,11 +59,12 @@ import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
 import { createBattleField } from './battleField.js';
 import { declutterPlates } from './hpStagger.js';
+import { setPlateVariant } from './hpIndicator.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { countLit } from '@/data/upgradeTree.js';
-import { composeChainFoe, composeSquadFoes } from '@/data/foeCompose.js';
+import { composeChainFoe, composeSquadFoes, composeRaid } from '@/data/foeCompose.js';
 import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
@@ -266,6 +267,20 @@ const route = useRoute();
 // боя. Думающий мозг модели и всё, что стоит денег, он не трогает — признак
 // приходит из адресной строки, значит его подставит кто угодно.
 const chainMode = !showcase && route.query.chain === '1';
+
+// ─── РЕЙД (?raid=1) ─────────────────────────────────────────────────────────
+// Временный вход в режим RAID — команда из четверых против босса и двух его
+// бойцов, по образцу ?chain=1. Игроку он не виден: в воротах сейчас два острова,
+// и третий в портрете без замера не ставится — это работа «экран режимов».
+// БЕЗ ПРИЗНАКА АРЕНА РАБОТАЕТ КАК ПРЕЖДЕ и ничего из рейда не включает.
+//
+// ⚠️ То же правило, что у признака показа и признака забега: он управляет ТОЛЬКО
+// режимом боя. Думающий мозг модели и всё, что стоит денег, он не трогает.
+//
+// ЗАБЕГ СИЛЬНЕЕ: два режима боя разом не включаются. Спрошены оба, потому что
+// адрес может нести оба признака сразу, и молчаливое «оба включились» дало бы
+// состав рейда с ходом раундов забега.
+const raidMode = !showcase && !chainMode && route.query.raid === '1';
 // Ход раунда. Номер и здоровье живут в chainRun; здесь — только то, что нужно
 // сцене, чтобы собрать следующего соперника.
 let chainLastCore = null;   // ядро прошлого раунда — подряд не повторяем
@@ -362,8 +377,13 @@ const escalation01 = () => {
   const silence = lastFrameT - lastExchangeT;
   const quietOver = silence - COMBAT_BALANCE.escalateSilenceSec;
   const bySilence = quietOver <= 0 ? 0 : Math.min(1, quietOver / COMBAT_BALANCE.escalateRampSec);
-  // 2. длина: время с начала боя, не сбрасывается ничем
-  const lengthOver = (lastFrameT - fightStartT) - COMBAT_BALANCE.escalateStartSec;
+  // 2. длина: время с начала боя, не сбрасывается ничем.
+  //    У РЕЙДА СВОЙ ПОРОГ: семеро на плите вязнут дольше пары, и на общем пороге
+  //    затянувшийся рейд не добивался — замер держал 104-112 с при потолке 100.
+  //    Число живёт в блоке raid файла чисел боя; общий порог не тронут, на нём
+  //    стоят DUEL, SQUAD и забег.
+  const startSec = raidMode ? COMBAT_BALANCE.raid.escalateStartSec : COMBAT_BALANCE.escalateStartSec;
+  const lengthOver = (lastFrameT - fightStartT) - startSec;
   const byLength = lengthOver <= 0 ? 0 : Math.min(1, lengthOver / COMBAT_BALANCE.escalateLengthRampSec);
   return Math.max(bySilence, byLength);
 };
@@ -522,7 +542,7 @@ onMounted(() => {
   //     там живой. Служебный ?field= сильнее — им проверяют поле само по себе, и
   //     он не должен зависеть от того, что игрок выбрал.
   const squadFighters = showcase ? [] : (store.getters['prefight/squadFighters'] || []);
-  const squadMode = !showcase && !chainMode
+  const squadMode = !showcase && !chainMode && !raidMode
     && store.getters['prefight/modeId'] === 'squad'
     && squadFighters.length > 1;
   // Чужая сторона. Собирается заново на каждый бой — «драться снова» должно
@@ -532,11 +552,24 @@ onMounted(() => {
     squadFoes = composeSquadFoes(squadFighters.length, squadFighters.map((f) => countLit(f.upgrade)));
   };
 
+  // ─── РЕЙД ─────────────────────────────────────────────────────────────────
+  //     Игрок выводит ОДНОГО своего бойца, к нему встают три бота-союзника, а
+  //     против них выходит босс и двое его бойцов. Всех шестерых собирает один
+  //     вызов — позывные не должны повторяться ни у кого на плите, а для этого
+  //     занятые имена надо вести одним списком (см. composeRaid).
+  //
+  //     Боец игрока — ПЕРВЫЙ из выбранного в воротах состава. Состава нет —
+  //     сюда вообще не доходят: страж арены заворачивает на выбор состава, ровно
+  //     как заворачивает DUEL.
+  let raid = null;
+  const rollRaid = () => { raid = composeRaid({ litCount: playerLit }); };
+
   // НОВЫЙ СОПЕРНИК ДЛЯ ПОВТОРНОГО БОЯ. Ядро соперника выбирается один раз при
   // открытии страницы, поэтому кнопка «драться снова» без этого выводила бы на
   // плиту ТОГО ЖЕ бойца, что и в прошлый раз. Правила те же, по которым он
   // рождается при входе на арену: случайное ядро, без граней.
   const rollDuelFoe = () => {
+    if (raidMode) { rollRaid(); return; }         // рейд — новые союзники, новый босс и охрана
     if (squadMode) { rollSquadFoes(); return; }   // командный бой — новая чужая команда
     opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
     opponentTree = CRYSTALS[opponentCoreId];
@@ -595,9 +628,20 @@ onMounted(() => {
     x: arena.refs.W / 2 - NAV_MARGIN,
     z: arena.refs.totalDepth / 2 - NAV_MARGIN,
   };
-  // --- СВОИ ОТЛИЧИМЫ ОТ ЧУЖИХ. Тонкое белое кольцо на плите под бойцами самого
-  //     игрока. Не под всей его стороной: союзные боты в RAID не метятся — метка
-  //     отвечает на вопрос «где мои», а не «где моя команда».
+  // --- СВОИ ОТЛИЧИМЫ ОТ ЧУЖИХ. Тонкое белое кольцо на плите под СТОРОНОЙ игрока.
+  //
+  //     ⚠️ Здесь стояло обратное: «союзные боты в RAID не метятся». Это было
+  //     написано до того, как режим появился, и расходилось с решением
+  //     девятнадцатой записи, которое прямо говорит: кольцо под всей стороной
+  //     игрока, включая союзных ботов, и делается это в работе RAID. Переписано
+  //     16.09.2026 вместе с самой правкой.
+  //
+  //     Кольцо отвечает «где моя команда», а не «где бот». Живой союзник получит
+  //     такое же кольцо, когда появятся живые, — поэтому ботов оно не выдаёт, и
+  //     правило «бота игроку не показывать» остаётся в силе.
+  //
+  //     Кому кольцо — решает СОСТАВ (`spec.ringed`), а не эта сборка: в рейде
+  //     это вся сторона, в прочих режимах — только бойцы самого игрока.
   //
   //     Почему белое и не светится. Цвет бойца принадлежит ядру, розовый —
   //     действию; кольцо не имеет права забрать ни то, ни другое. И свечение на
@@ -658,16 +702,21 @@ onMounted(() => {
   // Развести пересёкшиеся тела. Симметрично: каждого сдвигаем на половину
   // нехватки, чтобы никто не имел преимущества в пересчёте.
   const GAP = COMBAT_BALANCE.field.bodyGap;
+  // Пара с боссом расходится шире: он крупнее обычного тела и на общем просвете
+  // входил бы в соседей. Общий просвет при этом не тронут — на нём стоит бой
+  // один на один, и трогать его ради одного режима нельзя.
+  const BOSS_GAP = COMBAT_BALANCE.raid.bossBodyGap;
   const separateBodies = (list) => {
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i].f.group.position;
         const b = list[j].f.group.position;
+        const gap = (list[i].isBoss || list[j].isBoss) ? BOSS_GAP : GAP;
         let dx = a.x - b.x, dz = a.z - b.z;
         let d = Math.hypot(dx, dz);
-        if (d >= GAP - 1e-4) continue;          // уже врозь — не трогаем
+        if (d >= gap - 1e-4) continue;          // уже врозь — не трогаем
         if (d < 1e-4) { dx = (i % 2 ? 1 : -1) * 1e-3; dz = 1e-3; d = Math.hypot(dx, dz); } // совпали точка в точку
-        const push = (GAP - d) / 2;
+        const push = (gap - d) / 2;
         const ux = dx / d, uz = dz / d;
         a.x = THREE.MathUtils.clamp(a.x + ux * push, -navBounds.x, navBounds.x);
         a.z = THREE.MathUtils.clamp(a.z + uz * push, -navBounds.z, navBounds.z);
@@ -695,7 +744,9 @@ onMounted(() => {
     const won = field.winnerSide() === 'player';
     resultTimer = setTimeout(() => {
       resultTimer = null;
-      showFightResult(won);
+      // Заголовок общий, строка под ним у рейда своя: он выигран падением босса,
+      // а не тем, что своя сторона осталась одна.
+      showFightResult(won, raidMode ? 'raid' : null);
     }, COMBAT_BALANCE.panelDelaySec * 1000);
   };
 
@@ -802,8 +853,28 @@ onMounted(() => {
         refreshDevAliases();
       },
     });
-    if (spec.sideId === 'player' && !spec.isBot) unit.ring = makeOwnRing(); // свой — отмечаем кольцом
+    // Кольцо: в рейде состав просит его на всю сторону (spec.ringed), в прочих
+    // режимах поля `ringed` нет — и остаётся прежнее «свой, не бот».
+    const wantRing = spec.ringed !== undefined
+      ? spec.ringed
+      : (spec.sideId === 'player' && !spec.isBot);
+    if (wantRing) unit.ring = makeOwnRing();
+    unit.isBoss = !!spec.isBoss;
     unit.f.group.position.set(spec.pos.x, arena.refs.topY, spec.pos.z);
+    // БОСС КРУПНЕЕ. Домножаем к масштабу, который боец поставил себе сам при
+    // сборке, — абсолютного числа здесь нет намеренно: поменяется масштаб внутри
+    // бойца, и босс поедет за ним, а не разъедется с остальными. Всё, что висит
+    // на теле, едет вместе с ним: свечение ядра, ореол; плашка здоровья делит
+    // свой размер на размер тела и на экране остаётся прежней.
+    //
+    // ⚠️ Досягаемость удара НЕ растёт — расстояния боя живут в бойце и к размеру
+    //    не привязаны. Принято: босс выглядит чуть длиннорукее, чем бьёт.
+    if (spec.scale) unit.f.group.scale.multiplyScalar(spec.scale);
+    // Подпись плашки: BOSS вместо FOE. Ставится снаружи, после сборки, — боец
+    // собран общим сборщиком как обычный чужой, и трогать его файл ради слова
+    // нельзя. Цвет и яркость при этом прежние, чужие: второй оттенок на плите
+    // читался бы как второй источник света.
+    if (spec.isBoss) setPlateVariant(unit.f.group, 'boss');
     unit.f.setReducedMotion(reducedMotion);
     unit.f.setAI(spec.sideId === 'player' ? aiPlayer : aiOpponent); // keep AI on across respawn
     if (lockedIntention.value) unit.f.setIntentionLock(lockedIntention.value);
@@ -834,15 +905,57 @@ onMounted(() => {
     // Служебный признак выше сильнее — им проверяют поле само по себе.
     else if (squadMode) { sides = 2; per = squadFighters.length; }
 
+    // СТОРОНЫ РАЗНОГО РАЗМЕРА. Рейд — первый случай, когда их не поровну: четверо
+    // против троих. До него одного числа хватало на обе стороны, поэтому размер
+    // стал списком: `perSide[sIdx]`. Во всех прежних режимах список — это одно и
+    // то же число дважды, и они не заметили разницы.
+    const perSide = raidMode
+      ? [1 + COMBAT_BALANCE.raid.allies, 1 + COMBAT_BALANCE.raid.guards]
+      : Array.from({ length: sides }, () => per);
+
     const specs = [];
-    const oneOnOne = sides === 2 && per === 1;
+    const oneOnOne = sides === 2 && perSide[0] === 1 && perSide[1] === 1;
     for (let sIdx = 0; sIdx < sides; sIdx++) {
       const isPlayerSide = sIdx === 0;
       const sideId = isPlayerSide ? 'player' : `foe${sIdx}`;
-      for (let k = 0; k < per; k++) {
+      const count = perSide[sIdx];
+      for (let k = 0; k < count; k++) {
         const pos = oneOnOne
           ? (isPlayerSide ? HISTORIC_POS.player : HISTORIC_POS.foe)
-          : spreadPos(sIdx, sides, k, per);
+          : (raidMode ? raidPos(isPlayerSide, k, count) : spreadPos(sIdx, sides, k, count));
+
+        // РЕЙД. Сторона игрока — его боец и трое ботов-союзников; внешне бот от
+        // игрока не отличается, и кольцо стоит под всеми (решение девятнадцатой
+        // записи). Чужая сторона — босс и двое его бойцов; босс идёт ПЕРВЫМ, см.
+        // причину у composeRaid.
+        if (raidMode) {
+          const own = isPlayerSide && k === 0;
+          const unit = isPlayerSide
+            ? (own ? null : raid.allies[k - 1])
+            : (k === 0 ? raid.boss : raid.guards[k - 1]);
+          const coreId = own ? playerCoreId : unit.coreId;
+          const isBoss = !isPlayerSide && k === 0;
+          specs.push({
+            sideId,
+            isBot: !own,
+            isBoss,
+            // Кольцо — под ВСЕЙ командой игрока, включая союзных ботов. Кольцо
+            // отвечает «где моя команда», а не «где бот»: живой союзник получит
+            // то же кольцо, поэтому ботов оно не выдаёт.
+            ringed: isPlayerSide,
+            // Босс крупнее — домножением к тому масштабу, который боец ставит
+            // себе сам. Абсолютного числа размера здесь нет намеренно: подними
+            // масштаб внутри бойца, и босс поедет за ним, а не разъедется с ним.
+            scale: isBoss ? COMBAT_BALANCE.raid.bossScale : 0,
+            coreId,
+            side: isPlayerSide ? 'player' : 'opponent',
+            color: own ? playerColor : (coreId ? getCore(coreId).hue : pink),
+            behavior: own ? behaviorFor('player') : unit.behavior,
+            portrait: own ? portraitFor('player') : [],
+            pos,
+          });
+          continue;
+        }
 
         // КОМАНДНЫЙ БОЙ. Сторона игрока — ЕГО бойцы, все до одного: каждый со
         // своим ядром, своими гранями и своим белым кольцом. Чужая сторона —
@@ -889,6 +1002,45 @@ onMounted(() => {
     return specs;
   };
 
+  // Точки выхода РЕЙДА — две шеренги вдоль плиты, а не дуги вокруг центра.
+  //
+  // ПОЧЕМУ НЕ ОБЩАЯ РАССТАНОВКА. Общая ставит стороны в две точки круга и
+  // разводит бойцов стороны по дуге радиуса 1.08 (плита узкая по глубине). При
+  // трёх на сторону дуга занимает 122° и в свои 180° укладывается впритык; при
+  // ЧЕТЫРЁХ ей нужно 183° — сторона игрока обошла бы круг и вышла бы в чужую.
+  // Плита при этом 6 на 4: по ширине места вдвое больше, чем по глубине, и
+  // шеренги ложатся на неё свободно, а бой это не меняет — бойцы всё равно
+  // сходятся сами с первой секунды.
+  //
+  // Шаг между соседями заведомо больше рабочего просвета (spawnGap = 1.15),
+  // иначе первый же кадр начинался бы с расталкивания тел.
+  const RAID_ROW_Z = 1.15;   // своя шеренга: перед швом со своей стороны
+  const RAID_FOE_Z = -1.25;  // чужая шеренга: зеркально, чуть дальше
+  const RAID_STEP = 1.2;     // шаг вдоль шеренги
+  //
+  // БОСС СТОИТ В СЕРЕДИНЕ СВОЕЙ ШЕРЕНГИ, хотя в списке он первый. Это два разных
+  // «первым»: в списке — чтобы правила выбора цели брали его (см. composeRaid), а
+  // на плите — по центру, потому что рейд читается как «мы вместе против него», и
+  // главный с краю читался бы как ещё один охранник. Поэтому у чужой стороны
+  // место в шеренге считается не по порядку: первому достаётся середина,
+  // остальным — места от краёв внутрь.
+  function raidSlot(k, count, bossFirst) {
+    if (!bossFirst) return k;
+    const mid = Math.floor((count - 1) / 2);
+    if (k === 0) return mid;
+    const rest = [];
+    for (let i = 0; i < count; i++) if (i !== mid) rest.push(i);
+    return rest[k - 1];
+  }
+  function raidPos(isPlayerSide, k, count) {
+    const slot = raidSlot(k, count, !isPlayerSide);
+    const x = (slot - (count - 1) / 2) * RAID_STEP;
+    return {
+      x: THREE.MathUtils.clamp(x, -navBounds.x, navBounds.x),
+      z: isPlayerSide ? RAID_ROW_Z : RAID_FOE_Z,
+    };
+  }
+
   // Точки выхода: стороны по кругу, бойцы стороны — по дуге. Просвет держится
   // заведомо больше рабочего (COMBAT_BALANCE.field.spawnGap), иначе первый же
   // кадр начинался бы с расталкивания тел.
@@ -917,6 +1069,26 @@ onMounted(() => {
   // Командный бой: чужую команду собираем ДО первого состава — иначе на плиту
   // выйти будет некому.
   if (squadMode) rollSquadFoes();
+
+  // РЕЙД. То же самое — состав собирается до первого выхода на плиту. Плюс
+  // ставится СВОЁ правило конца боя: общее правило «жива ровно одна сторона»
+  // рейду не годится в обе стороны сразу.
+  //   • Босс пал — рейд взят, даже если охрана ещё на плите. Общее правило в этот
+  //     момент сказало бы «бой идёт».
+  //   • Пал боец игрока, а союзники живы — бой ПРОДОЛЖАЕТСЯ. Общее правило и тут
+  //     согласно (сторона жива), но полагаться на совпадение нельзя: рейд
+  //     проигран, только когда команды не осталось совсем.
+  // Правило ставится один раз на весь заход на арену и переживает пересборку
+  // состава кнопкой «драться снова».
+  if (raidMode) {
+    rollRaid();
+    field.setEndRule((units) => {
+      const boss = units.find((u) => u.isBoss);
+      if (boss && boss.dead) return 'player';
+      if (!units.some((u) => u.sideId === 'player' && !u.dead)) return 'foe1';
+      return null;
+    });
+  }
 
   // Забег: первого соперника собираем ДО первого состава — иначе на плиту выйдет
   // тот, кого выбрали при открытии страницы, то есть боец без граней и без

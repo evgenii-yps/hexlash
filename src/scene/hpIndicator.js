@@ -46,13 +46,22 @@ const HP_UI = {
 };
 
 // Player vs enemy: different fill COLOUR (not opacity) + bone/ash numeral & tag.
+//
+// BOSS (рейд, 16.09.2026) — ДОБАВОЧНЫЙ третий вариант: всё как у чужого, слово
+// другое. Ни цвета, ни яркости он не меняет — босс и так отличается размером
+// тела, а второй оттенок на плите читался бы как второй источник света. YOU и
+// FOE не тронуты.
 const VARIANTS = {
   player: { fill: '#FF0069', empty: '#1D1A1F', stroke: 'rgba(255,255,255,0.10)', numeral: '#F6F4F6', tag: 'YOU', tagColor: '#F6F4F6' },
   enemy: { fill: '#7A0033', empty: '#1D1A1F', stroke: 'rgba(255,255,255,0.05)', numeral: '#7E7A82', tag: 'FOE', tagColor: '#7E7A82' },
 };
+VARIANTS.boss = { ...VARIANTS.enemy, tag: 'BOSS' };
 
 export function createHpIndicator(side = 'player') {
-  const v = side === 'player' ? VARIANTS.player : VARIANTS.enemy;
+  // `let`, а не `const`: подпись переключается снаружи — см. setPlateVariant.
+  // Порядок разбора прежний, поэтому 'player' и 'opponent' дают ровно то же, что
+  // давали: неизвестное имя стороны по-прежнему приходит к чужому варианту.
+  let v = side === 'player' ? VARIANTS.player : (VARIANTS[side] || VARIANTS.enemy);
   const W = HP_UI.canvasW, H = HP_UI.canvasH;
   const aspect = W / H;
   const canvas = document.createElement('canvas');
@@ -143,5 +152,33 @@ export function createHpIndicator(side = 'player') {
     mesh.scale.set(local * aspect, local, 1);
   };
 
+  // Переключатель подписи для тех, кто держит только меш. Лежит на самом меше,
+  // потому что снаружи от бойца доступен именно он: боец наружу свою плашку не
+  // отдаёт, а трогать файл бойца ради этого нельзя.
+  mesh.userData.hpPlate = {
+    setVariant(key) {
+      const next = VARIANTS[key];
+      if (!next || next === v) return false;
+      v = next;
+      if (lastP >= 0) render(lastP); // перерисовать тем же числом — слово меняется сразу
+      return true;
+    },
+  };
+
   return { mesh, render, billboard };
+}
+
+/**
+ * Переключить вариант плашки у уже собранного бойца — снаружи, не трогая его.
+ * Нужно рейду: босс собирается общим сборщиком как обычный чужой боец, и только
+ * после сборки арена помечает его плашку словом BOSS.
+ *
+ * @param {THREE.Object3D} group группа бойца
+ * @param {string} key 'player' | 'enemy' | 'boss'
+ * @returns {boolean} удалось ли
+ */
+export function setPlateVariant(group, key) {
+  const plate = (group && group.children ? group.children : []).find((c) => c.isSprite);
+  const api = plate && plate.userData && plate.userData.hpPlate;
+  return api ? api.setVariant(key) : false;
 }

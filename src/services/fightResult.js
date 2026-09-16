@@ -24,6 +24,10 @@ import { reactive } from 'vue';
 export const fightResultState = reactive({
   visible: false,
   outcome: null,
+  // Какой бой кончился. Заголовок от этого не зависит — победа есть победа, —
+  // а строка под ним зависит: рейд выигран падением босса, а не тем, что своя
+  // сторона осталась одна. Пусто = обычный бой.
+  kind: null,
 });
 
 // Кто умеет начать новый бой. Ставит арена (только она это умеет), зовёт панель.
@@ -38,9 +42,14 @@ export function bindFightAgain(fn) {
   return () => { if (fightAgain === fn) fightAgain = null; };
 }
 
-/** Показать итог. `won` — выстояла ли сторона игрока. */
-export function showFightResult(won) {
+/**
+ * Показать итог.
+ * @param {boolean} won выстояла ли сторона игрока
+ * @param {string?} kind какой это был бой — 'raid' или ничего для обычного
+ */
+export function showFightResult(won, kind = null) {
   fightResultState.outcome = won ? 'victory' : 'defeat';
+  fightResultState.kind = kind || null;
   fightResultState.visible = true;
 }
 
@@ -48,6 +57,7 @@ export function showFightResult(won) {
 export function hideFightResult() {
   fightResultState.visible = false;
   fightResultState.outcome = null;
+  fightResultState.kind = null;
 }
 
 /**
