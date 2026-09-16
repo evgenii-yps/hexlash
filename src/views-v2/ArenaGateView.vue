@@ -111,6 +111,11 @@
       </div>
     </div>
 
+    <!-- Брошенный забег (CHAIN): игрока приводит сюда арена, а сообщение
+         показывает этот компонент — он же и снимает отметку. Островов не
+         касается и кликов не ловит. -->
+    <ChainInterrupted />
+
     <PlayerCabinet
       :open="cabinetOpen"
       :balance="balance"
@@ -130,6 +135,7 @@ import { getCore } from '@/data/upgradeData.js';
 import { ARENA_MODES } from '@/data/arenaModes.js';
 import ArenaGateScene from '@/scene/ArenaGateScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
+import ChainInterrupted from '@/components/chain/ChainInterrupted.vue';
 import { gatePlateTags } from '@/scene/gatePlateTags.js';
 import { DEV_MODE } from '@/services/devMode.js';
 import { raiseCurtain, dropCurtain, LOADING } from '@/services/sceneLoading.js';

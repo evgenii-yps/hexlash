@@ -370,6 +370,22 @@ export default {
     failedNote: "The scene failed to build. This is on us, not on your connection. Head home and step back in.",
     failedBack: "Back to home",
   },
+  // ЗАБЕГ (CHAIN) — три боя подряд одним бойцом. Панель между раундами, итог
+  // забега и сообщение о брошенном забеге. Больше про забег нигде не говорится:
+  // над головой соперника по-прежнему YOU / FOE, как в обычном бою.
+  chain: {
+    round: "Round {n} / {of}",
+    hp: "HP",
+    next: "Next",
+    stake: "Stake",
+    nextBtn: "Next",
+    complete: "Chain complete",
+    completeNote: "Every round survived. Your fighter walks out of it.",
+    broken: "Chain broken",
+    brokenNote: "Round {n} ended the run. Everything on the line is gone.",
+    toGate: "Back to the gate",
+    interrupted: "Run interrupted",
+  },
   errors: {
     pageNotFound: "Page not found",
     error404Code: "ERROR 404",

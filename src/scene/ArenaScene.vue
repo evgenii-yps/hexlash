@@ -48,7 +48,10 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+// ⚠️ `watch` из Vue взят под именем vueWatch НАМЕРЕННО: внутри onMounted уже
+//    живёт своя локальная функция watch — сторож сборки сцены, — и она перекрыла
+//    бы импорт. Одноимённая пара в одном файле молча сломала бы наблюдатель.
+import { onMounted, onBeforeUnmount, ref, watch as vueWatch } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
@@ -58,12 +61,15 @@ import { createBattleField } from './battleField.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
+import { countLit } from '@/data/upgradeTree.js';
+import { composeChainFoe } from '@/data/chainFoe.js';
 import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
+import { chainState, ROUNDS, startRun, clearRunState, winRound, loseRound, hasStaleRun } from '@/services/chainRun.js';
 import { useRouter, useRoute } from 'vue-router';
 import { t } from '@/locales/index.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
@@ -247,6 +253,22 @@ const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the
 const router = useRouter();
 // Служебный признак ?field= — временный вход на большое поле до экрана режимов.
 const route = useRoute();
+
+// ─── ЗАБЕГ (?chain=1) ───────────────────────────────────────────────────────
+// Временный вход в режим CHAIN — три боя подряд одним бойцом, по образцу ?field=.
+// Игроку он не виден и по ссылке не встречается: постоянный вход появится на
+// экране режимов. БЕЗ ПРИЗНАКА АРЕНА РАБОТАЕТ КАК DUEL И НИЧЕГО ИЗ ЗАБЕГА НЕ
+// ВКЛЮЧАЕТ — ни отметки во вкладке, ни стартового здоровья, ни граней сопернику.
+//
+// ⚠️ То же правило, что у признака показа рядом: он управляет ТОЛЬКО режимом
+// боя. Думающий мозг модели и всё, что стоит денег, он не трогает — признак
+// приходит из адресной строки, значит его подставит кто угодно.
+const chainMode = !showcase && route.query.chain === '1';
+// Ход раунда. Номер и здоровье живут в chainRun; здесь — только то, что нужно
+// сцене, чтобы собрать следующего соперника.
+let chainLastCore = null;   // ядро прошлого раунда — подряд не повторяем
+let chainPanelTimer = null; // пауза между замиранием боя и панелью
+let chainStartHp = null;    // здоровье бойца игрока на старте раунда (абсолют)
 // Дверь наружу из несобравшейся сцены — домой, а не «назад»: назад может вести
 // на тот же адрес арены, и игрок закольцуется на той же поломке.
 function onFailedBack() { router.push('/play/home'); }
@@ -346,6 +368,22 @@ const escalationMult = () => 1 + escalation01() * (COMBAT_BALANCE.escalateMax - 
 const noteExchange = () => { if (fightStartT) lastExchangeT = lastFrameT; };
 
 onMounted(() => {
+  // ЗАБЕГ БРОШЕН НА СЕРЕДИНЕ. Отметка во вкладке говорит, что прошлый забег не
+  // доигран: обновили страницу, закрыли вкладку, ушли кнопкой «назад». Забег
+  // с середины мы не обещаем восстанавливать — уводим в ворота, а сообщение
+  // покажут там. Отметку НЕ снимаем: её снимет тот, кто покажет сообщение,
+  // иначе оно потерялось бы вместе с этим экраном при переходе.
+  //
+  // Проверка стоит ДО startRun ниже — иначе мы нашли бы отметку, которую сами же
+  // и поставили секунду назад.
+  if (hasStaleRun(showcase)) {
+    router.replace({ name: 'V2ArenaGate' });
+    return;
+  }
+  // Ход забега живёт в памяти страницы и переживает уход с арены. Обычный бой
+  // обязан начаться с чистого хода, иначе панель прошлого забега выскочит в DUEL.
+  if (chainMode) startRun(); else clearRunState();
+
   // Build stages, in the order they happen below.
   load = beginSceneLoad(['renderer', 'arena', 'fighters', 'controls']);
 
@@ -438,8 +476,21 @@ onMounted(() => {
   const playerTree = store.getters['prefight/upgradeTree'] || (playerCoreId ? CRYSTALS[playerCoreId] : null);
   const playerBehavior = resolveBehavior(playerCoreId, collectLit(playerTree));
   // Opponent: a random one of the four cores, lit from its own CRYSTALS defaults.
-  const opponentCoreId = showcase ? 'zasada' : CORES[Math.floor(Math.random() * CORES.length)].id;
-  const opponentBehavior = resolveBehavior(opponentCoreId, collectLit(CRYSTALS[opponentCoreId]));
+  //
+  // ⚠️ `let`, А НЕ `const`, РАДИ ЗАБЕГА. В DUEL ядро соперника выбирается ОДИН РАЗ
+  //    при открытии страницы и дальше не меняется — кнопка FIGHT пересобирает тела,
+  //    но ядро остаётся то же. Забегу нужен НОВЫЙ соперник на каждый раунд, иначе
+  //    все три боя пройдут против одного и того же бойца. Переписывает эти три
+  //    строки только rollChainFoe ниже, и только когда забег включён: в DUEL они
+  //    как были заданы при входе, так и стоят.
+  //
+  //    `opponentTree` заведено здесь же: раньше дерево соперника спрашивали по
+  //    ядру в двух местах (характер и портрет), и оба всегда получали заготовку
+  //    БЕЗ ЕДИНОЙ ЗАЖЖЁННОЙ ГРАНИ. В забеге у соперника грани есть, и оба места
+  //    обязаны видеть одно и то же дерево — поэтому оно теперь одно.
+  let opponentCoreId = showcase ? 'zasada' : CORES[Math.floor(Math.random() * CORES.length)].id;
+  let opponentTree = CRYSTALS[opponentCoreId];
+  let opponentBehavior = resolveBehavior(opponentCoreId, collectLit(opponentTree));
 
   // Behaviour for a side: during a SIG dev bout the chosen signature preset
   // (L = player, R = opponent) overrides the core-derived profile; otherwise the
@@ -452,6 +503,21 @@ onMounted(() => {
     }
     return side === 'player' ? playerBehavior : opponentBehavior;
   };
+  // ─── СОПЕРНИК ЗАБЕГА ──────────────────────────────────────────────────────
+  //     Кто выходит драться в раунде N, решает data/chainFoe.js — там же, где
+  //     живут ядра и грани. Сцена только принимает готового бойца и ставит его на
+  //     плиту. В DUEL эта ветка не работает вовсе: соперник остаётся таким, каким
+  //     его выбрали при открытии страницы, — без граней и без поправок.
+  const playerLit = countLit(playerTree);
+  const rollChainFoe = (round) => {
+    const foe = composeChainFoe({ round, litCount: playerLit, lastCoreId: chainLastCore });
+    chainLastCore = foe.coreId;
+    opponentCoreId = foe.coreId;
+    opponentTree = foe.tree;
+    opponentBehavior = foe.behavior;
+    return { name: foe.name, coreId: foe.coreId };
+  };
+
   // Character PORTRAIT in WORDS for the model brain: the core's manner line + each
   // lit facet's manner-phrase (facetReadout) — NO raw axis numbers. Built where the
   // core + facet data lives; the backend just wraps it into the prompt. During a SIG
@@ -463,7 +529,7 @@ onMounted(() => {
     }
     const coreId = side === 'player' ? playerCoreId : opponentCoreId;
     const core = coreId ? getCore(coreId) : null;
-    const lit = side === 'player' ? collectLit(playerTree) : collectLit(CRYSTALS[opponentCoreId]);
+    const lit = side === 'player' ? collectLit(playerTree) : collectLit(opponentTree);
     const out = [];
     if (core) out.push(`${core.name} — ${core.manner}`);
     const seen = new Set();
@@ -584,6 +650,31 @@ onMounted(() => {
     for (const u of field.living()) u.f.setAI(false); // победители перестают бить → оседают в стойку
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
+    if (chainMode) closeChainRound();
+  };
+
+  // ЗАБЕГ: раунд кончился. Своего показа исхода у арены нет — бой просто замирает,
+  // — поэтому панель выходит ПОСЛЕ ПАУЗЫ: без неё игрок не успевает увидеть, чем
+  // бой кончился, и панель читается как выскочившая посреди боя.
+  //
+  // Победил игрок или нет, спрашиваем у поля боя: оно и так знает, ничьих в этой
+  // игре нет. Здоровье берём у самого бойца — оно уже посчитано боем.
+  const closeChainRound = () => {
+    if (!chainState.active) return;
+    const won = field.winnerSide() === 'player';
+    const alive = field.living().find((u) => u.sideId === 'player');
+    const hp01 = won && alive ? alive.f.getHp() / alive.f.maxHp : 0;
+    if (chainPanelTimer) clearTimeout(chainPanelTimer);
+    chainPanelTimer = setTimeout(() => {
+      chainPanelTimer = null;
+      if (!won) { loseRound(); return; }
+      // Имя и ядро следующего соперника нужны панели ДО того, как он выйдет:
+      // она про него и рассказывает. Поэтому соперник собирается здесь, а раунд
+      // потом просто выводит уже собранного.
+      const nextRound = chainState.round + 1;
+      const next = nextRound <= ROUNDS ? rollChainFoe(nextRound) : {};
+      winRound(hp01, next);
+    }, COMBAT_BALANCE.chain.panelDelaySec * 1000);
   };
 
   // Служебная панель и все её показания висят на ПЕРВОМ бойце игрока и ПЕРВОМ
@@ -616,6 +707,9 @@ onMounted(() => {
       side: spec.side,
       coreId: spec.coreId,
       behavior: spec.behavior,
+      // Стартовое здоровье — только у бойца игрока и только в забеге (см. spec).
+      // В любом другом бою здесь undefined, и боец выходит полным, как выходил.
+      startHp: spec.startHp,
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => { const x = foe(); return x ? x.group.position : null; },
@@ -709,6 +803,9 @@ onMounted(() => {
           : spreadPos(sIdx, sides, k, per);
         specs.push({
           sideId, isBot, coreId,
+          // Забег: со второго раунда боец игрока выходит с остатком прошлого боя.
+          // `undefined` во всех прочих случаях — то есть полное здоровье.
+          startHp: own && chainStartHp != null ? chainStartHp : undefined,
           side: isPlayerSide ? 'player' : 'opponent',
           color: own ? playerColor : (coreId ? getCore(coreId).hue : pink),
           behavior: own ? behaviorFor('player')
@@ -747,6 +844,11 @@ onMounted(() => {
     playerUnit = null;
   };
 
+  // Забег: первого соперника собираем ДО первого состава — иначе на плиту выйдет
+  // тот, кого выбрали при открытии страницы, то есть боец без граней и без
+  // поправки раунда.
+  if (chainMode) rollChainFoe(1);
+
   const startRoster = buildRoster();
   multiBout = startRoster.length > 2;
   for (const spec of startRoster) spawnUnit(spec);
@@ -757,6 +859,7 @@ onMounted(() => {
   // HP + neutral, then both fight autonomously until one is eliminated.
   runFight = () => {
     cancelSig(); // a normal bout uses core behaviour, not the A/B presets
+    if (chainPanelTimer) { clearTimeout(chainPanelTimer); chainPanelTimer = null; }
     clearField();
     aiPlayer = true;
     aiOpponent = true;
@@ -769,6 +872,21 @@ onMounted(() => {
     refreshDevAliases();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
+
+  // ЗАБЕГ: игрок нажал NEXT на панели. Панель живёт снаружи сцены и внутрь не
+  // лезет — она только переводит забег на следующий раунд, а сцена замечает смену
+  // номера и выводит бойцов. Так панель не знает про Three.js, а сцена — про
+  // кнопки.
+  //
+  // ⚠️ Двойное нажатие: номер раунда меняет chainRun, и второе нажатие приходит
+  //    уже вне состояния «между раундами» — номер не двигается, наблюдатель молчит,
+  //    раунд не запускается дважды.
+  vueWatch(() => chainState.round, (round, prev) => {
+    if (!chainMode || !chainState.active || round === prev) return;
+    // Стартовое здоровье раунда — доля, посчитанная забегом, в абсолют бойца.
+    chainStartHp = Math.round((chainState.hpAfter / 100) * COMBAT_BALANCE.maxHp);
+    runFight();
+  });
 
   // SIG dev bout (SIG FIGHT button): same clean re-run as FIGHT but the two
   // fighters take the chosen LEFT / RIGHT signature presets, and on each KO the
@@ -946,6 +1064,7 @@ onBeforeUnmount(() => {
   // тех полутора секунд; без отмены таймер разбудил бы уже разобранную сцену.
   if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
   if (sceneTimer) { clearTimeout(sceneTimer); sceneTimer = null; }
+  if (chainPanelTimer) { clearTimeout(chainPanelTimer); chainPanelTimer = null; } // панель забега — туда же
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);

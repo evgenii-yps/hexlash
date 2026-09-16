@@ -47,7 +47,7 @@ export function buildFighter(
   // `getFoePhase` (optional, like getFoeReacting) → the foe's CURRENT action phase
   // string ('windup' | 'commit' | 'recovery' | 'stagger' | 'neutral'); the reading
   // subsystem noises it by this fighter's counter (читать-навык) before acting.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, getFoePhase = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, startHp = null, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, getFoePhase = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null } = {},
 ) {
   const group = new THREE.Group();
 
@@ -211,7 +211,16 @@ export function buildFighter(
   //     opacity). No glow/bloom. Redrawn ONLY when the rounded percent changes;
   //     billboard()'d each frame for a constant on-screen size. maxHp is read from
   //     state — the indicator works at any pool size.
-  let hp = maxHp;
+  // ⚠️ `startHp` — С КАКИМ ЗДОРОВЬЕМ БОЕЦ ВЫХОДИТ НА ПЛИТУ. Заведена для ЗАБЕГА
+  //     (три боя подряд, см. services/chainRun.js): со второго раунда боец выходит
+  //     не полным, а с остатком прошлого боя плюс небольшая добавка — в этом и
+  //     состоит цена предыдущей победы.
+  //
+  //     По умолчанию null → полное здоровье, то есть ровно то, что было здесь
+  //     раньше. Ни один бой, который не попросит стартовое здоровье явно, этой
+  //     настройки не почувствует. Расчёт урона не тронут: ниже всё считается от
+  //     maxHp, как и считалось, — меняется только точка старта.
+  let hp = startHp == null ? maxHp : Math.max(1, Math.min(maxHp, startHp));
   const hpUI = createHpIndicator(side);
   group.add(hpUI.mesh);
   let lastPct = -1;
