@@ -106,10 +106,15 @@ export const PLAQUE = {
   // утоплена, а не прижата к прорезям: утопленная даёт стенкам букв тень на
   // скользящем ракурсе, и слово читается формой, а не подсветкой.
   glowSink: 0.22,
-  // Насколько панель и подложка уже самой таблички — доля её ПОЛУВЫСОТЫ. Обе
-  // обязаны быть чуть меньше лица, иначе их кромка вылезает за срезанные углы
-  // и висит в воздухе светящимся уголком (так и было в первой сборке).
+  // Насколько ПОДЛОЖКА уже самой таблички — доля её ПОЛУВЫСОТЫ. Она обязана
+  // быть чуть меньше лица, иначе её кромка вылезает за срезанные углы и висит
+  // в воздухе (так и было в первой сборке).
   innerInset: 0.06,
+  // Напуск светящейся панели за слово — доля высоты прописной. Панель стоит
+  // ПОЗАДИ ПРОРЕЗЕЙ, а не позади всей таблички: светить там, где нет дырок,
+  // нечему. Напуск нужен, чтобы свет не обрезался ровно по кромке буквы на
+  // косом взгляде.
+  glowBleed: 0.18,
 };
 
 // ───────────────────────────── Алфавит ─────────────────────────────
@@ -306,7 +311,7 @@ export function buildFightPlaque({ plateHalfW, topY, glowColor }) {
   // ── лицо с прорезями ──
   const outline = plaquePoints(halfW, halfH, halfH * 2 * o.chamferOfHeight);
   const shape = pathOf(outline, THREE.Shape);
-  const { letters, em } = layoutWord(halfW, halfH);
+  const { letters, em, wordW } = layoutWord(halfW, halfH);
   for (const pts of letters) shape.holes.push(pathOf(pts));
 
   const bodyGeo = new THREE.ExtrudeGeometry(shape, {
@@ -348,9 +353,13 @@ export function buildFightPlaque({ plateHalfW, topY, glowColor }) {
   // были у снятого диска (coreDim / coreArmed). Поведение «тускло — горит»
   // обязано остаться прежним, менялась картинка, а не отклик.
   //
-  // Форма — та же, что у таблички, а не прямоугольник: прямоугольная панель
-  // вылезала углами за срезы и висела в воздухе четырьмя светящимися уголками.
-  const glowGeo = new THREE.ShapeGeometry(pathOf(innerPts, THREE.Shape));
+  // Панель — ПО СЛОВУ, а не по всей табличке. Светить за глухой частью лица
+  // нечему: свет оттуда всё равно никуда не выходит, а закраска прозрачного
+  // аддитивного прямоугольника во всё лицо — это работа впустую на каждом
+  // кадре. Замерено на телефонном кадре с четырьмя бойцами: панель во всё лицо
+  // стоила 2 кадра в секунду, панель по слову — ни одного.
+  const bleed = em * o.glowBleed;
+  const glowGeo = new THREE.PlaneGeometry(wordW + bleed * 2, em + bleed * 2);
   glowGeo.translate(0, 0, -th / 2 + th * o.glowSink);
   const glowMat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(glowColor), transparent: true, opacity: 0,

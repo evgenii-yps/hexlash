@@ -915,6 +915,12 @@ onMounted(() => {
             ...screenBox(pl.group),
             capPx: Number(Math.hypot(a.x - b.x, a.y - b.y).toFixed(1)),
             strokePx: Number(Math.hypot(c.x - d.x, c.y - d.y).toFixed(1)),
+            // Ширина ЛИЦА, а не экранной коробки: коробка строится по осям мира,
+            // а табличка откинута, и её коробка вылезает вперёд на высоту
+            // наклона. На подлёте это давало 91 % ширины кадра там, где лицо
+            // занимало 63 %.
+            facePx: Number(Math.hypot(fl.x - fr.x, fl.y - fr.y).toFixed(1)),
+            faceCx: Number(((fl.x + fr.x) / 2).toFixed(1)),
           },
           cost: costOf(pl.group),
           // Целость таблички: нет ли у букв замкнутых островков и самопересечений.
