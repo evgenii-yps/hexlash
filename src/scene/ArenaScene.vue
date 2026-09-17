@@ -97,6 +97,7 @@ import {
 import {
   openFieldState, startOpenField, shortOfFighters as ofShortOfFighters,
   noteSidesLeft, finishOpenField, endOpenField,
+  bindCameraReturn, noteCameraFree,
 } from '@/services/openFieldRun.js';
 import { buildBotSide } from '@/services/collapseRun.js';
 import { showFightResult, hideFightResult, bindFightAgain } from '@/services/fightResult.js';
@@ -227,6 +228,12 @@ let multiBout = false;
 let field = null;
 let playerUnit = null;
 let onVisibility, onKeydown;
+// Камера в руках игрока (только открытое поле). Слежение выключено и само обратно
+// НЕ включается — вернуть его может только кнопка. Живёт здесь, а не в состоянии
+// режима, потому что спрашивается каждый кадр: реактивная переменная на кадровом
+// пути — это лишняя работа на ровном месте.
+let cameraFree = false;
+let unbindCameraReturn = null;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
 // Loading-screen handle — see services/sceneLoading.js. The arena lifts the screen
@@ -881,6 +888,9 @@ onMounted(() => {
   const _cen = new THREE.Vector3();
   const frameLiving = (list) => {
     if (!multiBout || !list.length) return;
+    // Камера в руках игрока — слежение молчит. Молчит оно и пока мы ждём, окажется
+    // ли касание жестом: иначе собственный сдвиг кадра мы приняли бы за руку.
+    if (cameraFree || grabArmed) return;
     // ОТКРЫТОЕ ПОЛЕ: КАДР ДЕРЖИТ СВОЮ СТОРОНУ, А НЕ ВСЁ ПОЛЕ.
     //
     // Общее правило «в кадре все живые» на двадцати телах работает против игрока:
@@ -907,7 +917,13 @@ onMounted(() => {
     r += FRAME_HEADROOM + room;
     const half = THREE.MathUtils.degToRad(camera.fov) / 2;
     const need = Math.max(r / Math.tan(half), r / (Math.tan(half) * camera.aspect)) * FRAME_MARGIN;
-    const want = THREE.MathUtils.clamp(need, controls.minDistance, controls.maxDistance);
+    // ⚠️ КЛАМП СВОЙ, А НЕ ПО КОРИДОРУ УПРАВЛЕНИЯ. Коридор на открытом поле
+    //    растянут под свободную камеру — до края поля; возьми слежение его потолок,
+    //    и кадр уезжал бы туда сам, а правило «свой боец не мельче, чем в турнире
+    //    QUAD» перестало бы работать. У слежения свой потолок, у руки свой.
+    const lo = openFieldMode ? COMBAT_BALANCE.openField.camMinDistance : controls.minDistance;
+    const hi = openFieldMode ? COMBAT_BALANCE.openField.camMaxDistance : controls.maxDistance;
+    const want = THREE.MathUtils.clamp(need, lo, hi);
 
     // ПЕРВЫЙ КАДР БОЯ — НАВОДКА СРАЗУ, БЕЗ ПОДЪЕЗДА.
     //
@@ -923,7 +939,7 @@ onMounted(() => {
     // ⚠️ ТОЛЬКО НА ОТКРЫТОМ ПОЛЕ. В командном бою, рейде и турнире бойцы выходят у
     //    середины плиты — там подъезжать и правда некуда, и плавный ход кадра там
     //    уже принят глазами. Снап без этой оговорки молча поменял бы три режима.
-    const k = (frameSnap && openFieldMode) ? 1 : 0.04;
+    const k = (frameSnap && openFieldMode) ? 1 : (returning ? 0.09 : 0.04);
     frameSnap = false;
     // Точка вращения едет к середине живых.
     controls.target.lerp(new THREE.Vector3(_cen.x, 0.2, _cen.z), k);
@@ -933,6 +949,17 @@ onMounted(() => {
     if (cur > 1e-3) {
       dir.multiplyScalar(THREE.MathUtils.lerp(cur, want, k) / cur);
       camera.position.copy(controls.target).add(dir);
+    }
+    // Доводка наклона и признак «доехали». Наклон сходится быстрее удаления,
+    // поэтому кончается подъезд не по нему одному, а по всем трём сразу: взгляд
+    // на своих, удаление рабочее, наклон рабочий.
+    if (returning) {
+      _sph.setFromVector3(_off.copy(camera.position).sub(controls.target));
+      _sph.phi = THREE.MathUtils.lerp(_sph.phi, workPolar, k);
+      camera.position.copy(controls.target).add(_off.setFromSpherical(_sph));
+      const atTarget = controls.target.distanceTo(new THREE.Vector3(_cen.x, 0.2, _cen.z)) < 0.4;
+      const atDist = Math.abs(camera.position.distanceTo(controls.target) - want) < 0.4;
+      if (atTarget && atDist && Math.abs(_sph.phi - workPolar) < 0.02) returning = false;
     }
   };
 
@@ -1568,6 +1595,7 @@ onMounted(() => {
     //    оставался в состоянии «для игрока всё», то есть не показывался вовсе, а
     //    место на панели было от прошлого боя.
     if (openFieldMode && !openFieldShort) startOpenField(openFieldLayoutId);
+    cameraFree = false; // новый бой всегда начинается со слежения — так решено в ТЗ
     frameSnap = true;   // новый бой — кадр наводится сразу, а не подъезжает
     const roster = buildRoster();
     multiBout = roster.length > 2;
@@ -1638,15 +1666,169 @@ onMounted(() => {
   controls.target.set(0, 0.2, 0);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.enablePan = false;
-  // Коридор удаления камеры. У открытого поля он свой: кадр там держит свою
-  // сторону, но у QUAD своих четверо, и на общем потолке (18) четвёрка вместе с
-  // запасом под цель в кадр не влезала.
-  controls.minDistance = openFieldMode ? COMBAT_BALANCE.openField.camMinDistance : 6;
-  controls.maxDistance = openFieldMode ? COMBAT_BALANCE.openField.camMaxDistance : 18;
+  // СДВИГ ДВУМЯ ПАЛЬЦАМИ — ТОЛЬКО НА БОЛЬШОМ ПОЛЕ. На боевой плите 6 на 4 сдвигать
+  // нечего: весь бой и так в кадре, а уехать вбок значило бы потерять его. На поле
+  // в шесть десятков единиц это единственный способ посмотреть чужой угол.
+  controls.enablePan = openFieldMode;
+
+  // ДАЛЬНИЙ ПРЕДЕЛ СЧИТАЕТСЯ, А НЕ ПИШЕТСЯ ЧИСЛОМ. Он зависит от размера поля И от
+  // пропорций экрана: в портрете кадр узкий, и то же поле влезает в него только с
+  // гораздо большего отъезда, чем в горизонтали. Число здесь было бы верно ровно
+  // для одной ориентации одного телефона.
+  //
+  // Считается той же формулой, что и кадр по живым: радиус, который должен
+  // поместиться, делится на угол обзора по более тесной из двух сторон.
+  //
+  // ⚠️ РАДИУС — ПО ДИАГОНАЛИ ПЛИТЫ, А НЕ ПО ЕЁ ПОЛОВИНЕ ШИРИНЫ. Плита квадратная, и
+  //    камера может стоять к ней под любым углом: с угла она шире себя же в
+  //    полтора раза. Первый снимок это и показал — поле обрезалось по краям.
+  const ofFitRadius = openFieldMode
+    ? (ofRingR + COMBAT_BALANCE.openField.edgeMargin) * Math.SQRT2
+      * COMBAT_BALANCE.openField.camFitMargin
+    : 0;
+  const ofFitDistance = () => {
+    const half = THREE.MathUtils.degToRad(camera.fov) / 2;
+    return Math.max(ofFitRadius / Math.tan(half), ofFitRadius / (Math.tan(half) * camera.aspect));
+  };
+
+  // Коридор удаления. В прежних режимах — как был. На открытом поле он шире
+  // ОБОИХ концов: ближе, чтобы рассмотреть замах, и дальше, чтобы увидеть поле
+  // целиком. Кадр по живым этим коридором НЕ пользуется — у него свой потолок
+  // (см. frameLiving), иначе слежение отъезжало бы до края поля.
+  controls.minDistance = openFieldMode ? COMBAT_BALANCE.openField.camMinFree : 6;
+  controls.maxDistance = openFieldMode ? ofFitDistance() : 18;
   controls.minPolarAngle = 0.25;
   controls.maxPolarAngle = 1.45; // ~83°, never dip under the slab
   controls.update();
+
+  if (openFieldMode) {
+    // ДАЛЬНЯЯ ПЛОСКОСТЬ ОТСЕЧЕНИЯ — ТОЖЕ ОТ ПОЛЯ, А НЕ ЧИСЛОМ. Арена видит на сто
+    // единиц: этого хватало плите 6 на 4 и не хватает полю, отодвинувшись от
+    // которого на полторы сотни единиц игрок увидел бы пустоту вместо дальней
+    // половины. Считаем: отъезд плюс само поле, с запасом.
+    camera.far = ofFitDistance() + ofFitRadius * 2 + 20;
+    camera.updateProjectionMatrix();
+  }
+
+  // --- КАМЕРА В ДВУХ СОСТОЯНИЯХ: СЛЕДИТ САМА или В РУКАХ ИГРОКА.
+  //
+  //     Как отличить одно от другого. Управление камерой само говорит о начале
+  //     жеста событием `start` — его шлют и мышь, и колесо, и касание, и только
+  //     они: своё движение кадра его не поднимает. Но одного `start` мало: он
+  //     приходит на ЛЮБОЕ касание холста, в том числе на промах пальцем, а промах
+  //     — не жест. Поэтому ждём, пока камера ДЕЙСТВИТЕЛЬНО сдвинется.
+  //
+  //     Пока ждём, слежение придержано: иначе сдвиг, который оно само и сделало,
+  //     мы бы приняли за руку игрока. Промах стоит трёх придержанных кадров —
+  //     глазом не видно.
+  const GRAB_EPS = 0.02;       // сдвиг, ниже которого это ещё не жест
+  const GRAB_FRAMES = 4;       // сколько кадров ждём движения после отпускания
+  let grabArmed = false;       // палец на холсте или колесо крутнули
+  let grabRelease = 0;         // кадров осталось ждать после отпускания
+  const grabPose = { p: new THREE.Vector3(), t: new THREE.Vector3() };
+
+  // РАБОЧИЙ НАКЛОН КАМЕРЫ. Снимается с самой камеры при сборке сцены, а не пишется
+  // числом: наклон задан позой камеры выше, и второе его написание разошлось бы с
+  // первым при первой же правке позы.
+  const _sph = new THREE.Spherical();
+  const _off = new THREE.Vector3();
+  const workPolar = _sph.setFromVector3(_off.copy(camera.position).sub(controls.target)).phi;
+  // ВОЗВРАТ СЛЕЖЕНИЯ В ХОДУ. Пока признак поднят, кадр едет обратно: к своей
+  // стороне, к рабочему удалению и к рабочему наклону. Азимут НЕ трогаем — обойти
+  // поле и остаться с той стороны, откуда смотрел, это и есть смысл свободной
+  // камеры.
+  //
+  // ⚠️ ПОДЪЕЗД ИДЁТ БЫСТРЕЕ ОБЫЧНОГО ХОДА КАДРА. Обычный ход (0.04) рассчитан на
+  //    то, чтобы следовать за дерущимися, а не пересекать поле: с дальнего предела
+  //    он возвращал кадр восемь секунд, и снимок ловил камеру ещё в пути. Возврат
+  //    — разовое движение через всё поле, и ему нужен свой шаг.
+  let returning = false;
+
+  const setCameraFree = (on) => {
+    if (!openFieldMode || cameraFree === on) return;
+    cameraFree = on;
+    // ⚠️ ВОЗВРАТ ВОЗВРАЩАЕТ И НАКЛОН, А НЕ ТОЛЬКО УДАЛЕНИЕ.
+    //
+    //    Кадр по живым наклон не трогает принципиально — его крутит игрок. Но
+    //    игрок, заглянувший на поле сверху вниз, после возврата видел своего бойца
+    //    с макушки, то есть мельче, чем в турнире QUAD, — а ТЗ требует обратного
+    //    именно от кадра ПОСЛЕ ВОЗВРАТА. Снимок это и показал.
+    if (!on) returning = true;
+    noteCameraFree(on);
+  };
+
+  controls.addEventListener('start', () => {
+    if (!openFieldMode || cameraFree) return;
+    grabArmed = true;
+    grabRelease = 0;
+    grabPose.p.copy(camera.position);
+    grabPose.t.copy(controls.target);
+  });
+  // Отпустили. Колесо двигает камеру УЖЕ ПОСЛЕ этого события (поворот
+  // применяется в следующем обновлении), поэтому сразу не разоружаемся, а даём
+  // движению несколько кадров, чтобы себя проявить.
+  controls.addEventListener('end', () => { if (grabArmed) grabRelease = GRAB_FRAMES; });
+
+  /** Зовётся раз в кадр ПОСЛЕ обновления управления. */
+  const watchGrab = () => {
+    if (!grabArmed) return;
+    const moved = camera.position.distanceTo(grabPose.p) > GRAB_EPS
+      || controls.target.distanceTo(grabPose.t) > GRAB_EPS;
+    if (moved) { grabArmed = false; setCameraFree(true); return; }
+    if (grabRelease > 0 && --grabRelease === 0) grabArmed = false; // промах, не жест
+  };
+
+  // ВЗГЛЯД ТЯНЕТ К СЕРЕДИНЕ ПОЛЯ, ЧЕМ ДАЛЬШЕ ОТЪЕХАЛИ.
+  //
+  // ЗАЧЕМ. Слежение держит взгляд на СВОЕЙ стороне, а она стоит у КРАЯ поля. Если
+  // оттуда просто отъезжать, поле уезжает вбок и обрезается кромкой экрана —
+  // первый снимок дальнего предела показал ровно это. Считать дальний предел «от
+  // края поля до дальнего угла» можно, но тогда на дальнем пределе поле занимает
+  // треть кадра, а две трети — пустота.
+  //
+  // Поэтому взгляд едет к середине, и тем сильнее, чем дальше камера. Тяга растёт
+  // КВАДРАТОМ: у рабочего удаления её нет вовсе, к дальнему пределу она уверенная.
+  //
+  // ⚠️ РАЗМЕН, НАЗВАННЫЙ ЧЕСТНО. У самого дальнего предела сдвиг двумя пальцами
+  //    подтягивается обратно за секунду. Это сознательно: там в кадре и так всё
+  //    поле, сдвигать нечего; а на среднем удалении, где сдвиг и нужен, тяга
+  //    почти не чувствуется.
+  const ofCenterPull = () => {
+    if (!cameraFree) return;
+    const follow = COMBAT_BALANCE.openField.camMaxDistance;
+    const far = ofFitDistance();
+    const dist = camera.position.distanceTo(controls.target);
+    const t01 = THREE.MathUtils.clamp((dist - follow) / Math.max(1, far - follow), 0, 1);
+    if (t01 <= 0) return;
+    const k = 0.05 * t01 * t01;
+    controls.target.x = THREE.MathUtils.lerp(controls.target.x, 0, k);
+    controls.target.z = THREE.MathUtils.lerp(controls.target.z, 0, k);
+  };
+
+  // ТОЧКА ВЗГЛЯДА НЕ УЕЗЖАЕТ С ПОЛЯ. Сдвиг двумя пальцами ничем не ограничен сам
+  // по себе — без этого игрок уводит камеру в пустоту и не находит дороги назад.
+  const ofPanBound = openFieldMode ? ofRingR + COMBAT_BALANCE.openField.edgeMargin : 0;
+  const clampPan = () => {
+    controls.target.x = THREE.MathUtils.clamp(controls.target.x, -ofPanBound, ofPanBound);
+    controls.target.z = THREE.MathUtils.clamp(controls.target.z, -ofPanBound, ofPanBound);
+  };
+
+  // ТУМАН ЕДЕТ ЗА КАМЕРОЙ — тот же приём, что в воротах арены, и по той же
+  // причине. Туман считается в мировых единицах: отодвинули камеру в полтора
+  // десятка раз — и всё поле оказалось в молоке, то есть дальний предел показывал
+  // бы не поле, а ровную мглу. Число в токенах — плотность ДЛЯ РАБОЧЕГО удаления;
+  // отъехали — разрежаем во столько же раз. На слежении отъезд равен единице, и
+  // туман остаётся ровно тем, что принят глазами.
+  const ofFogBase = openFieldMode ? COMBAT_BALANCE.openField.camMaxDistance : 1;
+  const followFog = () => {
+    if (!openFieldMode || !scene.fog) return;
+    const pull = Math.max(1, camera.position.distanceTo(controls.target) / ofFogBase);
+    scene.fog.density = FOG.arena.density / pull;
+  };
+
+  // Вернуть слежение. Плавно: кадр подъезжает обратно сам (frameSnap не взводим),
+  // как просит ТЗ. Кнопку рисует надпись поверх боя — сцена только отдаёт способ.
+  if (openFieldMode) unbindCameraReturn = bindCameraReturn(() => setCameraFree(false));
 
   load.stage('controls');
 
@@ -1681,6 +1863,11 @@ onMounted(() => {
     lastFrameT = t; // live loop time — used to schedule the SIG auto-cycle restart
 
     controls.update();
+    // Камера: не взял ли её игрок в руки, не уехал ли взгляд с поля, и туман —
+    // за отъездом. Всё три — только на открытом поле, в прочих режимах пусто.
+    watchGrab();
+    if (cameraFree) { ofCenterPull(); clampPan(); }
+    followFog();
     if (presence) presence.update(t); // на большом поле разлома нет — дышать нечему
     // Обход поля в порядке выхода на плиту: сторона игрока первой, чужие следом —
     // ровно тот порядок, в котором раньше стояли два вызова подряд. Порядок важен:
@@ -1803,6 +1990,15 @@ onMounted(() => {
     const ch = el.clientHeight;
     if (!cw || !ch) return;
     camera.aspect = cw / ch;
+    // ПОВОРОТ ТЕЛЕФОНА МЕНЯЕТ ДАЛЬНИЙ ПРЕДЕЛ. Он считается от пропорций экрана: в
+    // портрете кадр узкий, и поле влезает в него только с большего отъезда. Не
+    // пересчитать — и после поворота предел остался бы от прежней ориентации:
+    // в портрете поле не влезло бы, в горизонтали камера уезжала бы вдвое дальше
+    // нужного.
+    if (openFieldMode) {
+      controls.maxDistance = ofFitDistance();
+      camera.far = ofFitDistance() + ofFitRadius * 2 + 20;
+    }
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
     // We just moved the picture under ourselves — start the settled-frame count
@@ -1822,6 +2018,7 @@ onBeforeUnmount(() => {
   if (resultTimer) { clearTimeout(resultTimer); resultTimer = null; }  // и панель итога
   hideFightResult();   // уходим с арены — панель итога уходит с нами
   endOpenField();      // и счётчик сторон открытого поля: считать больше нечего
+  unbindCameraReturn?.(); // и способ вернуть слежение: камеры, которой он владел, больше нет
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();

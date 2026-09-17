@@ -33,6 +33,30 @@
     </dl>
   </div>
 
+  <!-- КАМЕРА В РУКАХ ИГРОКА — кнопка вернуть слежение. Стоит только в этом
+       состоянии: пока камера ведёт себя сама, возвращать нечего, и лишняя кнопка
+       поверх боя ничего не объясняет.
+
+       Матовая, круглая, со значком и БЕЗ РОЗОВОГО И БЕЗ СВЕЧЕНИЯ: розовое в этом
+       режиме занято действием, а дальше займётся лучом лидера. Материал —
+       существующий матовый хром (--chrome-*), тот же, что у кнопок дома. -->
+  <button
+    v-if="showRecenter"
+    type="button"
+    class="of-recenter"
+    :aria-label="t.openField.recenter"
+    :title="t.openField.recenter"
+    @click="onRecenter"
+  >
+    <!-- Прицел: рамка с просветами и точка в середине. Читается как «навести
+         обратно», а не как «закрыть» или «в центр экрана». -->
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+      <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.6" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+    </svg>
+  </button>
+
   <!-- Бойцов не хватает. На поле не вышел никто, и дверь ровно одна. -->
   <ArenaPanel
     v-if="showShort"
@@ -50,7 +74,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { t, interpolate } from '@/locales/index.js';
-import { openFieldState, endOpenField } from '@/services/openFieldRun.js';
+import { openFieldState, endOpenField, cameraReturnNow } from '@/services/openFieldRun.js';
 import ArenaPanel from '@/components/panel/ArenaPanel.vue';
 import '@/components/panel/panel.css';
 
@@ -59,6 +83,17 @@ const router = useRouter();
 const sidesLeft = computed(() => openFieldState.sidesLeft);
 const showCount = computed(() => openFieldState.active && openFieldState.phase === 'fight');
 const showShort = computed(() => openFieldState.active && openFieldState.phase === 'short');
+// Кнопка возврата — только пока идёт бой И камера в руках. На панели итога она
+// не нужна: бой кончился, следить не за чем.
+const showRecenter = computed(() => openFieldState.active
+  && openFieldState.phase === 'fight'
+  && openFieldState.cameraFree);
+
+// ⚠️ Двойное нажатие безвредно: признак снимается первым же нажатием, и второе
+//    приходит уже к невидимой кнопке (см. cameraReturnNow).
+function onRecenter() {
+  cameraReturnNow();
+}
 
 const shortTitle = computed(() => (openFieldState.shortBy === 1
   ? t.value.openField.needOne
@@ -94,4 +129,30 @@ function onLeave() {
 }
 .of-row dt { color: var(--ink-off); flex: 0 0 auto; }
 .of-row dd { margin: 0; color: var(--ink); }
+
+/* Кнопка возврата слежения. Материал — существующий матовый хром, тот же, что у
+   кнопок дома (.hs-chrome): матовое стекло, волосяная рамка, холодный текст.
+   Отличие одно — круглая: так её не спутать с кнопками панелей, которые в этой
+   игре все прямоугольные.
+
+   Справа: сверху по центру стоит счётчик сторон, слева снизу — служебная строка
+   кадра, справа сверху — служебная кнопка DEV. Ниже неё и стоим.
+
+   Розового и свечения здесь нет намеренно — см. причину у разметки. */
+.of-recenter {
+  position: fixed; top: 56px; right: var(--sp-4);
+  z-index: var(--z-ui); pointer-events: auto;
+  width: 44px; height: 44px;                 /* палец — не меньше 44 */
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--chrome-line); border-radius: 50%;
+  background: var(--chrome-glass);
+  -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass));
+  color: var(--chrome-ink);
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--e-weight),
+              color var(--d-hover) var(--e-weight);
+}
+.of-recenter > svg { width: var(--icon-sm); height: var(--icon-sm); }
+.of-recenter:hover { border-color: var(--chrome-rim); }
+.of-recenter:active { transform: scale(0.97); }
 </style>
