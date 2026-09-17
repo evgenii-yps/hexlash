@@ -747,7 +747,27 @@ onMounted(() => {
         hit: screenBox(fightBtn.pick),
         armed: fightBtn.armed,
       } : null;
-      return { vw: cw, vh: ch, aspect: cw / ch, bounds: plates.bounds(), fps: fpsNow, items: out, fight };
+      // ЦЕНА КАДРА. Треугольники и вызовы отрисовки берём у самого отрисовщика
+      // (renderer.info), а не считаем по геометриям: info говорит, сколько
+      // ушло в видеокарту В ЭТОМ кадре, а подсчёт по дереву сцены — сколько
+      // всего лежит в памяти. Бюджет ТЗ — про первое.
+      const r = renderer.info;
+      const cost = {
+        tris: r.render.triangles,
+        calls: r.render.calls,
+        geometries: r.memory.geometries,
+        textures: r.memory.textures,
+        meshes: (() => { let n = 0; scene.traverse((x) => { if (x.isMesh || x.isLine || x.isPoints) n++; }); return n; })(),
+      };
+      return { vw: cw, vh: ch, aspect: cw / ch, bounds: plates.bounds(), fps: fpsNow, items: out, fight, cost };
+    };
+    // КУДА ПОПАДЁТ ПАЛЕЦ. Приёмка обязана проверить, что нажатие в центр плиты и
+    // в центр подписи попадает в СВОЙ остров, а не в соседний. Синтетический клик
+    // мышью это не отвечает: он тронет наведение, а на телефоне мыши нет вовсе.
+    // Спрашиваем тот же луч, которым сцена и выбирает, — другого ответа нет.
+    window.__gatePick = (x, y) => {
+      const id = pickAt(x, y);
+      return id === FIGHT ? 'FIGHT' : (id || null);
     };
   }
 });
@@ -762,7 +782,7 @@ onBeforeUnmount(() => {
   // догнать уже снятый экран, — и только потом разбирать сцену.
   approach?.cancel();
   dive?.cancel();
-  if (DEV_MODE) delete window.__gateProbe;
+  if (DEV_MODE) { delete window.__gateProbe; delete window.__gatePick; }
   stopVeilWatch?.();
   clearGatePlateTags();
   load?.dispose();
