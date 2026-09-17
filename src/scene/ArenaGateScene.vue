@@ -51,7 +51,7 @@ import { makeHexGridTexture } from './arenaTextures.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { createGateApproach } from './gateApproach.js';
 import { createIslandDive } from './islandDive.js';
-import { buildGatePlates } from './gatePlates.js';
+import { buildGatePlates, GATE_PLATES } from './gatePlates.js';
 import { buildGateFightButton, FIGHT_BTN } from './gateFightButton.js';
 import {
   setGatePlateTag, setGatePlateHover, setGatePlateRefused, clearGatePlateTags,
@@ -292,7 +292,7 @@ function buildField(maxAniso) {
 // под чёрным кадром, где этого всё равно не видно.
 function buildPlates(items, aspect) {
   if (plates) { scene.remove(plates.group); plates.dispose(); plates = null; }
-  plates = buildGatePlates({ items, maxAniso: renderer.capabilities.getMaxAnisotropy() });
+  plates = buildGatePlates({ items, maxAniso: renderer.capabilities.getMaxAnisotropy(), reduced });
   plates.setSelected(props.selected);
   scene.add(plates.group);
   plates.layout(aspect);
@@ -714,9 +714,45 @@ onMounted(() => {
   // не включает в игре и ничего не стоит: вне `?dev=1` эта ветка не заводится.
   if (DEV_MODE) {
     const _p = new THREE.Vector3();
+    const _mm = new THREE.Matrix4();
     window.__gateProbe = () => {
       if (!plates || !camera) return null;
       const cw = el.clientWidth, ch = el.clientHeight;
+      // ЭМБЛЕМУ НЕЛЬЗЯ МЕРИТЬ ОДНОЙ КОРОБКОЙ. У кольца осколков COLLAPSE общая
+      // коробка почти пустая: углы у неё — воздух, а геометрия идёт по кольцу.
+      // Спросив «накрывает ли коробка подпись», получаешь «да» там, где на
+      // экране между ними просвет в полтора сантиметра. Поэтому мерим ЧАСТЯМИ:
+      // каждая деталь (и каждая копия из набора) даёт свой прямоугольник, а
+      // условие «подпись не закрыта» проверяется по ним, а не по их объединению.
+      const rectOf = (box, mat) => {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (let i = 0; i < 8; i++) {
+          _p.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z);
+          if (mat) _p.applyMatrix4(mat);
+          _p.project(camera);
+          const x = (_p.x * 0.5 + 0.5) * cw, y = (-_p.y * 0.5 + 0.5) * ch;
+          minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+        }
+        return { left: minX, right: maxX, top: minY, bottom: maxY, w: maxX - minX, h: maxY - minY };
+      };
+      const screenParts = (root) => {
+        const out = [];
+        root.traverse((obj) => {
+          if (!obj.isMesh) return;
+          if (!obj.geometry.boundingBox) obj.geometry.computeBoundingBox();
+          const lb = obj.geometry.boundingBox;
+          if (obj.isInstancedMesh) {
+            for (let i = 0; i < obj.count; i++) {
+              obj.getMatrixAt(i, _mm);
+              out.push(rectOf(lb, _mm.premultiply(obj.matrixWorld)));
+            }
+          } else {
+            out.push(rectOf(lb, obj.matrixWorld));
+          }
+        });
+        return out;
+      };
       const screenBox = (obj) => {
         const box = new THREE.Box3().setFromObject(obj);
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -739,6 +775,11 @@ onMounted(() => {
           x: p.baseX, z: p.baseZ,
           ...screenBox(p.slab.group),
           hit: screenBox(p.pick),
+          // Эмблема мерится ОТДЕЛЬНО от плиты. «Дальний не меньше 60% ближнего»
+          // считается по плите (ТЗ), а «всё в кадре» и «подпись не закрыта» — по
+          // эмблеме, и сложить их в одну коробку значит соврать в обоих.
+          emblem: p.emblem ? screenBox(p.emblem.group) : null,
+          emblemParts: p.emblem ? screenParts(p.emblem.group) : null,
           capX: cap.x, capY: cap.y, capVisible: cap.visible,
         };
       });
@@ -769,6 +810,42 @@ onMounted(() => {
       const id = pickAt(x, y);
       return id === FIGHT ? 'FIGHT' : (id || null);
     };
+    // КРУПНЫЙ ПЛАН ЭМБЛЕМЫ. Владелец смотрит эмблемы поштучно и с трёх сторон —
+    // с общего кадра ворот предмет высотой в два метра занимает полсантиметра
+    // экрана, и по нему нельзя сказать, читается он или нет.
+    //
+    // Это ТОЛЬКО камера: остров не подсвечивается, сцена не трогается, ничего не
+    // включается. Орбита при этом отдаётся служебной позе, поэтому возврат —
+    // тем же вызовом без имени острова.
+    const _restPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
+    let devShot = false;
+    window.__gateEmblemView = (id, angle = 'front') => {
+      const p = id ? plates.plates[id] : null;
+      if (!p) {                       // вернуть камеру в позу покоя
+        if (devShot) {
+          camera.position.copy(_restPose.pos);
+          controls.target.copy(_restPose.look);
+          controls.update();
+          devShot = false;
+        }
+        return null;
+      }
+      if (!devShot) { _restPose.pos.copy(camera.position); _restPose.look.copy(controls.target); devShot = true; }
+      const air = (p.emblem ? p.emblem.top : GATE_PLATES.height) ;
+      const centre = p.root.localToWorld(new THREE.Vector3(0, air * 0.55, 0));
+      const dist = air * 2.6;
+      const dirs = {
+        front: new THREE.Vector3(0, 0.22, 1),
+        quarter: new THREE.Vector3(0.82, 0.30, 0.82),
+        // «Сверху под углом ворот» — тот наклон, под которым остров видит игрок.
+        top: new THREE.Vector3(0, 1.05, 0.62),
+      };
+      const d = (dirs[angle] || dirs.front).clone().normalize();
+      camera.position.copy(centre).addScaledVector(d, dist);
+      controls.target.copy(centre);
+      controls.update();
+      return { id, angle, dist };
+    };
   }
 });
 
@@ -782,7 +859,7 @@ onBeforeUnmount(() => {
   // догнать уже снятый экран, — и только потом разбирать сцену.
   approach?.cancel();
   dive?.cancel();
-  if (DEV_MODE) { delete window.__gateProbe; delete window.__gatePick; }
+  if (DEV_MODE) { delete window.__gateProbe; delete window.__gatePick; delete window.__gateEmblemView; }
   stopVeilWatch?.();
   clearGatePlateTags();
   load?.dispose();

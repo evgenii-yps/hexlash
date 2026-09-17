@@ -220,7 +220,7 @@ export const MODE_PLATES = {
 // buildArena is a protected file, so this file carries its own copy rather than
 // reaching into it). u runs along the length, v ACROSS the width, which is what
 // the band textures expect (their gradient peaks at v = 0.5).
-function stripGeometry(railA, railB) {
+export function stripGeometry(railA, railB) {
   const n = railA.length;
   const pos = new Float32Array(n * 2 * 3);
   const uv = new Float32Array(n * 2 * 2);
@@ -242,6 +242,53 @@ function stripGeometry(railA, railB) {
   geo.setIndex(idx);
   geo.computeVertexNormals();
   return geo;
+}
+
+// ─────────────────────────────── The rift ───────────────────────────────
+/**
+ * РВАНЫЙ РАЗЛОМ, ПРОРЕЗАННЫЙ ПО КРЫШКЕ ПЛИТЫ — одна реализация на всю игру.
+ *
+ * Разлом придуман для острова ARENA и с тех пор стал языком: там, где в мире
+ * рвётся земля, она рвётся именно так — ломаная средняя линия, по ней лентой
+ * идут матовая канавка и поверх неё аддитивное свечение. Вторая копия этого
+ * построения (её просили ворота) означала бы, что два разлома в одной игре
+ * могут разойтись рисунком на первой же правке. Поэтому построение живёт здесь
+ * одно, а ЧИСЛА и МАТЕРИАЛЫ у каждого разлома свои: ширина, высота над крышкой
+ * и цвет — забота вызывающего.
+ *
+ * Возвращает только фабрику лент: сколько их и какими материалами красить,
+ * решает вызывающий (у дома три, у ворот две — там кадр холоднее и уже).
+ *
+ * @param {object} p
+ * @param {Array<[number,number]>} p.path ломаная в долях полуразмеров плиты
+ * @param {number} p.halfW половина ширины плиты
+ * @param {number} p.halfD половина глубины плиты
+ * @param {number} [p.samples] на сколько точек пересобрать кривую: чем мельче
+ *   разлом на экране, тем меньше их нужно — лишние точки это лишние
+ *   треугольники в каждом кадре
+ * @returns {{ ribbon(halfWidth:number): THREE.BufferGeometry }}
+ */
+export function riftRibbons({ path, halfW, halfD, samples = 48 }) {
+  const pts = path.map(([u, v]) => new THREE.Vector3(u * halfW, 0, v * halfD));
+  // Resample the jag through a curve so the ribbon has enough segments to read.
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.4);
+  const centre = curve.getPoints(samples);
+
+  const ribbon = (halfWidth) => {
+    const ra = []; const rb = [];
+    for (let i = 0; i < centre.length; i++) {
+      const p0 = centre[i];
+      const q = centre[Math.min(i + 1, centre.length - 1)];
+      const r = centre[Math.max(i - 1, 0)];
+      const dx = q.x - r.x; const dz = q.z - r.z;
+      const len = Math.hypot(dx, dz) || 1;
+      const nx = -dz / len; const nz = dx / len; // XZ normal
+      ra.push(new THREE.Vector3(p0.x - nx * halfWidth, 0, p0.z - nz * halfWidth));
+      rb.push(new THREE.Vector3(p0.x + nx * halfWidth, 0, p0.z + nz * halfWidth));
+    }
+    return stripGeometry(ra, rb);
+  };
+  return { ribbon };
 }
 
 // Chamfered rectangle outline (plate footprint), authored in XZ around (0,0).
@@ -322,7 +369,7 @@ export function buildSlab(halfW, halfD, height, hexTex, o) {
 // BufferGeometryUtils for this, but it lives in examples/ — and these plates already
 // carry their own stripGeometry rather than reach into the protected arena builder,
 // so they carry this too. Twenty lines is cheaper than a dependency.
-function mergeBoxes(parts) {
+export function mergeBoxes(parts) {
   const geos = parts.map(({ w, h, d, x, y, z, ry = 0 }) => {
     const src = new THREE.BoxGeometry(w, h, d);
     src.applyMatrix4(new THREE.Matrix4().makeRotationY(ry).setPosition(x, y, z));
@@ -356,7 +403,7 @@ function mergeBoxes(parts) {
 // Deliberately NOT buildFighter: that construct carries joints, an animation driver
 // and an HP plate, and it would be assembled at home-scene init just to stand still
 // on a plate 30 units away. The silhouette is the whole job here.
-function figureGeometry() {
+export function figureGeometry() {
   return mergeBoxes([
     { w: 0.11, h: 0.44, d: 0.13, x: -0.09, y: 0.22, z: 0 },   // left leg
     { w: 0.11, h: 0.44, d: 0.13, x: 0.09, y: 0.22, z: 0 },    // right leg
@@ -368,7 +415,7 @@ function figureGeometry() {
     { w: 0.15, h: 0.15, d: 0.15, x: 0, y: 0.99, z: 0 },       // head
   ]);
 }
-const FIGURE_H = 1.065; // head top of figureGeometry(), for framing maths
+export const FIGURE_H = 1.065; // head top of figureGeometry(), for framing maths
 
 // ─────────────────────────── FORGE emblem ───────────────────────────
 // The hexarch on his floating pedestal with a ring of students underneath. The
@@ -536,28 +583,10 @@ function buildArenaEmblem(o, halfW, halfD, topY) {
   const owned = [];
 
   // ── the rift ──
-  const pts = a.path.map(([u, v]) => new THREE.Vector3(u * halfW, 0, v * halfD));
-  // Resample the jag through a curve so the ribbon has enough segments to read.
-  const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.4);
-  const centre = curve.getPoints(48);
-
-  const rails = (halfWidth) => {
-    const ra = []; const rb = [];
-    for (let i = 0; i < centre.length; i++) {
-      const p = centre[i];
-      const q = centre[Math.min(i + 1, centre.length - 1)];
-      const r = centre[Math.max(i - 1, 0)];
-      const dx = q.x - r.x; const dz = q.z - r.z;
-      const len = Math.hypot(dx, dz) || 1;
-      const nx = -dz / len; const nz = dx / len; // XZ normal
-      ra.push(new THREE.Vector3(p.x - nx * halfWidth, 0, p.z - nz * halfWidth));
-      rb.push(new THREE.Vector3(p.x + nx * halfWidth, 0, p.z + nz * halfWidth));
-    }
-    return [ra, rb];
-  };
+  // Построение общее (см. riftRibbons выше) — числа и материалы свои.
+  const rift = riftRibbons({ path: a.path, halfW, halfD, samples: 48 });
   const addRibbon = (halfWidth, y, mat) => {
-    const [ra, rb] = rails(halfWidth);
-    const geo = stripGeometry(ra, rb);
+    const geo = rift.ribbon(halfWidth);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.y = y;
     group.add(mesh);

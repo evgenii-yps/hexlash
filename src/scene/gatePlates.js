@@ -16,11 +16,18 @@
 // решётки — здесь своё: игрок должен понимать, что он В ДРУГОМ МЕСТЕ, а не на
 // том же экране режимов.
 //
-// ЭМБЛЕМ НЕТ. На островах дома стоят фигуры — гексарх с учениками, разлом с
-// перчатками. Здесь их нет намеренно (решение владельца, ТЗ v7 §5): новую
-// геометрию под первую сборку не лепим. Что это за остров, несут подпись и цвет
-// ядра. Если на приёмке окажется, что этого мало, — рисуем эмблемы отдельной
-// работой, уже зная, чего именно не хватило.
+// ЭМБЛЕМЫ — У РЕЖИМОВ, И ОНИ ЗАМЕЩАЮТ ЯДРО. На первой сборке ворот эмблем не
+// было вовсе (решение владельца, ТЗ v7 §5: новую геометрию под первую сборку не
+// лепим), и что это за остров, несли подпись и цвет плоского ядра в крышке. На
+// приёмке этого оказалось мало: пять островов различались только словом.
+//
+// Теперь у островов РЕЖИМА стоят объёмные эмблемы (gateEmblems.js), и цвет
+// режима носят они — диск при этом снимается. Не добавляется, а именно
+// снимается: два светящихся пятна на одном острове это два акцента, а акцент на
+// предмете один.
+//
+// У островов БОЙЦА эмблем нет и диск остаётся как был: там остров это боец, и
+// цвет ядра — его собственный.
 //
 // РАСКЛАДКА ПЕРЕНОСОМ, А НЕ СЕТКОЙ. Режимов всегда два, а бойцов сколько купит
 // игрок. Поэтому острова не расставляются по заранее назначенным местам: они
@@ -40,6 +47,7 @@
 import * as THREE from 'three';
 import { buildSlab } from './modePlates.js';
 import { makeHexGridTexture } from './arenaTextures.js';
+import { buildGateEmblem } from './gateEmblems.js';
 
 // ───────────────────────────── Настройки ─────────────────────────────
 export const GATE_PLATES = {
@@ -128,9 +136,9 @@ export const GATE_PLATES = {
   chamfer: 0.34,       // скос угла — тот же, что у островов дома: форма общая
   hexTile: 4.2,        // мировой размер одной ячейки решётки на крышке
 
-  // Цвет ядра приходит СО СПИСКОМ: у режима он свой, у бойца — цвет его ядра.
-  // Розовый не берём ни там, ни там: он принадлежит интерфейсу и деньгам, а
-  // здесь предметы.
+  // Цвет приходит СО СПИСКОМ: у режима он свой, у бойца — цвет его ядра. Его
+  // носит эмблема (режимы) или плоское ядро в крышке (бойцы). Розовый не берём
+  // ни там, ни там: он принадлежит интерфейсу и деньгам, а здесь предметы.
   fallbackCore: '#7184B0',
 
   dimLevel: 0.5,       // яркость НЕподсвеченного острова, пока горит другой
@@ -177,15 +185,18 @@ function buildCore(colorHex, topY) {
 
 /**
  * @param {object} opts
- * @param {Array<{id:string, core?:string, locked?:boolean}>} opts.items
+ * @param {Array<{id:string, core?:string, locked?:boolean, emblem?:string}>} opts.items
  *        что стоит на островах: режимы на первом шаге, бойцы на втором.
- *        `core` — цвет ядра, `locked` — остров виден, но не выбирается.
+ *        `core` — цвет режима или бойца, `locked` — остров виден, но не
+ *        выбирается, `emblem` — вид эмблемы (только у режимов; см. gateEmblems).
  * @param {number} [opts.maxAniso]
+ * @param {boolean} [opts.reduced] «уменьшить движение»: эмблемы стоят
  * @returns {object} острова + их общий контракт
  */
 export function buildGatePlates(opts = {}) {
   const o = GATE_PLATES;
   const items = opts.items || [];
+  const reduced = !!opts.reduced;
   const group = new THREE.Group();
   const hexTex = makeHexGridTexture(opts.maxAniso || 1);
   hexTex.repeat.set(1, 1);
@@ -195,15 +206,29 @@ export function buildGatePlates(opts = {}) {
     const slab = buildSlab(o.halfW, o.halfD, o.height, hexTex, o);
     root.add(slab.group);
 
-    const core = buildCore(item.core || o.fallbackCore, slab.topY);
-    root.add(core.mesh);
+    const color = item.core || o.fallbackCore;
+    // Эмблема ИЛИ ядро, никогда оба: цвет режима носит эмблема, цвет бойца —
+    // диск. Два светящихся пятна на одной плите — это два акцента.
+    const emblem = item.emblem
+      ? buildGateEmblem(item.emblem, { color, halfW: o.halfW, halfD: o.halfD, topY: slab.topY })
+      : null;
+    if (emblem) root.add(emblem.group);
+    const core = emblem ? null : buildCore(color, slab.topY);
+    if (core) root.add(core.mesh);
 
     // Одна невидимая коробка на остров — дешёвая цель для луча, и заодно она
     // делает весь остров ОДНИМ предметом: наведение не зависит от того, попал
     // ли курсор в крышку или в бок.
-    const pickGeo = new THREE.BoxGeometry(o.halfW * 2, o.height * 2.2, o.halfD * 2);
+    //
+    // Когда на плите стоит эмблема, коробка растёт ВВЕРХ до её макушки: клик по
+    // эмблеме обязан быть кликом по её острову. Вниз коробка не меняется ни на
+    // единицу — область нажатия самой плиты уменьшиться не должна.
+    const topAir = emblem ? emblem.top : o.height * 1.7;
+    const bottomAir = -o.height * 0.5;
+    const pickH = topAir - bottomAir;
+    const pickGeo = new THREE.BoxGeometry(o.halfW * 2, pickH, o.halfD * 2);
     const pick = new THREE.Mesh(pickGeo, new THREE.MeshBasicMaterial({ visible: false }));
-    pick.position.y = o.height * 0.6;
+    pick.position.y = (topAir + bottomAir) / 2;
     pick.userData.gatePlate = item.id;
     root.add(pick);
 
@@ -211,7 +236,7 @@ export function buildGatePlates(opts = {}) {
     return {
       id: item.id,
       locked: !!item.locked,
-      root, slab, core, pick, pickGeo,
+      root, slab, core, emblem, pick, pickGeo,
       lit: 0,        // 0…1 — собственная подсветка
       level: 1,      // 1…dimLevel — насколько его топит свет соседа
       picked: false, // выбран в состав — горит и без курсора
@@ -374,7 +399,13 @@ export function buildGatePlates(opts = {}) {
 
       p.slab.rimMat.opacity = o.rimOpacity * p.level * (1 + p.lit * 1.6);
       p.slab.hexMat.opacity = 0.55 * p.level;
-      p.core.mat.opacity = (o.coreDim + o.coreLitBoost * p.lit) * p.level;
+      // Акцент острова несёт ЛИБО эмблема, ЛИБО ядро — смотря что на нём стоит.
+      // Числа у них одни и те же (coreDim / coreLitBoost), поэтому отклик на
+      // покой и курсор одинаков, чем бы цвет ни носился.
+      if (p.core) p.core.mat.opacity = (o.coreDim + o.coreLitBoost * p.lit) * p.level;
+      // Время эмблеме отдаём только при включённых анимациях; при выключенных
+      // она получает null и стоит.
+      if (p.emblem) p.emblem.tick(reduced ? null : t, p.lit, p.level);
 
       // Дрожание — только по X/Z, вокруг позы, которую поставил layout. Оно
       // затухает само: амплитуда падает к концу, иначе остров останавливается
@@ -399,7 +430,8 @@ export function buildGatePlates(opts = {}) {
   function dispose() {
     for (const p of list) {
       p.slab.dispose();
-      p.core.dispose();
+      p.core?.dispose();
+      p.emblem?.dispose();
       p.pickGeo.dispose();
       p.pick.material.dispose();
     }

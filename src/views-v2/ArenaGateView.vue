@@ -272,6 +272,9 @@ const modeItems = computed(() => ARENA_MODES.map((m) => ({
   id: m.id, name: m.name, tagline: m.tagline, locked: m.locked,
   lockLabel: t.value.gate.soon,
   core: MODE_CORE[m.id] || undefined,
+  // Вид эмблемы совпадает с идентификатором режима — у каждого режима своя, и
+  // второго имени для той же вещи заводить незачем (см. gateEmblems).
+  emblem: m.id,
 })));
 
 // Состояние «в кузнице» нарисовано, но до демо не встречается: тренировки в игре
