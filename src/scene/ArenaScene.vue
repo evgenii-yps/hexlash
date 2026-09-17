@@ -91,6 +91,10 @@ import { parseLayoutId, getLayout, collapseSpawnPos, layoutByPerSide } from '@/d
 // он заперт константой внутри защищённого buildArena. Это не третья копия
 // рецепта — та же плита, что под залом, только других размеров.
 import { buildForgeSlab } from './forgeSlab.js';
+// УКРЫТИЯ открытого поля: раскладка (данные), меши (объём) и обход (навигация).
+import { buildCoverLayout } from '@/data/openFieldCovers.js';
+import { buildCovers } from './buildCovers.js';
+import { createCoverNav } from './coverNav.js';
 import {
   getOfLayout, parseOfLayoutId, ofSpawnPos, spawnRingRadius,
 } from '@/data/openFieldLayouts.js';
@@ -235,6 +239,10 @@ let onVisibility, onKeydown;
 // кадр — реактивная переменная на кадровом пути это лишняя работа на ровном месте.
 // И объявлены выше по файлу, чем начало боя (runFight), которое их сбрасывает:
 // так порядок сборки сцены не может однажды поменяться и уронить их в мёртвую зону.
+// УКРЫТИЯ открытого поля: раскладка, их меш и обход. В прочих режимах — null.
+let covers = null;
+let coverMesh = null;
+let coverNav = null;
 let gesturing = false;   // палец на холсте прямо сейчас
 let sinceTouch = 0;      // секунд тишины: от отпускания и от конца прошлой наводки
 let aimT = -1;           // >= 0 — наводка едет, столько секунд она уже в пути
@@ -824,6 +832,18 @@ onMounted(() => {
   // там не построено. Так же поступает дом — «не создавать» вместо «погасить».
   presence = openFieldMode ? null : createArenaPresence(scene, arena.refs);
   if (presence) presence.setReducedMotion(reducedMotion);
+
+  // --- УКРЫТИЯ. Низкие толстые блоки, дробящие общую свалку на местные стычки.
+  //     Ставятся только на открытом поле: на боевой плите 6 на 4 им негде стоять,
+  //     и заводить их там значило бы менять пять принятых режимов.
+  //
+  //     Здесь, а не раньше, потому что блоки стоят НА плите, а высота её верха
+  //     известна только после сборки.
+  if (openFieldMode) {
+    covers = buildCoverLayout();
+    coverMesh = buildCovers(covers, arena.refs.topY);
+    scene.add(coverMesh.group);
+  }
   load.stage('arena');
 
   // --- Fighters: spawned on opposite sides, then free to roam the whole plate —
@@ -841,6 +861,12 @@ onMounted(() => {
     x: arena.refs.W / 2 - NAV_MARGIN,
     z: arena.refs.totalDepth / 2 - NAV_MARGIN,
   };
+  // ОБХОД УКРЫТИЙ. Сетка проходимости печётся здесь один раз — она нужна и полю
+  // боя (куда идти), и циклу (выталкивать тела из блоков). Время берёт у часов
+  // сцены: у мгновенного боя оно своё, и обход об этом ничего знать не должен.
+  if (openFieldMode) {
+    coverNav = createCoverNav({ covers, bounds: navBounds, now: () => lastFrameT });
+  }
   // --- СВОИ ОТЛИЧИМЫ ОТ ЧУЖИХ. Тонкое белое кольцо на плите под СТОРОНОЙ игрока.
   //
   //     ⚠️ Здесь стояло обратное: «союзные боты в RAID не метятся». Это было
@@ -1135,7 +1161,10 @@ onMounted(() => {
       // здесь; переехали 17.09.2026, когда у мгновенного боя турнира COLLAPSE
       // появилась нужда в тех же ниточках. Ни одна из них не изменила смысла:
       // перенос дословный, и бой один на один остался прежним.
-      ...boutHooks({ field, unit, clocks }),
+      // ОБХОД УКРЫТИЙ идёт сюда же, одной ниточкой: пока дорога к цели перекрыта
+      // блоком, бойцу называют её в стороне обхода — но на том же расстоянии. В
+      // прочих режимах `steer` нет, и ниточки ровно те, что были.
+      ...boutHooks({ field, unit, clocks, steer: coverNav ? coverNav.steer : null }),
       // ДУМАЮЩИЙ МОЗГ — ТОЛЬКО В БОЮ ОДИН НА ОДИН.
       //
       // В паре мозг раздаётся обоим, как раздавался до фундамента: служебный
@@ -1154,6 +1183,7 @@ onMounted(() => {
         scene.remove(unit.f.group);
         unit.f.dispose();
         dropRing(unit);
+        coverNav?.forget(unit);   // путь выбывшего больше не нужен
         if (sigCycle) {                       // служебный стенд A/B — перезапуск круга
           field.kill(unit);
           refreshDevAliases();
@@ -1993,6 +2023,13 @@ onMounted(() => {
     // и лишний проход означал бы, что бой один на один стал считаться иначе.
     if (onPlate.length > 2) separateBodies(onPlate, navBounds, gapOf);
 
+    // ВЫТОЛКНУТЬ ТЕЛА ИЗ УКРЫТИЙ — сразу после расталкивания и по той же причине,
+    // что оно вообще существует: позицию бойцу пишет не только его навигация.
+    // Расталкивание и отшат от тяжёлого удара двигают тело мимо неё и могут
+    // вдавить его в блок. Приёмка требует нуля тел внутри укрытий, и держит этот
+    // ноль именно здесь.
+    coverNav?.pushOut(onPlate);
+
     // ПЛАШКИ ЗДОРОВЬЯ: развести по экрану (scene/hpStagger.js). Проход по тем же
     // живым телам и с тем же условием «больше двух» — при двух телах он не
     // выполняется вовсе, и бой один на один считается ровно как считался.
@@ -2131,6 +2168,7 @@ onBeforeUnmount(() => {
   if (resultTimer) { clearTimeout(resultTimer); resultTimer = null; }  // и панель итога
   hideFightResult();   // уходим с арены — панель итога уходит с нами
   endOpenField();      // и счётчик сторон открытого поля: считать больше нечего
+  coverMesh?.dispose(); coverMesh = null; covers = null; coverNav = null;
   unbindCameraReturn?.(); // и способ вернуть слежение: камеры, которой он владел, больше нет
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
   load?.dispose();   // left mid-load → drop the screen and the wait with us
