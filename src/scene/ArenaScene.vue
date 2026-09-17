@@ -875,6 +875,9 @@ onMounted(() => {
   // HEADROOM добавляется к радиусу, иначе кадр садится бойцам на макушки.
   const FRAME_MARGIN = 1.25;
   const FRAME_HEADROOM = 1.8;
+  // Навести кадр сразу, без подъезда, — взводится на каждый новый бой. См. причину
+  // ниже, у самой наводки.
+  let frameSnap = true;
   const _cen = new THREE.Vector3();
   const frameLiving = (list) => {
     if (!multiBout || !list.length) return;
@@ -906,13 +909,29 @@ onMounted(() => {
     const need = Math.max(r / Math.tan(half), r / (Math.tan(half) * camera.aspect)) * FRAME_MARGIN;
     const want = THREE.MathUtils.clamp(need, controls.minDistance, controls.maxDistance);
 
-    // Точка вращения плавно едет к середине живых.
-    controls.target.lerp(new THREE.Vector3(_cen.x, 0.2, _cen.z), 0.04);
+    // ПЕРВЫЙ КАДР БОЯ — НАВОДКА СРАЗУ, БЕЗ ПОДЪЕЗДА.
+    //
+    // ⚠️ Точка вращения стоит в середине плиты, и на боевой плите 6 на 4 это же и
+    //    есть середина боя — подъезжать некуда. На большом поле бойцы выходят у
+    //    КРАЯ, за три десятка единиц от середины, и плавный подъезд означал, что
+    //    первые секунды матча игрок смотрит в пустой пол, пока камера ползёт к
+    //    своим. Снимок это и показал.
+    //
+    //    Поэтому на первый кадр боя наводка мгновенная, дальше — как была, плавная.
+    //    Рывка это не даёт: до первого кадра смотреть всё равно не на что.
+    //
+    // ⚠️ ТОЛЬКО НА ОТКРЫТОМ ПОЛЕ. В командном бою, рейде и турнире бойцы выходят у
+    //    середины плиты — там подъезжать и правда некуда, и плавный ход кадра там
+    //    уже принят глазами. Снап без этой оговорки молча поменял бы три режима.
+    const k = (frameSnap && openFieldMode) ? 1 : 0.04;
+    frameSnap = false;
+    // Точка вращения едет к середине живых.
+    controls.target.lerp(new THREE.Vector3(_cen.x, 0.2, _cen.z), k);
     // Удаление подгоняем вдоль ТЕКУЩЕГО направления — угол остаётся игроков.
     const dir = camera.position.clone().sub(controls.target);
     const cur = dir.length();
     if (cur > 1e-3) {
-      dir.multiplyScalar(THREE.MathUtils.lerp(cur, want, 0.04) / cur);
+      dir.multiplyScalar(THREE.MathUtils.lerp(cur, want, k) / cur);
       camera.position.copy(controls.target).add(dir);
     }
   };
@@ -1539,6 +1558,7 @@ onMounted(() => {
     //    оставался в состоянии «для игрока всё», то есть не показывался вовсе, а
     //    место на панели было от прошлого боя.
     if (openFieldMode && !openFieldShort) startOpenField(openFieldLayoutId);
+    frameSnap = true;   // новый бой — кадр наводится сразу, а не подъезжает
     const roster = buildRoster();
     multiBout = roster.length > 2;
     for (const spec of roster) spawnUnit(spec);
