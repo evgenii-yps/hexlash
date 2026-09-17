@@ -15,15 +15,20 @@
 // (placeOnElimination), потому что оно про раскладку, а не про ход боя. Здесь
 // только момент, когда его надо применить.
 //
-// КАМЕРА ТОЖЕ ЖИВЁТ ЗДЕСЬ — ОДНИМ ПРИЗНАКОМ И ОДНОЙ КНОПКОЙ. Про то, что игрок
-// взял камеру в руки, знает сцена; кнопку «вернуть слежение» рисует надпись
-// поверх боя. Это ровно тот же шов, что у кнопки «драться снова»
-// (services/fightResult.js): сцена отдаёт способ что-то сделать, надпись его
-// зовёт. Иначе кнопке пришлось бы лезть внутрь защищённой сцены за камерой.
+// КАМЕРА ТОЖЕ ЖИВЁТ ЗДЕСЬ — ОДНОЙ КНОПКОЙ. Камерой владеет сцена, кнопку
+// «показать своих» рисует надпись поверх боя. Это ровно тот же шов, что у кнопки
+// «драться снова» (services/fightResult.js): сцена отдаёт способ что-то сделать,
+// надпись его зовёт. Иначе кнопке пришлось бы лезть внутрь защищённой сцены за
+// камерой.
+//
+// ⚠️ ПРИЗНАКА «КАМЕРА В РУКАХ» ЗДЕСЬ БОЛЬШЕ НЕТ. Он был нужен, пока камера умела
+//    следить сама: кнопка возврата имела смысл только тогда, когда было что
+//    возвращать. Слежение отменено — камера в руках игрока ВСЕГДА, признак стал
+//    вечно поднятым, а кнопка стоит весь бой. Вечный признак — это не состояние,
+//    а лишнее место, где однажды заведётся расхождение.
 //
 // Экспортирует: openFieldState, startOpenField, shortOfFighters, noteSidesLeft,
-//               finishOpenField, endOpenField, bindCameraReturn, cameraReturnNow,
-//               noteCameraFree.
+//               finishOpenField, endOpenField, bindCameraReturn, cameraReturnNow.
 
 import { reactive } from 'vue';
 import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
@@ -37,8 +42,6 @@ import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
  *   place    — какое место занял игрок; null, пока бой для него идёт
  *   outcome  — 'victory' сторона игрока осталась одна · 'out' пала
  *   shortBy  — скольких бойцов не хватило, чтобы вообще выйти на поле
- *   cameraFree — камера в руках игрока: слежение выключено, и само обратно оно
- *              не включится. Пока признак поднят, поверх боя стоит кнопка возврата
  */
 export const openFieldState = reactive({
   active: false,
@@ -49,29 +52,29 @@ export const openFieldState = reactive({
   place: null,
   outcome: null,
   shortBy: 0,
-  cameraFree: false,
 });
 
-// Кто умеет вернуть слежение. Ставит сцена (только она владеет камерой), зовёт
-// кнопка. Снимается при уходе с арены, иначе кнопка дёрнула бы разобранную сцену.
-let cameraReturn = null;
+// Кто умеет навести камеру на своих. Ставит сцена (только она владеет камерой),
+// зовёт кнопка. Снимается при уходе с арены, иначе кнопка дёрнула бы разобранную
+// сцену.
+let cameraAim = null;
 
-/** Сцена отдаёт способ вернуть слежение. Вернуть — снять. */
+/** Сцена отдаёт способ навести кадр на свою сторону. Вернуть — снять. */
 export function bindCameraReturn(fn) {
-  cameraReturn = typeof fn === 'function' ? fn : null;
-  return () => { if (cameraReturn === fn) cameraReturn = null; };
+  cameraAim = typeof fn === 'function' ? fn : null;
+  return () => { if (cameraAim === fn) cameraAim = null; };
 }
 
-/** Игрок нажал возврат. Двойное нажатие безвредно: признак уже снят. */
+/**
+ * Игрок нажал «показать своих».
+ *
+ * ⚠️ Двойное нажатие безвредно: второе начинает наводку заново с того места, где
+ *    её застало первое, — то же самое, что делает прикосновение к экрану.
+ */
 export function cameraReturnNow() {
-  if (!openFieldState.cameraFree) return false;
-  if (cameraReturn) cameraReturn();
+  if (!cameraAim) return false;
+  cameraAim();
   return true;
-}
-
-/** Сцена сообщает, в чьих руках камера. */
-export function noteCameraFree(on) {
-  openFieldState.cameraFree = !!on;
 }
 
 /** Бой начался. Зовётся на КАЖДЫЙ бой, включая «драться снова». */
@@ -85,9 +88,6 @@ export function startOpenField(layoutId) {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = 0;
-  // ⚠️ КАЖДЫЙ БОЙ НАЧИНАЕТСЯ СО СЛЕЖЕНИЯ. Ручное положение камеры между боями не
-  //    переносится и между заходами не сохраняется — так решено в ТЗ.
-  openFieldState.cameraFree = false;
 }
 
 /**
@@ -136,5 +136,4 @@ export function endOpenField() {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = 0;
-  openFieldState.cameraFree = false;
 }
