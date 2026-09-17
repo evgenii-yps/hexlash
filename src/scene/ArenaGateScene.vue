@@ -736,6 +736,21 @@ onMounted(() => {
         }
         return { left: minX, right: maxX, top: minY, bottom: maxY, w: maxX - minX, h: maxY - minY };
       };
+      // Цена ОДНОЙ эмблемы: треугольники с учётом числа копий в наборе и
+      // сколько предметов она добавляет в кадр. Считаем по дереву, а не на
+      // бумаге: набор из шести копий — это шесть раз по геометрии, и в уме такое
+      // ошибается.
+      const costOf = (root) => {
+        let tris = 0, meshes = 0;
+        root.traverse((obj) => {
+          if (!obj.isMesh) return;
+          meshes++;
+          const g = obj.geometry;
+          const n = (g.index ? g.index.count : g.attributes.position.count) / 3;
+          tris += n * (obj.isInstancedMesh ? obj.count : 1);
+        });
+        return { tris, meshes };
+      };
       const screenParts = (root) => {
         const out = [];
         root.traverse((obj) => {
@@ -780,6 +795,7 @@ onMounted(() => {
           // эмблеме, и сложить их в одну коробку значит соврать в обоих.
           emblem: p.emblem ? screenBox(p.emblem.group) : null,
           emblemParts: p.emblem ? screenParts(p.emblem.group) : null,
+          emblemCost: p.emblem ? costOf(p.emblem.group) : null,
           // Подсветка острова числом: `lit` — его собственный свет (0…1),
           // `level` — насколько его топит свет соседа. Приёмка проверяет «горит
           // ровно один» по ним, а не по цвету пикселя на снимке.
@@ -821,12 +837,14 @@ onMounted(() => {
     // Это ТОЛЬКО камера: остров не подсвечивается, сцена не трогается, ничего не
     // включается. Орбита при этом отдаётся служебной позе, поэтому возврат —
     // тем же вызовом без имени острова.
-    const _restPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
+    const _restPose = { pos: new THREE.Vector3(), look: new THREE.Vector3(), min: 0, max: 0 };
     let devShot = false;
     window.__gateEmblemView = (id, angle = 'front') => {
       const p = id ? plates.plates[id] : null;
       if (!p) {                       // вернуть камеру в позу покоя
         if (devShot) {
+          controls.minDistance = _restPose.min;
+          controls.maxDistance = _restPose.max;
           camera.position.copy(_restPose.pos);
           controls.target.copy(_restPose.look);
           controls.update();
@@ -834,10 +852,22 @@ onMounted(() => {
         }
         return null;
       }
-      if (!devShot) { _restPose.pos.copy(camera.position); _restPose.look.copy(controls.target); devShot = true; }
+      if (!devShot) {
+        _restPose.pos.copy(camera.position); _restPose.look.copy(controls.target);
+        _restPose.min = controls.minDistance; _restPose.max = controls.maxDistance;
+        devShot = true;
+      }
+      // Коридор зума на время портрета снимается. Иначе орбита отталкивает
+      // камеру обратно к своему ближнему пределу (на пяти островах это ~11
+      // единиц), и «крупный план» выходит тем же общим видом — на чём первая
+      // сборка листов приёмки и попалась.
+      controls.minDistance = 0.1;
+      controls.maxDistance = 1000;
       const air = (p.emblem ? p.emblem.top : GATE_PLATES.height) ;
       const centre = p.root.localToWorld(new THREE.Vector3(0, air * 0.55, 0));
-      const dist = air * 2.6;
+      // Настолько близко, чтобы эмблема заняла кадр: это её портрет, а не вид
+      // на остров. Множитель подобран по листам приёмки.
+      const dist = air * 2.05;
       const dirs = {
         front: new THREE.Vector3(0, 0.22, 1),
         quarter: new THREE.Vector3(0.82, 0.30, 0.82),
