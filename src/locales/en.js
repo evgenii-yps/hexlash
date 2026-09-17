@@ -407,6 +407,34 @@ export default {
     toGate: "Back to the gate",
     interrupted: "Run interrupted",
   },
+  // ТУРНИР (COLLAPSE) — сетка на выбывание. Панель между волнами, итог турнира и
+  // честное состояние «бойцов не хватает». Больше про турнир нигде не говорится:
+  // над головой соперника по-прежнему YOU / FOE, как в обычном бою.
+  //
+  // ⚠️ НАГРАД НЕТ. Системы наград в игре нет, тема отложена владельцем — поэтому
+  // здесь нет ни ставки, ни приза: слово о награде, которой не существует,
+  // читалось бы как обещание.
+  collapse: {
+    wave: "Wave {n} / {of}",
+    sidesLeft: "Sides left",
+    hp: "HP",
+    foe: "Foe",
+    // Кого сторона игрока уже прошла — по порядку, через точку.
+    beat: "Beat",
+    nextBtn: "Next",
+    won: "Collapse won",
+    wonNote: "The last side standing is yours.",
+    out: "Collapse — out in wave {n}",
+    outNote: "The bracket closed on you.",
+    // Место: у победителя одно число, у выбывшего — вилка (9–16 и так далее).
+    place: "Place {p} of {of}",
+    // Бойцов в списке меньше, чем просит раскладка. Те же слова, что в воротах:
+    // игрок встречает одно и то же сообщение, откуда бы он ни пришёл.
+    needOne: "Need 1 more fighter",
+    needMany: "Need {n} more fighters",
+    shortNote: "This layout needs a bigger roster. Recruit in the shop, then come back.",
+    toGate: "Back to the gate",
+  },
   errors: {
     pageNotFound: "Page not found",
     error404Code: "ERROR 404",
