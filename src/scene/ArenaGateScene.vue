@@ -780,6 +780,10 @@ onMounted(() => {
           // эмблеме, и сложить их в одну коробку значит соврать в обоих.
           emblem: p.emblem ? screenBox(p.emblem.group) : null,
           emblemParts: p.emblem ? screenParts(p.emblem.group) : null,
+          // Подсветка острова числом: `lit` — его собственный свет (0…1),
+          // `level` — насколько его топит свет соседа. Приёмка проверяет «горит
+          // ровно один» по ним, а не по цвету пикселя на снимке.
+          lit: Number(p.lit.toFixed(3)), level: Number(p.level.toFixed(3)),
           capX: cap.x, capY: cap.y, capVisible: cap.visible,
         };
       });

@@ -63,6 +63,13 @@ export const GATE_EMBLEMS = {
   // Свечение. Числа приходят от островов (GATE_PLATES) — здесь только имена.
   glowRest: 0.16,   // = coreDim
   glowLit: 0.72,    // = coreLitBoost
+  // …и те же две ступени для светящихся ТЕЛ (гребень, кристалл), где свет несёт
+  // сам предмет. Числа другие, потому что мера другая: у аддитивной детали это
+  // прозрачность, у тела — сила испускания. Обе ступени взяты у ядра гексарха
+  // дома (0.1 → 1.7) и приподняты: комната ворот темнее, и в покое предмет там
+  // должен не тлеть, а читаться.
+  emitRest: 0.22,
+  emitLit: 2.1,
 
   // ── DUEL: двое лицом друг к другу через узкий разлом ──
   duel: {
@@ -199,6 +206,25 @@ function matteMat(hex) {
   return new THREE.MeshStandardMaterial({
     color: hex, flatShading: true,
     roughness: GATE_EMBLEMS.roughness, metalness: GATE_EMBLEMS.metalness,
+  });
+}
+
+/**
+ * СВЕТЯЩЕЕСЯ ТЕЛО: форма и свет одним предметом.
+ *
+ * У ленты разлома и у кольца внутри звена свечение — отдельная деталь поверх
+ * матовой: там светится не сам предмет, а щель в нём. У гребня вожака и у
+ * кристалла светится САМ предмет, и держать под каждым ещё и матовый двойник —
+ * это два вызова отрисовки вместо одного на каждую эмблему. Рецепт взят у ядра
+ * гексарха на острове FORGE дома: матовое тело с испусканием, которое едет от
+ * покоя к подсветке.
+ */
+function litBodyMat(color) {
+  const c = new THREE.Color(color);
+  return new THREE.MeshStandardMaterial({
+    color: c.clone().multiplyScalar(0.34),
+    emissive: c, emissiveIntensity: GATE_EMBLEMS.emitRest,
+    flatShading: true, roughness: 0.5, metalness: 0.25,
   });
 }
 
@@ -385,17 +411,13 @@ function buildRaidEmblem({ color, topY, H }) {
   const crestH = H * r.crestH;
   const crestGeo = new THREE.ConeGeometry(1, 1, 3);
   crestGeo.scale(r.crestR, crestH, r.crestLen);
-  const crestMat = matteMat(o.body);
+  const crestMat = litBodyMat(color);   // форма и свет одним предметом
+  const crestBase = crestMat.color.clone();
   const crest = new THREE.Mesh(crestGeo, crestMat);
-  const crestGlowGeo = crestGeo.clone();
-  crestGlowGeo.scale(1.35, 1.1, 1.2);
-  const gMat = glowMat(color);
-  const crestGlow = new THREE.Mesh(crestGlowGeo, gMat);
 
   const bossGroup = new THREE.Group();
   bossGroup.position.set(0, topY + bossH, r.bossZ);
   bossGroup.add(crest);
-  bossGroup.add(crestGlow);
   group.add(bossGroup);
 
   const mobScale = mobH / FIGURE_H;
@@ -417,15 +439,14 @@ function buildRaidEmblem({ color, topY, H }) {
 
   const tick = (t, lit, level) => {
     mat.color.setHex(o.body).multiplyScalar(level);
-    crestMat.color.setHex(o.body).multiplyScalar(level);
-    gMat.opacity = (o.glowRest + o.glowLit * lit) * level;
+    crestMat.color.copy(crestBase).multiplyScalar(level);
+    crestMat.emissiveIntensity = (o.emitRest + (o.emitLit - o.emitRest) * lit) * level;
     if (t !== null) place(t);
   };
   const still = () => place(null);
   const dispose = () => {
     mat.dispose(); figs.dispose(); releaseFigure();
     crestGeo.dispose(); crestMat.dispose();
-    crestGlowGeo.dispose(); gMat.dispose();
   };
   return { group, top: topY + bossH + crestH, tick, still, dispose };
 }
@@ -462,32 +483,28 @@ function buildCollapseEmblem({ color, topY, H }) {
   shards.instanceMatrix.needsUpdate = true;
 
   const crysGeo = new THREE.OctahedronGeometry(c.crystalR, 0);
-  const crysMat = matteMat(o.body);
+  const crysMat = litBodyMat(color);    // форма и свет одним предметом
+  const crysBase = crysMat.color.clone();
   const crystal = new THREE.Mesh(crysGeo, crysMat);
-  const auraGeo = new THREE.OctahedronGeometry(c.crystalR * 1.45, 0);
-  const gMat = glowMat(color);
-  const aura = new THREE.Mesh(auraGeo, gMat);
 
   const spin = new THREE.Group();
   spin.position.y = apexY;
   spin.add(crystal);
-  spin.add(aura);
   group.add(spin);
 
   const w = (Math.PI * 2) / c.period;
   const tick = (t, lit, level) => {
     shardMat.color.setHex(o.body).multiplyScalar(level);
-    crysMat.color.setHex(o.body).multiplyScalar(level);
-    gMat.opacity = (o.glowRest + o.glowLit * lit) * level;
+    crysMat.color.copy(crysBase).multiplyScalar(level);
+    crysMat.emissiveIntensity = (o.emitRest + (o.emitLit - o.emitRest) * lit) * level;
     if (t !== null) spin.rotation.y = t * w;
   };
   const still = () => { spin.rotation.y = 0; };
   const dispose = () => {
     shardGeo.dispose(); shardMat.dispose(); shards.dispose();
     crysGeo.dispose(); crysMat.dispose();
-    auraGeo.dispose(); gMat.dispose();
   };
-  return { group, top: apexY + c.crystalR * 1.45, tick, still, dispose };
+  return { group, top: apexY + c.crystalR, tick, still, dispose };
 }
 
 /**
