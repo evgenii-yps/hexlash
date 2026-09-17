@@ -1482,25 +1482,35 @@ onMounted(() => {
   // те, чей боец погиб ПОЗЖЕ нашего. Порядок выбывания поле боя ведёт само.
   const openFieldSidesAbove = () => {
     const units = field.units();
-    const myLast = units
-      .filter((u) => u.sideId === 'player' && u.dead)
-      .reduce((m, u) => Math.max(m, u.order || 0), 0);
-    const above = new Set();
+    const mine = units.filter((u) => u.sideId === 'player');
+    // ⚠️ СТОРОНА ПАЛА — ЭТО ГИБЕЛЬ ПОСЛЕДНЕГО ЕЁ БОЙЦА, А НЕ ПЕРВОГО.
+    //
+    //    Здесь стояла ошибка, которую поймал снимок победы: момент падения брался
+    //    как гибель последнего ПАВШЕГО нашего бойца — без проверки, пала ли сторона
+    //    вообще. В победной четвёрке кто-то из своих гибнет по ходу боя, а враги
+    //    добиваются ПОСЛЕ него, — и каждая чужая сторона засчитывалась выше нашей.
+    //    Победителю писалось «Place 5 of 5» вместо первого места.
+    //
+    //    Жива хоть одна наша — мы не пали вовсе, и выше нас не может быть никого:
+    //    бой кончился, значит мы его и выиграли.
+    const weFell = mine.length > 0 && mine.every((u) => u.dead);
+    const myLast = weFell ? mine.reduce((m, u) => Math.max(m, u.order || 0), 0) : Infinity;
+
+    // Сводим чужие стороны: жива ли и когда пал её последний боец.
+    const bySide = new Map();
     for (const u of units) {
       if (u.sideId === 'player') continue;
-      if (!u.dead) { above.add(u.sideId); continue; }
-      if (myLast && (u.order || 0) > myLast) above.add(u.sideId);
+      const acc = bySide.get(u.sideId) || { alive: false, last: 0 };
+      if (u.dead) acc.last = Math.max(acc.last, u.order || 0);
+      else acc.alive = true;
+      bySide.set(u.sideId, acc);
     }
-    // Сторона, чей последний боец пал РАНЬШЕ нашего, выше не считается — даже если
-    // кто-то из неё выбыл позже. Отсеиваем по последнему выбывшему в стороне.
-    for (const id of [...above]) {
-      const side = units.filter((u) => u.sideId === id);
-      if (side.every((u) => u.dead)) {
-        const lastOfSide = side.reduce((m, u) => Math.max(m, u.order || 0), 0);
-        if (myLast && lastOfSide < myLast) above.delete(id);
-      }
+    let above = 0;
+    for (const acc of bySide.values()) {
+      if (acc.alive) { above += 1; continue; }   // ещё дерётся — значит выше нас
+      if (acc.last > myLast) above += 1;         // пала позже нас — значит выше
     }
-    return above.size;
+    return above;
   };
 
   // Забег: первого соперника собираем ДО первого состава — иначе на плиту выйдет
