@@ -58,6 +58,7 @@ import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
 import { createBattleField } from './battleField.js';
+import { createBoutClocks, boutHooks, separateBodies, BODY_GAP } from './boutCore.js';
 import { declutterPlates } from './hpStagger.js';
 import { setPlateVariant } from './hpIndicator.js';
 import store from '@/core/state/store.js';
@@ -72,6 +73,11 @@ import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
 import { chainState, ROUNDS, startRun, clearRunState, winRound, loseRound, hasStaleRun } from '@/services/chainRun.js';
+import {
+  collapseState, startCollapse, shortOfFighters, winWave, loseWave,
+  clearCollapseState, hasStaleCollapse, playerStartHp, currentFoeRoster,
+} from '@/services/collapseRun.js';
+import { parseLayoutId, getLayout, collapseSpawnPos } from '@/data/collapseLayouts.js';
 import { showFightResult, hideFightResult, bindFightAgain } from '@/services/fightResult.js';
 import { useRouter, useRoute } from 'vue-router';
 import { t } from '@/locales/index.js';
@@ -242,15 +248,9 @@ let sigRestartAt = 0;
 let lastFrameT = 0;
 let lastStaReadout = 0; // throttle clock for the dev stamina readout
 let runSigFight = null;
-// Loop time the current bout started — gates the stalemate safeguard (накал). 0 =
-// no bout running (накал stays 0). Set on every FIGHT / SIG bout, so a SIG
-// auto-cycle re-arms it per re-run.
-let fightStartT = 0;
-// Loop time of the last CLEAN exchange (real HP dealt by either side). Drives the
-// stalemate safeguard: накал rises with the SILENCE since this stamp, and any landed
-// hit (noteExchange) snaps it back to "now" → накал resets. Armed to bout start so a
-// fresh bout begins with no накал.
-let lastExchangeT = 0;
+// Отсчёты боя (начало боя и последний чистый размен) переехали внутрь часов
+// накала — scene/boutCore.js. Здесь их больше нет намеренно: два места, где
+// живёт одно и то же время, разошлись бы при первой же правке.
 const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
 
 const router = useRouter();
@@ -281,6 +281,31 @@ const chainMode = !showcase && route.query.chain === '1';
 // адрес может нести оба признака сразу, и молчаливое «оба включились» дало бы
 // состав рейда с ходом раундов забега.
 const raidMode = !showcase && !chainMode && route.query.raid === '1';
+// ─── ТУРНИР (?collapse=solo | duo | quad) ───────────────────────────────────
+// Временный вход в режим COLLAPSE — сетка на выбывание, по образцу ?chain=1.
+// Игроку он не виден: в воротах сейчас два острова, а экран режимов на пять —
+// отдельная работа. Любое другое значение признака читается как SOLO.
+// БЕЗ ПРИЗНАКА АРЕНА РАБОТАЕТ КАК ПРЕЖДЕ и ничего из турнира не включает.
+//
+// ⚠️ То же правило, что у признаков показа, забега и рейда: он управляет ТОЛЬКО
+// подачей и режимом боя. Думающий мозг модели и всё, что стоит денег, он не
+// трогает — признак приходит из адресной строки, значит его подставит кто угодно
+// и нажжёт вызовов. Мгновенные бои турнира к модели не обращаются вовсе.
+//
+// ЗАБЕГ И РЕЙД СИЛЬНЕЕ: три режима боя разом не включаются. Спрошены все,
+// потому что адрес может нести несколько признаков сразу, и молчаливое «все
+// включились» дало бы состав одного режима с ходом другого.
+//
+// СЛУЖЕБНЫЙ ?field= ТОЖЕ СИЛЬНЕЕ: им проверяют поле само по себе, и он не должен
+// зависеть от того, какой режим включён. Два разных состава на одной плите
+// сложиться не могут, поэтому побеждает один — тот, что ближе к проверке.
+const collapseLayout = (showcase || chainMode || raidMode || route.query.field)
+  ? null
+  : parseLayoutId(route.query.collapse);
+const collapseMode = !!collapseLayout;
+let collapseStartHp = null;   // здоровье бойцов игрока на старте волны (абсолют)
+let collapsePanelTimer = null; // пауза между замиранием боя и панелью волны
+
 // Ход раунда. Номер и здоровье живут в chainRun; здесь — только то, что нужно
 // сцене, чтобы собрать следующего соперника.
 let chainLastCore = null;   // ядро прошлого раунда — подряд не повторяем
@@ -342,54 +367,18 @@ function onDevCharge() {
   else fighter.discharge();
 }
 
-// Stalemate safeguard — rising накал by SILENCE (not fight time). One silence clock
-// (lastExchangeT) feeds two outputs so a гляделка of two patient cores can't last:
-//   escalation01() — накал level 0..1: climbs after escalateSilenceSec of no clean
-//     exchange, full over escalateRampSec. Fed to BOTH fighters (getFightContext →
-//     picker bias + body forward/aggression pull), so they're forced into the clash.
-//   escalationMult() — outgoing damage multiplier, derived from the SAME накал (1 →
-//     escalateMax), so the forced clash bites (накал = злее И больнее).
-// noteExchange() — any landed hit (real HP dealt, by either side) re-stamps the clock
-//   → накал snaps to 0, so an actively-trading bout never heats up.
-// НАКАЛ — ДВА СТОРОЖА, БЕРЁТСЯ БÓЛЬШИЙ. Они закрывают РАЗНЫЕ случаи, и снимать
-// один, починяя другой, нельзя — этим уже один раз сломали длину боя.
-//
-//  1. ЧАСЫ ТИШИНЫ (заведены 19.06.2026, правка 4b63c95d). Против вечной
-//     гляделки: двое терпеливых могли стоять друг против друга бесконечно, а
-//     прежний накал умножал урон — умножать было нечего. Считают время БЕЗ
-//     чистого размена и сбрасываются на каждом попадании.
-//
-//  2. ЧАСЫ ДЛИНЫ БОЯ (решение владельца 16.06.2026; сняты той же правкой 19.06,
-//     возвращены 16.09.2026). Гарантия вилки 45–50 с. Считают время С НАЧАЛА БОЯ
-//     и НЕ сбрасываются на попаданиях — иначе активный, но вязкий бой не
-//     кончается никогда: замер 16.09 показал 78–136 с по парам, а двое стойких
-//     не добились вовсе.
-//
-// Первый сторож не ловит второй случай (размены идут — тишины нет), второй не
-// ловит первый достаточно рано (гляделка длится дольше порога длины). Поэтому
-// оба, и берётся тот, что горячее.
-//
-// Часы длины отмеряются от fightStartT, а он ставится заново на каждый бой —
-// значит в череде боёв (раунды CHAIN) каждый раунд получает свой отсчёт.
-const escalation01 = () => {
-  if (!fightStartT) return 0; // no bout running → no накал
-  // 1. тишина: время без чистого размена, сбрасывается попаданием
-  const silence = lastFrameT - lastExchangeT;
-  const quietOver = silence - COMBAT_BALANCE.escalateSilenceSec;
-  const bySilence = quietOver <= 0 ? 0 : Math.min(1, quietOver / COMBAT_BALANCE.escalateRampSec);
-  // 2. длина: время с начала боя, не сбрасывается ничем.
-  //    У РЕЙДА СВОЙ ПОРОГ: семеро на плите вязнут дольше пары, и на общем пороге
-  //    затянувшийся рейд не добивался — замер держал 104-112 с при потолке 100.
-  //    Число живёт в блоке raid файла чисел боя; общий порог не тронут, на нём
-  //    стоят DUEL, SQUAD и забег.
-  const startSec = raidMode ? COMBAT_BALANCE.raid.escalateStartSec : COMBAT_BALANCE.escalateStartSec;
-  const lengthOver = (lastFrameT - fightStartT) - startSec;
-  const byLength = lengthOver <= 0 ? 0 : Math.min(1, lengthOver / COMBAT_BALANCE.escalateLengthRampSec);
-  return Math.max(bySilence, byLength);
-};
-const escalationMult = () => 1 + escalation01() * (COMBAT_BALANCE.escalateMax - 1);
-// A clean exchange landed (real HP dealt) → reset the silence clock so накал cools.
-const noteExchange = () => { if (fightStartT) lastExchangeT = lastFrameT; };
+// Stalemate safeguard — rising накал by SILENCE (not fight time). Правила и их
+// причины переехали в scene/boutCore.js (17.09.2026): их теперь читает не только
+// сцена, но и мгновенный бой турнира COLLAPSE, а второй записи тех же правил
+// быть не должно — она разошлась бы с первой. Числа, условия и пороги перенесены
+// дословно, включая рейдовый порог ниже.
+const clocks = createBoutClocks({
+  now: () => lastFrameT,
+  // У РЕЙДА СВОЙ ПОРОГ часов длины — см. причину в combatBalance.raid.
+  startSec: () => (raidMode ? COMBAT_BALANCE.raid.escalateStartSec : COMBAT_BALANCE.escalateStartSec),
+});
+const escalation01 = clocks.escalation01;
+const escalationMult = clocks.escalationMult;
 
 onMounted(() => {
   // ЗАБЕГ БРОШЕН НА СЕРЕДИНЕ. Отметка во вкладке говорит, что прошлый забег не
@@ -400,13 +389,15 @@ onMounted(() => {
   //
   // Проверка стоит ДО startRun ниже — иначе мы нашли бы отметку, которую сами же
   // и поставили секунду назад.
-  if (hasStaleRun(showcase)) {
+  if (hasStaleRun(showcase) || hasStaleCollapse(showcase)) {
     router.replace({ name: 'V2ArenaGate' });
     return;
   }
   // Ход забега живёт в памяти страницы и переживает уход с арены. Обычный бой
   // обязан начаться с чистого хода, иначе панель прошлого забега выскочит в DUEL.
   if (chainMode) startRun(); else clearRunState();
+  // То же самое у турнира, и по той же причине.
+  if (!collapseMode) clearCollapseState();
 
   // Build stages, in the order they happen below.
   load = beginSceneLoad(['renderer', 'arena', 'fighters', 'controls']);
@@ -542,9 +533,45 @@ onMounted(() => {
   //     там живой. Служебный ?field= сильнее — им проверяют поле само по себе, и
   //     он не должен зависеть от того, что игрок выбрал.
   const squadFighters = showcase ? [] : (store.getters['prefight/squadFighters'] || []);
-  const squadMode = !showcase && !chainMode && !raidMode
+  const squadMode = !showcase && !chainMode && !raidMode && !collapseMode
     && store.getters['prefight/modeId'] === 'squad'
     && squadFighters.length > 1;
+
+  // ─── ТУРНИР (COLLAPSE) ────────────────────────────────────────────────────
+  //     Игрок выводит на плиту столько своих бойцов, сколько просит раскладка:
+  //     одного в SOLO, двоих в DUO, четверых в QUAD. Против него — сторона ботов
+  //     из сетки турнира; её состав и здоровье ведёт services/collapseRun.js.
+  //
+  //     ОТКУДА БЕРУТСЯ БОЙЦЫ. Сначала состав, выбранный в воротах, по порядку;
+  //     недостающие добираются из списка бойцов по его порядку, без повторов. У
+  //     турнира своего экрана выбора пока нет, а идти в бой с тем, кого игрок
+  //     выбрал, честнее, чем брать первых попавшихся.
+  const collapsePlayerRoster = (() => {
+    if (!collapseMode) return [];
+    const want = getLayout(collapseLayout).perSide;
+    const picked = [...squadFighters];
+    const all = store.getters['roster/fighters'] || [];
+    for (const f of all) {
+      if (picked.length >= want) break;
+      if (!picked.some((p) => p.id === f.id)) picked.push(f);
+    }
+    return picked.slice(0, want).map((f) => ({
+      id: f.id,
+      coreId: f.core,
+      behavior: resolveBehavior(f.core, collectLit(f.upgrade)),
+      name: f.callsign || '',
+      upgrade: f.upgrade,
+    }));
+  })();
+  // Чужая сторона текущей волны. Обновляется на старте каждой волны: сетка
+  // решает, кто выходит следующим, сцена только ставит его на плиту.
+  let collapseFoes = [];
+  const pullCollapseFoes = () => { collapseFoes = currentFoeRoster(); };
+  // Бойцов меньше, чем просит раскладка. Турнир НЕ начинается — вместо него
+  // честное состояние с одной дверью наружу. Это временная замена правилу SQUAD
+  // «режим доступен, кнопка не горит»: своего экрана у турнира пока нет.
+  const collapseShort = collapseMode
+    && collapsePlayerRoster.length < getLayout(collapseLayout).perSide;
   // Чужая сторона. Собирается заново на каждый бой — «драться снова» должно
   // выводить новую команду, а не ту же.
   let squadFoes = [];
@@ -699,32 +726,15 @@ onMounted(() => {
     }
   };
 
-  // Развести пересёкшиеся тела. Симметрично: каждого сдвигаем на половину
-  // нехватки, чтобы никто не имел преимущества в пересчёте.
-  const GAP = COMBAT_BALANCE.field.bodyGap;
+  // Развести пересёкшиеся тела — общий проход (scene/boutCore.js). Переехал туда
+  // 17.09.2026 вместе с остальной обвязкой боя: мгновенный бой турнира COLLAPSE
+  // разводит тела ровно так же, и второй записи этого правила быть не должно.
+  //
   // Пара с боссом расходится шире: он крупнее обычного тела и на общем просвете
   // входил бы в соседей. Общий просвет при этом не тронут — на нём стоит бой
   // один на один, и трогать его ради одного режима нельзя.
   const BOSS_GAP = COMBAT_BALANCE.raid.bossBodyGap;
-  const separateBodies = (list) => {
-    for (let i = 0; i < list.length; i++) {
-      for (let j = i + 1; j < list.length; j++) {
-        const a = list[i].f.group.position;
-        const b = list[j].f.group.position;
-        const gap = (list[i].isBoss || list[j].isBoss) ? BOSS_GAP : GAP;
-        let dx = a.x - b.x, dz = a.z - b.z;
-        let d = Math.hypot(dx, dz);
-        if (d >= gap - 1e-4) continue;          // уже врозь — не трогаем
-        if (d < 1e-4) { dx = (i % 2 ? 1 : -1) * 1e-3; dz = 1e-3; d = Math.hypot(dx, dz); } // совпали точка в точку
-        const push = (gap - d) / 2;
-        const ux = dx / d, uz = dz / d;
-        a.x = THREE.MathUtils.clamp(a.x + ux * push, -navBounds.x, navBounds.x);
-        a.z = THREE.MathUtils.clamp(a.z + uz * push, -navBounds.z, navBounds.z);
-        b.x = THREE.MathUtils.clamp(b.x - ux * push, -navBounds.x, navBounds.x);
-        b.z = THREE.MathUtils.clamp(b.z - uz * push, -navBounds.z, navBounds.z);
-      }
-    }
-  };
+  const gapOf = (a, b) => ((a.isBoss || b.isBoss) ? BOSS_GAP : BODY_GAP);
 
   const endFight = () => {
     fightActive = false;
@@ -734,6 +744,7 @@ onMounted(() => {
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
     if (chainMode) { closeChainRound(); return; }
+    if (collapseMode) { closeCollapseWave(); return; }
     // ИТОГ БОЯ. У забега свои панели и свой счёт раундов — там победа означает
     // «идём дальше», а не «бой выигран», поэтому общая панель туда не ходит.
     // Дека тоже мимо: там своя подача, и своё «ЕЩЁ РАЗ» ей даёт окно страницы.
@@ -774,6 +785,31 @@ onMounted(() => {
     }, COMBAT_BALANCE.panelDelaySec * 1000);
   };
 
+  // ТУРНИР: волна кончилась. Как и в забеге, своего показа исхода у арены нет —
+  // бой просто замирает, — поэтому панель выходит ПОСЛЕ ПАУЗЫ: без неё игрок не
+  // успевает увидеть, чем бой кончился.
+  //
+  // Выиграл игрок или нет, спрашиваем у поля боя: оно и так знает, ничьих в этой
+  // игре нет. Здоровье берём у самих бойцов — оно уже посчитано боем. Порядок
+  // бойцов на плите тот же, что в составе, поэтому остатки ложатся по местам.
+  const closeCollapseWave = () => {
+    if (!collapseState.active || collapseState.phase !== 'fight') return;
+    const won = field.winnerSide() === 'player';
+    // Остаток каждого бойца игрока по порядку. Павший даёт ноль — турнир сам
+    // превратит его в добавку, отдельного правила для павшего нет.
+    const mine = field.units().filter((u) => u.sideId === 'player');
+    const hpLeft = mine.map((u) => (u.dead || !u.f ? 0 : Math.max(0, u.f.getHp())));
+    if (collapsePanelTimer) clearTimeout(collapsePanelTimer);
+    collapsePanelTimer = setTimeout(() => {
+      collapsePanelTimer = null;
+      if (!won) { loseWave(); return; }
+      // winWave ждёт, пока досчитаются чужие пары: без них неизвестно, кто
+      // выйдет следующим. Считать они начали в начале волны, так что ждать
+      // почти не приходится.
+      winWave(hpLeft).then((goesOn) => { if (goesOn) pullCollapseFoes(); });
+    }, COMBAT_BALANCE.panelDelaySec * 1000);
+  };
+
   // Служебная панель и все её показания висят на ПЕРВОМ бойце игрока и ПЕРВОМ
   // чужом. В бою один на один это ровно та же пара, что и раньше, поэтому панель
   // работает как работала; на большем поле она показывает первую пару.
@@ -799,25 +835,20 @@ onMounted(() => {
     unit.spec = spec; // служебный респаун пересобирает бойца по этой же записи
     // Цель прямо сейчас. Спрашивается на каждое обращение, поэтому смена цели
     // доходит до тела в тот же кадр.
-    const foe = () => { const tu = field.targetFor(unit); return tu ? tu.f : null; };
     unit.f = buildFighter(spec.color, {
       side: spec.side,
       coreId: spec.coreId,
       behavior: spec.behavior,
-      // Стартовое здоровье — только у бойца игрока и только в забеге (см. spec).
+      // Стартовое здоровье — у бойца игрока в забеге и в турнире (см. spec).
       // В любом другом бою здесь undefined, и боец выходит полным, как выходил.
       startHp: spec.startHp,
       bounds: navBounds,
       neutralColor: neutralColor.value,
-      getFoePos: () => { const x = foe(); return x ? x.group.position : null; },
-      onImpact: (raw, pen, intr, pt, w) => { const x = foe(); if (x?.takeDamage(raw * escalationMult(), pen, intr, pt, w) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block. Real HP dealt → clean exchange → накал resets
-      onAttackStart: () => { field.noteWindup(unit); foe()?.noteIncomingAttack?.(); }, // замах: ЗАСАДА рядом разворачивается на него, цель поднимает блок
-      onMiss: () => foe()?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
-      getFoeReacting: () => { const x = foe(); return !!(x && (x.isBlocking?.() || x.isDodging?.())); }, // foe took the bait? (feint payoff)
-      getFightContext: () => ({ escalation: escalationMult(), escalation01: escalation01(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }),
-      getFoeStamina: () => { const x = foe(); return x ? x.getStamina01() : null; }, // foe wind (break detector + word memory)
-      getFoeHp01: () => { const x = foe(); return x ? x.getHp() / x.maxHp : null; }, // foe health (break detector)
-      getFoePhase: () => { const x = foe(); return x && x.getActionPhase ? x.getActionPhase() : 'neutral'; }, // foe action phase → the read subsystem (сбив / контра)
+      // НИТОЧКИ К ЦЕЛИ — общие (scene/boutCore.js). Раньше они были написаны
+      // здесь; переехали 17.09.2026, когда у мгновенного боя турнира COLLAPSE
+      // появилась нужда в тех же ниточках. Ни одна из них не изменила смысла:
+      // перенос дословный, и бой один на один остался прежним.
+      ...boutHooks({ field, unit, clocks }),
       // ДУМАЮЩИЙ МОЗГ — ТОЛЬКО В БОЮ ОДИН НА ОДИН.
       //
       // В паре мозг раздаётся обоим, как раздавался до фундамента: служебный
@@ -894,6 +925,9 @@ onMounted(() => {
   //     появится экран режимов. Игроку он не виден и по ссылке не встречается.
   const HISTORIC_POS = { player: { x: 0.45, z: 1.3 }, foe: { x: -0.65, z: -1.4 } };
   const buildRoster = () => {
+    // Бойцов не хватает — на плиту не выходит никто: турнир не начался, и
+    // ставить половину стороны значило бы показать бой, которого нет.
+    if (collapseShort) return [];
     const raw = String(route.query.field || '').toLowerCase();
     // сколько сторон и сколько бойцов на сторону
     let sides = 2, per = 1;
@@ -904,6 +938,8 @@ onMounted(() => {
     // Командный бой: столько бойцов на сторону, сколько игрок выбрал в воротах.
     // Служебный признак выше сильнее — им проверяют поле само по себе.
     else if (squadMode) { sides = 2; per = squadFighters.length; }
+    // Турнир: столько, сколько просит раскладка. Обе стороны одного размера.
+    else if (collapseMode) { sides = 2; per = getLayout(collapseLayout).perSide; }
 
     // СТОРОНЫ РАЗНОГО РАЗМЕРА. Рейд — первый случай, когда их не поровну: четверо
     // против троих. До него одного числа хватало на обе стороны, поэтому размер
@@ -920,9 +956,15 @@ onMounted(() => {
       const sideId = isPlayerSide ? 'player' : `foe${sIdx}`;
       const count = perSide[sIdx];
       for (let k = 0; k < count; k++) {
-        const pos = oneOnOne
-          ? (isPlayerSide ? HISTORIC_POS.player : HISTORIC_POS.foe)
-          : (raidMode ? raidPos(isPlayerSide, k, count) : spreadPos(sIdx, sides, k, count));
+        // ТОЧКИ ВЫХОДА. У турнира они свои и лежат рядом с его раскладками: те
+        // же точки спрашивает мгновенный бой чужих пар, и разъехаться им нельзя
+        // — иначе бой на экране пошёл бы не с тех позиций, что бой в расчёте.
+        // При одном на сторону это ровно исторические точки дуэли.
+        const pos = collapseMode
+          ? collapseSpawnPos(count, isPlayerSide, k)
+          : (oneOnOne
+            ? (isPlayerSide ? HISTORIC_POS.player : HISTORIC_POS.foe)
+            : (raidMode ? raidPos(isPlayerSide, k, count) : spreadPos(sIdx, sides, k, count)));
 
         // РЕЙД. Сторона игрока — его боец и трое ботов-союзников; внешне бот от
         // игрока не отличается, и кольцо стоит под всеми (решение девятнадцатой
@@ -952,6 +994,32 @@ onMounted(() => {
             color: own ? playerColor : (coreId ? getCore(coreId).hue : pink),
             behavior: own ? behaviorFor('player') : unit.behavior,
             portrait: own ? portraitFor('player') : [],
+            pos,
+          });
+          continue;
+        }
+
+        // ТУРНИР. Сторона игрока — его бойцы, каждый со своим ядром, своими
+        // гранями и своим белым кольцом. Чужая сторона — сторона из сетки
+        // турнира: её собрал collapseRun, здесь её только ставят на плиту.
+        //
+        // Здоровье несётся между волнами: со второй волны боец выходит с
+        // остатком прошлого боя плюс добавка. Считает это турнир, сцена берёт
+        // готовое число.
+        if (collapseMode) {
+          const mine = isPlayerSide ? collapsePlayerRoster[k] : null;
+          const foeSide = isPlayerSide ? null : (collapseFoes[k] || null);
+          const coreId = mine ? mine.coreId : (foeSide ? foeSide.coreId : playerCoreId);
+          const core = getCore(coreId);
+          specs.push({
+            sideId,
+            isBot: !isPlayerSide,            // свои — не боты, у каждого кольцо
+            coreId,
+            side: isPlayerSide ? 'player' : 'opponent',
+            color: isPlayerSide && k === 0 ? playerColor : (core ? core.hue : pink),
+            behavior: mine ? mine.behavior : foeSide.behavior,
+            startHp: isPlayerSide && collapseStartHp ? collapseStartHp[k] : undefined,
+            portrait: mine ? portraitFor('player') : [],
             pos,
           });
           continue;
@@ -1095,6 +1163,19 @@ onMounted(() => {
   // поправки раунда.
   if (chainMode) rollChainFoe(1);
 
+  // ТУРНИР. Сетка собирается ДО первого состава — иначе на плиту выйти будет
+  // некому. Бойцов не хватает — сетку не собираем вовсе: турнир не начался, и
+  // отметки «турнир идёт» тоже нет, бросать нечего.
+  if (collapseMode) {
+    if (collapseShort) {
+      shortOfFighters(collapseLayout, collapsePlayerRoster.length);
+    } else {
+      startCollapse(collapseLayout, collapsePlayerRoster);
+      pullCollapseFoes();
+      collapseStartHp = playerStartHp();
+    }
+  }
+
   const startRoster = buildRoster();
   multiBout = startRoster.length > 2;
   for (const spec of startRoster) spawnUnit(spec);
@@ -1112,8 +1193,7 @@ onMounted(() => {
     aiPlayer = true;
     aiOpponent = true;
     fightActive = true;
-    fightStartT = lastFrameT; // arm the stalemate safeguard (gate)
-    lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
+    clocks.startBout(); // arm the stalemate safeguard (gate) — оба отсчёта с нуля
     const roster = buildRoster();
     multiBout = roster.length > 2;
     for (const spec of roster) spawnUnit(spec);
@@ -1124,7 +1204,7 @@ onMounted(() => {
   // ИТОГ БОЯ: отдаём панели способ начать новый бой. Панель про сцену не знает,
   // сцена про кнопки — тоже; знание встречается здесь. В забеге кнопки «драться
   // снова» нет, поэтому и связывать нечего.
-  if (!chainMode && !showcase) {
+  if (!chainMode && !collapseMode && !showcase) {
     unbindFightAgain = bindFightAgain(() => { rollDuelFoe(); runFight(); });
   }
 
@@ -1143,6 +1223,21 @@ onMounted(() => {
     runFight();
   });
 
+  // ТУРНИР: игрок нажал NEXT на панели. Панель живёт снаружи сцены и внутрь не
+  // лезет — она только переводит турнир на следующую волну, а сцена замечает
+  // смену номера и выводит бойцов. Так панель не знает про Three.js, а сцена —
+  // про кнопки. Тот же шов, что у забега.
+  //
+  // ⚠️ Двойное нажатие: номер волны двигает collapseRun, и только из состояния
+  //    «между волнами». Второе нажатие приходит уже вне его — номер не двигается,
+  //    наблюдатель молчит, волна не запускается дважды.
+  vueWatch(() => collapseState.wave, (wave, prev) => {
+    if (!collapseMode || !collapseState.active || wave === prev) return;
+    // Здоровье волны уже посчитано турниром — сцена берёт готовые числа.
+    collapseStartHp = playerStartHp();
+    runFight();
+  });
+
   // SIG dev bout (SIG FIGHT button): same clean re-run as FIGHT but the two
   // fighters take the chosen LEFT / RIGHT signature presets, and on each KO the
   // bout auto-restarts (sigCycle) at full HP so successive runs can be watched
@@ -1153,8 +1248,7 @@ onMounted(() => {
     sigCycle = true;
     fightActive = false;
     sigRestartAt = 0;
-    fightStartT = lastFrameT; // arm the stalemate safeguard (re-armed each auto-cycle re-run)
-    lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
+    clocks.startBout(); // arm the stalemate safeguard (re-armed each auto-cycle re-run)
     aiPlayer = true;
     aiOpponent = true;
     const roster = buildRoster();
@@ -1204,7 +1298,7 @@ onMounted(() => {
     //
     // При двух телах он НЕ ВЫПОЛНЯЕТСЯ ВОВСЕ: пару и так держит врозь сам боец,
     // и лишний проход означал бы, что бой один на один стал считаться иначе.
-    if (onPlate.length > 2) separateBodies(onPlate);
+    if (onPlate.length > 2) separateBodies(onPlate, navBounds, gapOf);
 
     // ПЛАШКИ ЗДОРОВЬЯ: развести по экрану (scene/hpStagger.js). Проход по тем же
     // живым телам и с тем же условием «больше двух» — при двух телах он не
@@ -1245,8 +1339,8 @@ onMounted(() => {
       }
       // Накал: % level + live silence (s) since the last clean exchange. Rises in a
       // гляделка past escalateSilenceSec, snaps to 0 on any landed hit.
-      if (fightStartT) {
-        const sil = Math.max(0, lastFrameT - lastExchangeT);
+      if (clocks.armed()) {
+        const sil = clocks.silence();
         nkReadout.value = `NK   ${Math.round(escalation01() * 100)}%  sil ${sil.toFixed(1)}s`;
       } else {
         nkReadout.value = 'NK   — (no bout)';
@@ -1278,7 +1372,7 @@ onMounted(() => {
     // успел увидеть, кто вышел драться. Флаг ставится СРАЗУ, а не в таймере, —
     // иначе следующие кадры успеют завести ещё один таймер, и бой перезапустится
     // сам собой через полторы секунды после начала.
-    if (!showcase && !autoStarted && !sceneFailed.value && !loadingState.active) {
+    if (!showcase && !collapseShort && !autoStarted && !sceneFailed.value && !loadingState.active) {
       autoStarted = true;
       if (sceneTimer) { clearTimeout(sceneTimer); sceneTimer = null; } // успели — сторож больше не нужен
       autoTimer = setTimeout(() => { autoTimer = null; runFight(); }, AUTO_START_MS);
@@ -1325,6 +1419,7 @@ onBeforeUnmount(() => {
   if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
   if (sceneTimer) { clearTimeout(sceneTimer); sceneTimer = null; }
   if (chainPanelTimer) { clearTimeout(chainPanelTimer); chainPanelTimer = null; } // панель забега — туда же
+  if (collapsePanelTimer) { clearTimeout(collapsePanelTimer); collapsePanelTimer = null; } // и панель волны турнира
   if (resultTimer) { clearTimeout(resultTimer); resultTimer = null; }  // и панель итога
   hideFightResult();   // уходим с арены — панель итога уходит с нами
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
