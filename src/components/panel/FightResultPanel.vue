@@ -30,10 +30,14 @@ import '@/components/panel/panel.css';
 const router = useRouter();
 
 const won = computed(() => state.outcome === 'victory');
-const title = computed(() => (won.value ? t.value.fight.victory : t.value.fight.defeat));
+// Готовая строка от того, кто считал бой, сильнее своей: у открытого поля исход
+// — это МЕСТО, и панель его сама не знает (см. titleOver в services/fightResult).
+const title = computed(() => state.titleOver
+  || (won.value ? t.value.fight.victory : t.value.fight.defeat));
 // Строка под заголовком: у рейда своя — он выигран падением босса, а не тем, что
 // своя сторона осталась одна, и общая строка про него соврала бы.
 const note = computed(() => {
+  if (state.noteOver) return state.noteOver;
   const f = t.value.fight;
   if (state.kind === 'raid') return won.value ? f.victoryNoteRaid : f.defeatNoteRaid;
   return won.value ? f.victoryNote : f.defeatNote;

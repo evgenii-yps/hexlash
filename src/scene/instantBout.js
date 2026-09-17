@@ -80,15 +80,38 @@ const gapOf = (a, b) => ((a.isBoss || b.isBoss) ? COMBAT_BALANCE.raid.bossBodyGa
  * Собрать бой и вернуть шагомер. Внутренность общая у мгновенного прогона и у
  * прогона по кусочкам — второй только шагает не всё сразу.
  */
-function makeBout(specs, { endRule = null } = {}) {
-  const field = createBattleField();
+function makeBout(specs, {
+  endRule = null,
+  // ГРАНИЦЫ ПЛИТЫ — необязательны. Не переданы (турнир и всё, что было до
+  // открытого поля) — берутся границы боевой плиты, ровно как брались.
+  //
+  // ⚠️ ДО ЭТОЙ ПРАВКИ ГРАНИЦЫ БЫЛИ ЗАШИТЫ. Открытому полю нужны свои: его плита
+  //    в разы больше боевой, и на маленьких границах двадцать тел сошлись бы в
+  //    середину, а замер длины мерил бы не тот бой, который игрок видит.
+  bounds = INSTANT_BOUNDS,
+  // Радиус внимания — правило ОДНОГО режима (см. battleField). Не передан —
+  // выбор цели идёт прежним путём, и турнир считается ровно как считался.
+  attentionRadius = null,
+  // Порог часов ДЛИНЫ боя. Не передан — общий, на котором стоит турнир.
+  escalateStartSec = COMBAT_BALANCE.escalateStartSec,
+  // ОКОШКО ДЛЯ ЗАМЕРА: зовётся после каждого шага с текущим временем и живыми
+  // телами. Не передан — не зовётся, и шаг остаётся ровно таким, каким был.
+  //
+  // ЗАЧЕМ. Итог боя отвечает только «кто выиграл и за сколько». Приёмка режима
+  // спрашивает другое: когда прошёл первый удар, какое место занял игрок, не
+  // завис ли кто-то на месте. Всё это видно ТОЛЬКО по ходу боя. Без окошка замер
+  // пришлось бы собрать из тех же деталей отдельно — то есть завести вторую
+  // запись правил боя, а это ровно то, чего этот файл не допускает.
+  onStep = null,
+} = {}) {
+  const field = createBattleField({ attentionRadius });
   if (endRule) field.setEndRule(endRule);
   let now = 0;
   const clocks = createBoutClocks({
     now: () => now,
-    // Порог часов длины — общий. Свой порог есть только у рейда, а рейд
-    // мгновенно не считается: он не турнирный режим.
-    startSec: () => COMBAT_BALANCE.escalateStartSec,
+    // Порог часов длины. Общий у турнира; свой — у рейда и у открытого поля, и
+    // тогда он приходит сюда числом.
+    startSec: () => escalateStartSec,
   });
 
   const units = [];
@@ -100,7 +123,7 @@ function makeBout(specs, { endRule = null } = {}) {
       coreId: spec.coreId,
       behavior: spec.behavior,
       startHp: spec.startHp,
-      bounds: INSTANT_BOUNDS,
+      bounds,
       ...boutHooks({ field, unit, clocks }),
       brain: 'spinal',       // см. шапку: модель сюда не ходит никогда
       portrait: [],
@@ -121,7 +144,8 @@ function makeBout(specs, { endRule = null } = {}) {
       for (const u of alive) u.f.update(now, STUB_CAM);
       // Расталкивание — как на сцене, и с тем же условием: при двух телах не
       // зовётся вовсе, иначе бой один на один считался бы иначе.
-      if (alive.length > 2) separateBodies(alive, INSTANT_BOUNDS, gapOf);
+      if (alive.length > 2) separateBodies(alive, bounds, gapOf);
+      if (onStep) onStep(now, alive, field);
       if (field.isOver() || now >= MAX_SEC) return true;
     }
     return false;
@@ -184,8 +208,8 @@ export function runInstantBout(specs, opts = {}) {
  * @param {number} [o.budgetMs] сколько миллисекунд на порцию
  * @returns {{promise: Promise<object>, cancel: () => void}}
  */
-export function runInstantBoutSliced(specs, { budgetMs = 4, endRule = null } = {}) {
-  const bout = makeBout(specs, { endRule });
+export function runInstantBoutSliced(specs, { budgetMs = 4, ...opts } = {}) {
+  const bout = makeBout(specs, opts);
   let cancelled = false;
   let timer = null;
   const promise = new Promise((resolve) => {
