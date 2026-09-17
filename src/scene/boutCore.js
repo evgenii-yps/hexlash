@@ -55,11 +55,24 @@ import { COMBAT_BALANCE } from '@/data/combatBalance.js';
  *                                  рейда свой порог, и он выбирается по режиму
  */
 export function createBoutClocks({ now, startSec }) {
-  let fightStartT = 0;   // 0 — боя нет, накал равен нулю
+  // ⚠️ «БОЙ ИДЁТ» — ОТДЕЛЬНЫЙ ПРИЗНАК, А НЕ «ВРЕМЯ СТАРТА НЕ НОЛЬ».
+  //
+  //    В сцене этот вопрос решался проверкой самого времени: часы сцены идут от
+  //    её сборки, к первому бою там уже накопились секунды, и ноль честно
+  //    означал «боя нет». У мгновенного боя своё время, и оно начинается РОВНО С
+  //    НУЛЯ — на такой проверке накал молча выключался на весь бой. Замер поймал
+  //    это сразу: пара дралась 130 секунд вместо пятидесяти, потому что ни один
+  //    из двух сторожей длины не включался.
+  //
+  //    Признак отвечает на вопрос «бой идёт» прямо, и время старта больше не
+  //    обязано быть ненулевым. Для сцены ничего не меняется: до первого боя
+  //    признак снят, после startBout — поднят.
+  let running = false;
+  let fightStartT = 0;   // время начала текущего боя
   let lastExchangeT = 0; // когда в последний раз прошёл чистый размен
 
   const escalation01 = () => {
-    if (!fightStartT) return 0; // no bout running → no накал
+    if (!running) return 0; // no bout running → no накал
     const t = now();
     // 1. тишина: время без чистого размена, сбрасывается попаданием
     const silence = t - lastExchangeT;
@@ -78,14 +91,14 @@ export function createBoutClocks({ now, startSec }) {
   const escalationMult = () => 1 + escalation01() * (COMBAT_BALANCE.escalateMax - 1);
   // A clean exchange landed (real HP dealt, by either side) → reset the silence
   // clock so накал cools.
-  const noteExchange = () => { if (fightStartT) lastExchangeT = now(); };
+  const noteExchange = () => { if (running) lastExchangeT = now(); };
   /** Новый бой: оба отсчёта с нуля. Зовётся на КАЖДЫЙ бой, не на заход на арену. */
-  const startBout = () => { fightStartT = now(); lastExchangeT = now(); };
+  const startBout = () => { running = true; fightStartT = now(); lastExchangeT = now(); };
   /** Время с начала боя — бойцу его отдают в контексте. */
-  const elapsed = () => (fightStartT ? now() - fightStartT : 0);
-  const armed = () => !!fightStartT;
+  const elapsed = () => (running ? now() - fightStartT : 0);
+  const armed = () => running;
   /** Тишина — время без чистого размена. Нужно только служебному показанию. */
-  const silence = () => (fightStartT ? Math.max(0, now() - lastExchangeT) : 0);
+  const silence = () => (running ? Math.max(0, now() - lastExchangeT) : 0);
 
   return { escalation01, escalationMult, noteExchange, startBout, elapsed, armed, silence };
 }
