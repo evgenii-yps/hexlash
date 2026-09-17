@@ -21,6 +21,7 @@
 //               pushPointOutOfCovers, segmentHitsCovers.
 
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
+import { getOfLayout, spawnRingRadius } from '@/data/openFieldLayouts.js';
 
 /**
  * @typedef {object} Cover
@@ -49,8 +50,21 @@ import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 export function buildCoverLayout() {
   const C = COMBAT_BALANCE.openField.cover;
   const out = [];
-  const ring = (count, radius, length, phase) => {
+  // ⚠️ РАДИУСЫ КОЛЕЦ — ДОЛИ ОТ КОЛЬЦА ВЫХОДА, А ДЛИНЫ БЛОКОВ СЧИТАЮТСЯ ИЗ
+  //    ПРОСВЕТА. Сначала и радиусы, и длины стояли числами — и раскладка молча
+  //    разошлась бы с полем при первой же правке просвета между сторонами: поле
+  //    считается от кольца выхода, а укрытия стояли бы там, где стояли. При
+  //    уменьшении поля внешнее кольцо оказалось бы прямо на точках выхода.
+  //
+  //    Требование — ПРОСВЕТ (его назвал владелец: не уже трёх). Значит просвет
+  //    задан, а длина блока следует из него и из радиуса, а не наоборот.
+  const R = spawnRingRadius(getOfLayout('solo'));
+  const ring = (count, frac, phase) => {
+    const radius = R * frac;
     const ht = C.thickness / 2;
+    // Длина = шаг по дуге минус требуемый просвет. Короче собственной толщины
+    // блок быть не может — тогда это просто квадратный столб.
+    const length = Math.max(C.thickness, (Math.PI * 2 * radius) / count - C.gap);
     const hl = length / 2;
     for (let i = 0; i < count; i += 1) {
       const a = (i / count) * Math.PI * 2 + phase;
@@ -66,13 +80,8 @@ export function buildCoverLayout() {
       });
     }
   };
-  ring(C.outerCount, C.outerRadius, C.outerLength, 0);
-  ring(
-    C.innerCount,
-    C.innerRadius,
-    C.innerLength,
-    C.innerPhaseHalfStep ? Math.PI / C.innerCount : 0,
-  );
+  ring(C.outerCount, C.outerRadiusFrac, 0);
+  ring(C.innerCount, C.innerRadiusFrac, C.innerPhaseHalfStep ? Math.PI / C.innerCount : 0);
   return out;
 }
 
