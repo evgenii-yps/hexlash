@@ -1,7 +1,8 @@
 <!-- ArenaGateScene — ВОРОТА АРЕНЫ: пространство, в которое игрок попадает через
      дверь ARENA. Своя копия по рецепту (hexlash-3d §3), собранная из тех же
-     кирпичей, что дом и зал: гекс-пол в семейном материале арены, тёмный купол
-     фона внутри сцены, рассеянная заливка без теней, орбита с клампами.
+     кирпичей, что дом и зал: тёмный купол фона внутри сцены, рассеянная заливка
+     без теней, орбита с клампами. ПОЛА НЕТ — острова парят в пустоте, как остров
+     дома (решение владельца 17.09.2026; разбор — в блоке настроек ниже).
 
      ЗАЧЕМ ОТДЕЛЬНАЯ СЦЕНА, А НЕ УВОД КАМЕРЫ В СУЩЕСТВУЮЩЕМ МИРЕ. Инструкция
      советует второе, и для всего, что делали раньше, это было верно. Здесь
@@ -10,8 +11,8 @@
      пространство грузится с нуля, под экраном загрузки. Увод камеры в том же
      мире даёт ровно то, от чего уходим, — переход между экранами одной комнаты.
      Риск, ради которого правило написано (кадры на телефоне), снят иначе: это
-     самая лёгкая из сцен — пол, купол, три источника света, ноль фигур, ноль
-     частиц, — и две сцены никогда не живут в памяти одновременно.
+     самая лёгкая из сцен — купол, три источника света, ноль частиц, — и две
+     сцены никогда не живут в памяти одновременно.
 
      ЧТО В НЁМ СТОИТ. Первый шаг — выбор режима боя: пять живых островов (DUEL,
      SQUAD, CHAIN, RAID, COLLAPSE — см. data/arenaModes.js). Второй шаг — выбор
@@ -34,8 +35,8 @@
      Дисциплина: на выборе режима свечения нет ни одного и розового нет вовсе.
      На выборе бойцов светится РОВНО ОДИН предмет — кнопка старта, и она же
      единственная розовая: розовый в игре принадлежит главному действию, а
-     главное действие на этом шаге одно. Пол, туман и купол — семейные тёмные
-     тона из токенов. -->
+     главное действие на этом шаге одно. Туман и купол — семейные тёмные тона из
+     токенов. -->
 <template>
   <div ref="wrap" class="gate-scene-wrap">
     <canvas ref="canvasEl" class="gate-scene-canvas" />
@@ -47,7 +48,6 @@
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { makeHexGridTexture } from './arenaTextures.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { createGateApproach } from './gateApproach.js';
 import { createIslandDive } from './islandDive.js';
@@ -90,29 +90,21 @@ const props = defineProps({
 const emit = defineEmits(['arrived', 'dive-start', 'pick', 'refused', 'fight', 'fight-refused']);
 
 // ───────────────────────── CONFIG (ручки приёмки) ─────────────────────────
-// Пол. Одно ровное гекс-поле от края до края — без центральной плиты и без шва:
-// шов делит пространство на «здесь» и «там», а ворота должны читаться единым
-// местом. Размер подобран так, чтобы кромка тонула в тумане, а не обрезалась.
-const FIELD = {
-  // Сторона поля. Было 40 — под камеру, которая стояла ближе и ниже. Пять
-  // островов отогнали её назад и подняли, и с новой позы стала видна ДАЛЬНЯЯ
-  // КРОМКА поля: ровная черта поперёк кадра, за которой пустота. Туман её
-  // больше не съедает — его пришлось разредить, иначе дальний ряд островов
-  // пропадал вместе с ней (см. FOG.gate в sceneTokens).
-  //
-  // Поле стоит дёшево: это две плоскости, а не геометрия. Растянуть его — самый
-  // прямой способ убрать черту, не возвращая туман, который прятал острова.
-  size: 70,
-  // Плотность решётки едет ЗА размером: ячейка должна остаться той же величины.
-  // 16 ячеек на 40 единиц = 0.4 на единицу, столько же и здесь.
-  repeat: 28,
-  y: 0,          // высота поверхности
-  // Тон семейный — тёмный сине-серый, как поле пространства (0x0d1120). Здесь
-  // чуть светлее и холоднее: ворота ближе к камере и глуше по туману, и на
-  // тоне поля пространства пол тонул бы в нём целиком.
-  base: 0x121729,
-  lineOpacity: 0.5,   // сила линий решётки; свой цвет у них уже есть в текстуре
-};
+// ПОЛА ЗДЕСЬ НЕТ, И ЭТО РЕШЕНИЕ, А НЕ ПРОПУСК.
+//
+// До 17.09.2026 под островами лежало гекс-поле 70×70 — подложка плюс тайленная
+// решётка. Оно задумывалось как «единое место», но делало обратное: давало
+// пространству низ, а значит и края. Из-за края поля в кадре его пришлось
+// растягивать (было 40, стало 70), а потом разрежать туман, чтобы дальний ряд
+// островов не тонул вместе с этим краем.
+//
+// Владелец на приёмке эмблем решил иначе: острова ворот ПАРЯТ В ПУСТОТЕ, как
+// остров дома. Тогда ни края, ни низа не существует вовсе, и растягивать нечего.
+// Туман остаётся — он теперь работает только на островах и на куполе, — и его
+// плотность (FOG.gate) не трогается: она выверена под позу камеры, а не под пол.
+//
+// Если сюда однажды вернётся поверхность, она вернётся вместе с ответом на
+// вопрос «где у неё край и что за ним», а не просто как плоскость.
 
 // Свет. Ровная рассеянная заливка без теней — тот же выбор, что в пространстве
 // (владелец отклонил объёмный лепящий свет). Тёплый ключ + холодноватая
@@ -224,7 +216,7 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer = null, scene = null, camera = null, controls = null;
-let backdrop = null, field = null, approach = null, load = null, plates = null, dive = null;
+let backdrop = null, approach = null, load = null, plates = null, dive = null;
 let fightBtn = null;
 let launching = false;   // подлёт к кнопке пошёл — ввод заперт до самой арены
 let resizeObserver = null, onVisibility = null, stopVeilWatch = null;
@@ -246,44 +238,6 @@ function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
   const mem = navigator.deviceMemory || 8;
   return cores <= 4 || mem <= 4;
-}
-
-// Пол — подложка + тайленная гекс-решётка поверх. Две плоскости, а не одна с
-// комбинированной текстурой: решётка тайлится своей частотой, подложка тянется
-// целиком, и разводить их частоты в одной текстуре нечем.
-function buildField(maxAniso) {
-  const group = new THREE.Group();
-
-  const baseGeo = new THREE.PlaneGeometry(FIELD.size, FIELD.size);
-  const baseMat = new THREE.MeshStandardMaterial({
-    color: FIELD.base, roughness: 0.95, metalness: 0.0,
-  });
-  const base = new THREE.Mesh(baseGeo, baseMat);
-  base.rotation.x = -Math.PI / 2;
-  base.position.y = FIELD.y;
-  group.add(base);
-
-  // Текстура решётки уже несёт СВОЙ цвет линий (rgba(160,182,218,.32) внутри
-  // arenaTextures). Задавать материалу ещё и `color` нельзя: он умножается на
-  // цвет текстуры, и тёмный тон гасит линии до невидимости — так и вышло в
-  // первой сборке. Семейный состав (см. поле в SpaceScene): map + прозрачность,
-  // без тона. Анизотропия передаётся генератору, он ставит её сам.
-  const tex = makeHexGridTexture(maxAniso);
-  tex.repeat.set(FIELD.repeat, FIELD.repeat);
-  const gridGeo = new THREE.PlaneGeometry(FIELD.size, FIELD.size);
-  const gridMat = new THREE.MeshBasicMaterial({
-    map: tex, transparent: true, opacity: FIELD.lineOpacity, depthWrite: false,
-  });
-  const grid = new THREE.Mesh(gridGeo, gridMat);
-  grid.rotation.x = -Math.PI / 2;
-  grid.position.y = FIELD.y + 0.002;   // поверх подложки, без спора за глубину
-  group.add(grid);
-
-  const dispose = () => {
-    baseGeo.dispose(); baseMat.dispose();
-    gridGeo.dispose(); gridMat.dispose(); tex.dispose();
-  };
-  return { group, dispose };
 }
 
 // Собрать острова по списку. Старые разбираются целиком: переиспользовать
@@ -319,7 +273,7 @@ function syncFightButton() {
 }
 
 onMounted(() => {
-  load = beginSceneLoad(['renderer', 'field', 'plates', 'camera']);
+  load = beginSceneLoad(['renderer', 'backdrop', 'plates', 'camera']);
 
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
@@ -347,11 +301,9 @@ onMounted(() => {
   scene.add(new THREE.HemisphereLight(LIGHT.hemi.sky, LIGHT.hemi.ground, LIGHT.hemi.intensity));
   load.stage('renderer');
 
-  field = buildField(renderer.capabilities.getMaxAnisotropy());
-  scene.add(field.group);
   backdrop = buildBackdrop({ radius: 60, centerY: 5 });
   scene.add(backdrop.mesh);
-  load.stage('field');
+  load.stage('backdrop');
 
   buildPlates(props.items, w / h);
   load.stage('plates');
@@ -906,11 +858,10 @@ onBeforeUnmount(() => {
   controls?.dispose();
   plates?.dispose();
   fightBtn?.dispose();
-  field?.dispose();
   backdrop?.dispose();
   renderer?.dispose();
   renderer = scene = camera = controls = null;
-  field = backdrop = approach = dive = plates = fightBtn = load = null;
+  backdrop = approach = dive = plates = fightBtn = load = null;
   launching = false;
 });
 </script>
