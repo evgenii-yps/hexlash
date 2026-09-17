@@ -311,7 +311,12 @@ const urlMode = route.query.chain === '1' ? 'chain'
   : route.query.raid === '1' ? 'raid'
   : (route.query.collapse !== undefined && route.query.collapse !== '') ? 'collapse'
   : null;
-const gateMode = (showcase || route.query.field || urlMode)
+// ОТКРЫТОЕ ПОЛЕ — СЛУЖЕБНЫЙ ПРИЗНАК, И ОН СИЛЬНЕЕ ВЫБОРА В ВОРОТАХ, как ?field=.
+// Читается здесь, до всего остального: ниже он гасит выбор из ворот, и без этого
+// сохранённый в сейфе командный бой включился бы ВМЕСТЕ с открытым полем — два
+// состава на одной плите, и чей из них выйдет, решал бы порядок проверок.
+const hasOpenField = route.query.openfield !== undefined && route.query.openfield !== '';
+const gateMode = (showcase || route.query.field || urlMode || hasOpenField)
   ? null
   : store.getters['prefight/modeId'];
 
@@ -444,6 +449,8 @@ function onDevCharge() {
 // ОСТАЛЬНЫЕ РЕЖИМЫ СИЛЬНЕЕ: шесть режимов боя разом не включаются. Спрошены все,
 // потому что адрес может нести несколько признаков сразу, и молчаливое «все
 // включились» дало бы состав одного режима с ходом другого.
+// ЗАБЕГ, РЕЙД И ТУРНИР СИЛЬНЕЕ: они приходят своими признаками, и адрес может
+// нести несколько сразу. Выбор из ворот здесь уже погашен (см. hasOpenField).
 const openFieldLayoutId = (showcase || chainMode || raidMode || collapseMode || route.query.field)
   ? null
   : parseOfLayoutId(route.query.openfield);
@@ -730,10 +737,11 @@ onMounted(() => {
   const rollDuelFoe = () => {
     if (raidMode) { rollRaid(); return; }         // рейд — новые союзники, новый босс и охрана
     if (squadMode) { rollSquadFoes(); return; }   // командный бой — новая чужая команда
-    // Открытое поле — новые девятнадцать соперников и новый отсчёт сторон. ТЗ
-    // просит именно этого: «драться снова» выводит новые стороны, новые позывные
-    // и новую расстановку.
-    if (openFieldMode) { rollOpenFieldFoes(); startOpenField(openFieldLayoutId); return; }
+    // Открытое поле — новые девятнадцать соперников. ТЗ просит именно этого:
+    // «драться снова» выводит новые стороны, новые позывные и новую расстановку.
+    // Отсчёт сторон здесь НЕ трогаем: его заводит сам бой (runFight), потому что
+    // бой начинается не только этой кнопкой — есть ещё служебная FIGHT и клавиша.
+    if (openFieldMode) { rollOpenFieldFoes(); return; }
     opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
     opponentTree = CRYSTALS[opponentCoreId];
     opponentBehavior = resolveBehavior(opponentCoreId, collectLit(opponentTree));
@@ -1523,6 +1531,14 @@ onMounted(() => {
     aiOpponent = true;
     fightActive = true;
     clocks.startBout(); // arm the stalemate safeguard (gate) — оба отсчёта с нуля
+    // ОТСЧЁТ СТОРОН — НА КАЖДЫЙ БОЙ, И ИМЕННО ЗДЕСЬ.
+    //
+    // ⚠️ Сначала он стоял рядом со сбором новых соперников («драться снова»), и
+    //    этого было мало: бой начинается ещё и служебной кнопкой FIGHT, и
+    //    клавишей — обе зовут сюда напрямую, мимо того места. После них счётчик
+    //    оставался в состоянии «для игрока всё», то есть не показывался вовсе, а
+    //    место на панели было от прошлого боя.
+    if (openFieldMode && !openFieldShort) startOpenField(openFieldLayoutId);
     const roster = buildRoster();
     multiBout = roster.length > 2;
     for (const spec of roster) spawnUnit(spec);
@@ -1824,13 +1840,15 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   padding: 4px 8px;
 }
-/* Цена кадра — тот же вид, что у служебного показания рядом, но в СВОБОДНОМ углу:
-   справа снизу уже стоит показание, сверху по центру — счётчик сторон, справа
-   сверху — кнопка DEV. Остаётся левый верх. */
+/* Цена кадра — тот же вид, что у служебного показания рядом, но в СВОБОДНОМ углу.
+   ⚠️ Сначала стояла в левом верху и на узком экране НАЕЗЖАЛА на счётчик сторон:
+   счётчик стоит по центру сверху, и в портрете 390 точек места им двоим не
+   хватает. Снизу слева свободно: справа снизу — служебное показание, справа
+   сверху — кнопка DEV, сверху по центру — счётчик. */
 .arena-fps {
   position: absolute;
   left: 14px;
-  top: 14px;
+  bottom: 14px;
   pointer-events: none;
   font-family: var(--font-mono, monospace);
   font-size: 10px;
