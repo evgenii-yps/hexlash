@@ -241,9 +241,16 @@ function glowMat(color, map = null) {
   });
 }
 
-/** Поставить одну копию в набор: позиция, разворот вокруг Y, масштаб. */
+/**
+ * Поставить одну копию в набор: позиция, разворот вокруг Y, масштаб.
+ *
+ * Углы кладутся в ОДИН переиспользуемый Эйлер, а не в новый на каждый вызов:
+ * вызовов тринадцать за кадр, и тринадцать выброшенных объектов в секунду
+ * шестьдесят раз — это мусор, который потом собирают рывком посреди движения.
+ */
+const _e = new THREE.Euler();
 function setInstance(mesh, i, x, y, z, ry, scale, rx = 0) {
-  _q.setFromEuler(new THREE.Euler(rx, ry, 0));
+  _q.setFromEuler(_e.set(rx, ry, 0));
   _p.set(x, y, z);
   _s.setScalar(scale);
   mesh.setMatrixAt(i, _m.compose(_p, _q, _s));
