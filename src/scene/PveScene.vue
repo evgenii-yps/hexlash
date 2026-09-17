@@ -1015,6 +1015,8 @@ onMounted(() => {
         body: r0 ? one(r0.fighter.group) : null,      // боец сам по себе
         parts: r0 ? partsOf(r0.fighter.group) : null,
         buildMs: buildMs.slice(),
+        lit: r0 ? Number((r0.lit ?? 0).toFixed(3)) : null,
+        dim: r0 ? Number((r0.dim ?? 0).toFixed(3)) : null,
         halo: r0 && r0.glow ? one(r0.glow.mesh) : null, // подсветка зала под ним
         tris: r.render.triangles,
         calls: r.render.calls,
@@ -1024,6 +1026,34 @@ onMounted(() => {
         fighters: roster.filter((x) => x.fighter).length,
         fps: fpsNow,
       };
+    };
+    // Экранная коробка тела — чтобы сравнить ЯРКОСТЬ фигуры в зале и в воротах
+    // по пикселям, а не на глаз. Считаем по мешам: табличка HP над головой —
+    // спрайт огромного мирового габарита, и с ней коробка вдвое выше фигуры.
+    const _bp = new THREE.Vector3();
+    // `wantLit` — какого бойца мерить: подсвеченного (выбранного) или спокойного.
+    // Сравнивать надо подобное с подобным: в воротах боец стоит в покое, и его
+    // яркость нельзя сверять с ярко подсвеченным в зале.
+    window.__forgeBodyBox = (wantLit = false) => {
+      const r0 = roster.find((x) => x.fighter && (wantLit ? x.lit > 0.5 : x.lit <= 0.5))
+        || roster.find((x) => x.fighter);
+      if (!r0 || !camera) return null;
+      const el2 = wrap.value;
+      const cw = el2.clientWidth, ch = el2.clientHeight;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      r0.fighter.group.traverse((x) => {
+        if (!x.isMesh || !x.geometry) return;
+        if (!x.geometry.boundingBox) x.geometry.computeBoundingBox();
+        const bb = x.geometry.boundingBox;
+        for (let i = 0; i < 8; i++) {
+          _bp.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+          _bp.applyMatrix4(x.matrixWorld).project(camera);
+          const px = (_bp.x * 0.5 + 0.5) * cw, py = (-_bp.y * 0.5 + 0.5) * ch;
+          minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+          minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+        }
+      });
+      return { left: minX, right: maxX, top: minY, bottom: maxY, lit: Number((r0.lit ?? 0).toFixed(2)) };
     };
   }
 
@@ -1342,7 +1372,7 @@ defineExpose({ select, exitWork, growTo });
 
 onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
-  if (DEV_MODE) delete window.__forgeProbe;
+  if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; }
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);

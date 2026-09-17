@@ -52,6 +52,8 @@ import { buildBackdrop } from './hallBackdrop.js';
 import { createGateApproach } from './gateApproach.js';
 import { createIslandDive } from './islandDive.js';
 import { buildGatePlates, GATE_PLATES } from './gatePlates.js';
+import { buildFighter } from './buildFighter.js';
+import { resolveBehavior } from '@/data/behavior.js';
 import { buildGateFightButton, FIGHT_BTN } from './gateFightButton.js';
 import {
   setGatePlateTag, setGatePlateHover, setGatePlateRefused, clearGatePlateTags,
@@ -85,6 +87,17 @@ const props = defineProps({
   // Собран ли состав. Собран — кнопка горит и ведёт в бой; не собран — тусклая,
   // и нажатие на неё только дрожит.
   fightArmed: { type: Boolean, default: false },
+  // КОГО СТРОИТЬ ЗАРАНЕЕ: [{ id, coreId, hue }] — весь ростер игрока.
+  //
+  // Тела строятся ОДИН РАЗ, на входе в ворота, пока стоит экран загрузки, и
+  // живут до ухода со сцены. Не на смене шага: смена шага идёт под чёрным
+  // кадром занавеса, он и так длится около полусекунды, и сборка четырёх тел
+  // (≈18 мс замерено) уехала бы прямо в него.
+  //
+  // Список читается ОДИН РАЗ, на сборке сцены. Новый боец появится в воротах со
+  // следующего входа — живое обновление ростера прямо в воротах ТЗ выносит за
+  // рамки, и правильно: ростер меняют не здесь.
+  bodies: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['arrived', 'dive-start', 'pick', 'refused', 'fight', 'fight-refused']);
@@ -118,6 +131,24 @@ const LIGHT = {
   hemi: { sky: 0x6f6a58, ground: 0x0c0e16, intensity: 1.05 },
   amb:  { color: 0x423c38, intensity: 0.75 },
 };
+
+// ⚠️ ЧЕТВЁРТОГО ИСТОЧНИКА ЗДЕСЬ НЕТ, И ЭТО ПРОВЕРЕННОЕ РЕШЕНИЕ, А НЕ ПРОПУСК.
+//
+// Когда на островах встали бойцы, первое впечатление было — «тела слишком
+// тёмные, в зале FORGE они светлее». Впечатление верное по букве: замер на
+// 1280×720 дал среднюю яркость тела 20.0 в воротах против 33.3 в зале (боец в
+// покое, тот же материал, та же геометрия).
+//
+// Но мерить надо не тело против тела, а тело ПРОТИВ СВОЕЙ КОМНАТЫ. Крышка
+// плиты рядом с ним: в воротах 23.3, в зале 41.0. Комната темнее в 1,76 раза —
+// боец темнее в 1,67. Отношение «тело к своей земле» в воротах даже чуть выше
+// (0,86 против 0,81): фигура стоит к своему окружению ровно так же, как в зале.
+// Ворота просто тёмное место, и это их принятое устройство.
+//
+// Пробный фронтальный источник это подтвердил от противного: он поднимал тело с
+// 20.0 до 28.5, но крышку — с 23.3 до 31.5, ровно на столько же. То есть он
+// светил не на людей, а на комнату, и шаг выбора бойцов начинал выглядеть
+// другой комнатой, чем шаг выбора режима. Убран.
 
 // Камера. Поза покоя — то, к чему привозит подлёт и вокруг чего потом ходит
 // орбита. Клампы обязательны (hexlash-3d §4): под пол не заглянуть, зум в
@@ -197,6 +228,37 @@ const CAM = {
   baseRowsPortrait: 2,
   liftPerRow: 3.8,
   maxLiftRows: 2,
+
+  // ПОДЪЁМ КАМЕРЫ, КОГДА НА ОСТРОВАХ СТОЯТ ЛЮДИ.
+  //
+  // Та же болезнь, что лечит подъём под лишний ряд, и то же лекарство. Подпись
+  // висит под ближней кромкой своего острова — то есть ровно в той полосе, где
+  // стоит боец СЛЕДУЮЩЕГО ряда. Пока на плитах было плоско, полоса пустовала;
+  // эмблемы в неё не попали, потому что стоят на дальнем ряду, а не на ближнем.
+  //
+  // ⚠️ ОТЪЕЗДОМ ЭТО НЕ ЛЕЧИТСЯ, И РОСТОМ ФИГУРЫ ТОЖЕ. Замерено: при росте от
+  // 0,55 до 0,32 (фигура ниже половины плиты!) перекрытие в портрете падало с
+  // 33 px лишь до 9 и не исчезало ни при каком росте. Отъезд уменьшает всё
+  // разом — полоса подписи сжимается вместе с фигурой, и их отношение не
+  // меняется. Дело не в фигуре, а в том, что ряды стоят слишком близко ДЛЯ
+  // ГЛАЗА камеры.
+  //
+  // Подъём лечит: наклон растёт, глубина раскладывается по вертикали экрана
+  // сильнее, ряды расходятся — а в мире не двигается ничего. Значит, не
+  // двигается и раскладка, и шаг выбора режима остаётся таким, каким его
+  // приняли глазами.
+  //
+  // ПРИЗНАК, А НЕ ЧИСЛО. Камере важно не «насколько высоко», а «есть ли ряд
+  // фигур, сквозь который смотрит следующий ряд». Непрерывная мерка высоты была
+  // бы здесь хуже: эмблема (2,19) и боец (2,63) различаются на треть, и порог
+  // между ними встал бы впритык к эмблеме — подрастёт она на сантиметр, и
+  // поедут принятые кадры.
+  //
+  // 5.2 — из замера: при нём обе телефонные раскладки выходят в плюс (портрет
+  // +4 px при четверых, +8 при троих), и это ровно тот же порядок, что подъём
+  // под один лишний ряд (3.8). Выше поднимать нельзя по той же причине, по
+  // которой ограничен и тот: сверху вниз — это уже карта, а не комната.
+  liftStanding: 5.2,
   portraitAspect: 1.0,      // уже этого — портретная поза (тот же порог, что у островов)
   look:   [0, 1.1, 0],      // цель орбиты
   polarMin: 0.60,
@@ -218,6 +280,9 @@ const canvasEl = ref(null);
 let renderer = null, scene = null, camera = null, controls = null;
 let backdrop = null, approach = null, load = null, plates = null, dive = null;
 let fightBtn = null;
+// Тела бойцов, собранные заранее: id → handle от buildFighter. Пересборку
+// островов переживают, разбираются один раз, на уходе со сцены.
+const bodyPool = new Map();
 let launching = false;   // подлёт к кнопке пошёл — ввод заперт до самой арены
 let resizeObserver = null, onVisibility = null, stopVeilWatch = null;
 let onPointerMove = null, onPointerDown = null, onPointerUp = null;
@@ -240,13 +305,51 @@ function lowPowerDevice() {
   return cores <= 4 || mem <= 4;
 }
 
+// ── ТЕЛА БОЙЦОВ ──────────────────────────────────────────────────────────
+// Собираются заранее, на входе в ворота, и живут до ухода со сцены. Остров их
+// только ставит на крышку (см. gatePlates.placeBody).
+//
+// ⚠️ ЭТО ТОТ ЖЕ ВЫЗОВ, ЧТО В ЗАЛЕ FORGE (PveScene.vue, ensureBody) — те же
+// настройки, тот же `buildFighter`, никакой упрощённой копии. Две настройки
+// зала сюда не идут и не должны: `bounds` (края плиты, по которым он ходит) и
+// `getFoePos` (подсказка директора прогулок) принадлежат прогулке, а здесь боец
+// стоит. Мозг у него выключен по умолчанию — значит стойка и дыхание.
+//
+// Общий кусок сборки в отдельный файл НЕ ВЫНЕСЕН намеренно: ТЗ разрешает это
+// «если без этого не обойтись», а обойтись можно — совпадающих настроек четыре
+// из шести, и вынос ради них потребовал бы править зал, который ТЗ просит не
+// трогать. Пара мест названа здесь, чтобы её было видно с обеих сторон.
+function buildBodies(list) {
+  for (const f of list) {
+    if (!f || !f.id || bodyPool.has(f.id)) continue;
+    const body = buildFighter(f.hue, {
+      side: 'player',
+      coreId: f.coreId,
+      behavior: resolveBehavior(f.coreId, []),
+      neutralColor: false,
+    });
+    body.setReducedMotion(reduced);
+    // Табличка HP — единственный спрайт, добавленный ПРЯМО в группу. В воротах
+    // её нет: здесь не бой, а смотр, и число здоровья над головой обещало бы
+    // состояние, которого у стоящего бойца нет.
+    body.group.children.forEach((x) => { if (x.isSprite) x.visible = false; });
+    bodyPool.set(f.id, body);
+  }
+}
+
 // Собрать острова по списку. Старые разбираются целиком: переиспользовать
 // половину плит и дорисовать недостающие значило бы держать в сцене два разных
 // способа оказаться на месте, а собрать их заново стоит доли кадра и происходит
 // под чёрным кадром, где этого всё равно не видно.
+//
+// Тела при этом НЕ пересобираются: они переживают смену шага (см. buildBodies).
 function buildPlates(items, aspect) {
   if (plates) { scene.remove(plates.group); plates.dispose(); plates = null; }
-  plates = buildGatePlates({ items, maxAniso: renderer.capabilities.getMaxAnisotropy(), reduced });
+  const withBodies = items.map((it) => {
+    const body = bodyPool.get(it.id);
+    return body ? { ...it, body } : it;
+  });
+  plates = buildGatePlates({ items: withBodies, maxAniso: renderer.capabilities.getMaxAnisotropy(), reduced });
   plates.setSelected(props.selected);
   scene.add(plates.group);
   plates.layout(aspect);
@@ -273,7 +376,7 @@ function syncFightButton() {
 }
 
 onMounted(() => {
-  load = beginSceneLoad(['renderer', 'backdrop', 'plates', 'camera']);
+  load = beginSceneLoad(['renderer', 'backdrop', 'bodies', 'plates', 'camera']);
 
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
@@ -304,6 +407,27 @@ onMounted(() => {
   backdrop = buildBackdrop({ radius: 60, centerY: 5 });
   scene.add(backdrop.mesh);
   load.stage('backdrop');
+
+  // Тела — ПЕРЕД островами и до отметки готовности: пока считается этот этап,
+  // экран загрузки стоит, и игрок сборки не видит. Ставить их позже значило бы
+  // строить их на смене шага, под чёрным кадром, — ровно то, чего ТЗ просит не
+  // делать.
+  buildBodies(props.bodies);
+  // ⚠️ И ПРОГРЕВ ТОЖЕ ЗДЕСЬ. Собрать тело мало: материал компилируется в
+  // шейдер при ПЕРВОЙ отрисовке, а первая отрисовка бойцов приходится на смену
+  // шага — то есть на чёрный кадр занавеса. Замерено: без прогрева занавес
+  // держался чёрным 584 мс против 467 мс на пустых плитах, +117 мс ровно там,
+  // где ТЗ разрешает не больше ста.
+  //
+  // Компилируем под экраном загрузки, где за это платить и положено: тела
+  // ненадолго кладутся в сцену, компилятору показывают сцену целиком, и тела
+  // снимаются обратно до первого настоящего кадра.
+  if (bodyPool.size) {
+    for (const body of bodyPool.values()) scene.add(body.group);
+    renderer.compile(scene, camera);
+    for (const body of bodyPool.values()) scene.remove(body.group);
+  }
+  load.stage('bodies');
 
   buildPlates(props.items, w / h);
   load.stage('plates');
@@ -346,6 +470,13 @@ onMounted(() => {
     // (стоя 2.92 из 3.0), и за вынос кнопки расплачивались острова: они садились
     // до 42 px в нажатии при пороге 44. Взгляд, сдвинутый вперёд вместе с
     // содержимым (см. frontShift в restFor), стоит вдвое дешевле.
+    // ⚠️ ВЫСОТЫ ЗДЕСЬ НЕТ НАМЕРЕННО. Мерки две — ширина и глубина, — и третья,
+    // по высоте того, что стоит на плитах, проверялась и оказалась мёртвой: на
+    // всех четырёх раскладках ширина или глубина требуют отъехать дальше, чем
+    // высота, и высотное слагаемое не побеждало ни разу. Ручка, которая никогда
+    // не срабатывает, — это ручка, которая однажды сработает не вовремя.
+    //
+    // Головы, уехавшие в хром, лечатся не отъездом, а подъёмом (CAM.liftStanding).
     return Math.min(CAM.maxPull, Math.max(1, b.halfW / bw, (b.halfD + frontShift()) / bd));
   }
   function restFor(a) {
@@ -366,6 +497,9 @@ onMounted(() => {
       (plates.bounds().rows || 1) - (portrait ? CAM.baseRowsPortrait : CAM.baseRows),
     ));
     base.y += CAM.liftPerRow * extraRows;
+    // Подъём под стоящие фигуры. На шаге выбора режима он ровно ноль, и
+    // принятые кадры не двигаются ни на пиксель.
+    if (plates.bounds().standing) base.y += CAM.liftStanding;
     pull = pullFor(a);
 
     // ТУМАН ЕДЕТ ЗА КАМЕРОЙ. Туман считается в мировых единицах: отодвинули
@@ -748,6 +882,13 @@ onMounted(() => {
           emblem: p.emblem ? screenBox(p.emblem.group) : null,
           emblemParts: p.emblem ? screenParts(p.emblem.group) : null,
           emblemCost: p.emblem ? costOf(p.emblem.group) : null,
+          // Боец мерится ОТДЕЛЬНО от плиты — ровно как эмблема, и по той же
+          // причине: «всё в кадре» и «подпись не закрыта» считаются по нему, а
+          // «дальний не меньше 60% ближнего» — по плите.
+          body: p.body ? screenBox(p.body.group) : null,
+          bodyParts: p.body ? screenParts(p.body.group) : null,
+          bodyCost: p.body ? costOf(p.body.group) : null,
+          bodyH: p.body ? Number(p.bodyH.toFixed(3)) : null,
           // Подсветка острова числом: `lit` — его собственный свет (0…1),
           // `level` — насколько его топит свет соседа. Приёмка проверяет «горит
           // ровно один» по ним, а не по цвету пикселя на снимке.
@@ -815,7 +956,8 @@ onMounted(() => {
       // сборка листов приёмки и попалась.
       controls.minDistance = 0.1;
       controls.maxDistance = 1000;
-      const air = (p.emblem ? p.emblem.top : GATE_PLATES.height) ;
+      const air = p.emblem ? p.emblem.top
+        : (p.body ? p.slab.topY + p.bodyH : GATE_PLATES.height);
       const centre = p.root.localToWorld(new THREE.Vector3(0, air * 0.55, 0));
       // Настолько близко, чтобы эмблема заняла кадр: это её портрет, а не вид
       // на остров. Множитель подобран по листам приёмки.
@@ -856,7 +998,12 @@ onBeforeUnmount(() => {
   if (onPointerUp) window.removeEventListener('pointerup', onPointerUp);
   renderer?.setAnimationLoop(null);
   controls?.dispose();
+  // Порядок: сначала острова (они отвяжут тела от себя), потом сами тела. Иначе
+  // разобранное тело осталось бы висеть в группе острова, которую разбирают
+  // следом, — и `dispose` пошёл бы по уже освобождённой геометрии.
   plates?.dispose();
+  for (const body of bodyPool.values()) body.dispose();
+  bodyPool.clear();
   fightBtn?.dispose();
   backdrop?.dispose();
   renderer?.dispose();
