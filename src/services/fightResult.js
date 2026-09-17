@@ -28,6 +28,16 @@ export const fightResultState = reactive({
   // а строка под ним зависит: рейд выигран падением босса, а не тем, что своя
   // сторона осталась одна. Пусто = обычный бой.
   kind: null,
+  // ГОТОВЫЕ СТРОКИ ОТ ТОГО, КТО ЗНАЕТ ИСХОД. Пусто — панель берёт свои, как
+  // брала всегда.
+  //
+  // ЗАЧЕМ. У открытого поля исход — это МЕСТО («Place 7 of 20»), а место знает
+  // только тот, кто считал бой. Разбирать режимы внутри панели (ещё один `if` по
+  // имени режима, как у рейда) нельзя: панель одна на все режимы, и с каждым
+  // новым она превращалась бы в список чужих правил. Здесь же вместо правила
+  // лежит готовая строка, и панель по-прежнему не знает ни одного режима.
+  titleOver: null,
+  noteOver: null,
 });
 
 // Кто умеет начать новый бой. Ставит арена (только она это умеет), зовёт панель.
@@ -46,10 +56,14 @@ export function bindFightAgain(fn) {
  * Показать итог.
  * @param {boolean} won выстояла ли сторона игрока
  * @param {string?} kind какой это был бой — 'raid' или ничего для обычного
+ * @param {object} [over] готовые строки вместо своих — { title, note }. См. причину
+ *                 у titleOver выше. Не передан — панель говорит как говорила.
  */
-export function showFightResult(won, kind = null) {
+export function showFightResult(won, kind = null, over = null) {
   fightResultState.outcome = won ? 'victory' : 'defeat';
   fightResultState.kind = kind || null;
+  fightResultState.titleOver = (over && over.title) || null;
+  fightResultState.noteOver = (over && over.note) || null;
   fightResultState.visible = true;
 }
 
@@ -58,6 +72,8 @@ export function hideFightResult() {
   fightResultState.visible = false;
   fightResultState.outcome = null;
   fightResultState.kind = null;
+  fightResultState.titleOver = null;
+  fightResultState.noteOver = null;
 }
 
 /**

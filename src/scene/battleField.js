@@ -41,7 +41,19 @@ const AMBUSH = 'zasada';
  * @property {string?} coreId  ядро: оно задаёт правило выбора цели
  */
 
-export function createBattleField() {
+/**
+ * @param {object} [o]
+ * @param {number|null} [o.attentionRadius] РАДИУС ВНИМАНИЯ — правило ОДНОГО режима.
+ *   Задан числом (открытое поле) — боец применяет правило своего ядра только к
+ *   врагам не дальше этого; никого в радиусе нет — идёт к ближайшему.
+ *   Не задан (все пять прежних режимов и мгновенный бой) — выбор цели идёт РОВНО
+ *   тем же путём, что и до этой правки: ни одной новой проверки на этом пути нет.
+ */
+export function createBattleField({ attentionRadius = null } = {}) {
+  // Радиус живёт числом, а не признаком «режим такой-то»: поле боя про режимы не
+  // знает и знать не должно. Ноль и отрицательное читаются как «радиуса нет» —
+  // иначе опечатка в числе молча оставила бы бойцов без целей вовсе.
+  const RADIUS = Number.isFinite(attentionRadius) && attentionRadius > 0 ? attentionRadius : null;
   /** @type {Unit[]} */
   let units = [];
   // Своё правило конца боя, если режим его поставил. Отвечает ключом победившей
@@ -106,6 +118,41 @@ export function createBattleField() {
     if (!alive(u)) return null;
     const foes = enemiesOf(u);
     if (!foes.length) { u.target = null; return null; }
+
+    // --- РАДИУС ВНИМАНИЯ. Ветка ЦЕЛИКОМ под признаком: без радиуса выполнение
+    //     идёт мимо неё к прежним трём строкам, и ни одной новой проверки на
+    //     старом пути нет.
+    //
+    //     ЗАЧЕМ ЭТО НУЖНО. На девятнадцати врагах правило ядра, применённое ко
+    //     всему полю, отправляет бойца через всю карту мимо того, кто стоит рядом
+    //     и уже бьёт: ONSLAUGHT ищет самого слабого, BULWARK — самого сильного
+    //     бьющего, и оба находят их где угодно. Читается это не как охота, а как
+    //     бессмыслица.
+    //
+    //     ЦЕЛЬ ПОБЛИЖЕ — ВРЕМЕННАЯ. Когда в радиусе никого нет, боец идёт к
+    //     ближайшему врагу — но эта цель НЕ ДЕРЖИТСЯ до выбывания, как обычная:
+    //     она взята не по правилу ядра, а за неимением лучшего. Как только в
+    //     радиус кто-то вошёл, боец выбирает по-настоящему. Держи её как обычную
+    //     — и ядро не сработало бы ни разу за бой: первая же цель, взятая на
+    //     подходе, осталась бы навсегда.
+    if (RADIUS) {
+      const near = foes.filter((o) => dist(u, o) <= RADIUS);
+      const held = u.target && alive(u.target) && u.target.sideId !== u.sideId;
+      // Настоящая цель (взята по ядру) держится до выбывания — как везде.
+      if (held && !u.targetProvisional) return u.target;
+      if (near.length) {
+        u.target = pickByCore(u, near);
+        u.targetProvisional = false;
+        return u.target;
+      }
+      // Никого рядом. Держим прежнего временного, пока он на поле: иначе боец
+      // перевыбирал бы ближайшего на каждом кадре и топтался между двумя.
+      if (held) return u.target;
+      u.target = foes.reduce((a, b) => (dist(u, b) < dist(u, a) ? b : a));
+      u.targetProvisional = true;
+      return u.target;
+    }
+
     // Держим прежнюю, пока она на поле и всё ещё враг.
     if (u.target && alive(u.target) && u.target.sideId !== u.sideId) return u.target;
     u.target = pickByCore(u, foes);
@@ -124,14 +171,17 @@ export function createBattleField() {
       if (!alive(u) || u.coreId !== AMBUSH) continue;
       if (u.sideId === attacker.sideId) continue;      // своих не ловим
       if (u.target === attacker) continue;
-      if (dist(u, attacker) <= reach) u.target = attacker;
+      // Засада поймала момент — это НАСТОЯЩИЙ выбор по правилу ядра, а не цель
+      // за неимением лучшего: снимаем пометку «временная», иначе радиус внимания
+      // отобрал бы её на следующем же кадре.
+      if (dist(u, attacker) <= reach) { u.target = attacker; u.targetProvisional = false; }
     }
   }
 
   // --- ЖИЗНЬ И СМЕРТЬ --------------------------------------------------------
 
   function add(unit) {
-    const u = { target: null, dead: false, ...unit };
+    const u = { target: null, targetProvisional: false, dead: false, ...unit };
     units.push(u);
     return u;
   }
@@ -142,7 +192,7 @@ export function createBattleField() {
     u.dead = true;
     u.order = ++eliminatedOrder;   // кто раньше, кто позже — для правила «ничьих нет»
     // Те, кто дрался с ним, остаются без цели и выберут новую по своему ядру.
-    for (const o of units) if (o.target === u) o.target = null;
+    for (const o of units) if (o.target === u) { o.target = null; o.targetProvisional = false; }
     return u;
   }
 
