@@ -243,6 +243,7 @@ let onVisibility, onKeydown;
 let covers = null;
 let coverMesh = null;
 let coverNav = null;
+let camPrevSet = false;  // поза прошлого кадра уже снята
 let gesturing = false;   // палец на холсте прямо сейчас
 let sinceTouch = 0;      // секунд тишины: от отпускания и от конца прошлой наводки
 let aimT = -1;           // >= 0 — наводка едет, столько секунд она уже в пути
@@ -1771,6 +1772,8 @@ onMounted(() => {
   const _sph = new THREE.Spherical();
   const _off = new THREE.Vector3();
   const _dst = new THREE.Vector3();
+  const _camWas = new THREE.Vector3();
+  const _tgtWas = new THREE.Vector3();
   const _prj = new THREE.Vector3();
   const _fwd = new THREE.Vector3();
   const workPolar = _sph.setFromVector3(_off.copy(camera.position).sub(controls.target)).phi;
@@ -1803,11 +1806,17 @@ onMounted(() => {
   // Поэтому взгляд едет к середине, и тем сильнее, чем дальше камера. Тяга растёт
   // КВАДРАТОМ: у рабочего удаления её нет вовсе, к дальнему пределу она уверенная.
   //
-  // ⚠️ ТЯНЕТ ТОЛЬКО ПОД ПАЛЬЦЕМ. Отпустил — камера замерла ровно там, где её
-  //    оставили. Иначе правило «камера не движется сама» было бы нарушено ею же:
-  //    игрок отъехал к дальнему пределу, убрал палец — и кадр ещё пару секунд
-  //    уезжал бы сам. Тяга нужна ВО ВРЕМЯ отъезда, чтобы поле не сползало за
-  //    кромку, и ровно тогда она и работает.
+  // ⚠️ ТЯНЕТ ТОЛЬКО ПОКА КАМЕРА ЕДЕТ ОТ ВВОДА. Отпустил, всё затихло — камера
+  //    замерла ровно там, где её оставили: правило «камера не движется сама»
+  //    держится. Тяга нужна ВО ВРЕМЯ отъезда, чтобы поле не сползало за кромку, и
+  //    ровно тогда она и работает.
+  //
+  //    ⚠️ СНАЧАЛА ЗДЕСЬ СТОЯЛО «ПОКА ПАЛЕЦ НА ЭКРАНЕ», И ЭТО БЫЛО НЕВЕРНО. Колесо
+  //       шлёт «взял» и «отпустил» в ОДНОМ тике — значит по признаку пальца тяга
+  //       не срабатывала вообще ни разу, и отъезд колесом уводил поле за кромку
+  //       экрана. Снимок дальнего предела это и показал: две трети кадра пустота.
+  //       Признак «камера сдвинулась от ввода» ловит и колесо, и палец, и затухание
+  //       после него — и при этом остаётся ложным в покое.
   const ofCenterPull = () => {
     const follow = COMBAT_BALANCE.openField.camMaxDistance;
     const far = ofFitDistance();
@@ -1995,16 +2004,29 @@ onMounted(() => {
       window.__hexCam = {
         px: camera.position.x, py: camera.position.y, pz: camera.position.z,
         tx: controls.target.x, ty: controls.target.y, tz: controls.target.z,
-        hold: sinceTouch, aim: aimT,
+        hold: sinceTouch, aim: aimT, tx2: controls.target.x, tz2: controls.target.z,
       };
     }
 
+    // КАМЕРУ СДВИНУЛ ИГРОК — сравниваем с тем, какой мы её ОСТАВИЛИ в конце
+    // прошлого кадра. Всё, что изменилось между кадрами, сделал ввод: свои
+    // собственные правки (наводка, тяга, зажим) попали в тот снимок и в разницу
+    // не идут.
+    //
+    // ⚠️ СРАВНИВАТЬ ВОКРУГ `controls.update()` НЕЛЬЗЯ, ХОТЯ ЭТО И НАПРАШИВАЕТСЯ.
+    //    Управление камерой применяет колесо СВОИМ вызовом обновления прямо в
+    //    обработчике события — к нашему кадру поза уже окончательная, и разница
+    //    вокруг нашего вызова выходит нулевой. Замер это и показал: отъезд с 12 до
+    //    119 при наибольшей разнице 1.6e-14, то есть тяга к середине не сработала
+    //    ни разу и поле уезжало за кромку.
     controls.update();
+    const inputMoved = camPrevSet
+      && (camera.position.distanceTo(_camWas) > 1e-4 || controls.target.distanceTo(_tgtWas) > 1e-4);
     // Камера: не уехал ли взгляд с поля и туман — за отъездом. Тяга к середине —
-    // только под пальцем (см. её причину). Всё это — только на открытом поле, в
-    // прочих режимах пусто.
+    // только пока камера едет от ввода (см. её причину). Всё это — только на
+    // открытом поле, в прочих режимах пусто.
     if (openFieldMode) {
-      if (gesturing) ofCenterPull();
+      if (inputMoved) ofCenterPull();
       clampPan();
     }
     followFog();
@@ -2047,6 +2069,11 @@ onMounted(() => {
     // прежних режимах — подъезжает к живым каждый кадр, как было принято глазами.
     if (openFieldMode) aimTick(frameMs / 1000, onPlate);
     else frameLiving(onPlate);
+    // Запомнить, какой мы оставили камеру: со следующим кадром эта поза станет
+    // мерой того, сдвинул ли её игрок.
+    _camWas.copy(camera.position);
+    _tgtWas.copy(controls.target);
+    camPrevSet = true;
 
     // Dev readout (throttled ~5/s) — live stamina + charge of both fighters.
     if (panelVisible.value && t - lastStaReadout > 0.2) {
