@@ -40,6 +40,7 @@ import { createLegendPresence } from './legendPresence.js';
 import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { DEV_MODE } from '@/services/devMode.js';
 import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
@@ -646,6 +647,9 @@ let prevT = 0;
 let reduced = false;
 let lamps = null, backdrop = null;
 let legend = null, legendPresence = null, legendParts = null;
+// Счётчик кадров и время сборки тел — только для служебной линейки (__forgeProbe).
+let fpsNow = 0, fpsFrames = 0, fpsSince = 0;
+const buildMs = [];
 // [{ id, callsign, fighter, glow, home, scale, parts, skin, lit, dim }]
 const roster = [];
 
@@ -957,9 +961,71 @@ onMounted(() => {
     // One settled frame toward readiness — counted only once every stage above is
     // in, and reset by any re-fit (see applyResize).
     load.frame();
-    // TEMP (acceptance): measure the composition from outside.
+    if (DEV_MODE) {
+      fpsFrames++;
+      const ms = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      if (ms - fpsSince >= 1000) { fpsNow = Math.round((fpsFrames * 1000) / (ms - fpsSince)); fpsFrames = 0; fpsSince = ms; }
+    }
   };
   renderer.setAnimationLoop(loop);
+
+  // ── ЦЕНА КАДРА (только в служебном режиме) ───────────────────────────────
+  // Зал FORGE — самая тяжёлая из сцен с бойцами, и он служит МЕРКОЙ: ворота с
+  // бойцами обязаны остаться легче него (иначе рушится основание, по которому
+  // воротам вообще разрешили быть пятой сценой). Мерку нельзя брать из отчётов —
+  // её надо мерить тем же способом, что и ворота: у самого отрисовщика.
+  //
+  // ⚠️ Признак служебного режима управляет ТОЛЬКО видимостью линейки. В игре
+  // этой ветки нет вовсе.
+  if (DEV_MODE) {
+    window.__forgeProbe = () => {
+      if (!renderer || !scene) return null;
+      const r = renderer.info;
+      let meshes = 0;
+      scene.traverse((x) => { if (x.isMesh || x.isLine || x.isPoints) meshes++; });
+      // Цена ОДНОГО бойца, посчитанная по его собственному поддереву, а не
+      // вычитанием одного замера из другого: вычитание смешивает бойца с тем,
+      // чем зал его украшает (подсветка под ногами — его, но не его тела), и
+      // молчаливо зависит от отсечения невидимого. Треугольники берутся из
+      // геометрии, поэтому не зависят от того, попал ли боец в кадр.
+      const one = (root) => {
+        let m = 0, t = 0;
+        root.traverse((x) => {
+          if (!x.isMesh && !x.isLine && !x.isPoints) return;
+          m += (x.isInstancedMesh ? x.count : 1);
+          const g = x.geometry;
+          if (!g) return;
+          const n = g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0);
+          t += (n / 3) * (x.isInstancedMesh ? x.count : 1);
+        });
+        return { meshes: m, tris: Math.round(t) };
+      };
+      const partsOf = (root) => {
+        const out = [];
+        root.traverse((x) => {
+          if (!x.isMesh && !x.isLine && !x.isPoints && !x.isSprite) return;
+          const g = x.geometry;
+          const n = g ? (g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0)) : 0;
+          out.push(`${x.isSprite ? 'sprite' : x.type}${x.visible ? '' : '(скрыт)'} ${Math.round(n / 3)}т`);
+        });
+        return out;
+      };
+      const r0 = roster.find((x) => x.fighter);
+      return {
+        body: r0 ? one(r0.fighter.group) : null,      // боец сам по себе
+        parts: r0 ? partsOf(r0.fighter.group) : null,
+        buildMs: buildMs.slice(),
+        halo: r0 && r0.glow ? one(r0.glow.mesh) : null, // подсветка зала под ним
+        tris: r.render.triangles,
+        calls: r.render.calls,
+        meshes,
+        geometries: r.memory.geometries,
+        textures: r.memory.textures,
+        fighters: roster.filter((x) => x.fighter).length,
+        fps: fpsNow,
+      };
+    };
+  }
 
   onVisibility = () => {
     if (document.hidden) renderer.setAnimationLoop(null);
@@ -1028,6 +1094,9 @@ onMounted(() => {
 function ensureBody(i) {
   const r = roster[i];
   if (!r || r.fighter) return;
+  // Служебная линейка: сколько миллисекунд стоит сборка одного тела. Нужна,
+  // чтобы знать, влезает ли сборка нескольких бойцов под занавес загрузки.
+  const _t0 = DEV_MODE ? performance.now() : 0;
   const fighter = buildFighter(r.core.hue, {
     side: 'player',
     coreId: r.core.id,
@@ -1049,6 +1118,7 @@ function ensureBody(i) {
   r.glow.mesh.position.set(r.home.x, slab.refs.topY + GLOW.yLift, r.home.z);
   r.parts = coreParts(fighter);        // gem + halo, for the rest/lit brightness
   r.skin = skinOf(fighter);            // this body's own material (per-instance)
+  if (DEV_MODE) buildMs.push(+(performance.now() - _t0).toFixed(1));
 }
 
 /** Is this entry supposed to be in the picture on the current screen? */
@@ -1272,6 +1342,7 @@ defineExpose({ select, exitWork, growTo });
 
 onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
+  if (DEV_MODE) delete window.__forgeProbe;
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
