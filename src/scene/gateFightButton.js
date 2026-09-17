@@ -9,13 +9,26 @@
 // из modePlates), только меньше. Это не экономия: язык предметов в игре один, и
 // вторая форма «тоже плита, но своя» — это место, где скос и обводка разойдутся
 // на первой же правке. Кнопка отличается от острова размером, положением
-// (ближе к камере) и единственным светящимся ядром, а не силуэтом.
+// (ближе к камере) и стоящей на ней светящейся табличкой, а не силуэтом.
 //
 // ОДНО РОЗОВОЕ И ОДНО СВЕЧЕНИЕ. Розовый в игре принадлежит главному действию —
-// и на шаге выбора бойцов главное действие ровно одно. Поэтому ядро кнопки
-// розовое, а ядра островов — нет, и светится на этом шаге только она. Пока
-// состав не набран, кнопка ТУСКЛАЯ и не светится вовсе: обещать нажатие, за
-// которым ничего не будет, — хуже, чем не обещать.
+// и на шаге выбора бойцов главное действие ровно одно. Поэтому светится на этом
+// шаге только кнопка, а ядра островов — нет. Пока состав не набран, кнопка
+// ТУСКЛАЯ и не светится вовсе: обещать нажатие, за которым ничего не будет, —
+// хуже, чем не обещать.
+//
+// СВЕТИТ ТАБЛИЧКА, А НЕ ДИСК. Плоский розовый диск в крышке снят: его место
+// занял свет, идущий сквозь прорезанное слово FIGHT на объёмной табличке
+// (gateFightPlaque.js). Тот же ход, что у эмблем на островах режима, — эмблема
+// там ЗАМЕСТИЛА ядро острова, а не добавилась к нему, и по той же причине: два
+// светящихся пятна на одном предмете — это два акцента, а акцент на предмете
+// один. Числа яркости (coreDim / coreArmed / coreHoverBoost) остались от диска
+// БЕЗ ИЗМЕНЕНИЙ и теперь правят панелью за прорезями: менялась картинка, а не
+// отклик.
+//
+// ОРЕОЛ ОСТАЛСЯ. Он не второе свечение, а разлив первого: свет таблички лежит
+// на крышке, под которой она стоит. Без него кнопка перестаёт отличаться от
+// острова издали — с общего кадра ворот прорези занимают несколько пикселей.
 //
 // ОТКАЗ ТОТ ЖЕ, ЧТО У ЗАПЕРТОГО ОСТРОВА. Нажали, когда состав не собран, —
 // короткая дрожь, и ничего больше. Механизм взят у островов дословно (и числа
@@ -24,6 +37,7 @@
 // Экспортирует: FIGHT_BTN (настройки), buildGateFightButton.
 import * as THREE from 'three';
 import { buildSlab } from './modePlates.js';
+import { buildFightPlaque } from './gateFightPlaque.js';
 import { makeHexGridTexture } from './arenaTextures.js';
 
 // ───────────────────────────── Настройки ─────────────────────────────
@@ -48,16 +62,15 @@ export const FIGHT_BTN = {
   chamfer: 0.26,
   hexTile: 2.6,
 
-  // Ядро. Розовое — единственное на этом шаге (см. шапку).
+  // Свет кнопки. Розовый — единственный на этом шаге (см. шапку). Числа те же,
+  // что были у снятого диска: теперь они правят панелью за прорезями таблички.
   core: '#FF0069',
-  coreR: 0.30,
-  coreLift: 0.012,
   coreDim: 0.10,        // не собран состав: тускло и без свечения
   coreArmed: 0.85,      // собран: горит
   coreHoverBoost: 0.15, // курсор поверх горящей — чуть ярче
 
-  // Свечение — ореол вокруг ядра, аддитивный диск. Он и есть «одно свечение»
-  // шага; у островов его нет вовсе.
+  // Ореол — аддитивный диск на крышке, разлив света таблички. У островов его
+  // нет вовсе: светится на этом шаге только кнопка.
   haloR: 1.15,
   haloArmed: 0.30,
 
@@ -68,14 +81,13 @@ export const FIGHT_BTN = {
   shakeAmp: 0.075,
   shakeHz: 11,
 
-  // Подпись встаёт под ближней кромкой — как у островов.
-  captionDrop: 0.30,
-
-  // Доля кадра, которую кнопка занимает в конце подлёта «в лицо». Больше, чем
-  // у острова (0.88): к острову подлетают, чтобы сквозь него пройти дальше, а
-  // сюда — чтобы упереться.
-  diveFill: 0.62,
-  diveMinDist: 2.6,
+  // Доля кадра, которую ТАБЛИЧКА занимает в конце подлёта «в лицо». Потолок ТЗ —
+  // 0.85 по ширине, и доля здесь и есть эта доля: расстояние считается так, что
+  // ширина прицела делит ширину кадра ровно в ней (islandDive.poseFor).
+  // 0.72 — с запасом под потолок и с воздухом по кромкам, который ТЗ просит
+  // отдельно (≥16 px).
+  diveFill: 0.72,
+  diveMinDist: 2.2,
 };
 
 const _v = new THREE.Vector3();
@@ -113,18 +125,15 @@ export function buildGateFightButton(opts = {}) {
   const slab = buildSlab(o.halfW, o.halfD, o.height, hexTex, o);
   root.add(slab.group);
 
-  // Ядро — плоский диск в крышке, как у островов.
-  const coreGeo = new THREE.CircleGeometry(o.coreR, 40);
-  const coreMat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(o.core), transparent: true, opacity: o.coreDim,
-    blending: THREE.AdditiveBlending, depthWrite: false,
-  });
-  const core = new THREE.Mesh(coreGeo, coreMat);
-  core.rotation.x = -Math.PI / 2;
-  core.position.y = slab.topY + o.coreLift;
-  root.add(core);
+  // Табличка со словом FIGHT. Она же несёт весь свет кнопки — плоского диска в
+  // крышке больше нет (см. шапку).
+  const plaque = buildFightPlaque({ plateHalfW: o.halfW, topY: slab.topY, glowColor: o.core });
+  root.add(plaque.group);
 
-  // Ореол — над крышкой, но ПОД ядром по яркости: светится предмет, а не пятно.
+  // Ореол — разлив света таблички по крышке, под которой она стоит. Он слабее
+  // самих прорезей намеренно: светится ПРЕДМЕТ, а пятно только объясняет, от
+  // чего свет. Без него кнопка перестаёт отличаться от острова издали — с общего
+  // кадра ворот прорези занимают несколько пикселей.
   const haloTex = makeHaloTexture(o.core);
   const haloGeo = new THREE.PlaneGeometry(o.haloR * 2, o.haloR * 2);
   const haloMat = new THREE.MeshBasicMaterial({
@@ -133,13 +142,21 @@ export function buildGateFightButton(opts = {}) {
   });
   const halo = new THREE.Mesh(haloGeo, haloMat);
   halo.rotation.x = -Math.PI / 2;
-  halo.position.y = slab.topY + o.coreLift * 0.5;
+  halo.position.y = slab.topY + 0.006;
   root.add(halo);
 
   // Невидимая коробка — одна цель для луча на весь предмет, как у островов.
-  const pickGeo = new THREE.BoxGeometry(o.halfW * 2, o.height * 2.6, o.halfD * 2);
+  //
+  // ⚠️ КОРОБКА ДОРОСЛА ДО ВЕРХА ТАБЛИЧКИ, и это не удобство, а требование: в
+  // кнопку целятся пальцем, а глазами целятся в надпись. Коробка по одной
+  // плите означала бы, что нажатие ровно в слово FIGHT не попадает НИКУДА —
+  // луч прошёл бы над крышкой. Низ остаётся прежним (плита с запасом снизу),
+  // так что площадь только выросла.
+  const pickTop = plaque.top + o.height * 0.2;
+  const pickBot = -o.height * 0.6;
+  const pickGeo = new THREE.BoxGeometry(o.halfW * 2, pickTop - pickBot, o.halfD * 2);
   const pick = new THREE.Mesh(pickGeo, new THREE.MeshBasicMaterial({ visible: false }));
-  pick.position.y = o.height * 0.7;
+  pick.position.y = (pickTop + pickBot) / 2;
   pick.userData.gateFight = true;
   root.add(pick);
 
@@ -167,34 +184,36 @@ export function buildGateFightButton(opts = {}) {
   function refuse() { shakeUntil = now() + o.shakeMs; }
   function shaking() { return shakeUntil > now(); }
 
-  /** Прицел для подлёта — та же форма, что у островов (её ждёт islandDive). */
+  /**
+   * Прицел для подлёта — та же форма, что у островов (её ждёт islandDive).
+   *
+   * ЦЕЛИМСЯ В ТАБЛИЧКУ, А НЕ В ПЛИТУ. Подлёт «в лицо» показывает лицо, а лицо
+   * кнопки — это слово. Пока прицелом была плита, камера подъезжала к пустой
+   * крышке, а надпись висела над кадром. Половина ВЫСОТЫ берётся по наклонённой
+   * табличке (её проекция на вертикаль), иначе камера подходит слишком близко и
+   * срезает верх слова.
+   */
   function aimFor() {
-    _v.set(0, o.height * 0.5, 0);
+    const rise = plaque.halfH * Math.cos(plaque.tilt);
+    _v.set(0, plaque.top - rise, 0);
     const point = root.localToWorld(_v.clone());
     return {
       point,
-      halfW: o.halfW,
-      halfH: o.height * 0.5 + o.haloR * 0.5,
+      halfW: plaque.halfW,
+      halfH: rise,
       fill: o.diveFill,
       minDist: o.diveMinDist,
       // ПОДЛЁТ В ЛИЦО. У острова направление берут то, с которого игрок смотрит:
       // остров — дверь, и въезжать в неё всегда с одной стороны значило бы
-      // отменять его поворот. Кнопка — не дверь, у неё есть лицо: крышка с
-      // надписью и ядром. Поэтому направление задаём мы, и камера приходит
-      // спереди-сверху, а не с той стороны, куда игрок случайно отвернул.
-      dir: new THREE.Vector3(0, 0.62, 1).normalize(),
-    };
-  }
-
-  /** Экранная точка под ближней кромкой — туда встаёт надпись FIGHT. */
-  function captionScreen(camera, w, h) {
-    _v.set(0, -o.captionDrop, o.halfD);
-    root.localToWorld(_v);
-    _v.project(camera);
-    return {
-      x: (_v.x * 0.5 + 0.5) * w,
-      y: (-_v.y * 0.5 + 0.5) * h,
-      visible: _v.z < 1 && _v.x > -1.6 && _v.x < 1.6,
+      // отменять его поворот. Кнопка — не дверь, у неё есть лицо: табличка со
+      // словом. Поэтому направление задаём мы, и камера приходит спереди-сверху,
+      // а не с той стороны, куда игрок случайно отвернул.
+      //
+      // Луч ИДЁТ ПО НОРМАЛИ ТАБЛИЧКИ: она откинута ровно настолько, насколько
+      // поднята камера покоя, и подлетать к ней под другим углом значило бы
+      // показывать крупно то, что в покое читалось прямо. Одно число на оба
+      // случая — наклон таблички.
+      dir: new THREE.Vector3(0, Math.sin(plaque.tilt), Math.cos(plaque.tilt)).normalize(),
     };
   }
 
@@ -203,7 +222,7 @@ export function buildGateFightButton(opts = {}) {
     lit += ((armed ? 1 : 0) - lit) * k;
     hoverLit += ((armed && hovered ? 1 : 0) - hoverLit) * k;
 
-    coreMat.opacity = o.coreDim + (o.coreArmed - o.coreDim) * lit + o.coreHoverBoost * hoverLit;
+    plaque.setLit(o.coreDim + (o.coreArmed - o.coreDim) * lit + o.coreHoverBoost * hoverLit);
     haloMat.opacity = o.haloArmed * lit * (1 + 0.35 * hoverLit);
     slab.rimMat.opacity = o.rimOpacity * (1 + lit * 1.4);
 
@@ -219,15 +238,15 @@ export function buildGateFightButton(opts = {}) {
 
   function dispose() {
     slab.dispose();
-    coreGeo.dispose(); coreMat.dispose();
+    plaque.dispose();
     haloGeo.dispose(); haloMat.dispose(); haloTex.dispose();
     pickGeo.dispose(); pick.material.dispose();
     hexTex.dispose();
   }
 
   return {
-    group: root, pick, slab,
-    place, setArmed, setHover, refuse, shaking, aimFor, captionScreen, update, dispose,
+    group: root, pick, slab, plaque,
+    place, setArmed, setHover, refuse, shaking, aimFor, update, dispose,
     get armed() { return armed; },
   };
 }

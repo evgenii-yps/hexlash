@@ -55,9 +55,9 @@ import { buildGatePlates, GATE_PLATES } from './gatePlates.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { buildGateFightButton, FIGHT_BTN } from './gateFightButton.js';
+import { plaqueIntegrity } from './gateFightPlaque.js';
 import {
   setGatePlateTag, setGatePlateHover, setGatePlateRefused, clearGatePlateTags,
-  setGateFightTag, setGateFightRefused,
 } from './gatePlateTags.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
@@ -364,7 +364,6 @@ function syncFightButton() {
   if (!scene) return;
   if (!props.showFight) {
     if (fightBtn) { scene.remove(fightBtn.group); fightBtn.dispose(); fightBtn = null; }
-    setGateFightTag(0, 0, false);
     return;
   }
   if (!fightBtn) {
@@ -653,10 +652,10 @@ onMounted(() => {
   function launch() {
     if (launching || !fightBtn) return;
     if (!fightBtn.armed) {
+      // Дрожит ВЕСЬ предмет — плита вместе с табличкой, потому что табличка её
+      // ребёнок. Отдельной дрожи для подписи больше нет: подписи больше нет.
       fightBtn.refuse();
-      setGateFightRefused(true);
       emit('fight-refused');
-      setTimeout(() => setGateFightRefused(false), 420);
       return;
     }
     launching = true;
@@ -735,11 +734,9 @@ onMounted(() => {
         const sc = plates.captionScreen(p.id, camera, cw, ch);
         setGatePlateTag(p.id, sc.x, sc.y, sc.visible && arrived && !diving);
       }
-      if (fightBtn) {
-        fightBtn.update(t, dt);
-        const sc = fightBtn.captionScreen(camera, cw, ch);
-        setGateFightTag(sc.x, sc.y, sc.visible && arrived && !diving);
-      }
+      // У кнопки подписи больше нет — слово прорезано на её табличке. Здесь
+      // остаётся только её собственная жизнь: яркость света и дрожь отказа.
+      if (fightBtn) fightBtn.update(t, dt);
     }
 
     renderer.render(scene, camera);
@@ -896,11 +893,38 @@ onMounted(() => {
           capX: cap.x, capY: cap.y, capVisible: cap.visible,
         };
       });
-      const fight = fightBtn ? {
-        ...screenBox(fightBtn.slab.group),
-        hit: screenBox(fightBtn.pick),
-        armed: fightBtn.armed,
-      } : null;
+      const fight = fightBtn ? (() => {
+        const pl = fightBtn.plaque;
+        // ЧИТАЕМОСТЬ СЛОВА В ПИКСЕЛЯХ. Проецируем точки, которые табличка
+        // отдаёт сама (см. plaque.metrics), и меряем расстояние на экране.
+        // Считать по экранной коробке таблички нельзя: она откинута, и её
+        // высота на экране — это не высота буквы.
+        const m = pl.metrics();
+        const px = (v) => {
+          _p.copy(v); pl.group.localToWorld(_p); _p.project(camera);
+          return { x: (_p.x * 0.5 + 0.5) * cw, y: (-_p.y * 0.5 + 0.5) * ch };
+        };
+        const a = px(m.capTop), b = px(m.capBottom);
+        const c = px(m.strokeA), d = px(m.strokeB);
+        const fl = px(m.faceL), fr = px(m.faceR);
+        return {
+          ...screenBox(fightBtn.slab.group),
+          hit: screenBox(fightBtn.pick),
+          armed: fightBtn.armed,
+          plaque: {
+            ...screenBox(pl.group),
+            capPx: Number(Math.hypot(a.x - b.x, a.y - b.y).toFixed(1)),
+            strokePx: Number(Math.hypot(c.x - d.x, c.y - d.y).toFixed(1)),
+          },
+          cost: costOf(pl.group),
+          // Целость таблички: нет ли у букв замкнутых островков и самопересечений.
+          // Считается по той же таблице контуров, из которой табличка и собрана.
+          integrity: plaqueIntegrity(),
+          // Куда целится подлёт — приёмке нужно проверить, что камера не прошла
+          // сквозь табличку ни в одной точке поездки.
+          aim: fightBtn.aimFor().point.toArray().map((v) => Number(v.toFixed(3))),
+        };
+      })() : null;
       // ЦЕНА КАДРА. Треугольники и вызовы отрисовки берём у самого отрисовщика
       // (renderer.info), а не считаем по геометриям: info говорит, сколько
       // ушло в видеокарту В ЭТОМ кадре, а подсчёт по дереву сцены — сколько
@@ -913,7 +937,15 @@ onMounted(() => {
         textures: r.memory.textures,
         meshes: (() => { let n = 0; scene.traverse((x) => { if (x.isMesh || x.isLine || x.isPoints) n++; }); return n; })(),
       };
-      return { vw: cw, vh: ch, aspect: cw / ch, bounds: plates.bounds(), fps: fpsNow, items: out, fight, cost };
+      // КАМЕРА. Нужна приёмке дважды: чтобы посчитать, под каким углом кадр
+      // видит кнопку (от этого выведен наклон таблички), и чтобы проверить
+      // подлёт — где камера встала и куда смотрит.
+      const cam = {
+        pos: [camera.position.x, camera.position.y, camera.position.z].map((v) => Number(v.toFixed(3))),
+        look: [controls.target.x, controls.target.y, controls.target.z].map((v) => Number(v.toFixed(3))),
+        fov: camera.fov,
+      };
+      return { vw: cw, vh: ch, aspect: cw / ch, bounds: plates.bounds(), fps: fpsNow, items: out, fight, cam, cost };
     };
     // КУДА ПОПАДЁТ ПАЛЕЦ. Приёмка обязана проверить, что нажатие в центр плиты и
     // в центр подписи попадает в СВОЙ остров, а не в соседний. Синтетический клик
@@ -933,8 +965,14 @@ onMounted(() => {
     const _restPose = { pos: new THREE.Vector3(), look: new THREE.Vector3(), min: 0, max: 0 };
     let devShot = false;
     window.__gateEmblemView = (id, angle = 'front') => {
-      const p = id ? plates.plates[id] : null;
-      if (!p) {                       // вернуть камеру в позу покоя
+      // ⚠️ 'fight' — не остров. Табличка кнопки старта смотрится теми же тремя
+      // ракурсами, что и эмблемы, и заводить ради неё вторую служебную камеру
+      // значило бы получить два разных «крупных плана» в одних листах приёмки.
+      // Отличие одно: у таблички есть СПИНА, и её приёмка смотрит отдельно —
+      // сзади сквозь прорези не должно светить.
+      const fightShot = id === 'fight' && fightBtn;
+      const p = fightShot ? null : (id ? plates.plates[id] : null);
+      if (!p && !fightShot) {         // вернуть камеру в позу покоя
         if (devShot) {
           controls.minDistance = _restPose.min;
           controls.maxDistance = _restPose.max;
@@ -956,6 +994,27 @@ onMounted(() => {
       // сборка листов приёмки и попалась.
       controls.minDistance = 0.1;
       controls.maxDistance = 1000;
+      if (fightShot) {
+        const pl = fightBtn.plaque;
+        const rise = pl.halfH * Math.cos(pl.tilt);
+        const centre = fightBtn.group.localToWorld(new THREE.Vector3(0, pl.top - rise, 0));
+        const dist = Math.max(pl.halfW, rise) * 3.0;
+        // Ракурсы считаются ОТ НОРМАЛИ ТАБЛИЧКИ, а не от осей мира: она стоит
+        // откинутой, и «спереди» по оси Z показало бы её под тем же скользящим
+        // углом, от которого её и откинули.
+        const n = new THREE.Vector3(0, Math.sin(pl.tilt), Math.cos(pl.tilt)).normalize();
+        const side = new THREE.Vector3(1, 0, 0);
+        const dirs = {
+          front: n.clone(),
+          quarter: n.clone().multiplyScalar(0.72).addScaledVector(side, 0.69).normalize(),
+          back: n.clone().multiplyScalar(-1),
+        };
+        const d = (dirs[angle] || dirs.front).clone().normalize();
+        camera.position.copy(centre).addScaledVector(d, dist);
+        controls.target.copy(centre);
+        controls.update();
+        return { id, angle, dist: Number(dist.toFixed(3)) };
+      }
       const air = p.emblem ? p.emblem.top
         : (p.body ? p.slab.topY + p.bodyH : GATE_PLATES.height);
       const centre = p.root.localToWorld(new THREE.Vector3(0, air * 0.55, 0));
