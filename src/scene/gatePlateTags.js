@@ -26,6 +26,11 @@ export const gatePlateTags = reactive({
   // Остров, который сейчас дрожит после отказа. Вид смотрит сюда, чтобы
   // дрогнуть подписью заодно с островом: дрожит предмет целиком, а не его часть.
   refused: null,
+  // Надпись FIGHT на объёмной кнопке старта. Отдельным полем, а не ключом в
+  // `items`: вид проходит по `items` списком островов, и запись с чужим ключом
+  // там либо не отрисовалась бы вовсе, либо попала бы в список выбора. Кнопка —
+  // не остров, и место у неё своё.
+  fight: { x: 0, y: 0, visible: false, refused: false },
 });
 
 export function setGatePlateTag(id, x, y, visible) {
@@ -45,6 +50,17 @@ export function setGatePlateRefused(id) {
   gatePlateTags.refused = id || null;
 }
 
+/** Место надписи FIGHT — сцена пишет каждый кадр, пока кнопка стоит. */
+export function setGateFightTag(x, y, visible) {
+  const f = gatePlateTags.fight;
+  f.x = x; f.y = y; f.visible = visible;
+}
+
+/** Кнопка дрогнула отказом — подпись обязана дрогнуть вместе с ней. */
+export function setGateFightRefused(on) {
+  gatePlateTags.fight.refused = !!on;
+}
+
 /**
  * Забыть острова, которых больше нет. Зовётся при смене шага: старые ключи
  * иначе копились бы за сеанс, а вид, читая их по имени, не заметил бы разницы —
@@ -54,4 +70,5 @@ export function clearGatePlateTags() {
   gatePlateTags.items = {};
   gatePlateTags.hovered = null;
   gatePlateTags.refused = null;
+  gatePlateTags.fight = { x: 0, y: 0, visible: false, refused: false };
 }

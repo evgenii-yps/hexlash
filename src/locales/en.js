@@ -171,8 +171,24 @@ export default {
     emptyTitle: "No fighters left.",
     emptyNote: "Your roster is empty — there is nobody to send in. Recruit in the shop, then come back.",
     noFighters: "No fighters to send. Recruit in the shop.",
-    // ⚠️ временная плоская кнопка — её место займёт объёмная (работа 4)
+    // ⚠️ Плоская кнопка в бой. Игроку её больше не показывают: в сцене стоит
+    // объёмная. Остаётся запасным путём под служебным признаком ?flatstart=1 —
+    // пока объёмную не проверили на телефоне, дорога в бой не должна зависеть
+    // только от неё.
     toArena: "To arena",
+    // Надпись на объёмной кнопке старта.
+    fight: "FIGHT",
+    // ПРАВИЛА РЕЖИМА — одна строка у кнопки FIGHT. Говорит, чем этот бой
+    // отличается от прочих, ровно в тот момент, когда игрок готов в него выйти.
+    // Ключи — идентификаторы режимов (см. data/arenaModes.js); читаются по
+    // ключу на ходу, поэтому поиском по `t.gate.rules.duel` не находятся.
+    rules: {
+      duel: "One on one. Last fighter standing wins.",
+      squad: "Your team against theirs. Last side standing wins.",
+      chain: "3 fights in a row. HP carries over. Lose once — the run is over.",
+      raid: "3 allies join you. Bring down the boss.",
+      collapse: "Win every round to take the tournament. Lose once — you're out.",
+    },
     // Командный бой: сколько бойцов с каждой стороны. Переключатель стоит только
     // в SQUAD — у дуэли выбора нет.
     sizeLabel: "{n} v {n}",

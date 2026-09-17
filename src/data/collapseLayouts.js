@@ -19,7 +19,8 @@
 // S/2^(N-1). Для шестнадцати это 9–16 · 5–8 · 3–4 · 2, ровно как в ТЗ.
 //
 // Экспортирует: COLLAPSE_LAYOUTS, LAYOUT_IDS, DEFAULT_LAYOUT_ID, getLayout,
-//               wavesOf, placeAfterLoss, parseLayoutId, collapseSpawnPos.
+//               wavesOf, placeAfterLoss, parseLayoutId, collapseSpawnPos,
+//               layoutByPerSide, layoutNameByPerSide.
 
 /**
  * @typedef {object} CollapseLayout
@@ -57,6 +58,27 @@ export function parseLayoutId(raw) {
   if (raw === undefined || raw === null || raw === '') return null;
   const v = String(raw).toLowerCase();
   return LAYOUT_IDS.includes(v) ? v : DEFAULT_LAYOUT_ID;
+}
+
+/**
+ * Раскладка по размеру стороны. Нужна воротам: там игрок выбирает ЧИСЛО бойцов
+ * тем же переключателем, что и в командном бою (1 / 2 / 4), и это число должно
+ * превратиться в раскладку ровно одним способом.
+ *
+ * Обратного перевода в таблице режимов нет намеренно: список `sizes` у COLLAPSE
+ * — это те же `perSide` отсюда. Второй таблицы соответствий не заводим, иначе
+ * при добавлении раскладки их стало бы две и они разошлись бы.
+ *
+ * @param {number} n сколько бойцов в стороне
+ * @returns {CollapseLayout} незнакомое число — раскладка по умолчанию
+ */
+export function layoutByPerSide(n) {
+  return COLLAPSE_LAYOUTS.find((l) => l.perSide === n) || getLayout(DEFAULT_LAYOUT_ID);
+}
+
+/** Подпись раскладки по размеру стороны — её показывает переключатель в воротах. */
+export function layoutNameByPerSide(n) {
+  return layoutByPerSide(n).name;
 }
 
 /** Сколько волн в турнире: столько раз стороны делятся пополам до одной. */

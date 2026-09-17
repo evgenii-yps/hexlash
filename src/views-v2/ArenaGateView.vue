@@ -24,10 +24,11 @@
      вместе со своей подписью. Дрогнувшая плита при неподвижном имени читалась бы
      как сбой отрисовки, а не как «нельзя».
 
-     ⚠️ ВРЕМЕННАЯ КНОПКА В БОЙ. Когда состав набран, внизу появляется матовая
-     кнопка. Её место займёт объёмная кнопка в самой сцене (работа 4) — предмет,
-     к которому камера подлетает в лицо. До тех пор путь в бой не должен
-     обрываться, поэтому кнопка есть и она плоская.
+     КНОПКА В БОЙ — ПРЕДМЕТ В СЦЕНЕ, а не наклейка поверх неё: объёмная кнопка
+     стоит перед островами бойцов, горит розовым, когда состав собран, и камера
+     подлетает к ней в лицо (gateFightButton.js). Плоская кнопка внизу экрана
+     осталась запасным путём под ?flatstart=1 — пока объёмную не проверили на
+     телефоне, дорога в бой не должна зависеть только от неё.
 
      ⚙️ ПЛОСКИЙ ЭКРАН СОСТАВА ЖИВ. Он остаётся рабочим по адресу /play и
      достижим отсюда через ?flat=1: выбор режима тогда уводит на него, а не на
@@ -44,10 +45,14 @@
       :items="items"
       :selected="squad"
       :dive-on-pick="stage === 'mode'"
+      :show-fight="stage === 'squad' && !!fighters.length"
+      :fight-armed="squadFull"
       @arrived="onArrived"
       @dive-start="onDiveStart"
       @pick="onPick"
       @refused="onRefused"
+      @fight="toArena"
+      @fight-refused="onRefused"
     />
 
     <!-- Подписи островов. Позицию каждый кадр пишет сцена; здесь только текст.
@@ -69,6 +74,22 @@
         <span class="gc-name">{{ it.name }}</span>
         <span class="gc-desc">{{ it.tagline }}</span>
         <span v-if="it.locked" class="gc-soon">{{ it.lockLabel }}</span>
+      </div>
+    </div>
+
+    <!-- Надпись на объёмной кнопке старта. Тот же приём, что у подписей
+         островов: место каждый кадр считает сцена, здесь только текст. Живёт
+         отдельным блоком, а не в списке выше: кнопка — не остров, и в список
+         выбора попадать не должна. -->
+    <div
+      v-if="stage === 'squad' && fighters.length"
+      class="gate-cap gate-cap-fight"
+      :class="{ 'is-lit': squadFull, 'is-locked': !squadFull, 'is-refused': tags.fight.refused }"
+      :style="{ transform: `translate3d(${tags.fight.x}px, ${tags.fight.y}px, 0)` }"
+      aria-hidden="true"
+    >
+      <div class="gc-card" :class="{ 'is-shown': !diving && tags.fight.visible }">
+        <span class="gc-name">{{ t.gate.fight }}</span>
       </div>
     </div>
 
@@ -95,16 +116,18 @@
         :class="{ 'is-on': n === size }"
         :aria-pressed="n === size"
         @click="pickSize(n)"
-      >{{ interpolate(t.gate.sizeLabel, { n }) }}</button>
+      >{{ sizeLabel(n) }}</button>
     </div>
 
-    <!-- Строка шага: чего сейчас ждут от игрока. Матовая, без свечения —
-         светятся острова, а не текст про них. -->
+    <!-- Строка у кнопки: ПРАВИЛА выбранного режима — чем этот бой отличается от
+         прочих. Пока бойцов не хватает, на её месте стоит нехватка: просить
+         прочитать правила боя, в который нельзя выйти, — значит говорить не о
+         том. Матовая, без свечения — светится кнопка, а не текст про неё. -->
     <p v-if="!diving && stage === 'squad' && fighters.length" class="gate-hint">{{ hint }}</p>
 
-    <!-- ⚠️ временная плоская кнопка — см. шапку файла -->
+    <!-- ⚠️ ПЛОСКАЯ КНОПКА — запасной путь, см. шапку файла. Игроку не видна. -->
     <button
-      v-if="!diving && stage === 'squad' && squadFull"
+      v-if="flatStart && !diving && stage === 'squad' && squadFull"
       type="button"
       class="gate-go"
       @click="toArena"
@@ -147,7 +170,8 @@ import { useRouter, useRoute } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
-import { ARENA_MODES } from '@/data/arenaModes.js';
+import { ARENA_MODES, defaultSizeFor } from '@/data/arenaModes.js';
+import { layoutNameByPerSide } from '@/data/collapseLayouts.js';
 import ArenaGateScene from '@/scene/ArenaGateScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import RunInterrupted from '@/components/chain/RunInterrupted.vue';
@@ -163,15 +187,42 @@ const sceneRef = ref(null);
 
 const cabinetOpen = ref(false);
 const diving = ref(false);
-const stage = ref('mode');          // 'mode' | 'squad'
 const tags = gatePlateTags;
 
 // Служебные ручки, не режимы игры:
-//   ?stay=1 — выбор режима не меняет шаг: можно рассматривать пространство;
-//   ?flat=1 — после выбора режима уводим на ПЛОСКИЙ экран состава (/play).
-//             Он остаётся рабочим, пока острова не проверены на телефоне.
+//   ?stay=1      — выбор режима не меняет шаг: можно рассматривать пространство;
+//   ?flat=1      — после выбора режима уводим на ПЛОСКИЙ экран состава (/play).
+//                  Он остаётся рабочим, пока острова не проверены на телефоне;
+//   ?flatstart=1 — вернуть плоскую кнопку «в бой» внизу экрана. Запасной путь,
+//                  пока объёмную кнопку не проверили на телефоне: дорога в бой
+//                  не должна зависеть только от неё;
+//   ?step=squad  — войти сразу на выбор бойцов. Этим возвращаются с итоговых
+//                  панелей боя: игрок уже выбрал режим, и показывать ему выбор
+//                  режима заново значит просить сделать тот же шаг дважды.
 const stay = route.query.stay === '1';
 const flat = route.query.flat === '1';
+const flatStart = route.query.flatstart === '1';
+
+// Шаг, с которого открывают ворота. Обычный вход — с выбора режима; возврат с
+// боя — сразу на выбор бойцов. Режим и состав при этом уже лежат в сейфе, так
+// что второй шаг открывается ровно тем, чем игрок его оставил.
+const stage = ref(route.query.step === 'squad' ? 'squad' : 'mode');   // 'mode' | 'squad'
+
+// Отметку СЪЕДАЕМ СРАЗУ, как только прочитали: она говорит, с чего начать, и
+// после старта врёт — игрок уже мог уйти кнопкой «назад» на первый шаг, а адрес
+// продолжал бы обещать второй, и обновление страницы возвращало бы туда же.
+//
+// ⚠️ Чистим адрес НАПРЯМУЮ, а не через роутер. `router.replace` — это переход,
+// даже когда меняется одна буква в запросе: он поднимает экран загрузки
+// (beforeEach) и роняет занавес (afterEach). Именно это и сломалось при первой
+// сборке — «назад» со второго шага переставало работать вовсе: занавес,
+// поднятый для смены шага, гасился чужим переходом, и шаг не менялся. Здесь же
+// не переход, а косметика адреса, и знать о ней никому не нужно.
+if (typeof window !== 'undefined' && route.query.step) {
+  const u = new URL(window.location.href);
+  u.searchParams.delete('step');
+  window.history.replaceState(window.history.state, '', u.pathname + u.search + u.hash);
+}
 
 const reduced = typeof window !== 'undefined'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -187,16 +238,40 @@ const squadLeft = computed(() => store.getters['prefight/squadLeft']);
 // переключателя нет.
 const sizes = computed(() => store.getters['prefight/squadSizes']);
 const size = computed(() => store.getters['prefight/squadSize']);
+// Выбранный режим — его правила показывает строка у кнопки, а у турнира он же
+// решает, какими словами подписан переключатель размера.
+const modeId = computed(() => store.getters['prefight/modeId']);
 // Бойцов в ростере меньше, чем просит размер. Считаем по РОСТЕРУ, а не по
 // составу: «не хватает» — это про то, кого вообще некем поставить.
 const shortBy = computed(() => Math.max(0, size.value - fighters.value.length));
 
+// ЦВЕТ ЯДРА РЕЖИМА. Розового здесь нет ни у кого: он принадлежит интерфейсу и
+// деньгам, а на островах стоят предметы.
+//
+// DUEL и SQUAD держат те цвета, с которыми игрок их уже видел, — менять их
+// значило бы переучивать без причины. Трём новым островам цвета взяты из
+// палитры ядер (tokens.css, --core-*): своих заводить нельзя.
+//
+// Оранжевый ядра RAIDER (#FFA526) НЕ ВЗЯТ ни для одного из трёх, хотя он в
+// палитре: он почти неотличим от золота SQUAD (#FFB21D), и два таких острова в
+// одном кадре читались бы как один режим в двух экземплярах. Оставшихся трёх
+// цветов на три острова хватает ровно, и повторять ничего не пришлось.
+//
+// Порядок соседства проверен по списку: бирюза стоит рядом с золотом, красный
+// рядом с бирюзой, фиолетовый рядом с красным — соседи нигде не совпадают и
+// нигде не близки по тону.
+const MODE_CORE = {
+  duel:     '#4DD9FF',   // холодный — как стоял
+  squad:    '#FFB21D',   // тёплый — как стоял
+  chain:    '#2ED6B0',   // --core-skala   (BULWARK)
+  raid:     '#FF3344',   // --core-natisk  (ONSLAUGHT)
+  collapse: '#9461FF',   // --core-zasada  (AMBUSH)
+};
+
 const modeItems = computed(() => ARENA_MODES.map((m) => ({
   id: m.id, name: m.name, tagline: m.tagline, locked: m.locked,
   lockLabel: t.value.gate.soon,
-  // Цвет ядра режима: холодный для дуэли, тёплый для команды. Розовый не берём —
-  // он принадлежит интерфейсу и деньгам, а здесь предметы.
-  core: m.id === 'duel' ? '#4DD9FF' : '#FFB21D',
+  core: MODE_CORE[m.id] || undefined,
 })));
 
 // Состояние «в кузнице» нарисовано, но до демо не встречается: тренировки в игре
@@ -230,19 +305,32 @@ const items = computed(() => (stage.value === 'mode' ? modeItems.value : fighter
 const EMPTY_TAG = { x: 0, y: 0, visible: false };
 function tagOf(id) { return tags.items[id] || EMPTY_TAG; }
 
+// Подпись кнопки размера. У команды это «2 V 2», у турнира — имя раскладки
+// (SOLO / DUO / QUAD). Имена берутся из таблицы раскладок, а не переписываются
+// сюда: числа 1/2/4 в `sizes` режима — это её же `perSide`, и второй список
+// имён разошёлся бы с сеткой турнира при первой правке.
+function sizeLabel(n) {
+  if (modeId.value === 'collapse') return layoutNameByPerSide(n);
+  return interpolate(t.value.gate.sizeLabel, { n });
+}
+
 const hint = computed(() => {
-  // Нехватка бойцов важнее просьбы выбрать: просить выбрать того, кого нет, —
-  // значит послать игрока искать несуществующий остров.
+  // Нехватка бойцов важнее правил: рассказывать про бой, в который нельзя
+  // выйти, — значит говорить не о том. Строка та же, что и была.
   if (shortBy.value > 0) {
     return shortBy.value === 1
       ? t.value.gate.needOne
       : interpolate(t.value.gate.needMany, { n: shortBy.value });
   }
+  // Состав ещё набирают — просим добрать. Когда добрали, на это место встают
+  // правила режима: игрок дочитывает их ровно перед тем, как нажать.
   const n = squadLeft.value;
-  if (n <= 0) return t.value.gate.squadReady;
-  return n === 1
-    ? t.value.gate.pickOne
-    : interpolate(t.value.gate.pickMore, { n });
+  if (n > 0) {
+    return n === 1
+      ? t.value.gate.pickOne
+      : interpolate(t.value.gate.pickMore, { n });
+  }
+  return t.value.gate.rules?.[modeId.value] || t.value.gate.squadReady;
 });
 
 // ── дорога между шагами ──────────────────────────────────────────────────
@@ -261,11 +349,11 @@ function onPick(id) {
 async function pickMode(id) {
   store.commit('prefight/SET_MODE', id);
   // РАЗМЕР ПО УМОЛЧАНИЮ. Ставится здесь, а не в состоянии: он зависит от того,
-  // сколько у игрока бойцов, а состояние про ростер знать не должно. Трёшка,
-  // если есть кого поставить, иначе двойка — предлагаем то, во что можно выйти.
-  // Уже сделанный выбор не трогаем: игрок его помнит.
+  // сколько у игрока бойцов, а состояние про ростер знать не должно. Какой
+  // именно размер предложить, решает таблица режимов — у команды и у турнира
+  // правила разные. Уже сделанный выбор не трогаем: игрок его помнит.
   if (store.getters['prefight/squadSizes'].length && !store.state.prefight.squadN) {
-    store.commit('prefight/SET_SQUAD_SIZE', fighters.value.length >= 3 ? 3 : 2);
+    store.commit('prefight/SET_SQUAD_SIZE', defaultSizeFor(id, fighters.value.length));
   }
   if (stay) { diving.value = false; return; }
   if (flat) { router.push('/play'); return; }
@@ -396,6 +484,11 @@ const coreSig = computed(() => core.value?.sig || '');
    просто ещё не открыт (режим) или занят (боец на тренировке). Метка матовая,
    своего свечения у неё нет. */
 .gate-cap.is-locked .gc-name { color: var(--ink-off); }
+
+/* Надпись на кнопке старта. Тот же текстовый элемент, что у островов, — своего
+   стиля у неё нет, только разрядка пошире: это команда, а не имя. Когда состав
+   не собран, она гаснет вместе с кнопкой по общему правилу `.is-locked`. */
+.gate-cap-fight .gc-name { letter-spacing: var(--ls-title); }
 .gate-cap.is-locked .gc-desc { color: var(--ink-dim); opacity: 0.55; }
 .gc-soon {
   margin-top: var(--sp-1);
