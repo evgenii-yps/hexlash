@@ -44,23 +44,34 @@
               <p class="lw-p">The cell is where a fight happens. Every cell is joined into one system — not a place, an institution. Like an exchange: physically everywhere, in practice a single thing. Inside this world the name HEXLASH is read literally: a strike inside the cell. The only violence this world allows itself.</p>
             </section>
 
+            <!-- Миры — восьмой раздел, добавлен четвёртым по порядку (решение
+                 владельца 17.09.2026). Своих классов и чисел у него нет: та же
+                 тройка lw-num / lw-h / lw-p, что у соседей. Вставка сдвинула номера
+                 остальных разделов на единицу — больше в них ничего не менялось. -->
             <section class="lw-sec" data-reveal>
-              <p class="lw-num">04 · LOAD</p>
-              <h3 class="lw-h">Made of different things</h3>
-              <p class="lw-p">Fighters are made of metal, flesh, light, and things with no name. One reads as a machine, one as a beast, one as a person, one as nothing you recognize.</p>
-              <p class="lw-p">What they share is not substance. It's load. Everything that exists behaves the same way under load: it holds, it bends, or it breaks. That is the only rule that turned out to be true for all of them — which is why the system measures what you hold, not what you're made of.</p>
-              <p class="lw-p">Stepping in, every fighter takes the same shell. Not armour — a condition of entry. The silhouette stays its own. The surface is shared, and only one thing glows: the core. So the fight settles the question, not the origin.</p>
+              <p class="lw-num">04 · WORLDS</p>
+              <h3 class="lw-h">Many worlds, one condition</h3>
+              <p class="lw-p">Fighters do not come from one place. Many worlds send them into the cells, and a world may take part on one condition only: any dispute ends in a single fight, and the result stands.</p>
+              <p class="lw-p">A world gives a fighter its body and the way that body takes load. Nothing else. No world is the strongest: each one holds what another cannot and gives way to a third. Where you came from is an advantage, never a verdict.</p>
             </section>
 
             <section class="lw-sec" data-reveal>
-              <p class="lw-num">05 · CHARACTER</p>
+              <p class="lw-num">05 · LOAD</p>
+              <h3 class="lw-h">Made of different things</h3>
+              <p class="lw-p">Fighters are made of metal, flesh, light, and things with no name. One reads as a machine, one as a beast, one as a person, one as nothing you recognize.</p>
+              <p class="lw-p">What they share is not substance. It's load. Everything that exists behaves the same way under load: it holds, it bends, or it breaks. That is the only rule that turned out to be true for all of them — which is why the system measures what you hold, not what you're made of.</p>
+              <p class="lw-p">Stepping in, every fighter takes the same shell. Not armour — a condition of entry. The silhouette stays its own. The surface is shared, and only one thing glows: the core. The shell levels the surface, not the substance: what a fighter is made of still answers the load.</p>
+            </section>
+
+            <section class="lw-sec" data-reveal>
+              <p class="lw-num">06 · CHARACTER</p>
               <h3 class="lw-h">A fighter is born empty</h3>
               <p class="lw-p">The body was given. The core surfaced on its own — the way a fighter meets an opponent, four of them, and nobody gets to choose.</p>
               <p class="lw-p">Character is the only thing a fighter earns. It's what's left after load: wins make it bolder or calmer, losses make it careful or angry. It doesn't grow in a straight line and it never resets. A fighter with no losses isn't soft. It just hasn't been loaded yet.</p>
             </section>
 
             <section class="lw-sec" data-reveal>
-              <p class="lw-num">06 · THE THRESHOLD</p>
+              <p class="lw-num">07 · THE THRESHOLD</p>
               <h3 class="lw-h">Enough hits, and hitting stops teaching</h3>
               <p class="lw-p">There comes a fight that teaches nothing. No opponent can surprise it anymore, and in that second it stops being a fighter — not because anyone decided, but because there is nothing left to learn by being hit.</p>
               <p class="lw-p">A fighter that has been hit enough no longer needs hits. It starts to explain.</p>
@@ -68,7 +79,7 @@
             </section>
 
             <section class="lw-sec" data-reveal>
-              <p class="lw-num">07 · THE RECORD</p>
+              <p class="lw-num">08 · THE RECORD</p>
               <h3 class="lw-h">History can't be bought</h3>
               <p class="lw-p">All of it holds together on one thing: a result cannot be faked, and a fighter's history is visible to everyone and owned by no one. Every fight, every loss, every load.</p>
               <p class="lw-p">You can buy a fighter a look. You cannot buy what it lived through.</p>
@@ -153,9 +164,9 @@ function stopReveal() {
    события не получает и остаётся невидимым НАВСЕГДА — текст молча пропадает.
    Замерено дважды: прыжок в конец оставлял скрытыми то разделы 4 и 5, то
    раздел 6 (тот, что вставал ровно на верхнюю кромку). Здесь один проход по
-   геометрии на каждое событие прокрутки — семь элементов, дешёво, и пропустить
-   раздел он не может по построению. Обработчик прокрутки уже есть: он ведёт
-   полосу прочитанного. */
+   геометрии на каждое событие прокрутки — восемь разделов плюс закрывающая
+   строка, дешёво, и пропустить раздел он не может по построению. Обработчик
+   прокрутки уже есть: он ведёт полосу прочитанного. */
 function syncReveal(instant = false) {
   const root = scrollRef.value;
   if (!root || !revealItems.length) return;
