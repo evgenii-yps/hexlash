@@ -95,12 +95,13 @@ import { buildForgeSlab } from './forgeSlab.js';
 import { buildCoverLayout } from '@/data/openFieldCovers.js';
 import { buildCovers } from './buildCovers.js';
 import { createCoverNav } from './coverNav.js';
+import { createLeaderBeams } from './leaderBeam.js';
 import {
   getOfLayout, parseOfLayoutId, ofSpawnPos, spawnRingRadius,
 } from '@/data/openFieldLayouts.js';
 import {
   openFieldState, startOpenField, shortOfFighters as ofShortOfFighters,
-  noteSidesLeft, finishOpenField, endOpenField,
+  noteSidesLeft, noteLeader, finishOpenField, endOpenField,
   bindCameraReturn,
 } from '@/services/openFieldRun.js';
 import { buildBotSide } from '@/services/collapseRun.js';
@@ -243,6 +244,7 @@ let onVisibility, onKeydown;
 let covers = null;
 let coverMesh = null;
 let coverNav = null;
+let leaderBeams = null;
 let camPrevSet = false;  // поза прошлого кадра уже снята
 let gesturing = false;   // палец на холсте прямо сейчас
 let sinceTouch = 0;      // секунд тишины: от отпускания и от конца прошлой наводки
@@ -479,10 +481,17 @@ const openFieldLayoutId = (showcase || chainMode || raidMode || collapseMode || 
 const openFieldMode = !!openFieldLayoutId;
 const ofLayout = openFieldMode ? getOfLayout(openFieldLayoutId) : null;
 
-// ПОЛЕ БОЯ. Радиус внимания — правило ОДНОГО режима: без него выбор цели идёт
-// прежним путём, и пять прежних режимов ведут себя ровно как вели.
+// ПОЛЕ БОЯ. Радиус внимания и лидер — два правила ОДНОГО режима: без них выбор
+// цели идёт прежним путём, и пять прежних режимов ведут себя ровно как вели.
+//
+// ⚠️ ЧАСЫ ЛИДЕРА — ВРЕМЯ БОЯ, А НЕ ВРЕМЯ СЦЕНЫ. «Лидера нет первые десять
+//    секунд» отсчитывается от начала боя; возьми часы сцены — и во втором бою
+//    подряд («драться снова») корона села бы в первом же кадре, потому что сцена
+//    к тому моменту стоит уже минуту. `clocks.elapsed()` объявлен ниже, но к
+//    моменту первого обращения он уже есть.
 field = createBattleField({
   attentionRadius: openFieldMode ? COMBAT_BALANCE.openField.attentionRadius : null,
+  leader: openFieldMode ? { now: () => clocks.elapsed() } : null,
 });
 
 const clocks = createBoutClocks({
@@ -733,6 +742,16 @@ onMounted(() => {
     }
   };
 
+  // ПОЗЫВНОЙ СТОРОНЫ — имя её ПЕРВОГО бойца. То же правило, по которому турнир
+  // называет сторону (collapseRun.nameOf): второго имени у стороны в этой игре
+  // нет, и заводить его ради одной строки значило бы завести второе имя одному
+  // и тому же. Сторона игрока сюда не приходит: про неё строка говорит иначе.
+  const ofLeaderName = (sideId) => {
+    const i = Number(String(sideId).replace('foe', ''));
+    const side = Number.isFinite(i) ? openFieldFoes[i - 1] : null;
+    return side && side.roster[0] ? side.roster[0].name : null;
+  };
+
   // Чужая сторона. Собирается заново на каждый бой — «драться снова» должно
   // выводить новую команду, а не ту же.
   let squadFoes = [];
@@ -844,6 +863,10 @@ onMounted(() => {
     covers = buildCoverLayout();
     coverMesh = buildCovers(covers, arena.refs.topY);
     scene.add(coverMesh.group);
+    // --- ЛУЧ ЛИДЕРА. Единственное новое свечение на поле: разлома здесь нет
+    //     (см. presence выше), и розовый, занятый в этом режиме действием, тут же
+    //     достаётся короне. Кто корона — знает поле боя; здесь только показ.
+    leaderBeams = createLeaderBeams({ scene, color: pink, groundY: arena.refs.topY });
   }
   load.stage('arena');
 
@@ -1916,6 +1939,48 @@ onMounted(() => {
     return Math.abs(_prj.x) <= OF.camCalmFrac && Math.abs(_prj.y) <= OF.camCalmFrac;
   };
 
+  /**
+   * ЛИДЕР В КАДРЕ: лучи над его бойцами, позывной в надписи, уголок на кромке.
+   *
+   * ⚠️ СЧИТАЕТСЯ ЗДЕСЬ, А НЕ В НАДПИСЯХ. Надписи живут снаружи сцены и камеры не
+   *    видят, а вопрос «лидер за кадром или нет» — это вопрос к камере. Наружу
+   *    уходит уже готовый ответ: позывной и место уголка в процентах экрана.
+   *
+   * Уголок ставится по СЕРЕДИНЕ живых бойцов короны, а не по каждому: в QUAD их
+   * четверо, и четыре уголка на кромке читались бы как сыпь, а не как указание.
+   */
+  const noteLeaderFrame = (list, dtSec) => {
+    const crown = field.leaderSide();
+    leaderBeams.update(crown, list, dtSec);
+    if (!crown) { noteLeader(null, false, null); return; }
+    let n = 0, sx = 0, sz = 0;
+    for (const u of list) { if (u.sideId === crown) { sx += u.f.group.position.x; sz += u.f.group.position.z; n += 1; } }
+    if (!n) { noteLeader(null, false, null); return; }
+    const mine = crown === 'player';
+    _prj.set(sx / n, arena.refs.topY + 1.0, sz / n);
+    camera.getWorldDirection(_fwd);
+    const behind = _fwd.dot(_off.copy(_prj).sub(camera.position)) <= 0;
+    _prj.project(camera);
+    // За спиной у камеры проекция переворачивается: берём её наизнанку, иначе
+    // уголок показывал бы ровно в противоположную сторону.
+    let nx = behind ? -_prj.x : _prj.x;
+    let ny = behind ? -_prj.y : _prj.y;
+    const out = behind || Math.abs(nx) > 1 || Math.abs(ny) > 1;
+    if (!out) { noteLeader(ofLeaderName(crown), mine, null); return; }
+    // Прижимаем к кромке по длинной из двух осей — так уголок встаёт на той
+    // стороне экрана, куда на самом деле смотреть.
+    // Не в саму кромку, а чуть внутрь: уголок ставится по своей середине, и на
+    // точной кромке половина значка ушла бы за экран.
+    const m = (Math.max(Math.abs(nx), Math.abs(ny)) || 1) / 0.94;
+    nx /= m; ny /= m;
+    noteLeader(ofLeaderName(crown), mine, {
+      x: Math.round((nx * 0.5 + 0.5) * 1000) / 10,
+      // В экране ось вниз, в проекции — вверх.
+      y: Math.round((0.5 - ny * 0.5) * 1000) / 10,
+      angle: Math.round(Math.atan2(-ny, nx) * 180 / Math.PI),
+    });
+  };
+
   /** Раз в кадр — вместо слежения. Открытое поле и только оно. */
   const aimTick = (dtSec, list) => {
     const pose = framePose(list);
@@ -2074,6 +2139,10 @@ onMounted(() => {
       if (!u.ring) continue;
       u.ring.position.set(u.f.group.position.x, arena.refs.topY + RING_Y, u.f.group.position.z);
     }
+    // ЛИДЕР: лучи над его бойцами и строка поверх боя. Корону считает поле боя,
+    // сцена только показывает — и она же одна знает камеру, поэтому уголок «лидер
+    // за кадром» считается здесь, а не в надписях.
+    if (leaderBeams) noteLeaderFrame(onPlate, frameMs / 1000);
     // КАДР. На открытом поле камера СТОИТ и наводится по случаю (aimTick), в пяти
     // прежних режимах — подъезжает к живым каждый кадр, как было принято глазами.
     if (openFieldMode) aimTick(frameMs / 1000, onPlate);
@@ -2205,6 +2274,7 @@ onBeforeUnmount(() => {
   hideFightResult();   // уходим с арены — панель итога уходит с нами
   endOpenField();      // и счётчик сторон открытого поля: считать больше нечего
   coverMesh?.dispose(); coverMesh = null; covers = null; coverNav = null;
+  leaderBeams?.dispose(); leaderBeams = null;
   unbindCameraReturn?.(); // и способ вернуть слежение: камеры, которой он владел, больше нет
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
   load?.dispose();   // left mid-load → drop the screen and the wait with us

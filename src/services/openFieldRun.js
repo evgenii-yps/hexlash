@@ -28,7 +28,8 @@
 //    а лишнее место, где однажды заведётся расхождение.
 //
 // Экспортирует: openFieldState, startOpenField, shortOfFighters, noteSidesLeft,
-//               finishOpenField, endOpenField, bindCameraReturn, cameraReturnNow.
+//               noteLeader, finishOpenField, endOpenField, bindCameraReturn,
+//               cameraReturnNow.
 
 import { reactive } from 'vue';
 import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
@@ -42,6 +43,12 @@ import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
  *   place    — какое место занял игрок; null, пока бой для него идёт
  *   outcome  — 'victory' сторона игрока осталась одна · 'out' пала
  *   shortBy  — скольких бойцов не хватило, чтобы вообще выйти на поле
+ *
+ * ЛИДЕР — магнит поля: одна сторона объявляется сильнейшей, и все идут на неё.
+ *   leaderName — позывной стороны-лидера; null, пока короны нет
+ *   leaderMine — корона на стороне игрока (тогда вместо позывного другая строка)
+ *   leaderEdge — где уголок, когда лидер за кадром: { x, y } в процентах экрана и
+ *                `angle` в градусах. null — лидер в кадре либо короны нет
  */
 export const openFieldState = reactive({
   active: false,
@@ -52,6 +59,9 @@ export const openFieldState = reactive({
   place: null,
   outcome: null,
   shortBy: 0,
+  leaderName: null,
+  leaderMine: false,
+  leaderEdge: null,
 });
 
 // Кто умеет навести камеру на своих. Ставит сцена (только она владеет камерой),
@@ -88,6 +98,9 @@ export function startOpenField(layoutId) {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = 0;
+  // Корона — за бой, а не за заход на арену: «драться снова» выводит новые
+  // стороны, и корона прошлого боя на них не переносится.
+  clearLeader();
 }
 
 /**
@@ -105,11 +118,42 @@ export function shortOfFighters(layoutId, have) {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = Math.max(0, L.perSide - have);
+  clearLeader();
+}
+
+/** Короны нет: ни имени, ни уголка. */
+function clearLeader() {
+  openFieldState.leaderName = null;
+  openFieldState.leaderMine = false;
+  openFieldState.leaderEdge = null;
 }
 
 /** Сколько сторон ещё дерётся. Сцена зовёт это, когда число изменилось. */
 export function noteSidesLeft(n) {
   openFieldState.sidesLeft = Math.max(0, n | 0);
+}
+
+/**
+ * КТО ЛИДЕР И ГДЕ ОН. Зовётся сценой каждый кадр — она одна знает и корону, и
+ * камеру.
+ *
+ * ⚠️ ПИШЕМ ТОЛЬКО ПРИ ИЗМЕНЕНИИ. Это реактивное состояние: положи в него то же
+ *    самое шестьдесят раз в секунду — и надписи будут пересчитываться шестьдесят
+ *    раз в секунду ни за чем. Уголок сравнивается по значениям, а не по ссылке:
+ *    объект сцена собирает заново на каждый кадр.
+ *
+ * @param {string|null} name позывной стороны-лидера (null — короны нет)
+ * @param {boolean} mine     корона на стороне игрока
+ * @param {{x:number,y:number,angle:number}|null} edge где уголок, если за кадром
+ */
+export function noteLeader(name, mine, edge) {
+  if (openFieldState.leaderName !== name) openFieldState.leaderName = name;
+  if (openFieldState.leaderMine !== mine) openFieldState.leaderMine = mine;
+  const cur = openFieldState.leaderEdge;
+  if (!edge) { if (cur) openFieldState.leaderEdge = null; return; }
+  if (!cur || cur.x !== edge.x || cur.y !== edge.y || cur.angle !== edge.angle) {
+    openFieldState.leaderEdge = edge;
+  }
 }
 
 /**
@@ -136,4 +180,5 @@ export function endOpenField() {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = 0;
+  clearLeader();
 }

@@ -29,8 +29,39 @@
         <dt>{{ t.openField.sidesLeft }}</dt>
         <dd>{{ sidesLeft }}</dd>
       </div>
-      <!-- Сюда встанет строка лидера — работа «охота на лидера». -->
+      <!-- ЛИДЕР. Второй строкой того же списка: то же поле, то же показание.
+           Пока короны нет (первые секунды боя) строки нет вовсе — пустое место
+           честнее прочерка, за которым игрок ждал бы появления числа.
+
+           Позывной РОЗОВЫЙ — единственная розовая надпись поверх боя, и это тот
+           же розовый, что у луча над короной. Дальше по экрану розового нет
+           нигде: счётчик сторон, кнопка наводки и панель итога все матовые. -->
+      <div v-if="leaderLine" class="of-row">
+        <dt>{{ t.openField.leader }}</dt>
+        <dd class="of-leader">{{ leaderLine }}</dd>
+      </div>
     </dl>
+  </div>
+
+  <!-- ЛИДЕР ЗА КАДРОМ — уголок на кромке экрана. Камера на этом поле СТОИТ, и
+       корона может оказаться где угодно за краем; строка говорит КТО, уголок —
+       КУДА смотреть.
+
+       Место и поворот считает сцена: только она знает камеру. Сюда приходит уже
+       готовый ответ в процентах экрана.
+
+       Пальца не ловит: под ним живой бой, и камера крутится пальцем по всему
+       экрану. -->
+  <div
+    v-if="leaderEdge"
+    class="of-leader-arrow"
+    role="img"
+    :aria-label="t.openField.leaderOffscreen"
+    :style="arrowStyle"
+  >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8 4l8 8-8 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
   </div>
 
   <!-- ПОКАЗАТЬ СВОИХ. Камера на открытом поле СТОИТ, а не следит: где игрок её
@@ -88,6 +119,21 @@ const router = useRouter();
 
 const sidesLeft = computed(() => openFieldState.sidesLeft);
 const showCount = computed(() => openFieldState.active && openFieldState.phase === 'fight');
+
+// Строка лидера. Корона на своей стороне — прямое обращение вместо позывного;
+// короны ещё нет — строки нет вовсе.
+const leaderLine = computed(() => {
+  if (!showCount.value) return null;
+  if (openFieldState.leaderMine) return t.value.openField.youAreLeader;
+  return openFieldState.leaderName || null;
+});
+// Уголок — только пока дерёмся и только когда корона за кадром.
+const leaderEdge = computed(() => (showCount.value ? openFieldState.leaderEdge : null));
+const arrowStyle = computed(() => {
+  const e = leaderEdge.value;
+  if (!e) return null;
+  return { left: `${e.x}%`, top: `${e.y}%`, transform: `translate(-50%, -50%) rotate(${e.angle}deg)` };
+});
 const showShort = computed(() => openFieldState.active && openFieldState.phase === 'short');
 // Кнопка «показать своих» — весь бой. На панели итога её нет: бой кончился, и
 // наводиться не на кого.
@@ -134,6 +180,24 @@ function onLeave() {
 }
 .of-row dt { color: var(--ink-off); flex: 0 0 auto; }
 .of-row dd { margin: 0; color: var(--ink); }
+
+/* ПОЗЫВНОЙ ЛИДЕРА — единственная розовая надпись поверх боя. Розовый в этом
+   режиме принадлежит короне: луч над её бойцами, уголок на кромке и это слово —
+   одно и то же указание, поэтому и цвет один. Свечения у надписи нет: светится
+   на поле только луч. */
+.of-leader { color: var(--pink); }
+
+/* УГОЛОК НА КРОМКЕ. Место и поворот приходят из сцены встроенным стилем — она
+   одна знает камеру. Здесь только вид: тот же розовый, никакого свечения,
+   пальца не ловит. Размер мелкий намеренно — это указание, а не кнопка. */
+.of-leader-arrow {
+  position: fixed; z-index: var(--z-ui); pointer-events: none;
+  color: var(--pink);
+  width: var(--icon-sm); height: var(--icon-sm);
+  /* В саму кромку не ставим: место приходит уже отжатым внутрь на долю экрана
+     (см. noteLeaderFrame в сцене), иначе половина значка ушла бы за край. */
+}
+.of-leader-arrow > svg { width: 100%; height: 100%; display: block; }
 
 /* Кнопка «показать своих». Материал — существующий матовый хром, тот же, что у
    кнопок дома (.hs-chrome): матовое стекло, волосяная рамка, холодный текст.
