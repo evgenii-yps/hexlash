@@ -11,9 +11,14 @@
      готовым сверху (`gates`), и это тот же отказ, который вынесет список
      бойцов: две копии правила разошлись бы.
 
-     ОТКАЗ ГОВОРИТ СЛОВАМИ. Молчаливая недоступность читается как поломка,
-     поэтому у грани есть своя подпись состояния, а на нажатие строка внизу
-     камеры на несколько секунд называет причину целиком.
+     ОТКАЗ ГОВОРИТ СЛОВАМИ, НО НЕ ЗДЕСЬ. У грани есть своя подпись
+     состояния («UNTRAINED») и тряска на нажатие, а ПРИЧИНУ ЦЕЛИКОМ говорит
+     строка панели под деревом (.fp-hint в ForgePanel).
+
+     ⚠️ Почему не в строке внизу камеры, где она напрашивалась: та строка
+        СКРЫТА, пока у бойца не зажжено ни одной грани (.fp-tree.is-fresh
+        .ft-foot { display: none } в forge.css) — а это ровно тот случай, в котором
+        причина нужна больше всего. Измерено: коробка 0×0.
 
      What is NOT carried over is that screen's furniture: it was a full-page
      composition (page background, headline, big stepper, bottom action bar) and
@@ -121,18 +126,14 @@ import { facetEffects } from '@/data/facetReadout.js';
 import { coreSVG, shardSVG, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
 import { t } from '@/locales/index.js';
 
-// Сколько держать причину отказа внизу камеры. Дольше тряски грани намеренно:
-// тряска говорит «нет», а строка — почему, и её надо успеть дочитать.
-const REASON_MS = 2800;
-
 const props = defineProps({
   coreId: { type: String, required: true },
   tree: { type: Array, default: () => [] },
   spent: { type: Number, default: 0 },
   resource: { type: Number, default: 5 },
-  // ТРЕТИЙ СТРАЖ — ЗАНЯТИЕ. Приходит сверху готовым: { light, lightText,
-  // quench, quenchText }. Дерево его НЕ СЧИТАЕТ и не знает ни про часы, ни
-  // про состояния бойца — иначе правило жило бы в двух местах.
+  // ТРЕТИЙ СТРАЖ — ЗАНЯТИЕ. Приходит сверху готовым: { light, quench } — ключ
+  // причины или null. Дерево его НЕ СЧИТАЕТ и не знает ни про часы, ни про
+  // состояния бойца — иначе правило жило бы в двух местах. Слова — у панели.
   gates: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(['toggle']);
@@ -163,22 +164,10 @@ watch(() => props.coreId, () => { level.value = 'core'; selCrystal.value = null;
 function litCount(cr) { return cr ? cr.faces.filter((f) => f.state === 'lit').length : 0; }
 function shardHtml(cr) { return shardSVG(litCount(cr) / cr.limit, props.coreId + '-' + cr.id); }
 
-// Причина отказа словами. Занимает СУЩЕСТВУЮЩУЮ строку подсказки и сама уходит:
-// своего места ей не заводим, иначе в камере появляется пустая полоска.
-const reason = ref('');
-let reasonTimer = 0;
-function sayReason(text) {
-  if (!text) return;
-  reason.value = text;
-  clearTimeout(reasonTimer);
-  reasonTimer = setTimeout(() => { reason.value = ''; }, REASON_MS);
-}
-onBeforeUnmount(() => clearTimeout(reasonTimer));
-
-const footHint = computed(() => reason.value
-  || (level.value === 'core' ? t.value.forge.hintCore
+const footHint = computed(() =>
+  level.value === 'core' ? t.value.forge.hintCore
     : level.value === 'crystal' ? t.value.forge.hintCrystal
-      : t.value.forge.hintFacet));
+      : t.value.forge.hintFacet);
 
 // --- facet state → class + label (same rules as the old screen) ---------------
 function faceClass(f) {
@@ -222,13 +211,13 @@ function onFace(f) {
   // ГАСИМ. Свой отказ и своя причина: гасить нельзя, пока не забрано
   // прошлое право — иначе прав стало бы два, а копиться им нельзя.
   if (wasLit) {
-    if (props.gates.quench) { deny(f.id); sayReason(props.gates.quenchText); return; }
+    if (props.gates.quench) { deny(f.id); return; }   // причина — строкой панели
     emit('toggle', { crystalId: cr.id, faceId: f.id });
     return;
   }
   // ЗАЖИГАЕМ. Сначала два прежних стража, потом третий — занятие.
   if (litCount(cr) >= cr.limit || props.spent >= props.resource) { deny(f.id); return; }
-  if (props.gates.light) { deny(f.id); sayReason(props.gates.lightText); return; }
+  if (props.gates.light) { deny(f.id); return; }      // причина — строкой панели
   emit('toggle', { crystalId: cr.id, faceId: f.id });
 }
 

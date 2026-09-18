@@ -116,11 +116,19 @@
           </template>
         </div>
 
-        <!-- One line under the tree, whichever of the two applies: nothing put in
-             yet, or nothing left to put in. The second does NOT take the tree
-             away — the pool is given back by quenching a facet, so the tree has
-             to stay reachable exactly when it is full. -->
-        <p v-if="treeState === 'live' && !litNames.length" class="fp-hint">{{ t.forge.treeHint }}</p>
+        <!-- One line under the tree, whichever applies. The second does NOT take
+             the tree away — the pool is given back by quenching a facet, so the
+             tree has to stay reachable exactly when it is full.
+
+             ПРИЧИНА ОТКАЗА — ПЕРВОЙ (18.09.2026). Грани видны, но не
+             зажигаются — и игрок обязан прочесть почему ДО нажатия, а не после.
+
+             ⚠️ Причина живёт ИМЕННО ЗДЕСЬ, а не внизу камеры дерева, где она
+                напрашивалась: та строка скрыта, пока у бойца ни одной зажжённой
+                грани (.fp-tree.is-fresh .ft-foot в forge.css) — то есть ровно в том
+                случае, в котором причина нужнее всего. Измерено: коробка 0×0. -->
+        <p v-if="treeState === 'live' && lightWhy" class="fp-hint">{{ whyText(lightWhy) }}</p>
+        <p v-else-if="treeState === 'live' && !litNames.length" class="fp-hint">{{ t.forge.treeHint }}</p>
         <p v-else-if="treeState === 'live' && spent >= resource" class="fp-hint">{{ t.forge.treeSpent }}</p>
       </section>
 
@@ -249,13 +257,12 @@ function stateWord(st) {
 }
 const pickedState = computed(() => (props.picked ? stateOf(props.picked.id) : 'free'));
 
-// Дерево получает оба отказа СЛОВАМИ, а не ключами: словарь причин живёт
-// в одном месте (whyText ниже), и второй его копии внутри дерева быть не должно.
+// Дерево получает только КЛЮЧИ отказов — гасить грань и подписывать её
+// состояние. СЛОВА говорит панель: словарь причин один (whyText ниже),
+// и второй его копии внутри дерева быть не должно.
 const gates = computed(() => ({
   light: props.lightWhy || null,
-  lightText: whyText(props.lightWhy),
   quench: props.quenchWhy || null,
-  quenchText: whyText(props.quenchWhy),
 }));
 
 // ОДНА КНОПКА, ДВА СМЫСЛА. Занятому она отменяет занятие — и в этом состоянии
