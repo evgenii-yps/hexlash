@@ -164,12 +164,23 @@ export function createCoverNav({ covers, bounds, now }) {
   };
 
   const pathBuf = [];   // переиспользуемый список узлов пути, от цели к старту
+  // СЛУЖЕБНЫЙ СЧЁТ ЦЕНЫ. Владелец просил цену кадра отдельной строкой: поиск пути
+  // против остального. Копится здесь, показывается служебной строкой сцены.
+  let costMs = 0;
+  let searches = 0;
+  // ⚠️ СТОРОЖ ГЛАВНОГО ПРАВИЛА ПОДМЕНЫ. Подмена обязана молчать, пока цель в
+  //    досягаемости, иначе боец ударит в пустое место. Условие держится кодом, но
+  //    правило слишком дорогое, чтобы верить ему на слово: сторож считает, сколько
+  //    раз оно было бы нарушено. Ноль — значит ударов в пустое место быть не может.
+  let nearLies = 0;
 
   /**
    * Путь по сетке. Возвращает число узлов в pathBuf (0 — пути нет).
    * Узлы лежат в порядке ОТ ЦЕЛИ К СТАРТУ.
    */
   const findPath = (sx, sz, tx, tz) => {
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+    searches += 1;
     const s = nearestFree(ix(sx), iz(sz));
     const t = nearestFree(ix(tx), iz(tz));
     pathBuf.length = 0;
@@ -220,6 +231,7 @@ export function createCoverNav({ covers, bounds, now }) {
         }
       }
     }
+    if (t0) costMs += performance.now() - t0;
     if (!found) return 0;
     for (let n = t; n >= 0; n = cameFrom[n]) pathBuf.push(n);
     return pathBuf.length;
@@ -294,6 +306,8 @@ export function createCoverNav({ covers, bounds, now }) {
     s.out.z = me.z + (wdz / wd) * dist;
     s.out.y = foe.y;
     s.active = true;
+    // Сторож: подмена не имеет права случиться в досягаемости. См. объявление.
+    if (dist <= C.steerMinDist) nearLies += 1;
     return s.out;
   };
 
@@ -309,6 +323,12 @@ export function createCoverNav({ covers, bounds, now }) {
     for (const u of list) pushPointOutOfCovers(covers, u.f.group.position, pad);
   };
 
+  /**
+   * Цена поиска пути с прошлого опроса, в миллисекундах, и сколько поисков её
+   * составило. Счётчики обнуляются опросом — строку показывают два раза в секунду.
+   */
+  const takeCost = () => { const r = { ms: costMs, n: searches, lies: nearLies }; costMs = 0; searches = 0; return r; };
+
   /** Сколько бойцов прямо сейчас идёт в обход — для служебной строки. */
   const steeringCount = () => {
     let n = 0;
@@ -316,5 +336,5 @@ export function createCoverNav({ covers, bounds, now }) {
     return n;
   };
 
-  return { steer, forget, pushOut, steeringCount, grid: { nx, nz, blocked, cell } };
+  return { steer, forget, pushOut, steeringCount, takeCost, grid: { nx, nz, blocked, cell } };
 }

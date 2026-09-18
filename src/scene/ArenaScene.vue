@@ -1984,13 +1984,22 @@ onMounted(() => {
       if (frameMs > fpsWorst) fpsWorst = frameMs;
       if (!fpsSince) fpsSince = t;
       if (t - fpsSince >= 0.5) {
+        const fpsSince0 = fpsSince;
         const fps = Math.round(fpsFrames / (t - fpsSince));
         // Потолок печатается рядом: цикл ограничен (30 на касании, 60 на мыши), и
         // «29» без «/30» читалось бы как поломка.
         // HOLD — тишина перед наводкой; AIM — наводка в пути. Без них проверить
         // «сработала между 15 и 16 секундами» можно только секундомером в руках.
         const cam = aimT >= 0 ? `AIM ${aimT.toFixed(1)}s` : `HOLD ${sinceTouch.toFixed(1)}s`;
-        fpsReadout.value = `FPS ${fps}/${targetFPS}  ·  worst ${Math.round(fpsWorst)}ms  ·  BODIES ${field.living().length}  ·  ${cam}`;
+        // ЦЕНА ПОИСКА ПУТИ — ОТДЕЛЬНОЙ СТРОКОЙ, как просил владелец: сколько
+        // миллисекунд за показ ушло на обход и сколько это было поисков. `lies` —
+        // сторож главного правила подмены, он обязан всегда показывать ноль.
+        let nav = '';
+        if (coverNav) {
+          const c = coverNav.takeCost();
+          nav = `  ·  NAV ${c.ms.toFixed(1)}ms/${(t - fpsSince0).toFixed(1)}s (${c.n} поисков, обходят ${coverNav.steeringCount()}, ложь вблизи ${c.lies})`;
+        }
+        fpsReadout.value = `FPS ${fps}/${targetFPS}  ·  worst ${Math.round(fpsWorst)}ms  ·  BODIES ${field.living().length}  ·  ${cam}${nav}`;
         fpsFrames = 0; fpsSince = t; fpsWorst = 0;
       }
     }
@@ -2004,7 +2013,7 @@ onMounted(() => {
       window.__hexCam = {
         px: camera.position.x, py: camera.position.y, pz: camera.position.z,
         tx: controls.target.x, ty: controls.target.y, tz: controls.target.z,
-        hold: sinceTouch, aim: aimT, tx2: controls.target.x, tz2: controls.target.z,
+        hold: sinceTouch, aim: aimT,
       };
     }
 
