@@ -7,7 +7,7 @@
 // combat files, no group.position.lerp anywhere — a body that changes place in
 // this hall does it with its legs.
 //
-// TWO JOBS, and the second one is why this is not just a copy of spaceWander:
+// THREE JOBS. Третий появился 18.09.2026 вместе с тренировкой:
 //
 //   1. WANDER — each fighter owns a small personal zone on the hall floor and
 //      strolls inside it, pausing with non-translating waiting actions. Zones are
@@ -20,6 +20,17 @@
 //      the player sees him go. Errands start from wherever the body IS, so a
 //      player jabbing at fighter after fighter turns them around mid-step instead
 //      of queueing trips.
+//
+//   3. ЗАНЯТИЕ — боец НЕ строллит, а работает НА МЕСТЕ: гоняет свои же
+//      боевые движения одно за другим. Теми же самыми клипами, которые уже
+//      игрались здесь в паузах между прогулками, — никакой второй системы
+//      анимации и ни одной правки в защищённых файлах.
+//
+//      ⚠️ РАБОТАЕТ В СВОЕЙ ЗОНЕ, И ЭТО ГЛАВНОЕ. Занятие можно назначить хоть
+//         всем десяти сразу, а зоны по построению не касаются (см. ZONE в
+//         PveScene) — значит, тела не могут налезть друг на друга ни при каком
+//         ростере. Сами клипы тело НЕ ПЕРЕМЕЩАЮТ — это то же свойство, на
+//         котором держались действия в паузах.
 //
 // Reduced motion ⇒ the director stays inert (every foePos null): nobody strolls,
 // and the scene places picked fighters instead of walking them.
@@ -76,6 +87,22 @@ const CONFIG = {
 
   // --- keeping bodies apart while crossing ---
   agentClearance: 1.45,
+
+  // --- ЗАНЯТИЕ: что именно гоняет тело и как часто ---
+  //
+  // Это ТЕМП ДВИЖЕНИЯ, а не цифры прокачки: от них ничего не зависит,
+  // кроме того, как работа выглядит. Пауза короткая, но не нулевая: боец,
+  // бьющий без передышки, читается как заевшаяся анимация, а не как работа.
+  drillGapMin: 0.25,
+  drillGapMax: 0.95,
+  // Веса — по частоте в реальной работе на мешке: чаще всего прямые и
+  // двойки, реже тяжёлое, изредка ноги и уходы. Все эти клипы тело на
+  // месте не двигают — потому занятие и не выводит его из своей зоны.
+  drillKindW: [
+    ['punch', 0.26], ['double', 0.18], ['hook', 0.12], ['uppercut', 0.10],
+    ['bodyShot', 0.09], ['combo', 0.07], ['knee', 0.06], ['teep', 0.05],
+    ['frontKick', 0.04], ['dodge', 0.02], ['feint', 0.01],
+  ],
 };
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -116,6 +143,14 @@ export function createForgeWanderDirector(opts = {}) {
       actions: [],
       after: 'pause',          // what to do on arrival: 'pause' | 'hold'
       target: { x: 0, z: 0 },
+      // ЧТО ТЕЛО ДЕЛАЕТ ВООБЩЕ — поверх фазы, а не вместо неё:
+      //   'wander' — строллит по своей зоне (как было всегда)
+      //   'drill'  — занимается на месте
+      //   'still'  — стоит смирно (отработал и ждёт)
+      // Поверх, а не вместо: начатый путь всегда доходится до конца — иначе
+      // боец, которому назначили занятие на полушаге, замирал бы между местами.
+      mode: 'wander',
+      drillT: 0,
     };
   }
 
@@ -276,6 +311,18 @@ export function createForgeWanderDirector(opts = {}) {
     // 'breathe' → nothing: the body's own idle breath carries it
   }
 
+  // ЗАНЯТИЕ, ОДИН ШАГ. Клипы зовутся ПО ИМЕНИ из публичного набора
+  // бойца: список движений живёт в настройках выше, а не разветвлён здесь
+  // десятью if-ами. Нет такого движения — шаг просто пропускается.
+  function tickDrill(a, d) {
+    a.drillT -= d;
+    if (a.drillT > 0 || clipBusy(a)) return;
+    const kind = wpick(cfg.drillKindW);
+    const play = a.fighter && a.fighter[kind];
+    if (typeof play === 'function') play();
+    a.drillT = rand(cfg.drillGapMin, cfg.drillGapMax);
+  }
+
   function updateAgent(a, d) {
     a.phaseT += d;
 
@@ -283,8 +330,6 @@ export function createForgeWanderDirector(opts = {}) {
       if (a.phaseT >= a.initDelay) startWalk(a);
       return;
     }
-
-    if (a.phase === 'hold') return;   // standing on the mark: the body idles on its own
 
     if (a.phase === 'walk') {
       const p = a.fighter.group.position;
@@ -296,6 +341,13 @@ export function createForgeWanderDirector(opts = {}) {
       }
       return;
     }
+
+    // Отсюда тело СТОИТ — и только теперь спрашиваем, что оно вообще делает.
+    // Путь выше доходится до конца в любом режиме: боец не замирает между местами.
+    if (a.mode === 'drill') { tickDrill(a, d); return; }
+    if (a.mode === 'still') return;   // отработал и ждёт — стоит смирно
+
+    if (a.phase === 'hold') return;   // standing on the mark: the body idles on its own
 
     // phase === 'pause' — standing in his own zone between strolls
     if (strayed(a)) {   // nudged out of his patch: walk back in, do not stand outside it
@@ -337,6 +389,27 @@ export function createForgeWanderDirector(opts = {}) {
     goTo(a, (a.Z.xMin + a.Z.xMax) / 2, (a.Z.zMin + a.Z.zMax) / 2, 'pause');
   }
 
+  /**
+   * Чем тело занято: 'wander' | 'drill' | 'still'.
+   * Повторный вызов с тем же режимом ничего не делает — сцена зовёт это
+   * на каждую смену состояния, а не раз в жизнь.
+   */
+  function setMode(i, mode) {
+    const a = agents[i];
+    if (!a || a.mode === mode) return;
+    a.mode = mode;
+    if (mode === 'wander') {
+      // Вернулся к прогулкам — но не с места: короткая пауза, потом шаг.
+      if (a.phase !== 'walk') startPause(a);
+    } else if (a.phase === 'pause') {
+      // Занятие и стойка смирно — на месте: приманка снимается, чтобы
+      // тело не ушло за ней следующим шагом.
+      setLoco(a, null);
+      a.lureValid = false;
+    }
+    if (mode === 'drill') a.drillT = rand(0, cfg.drillGapMax);   // десять тел — не в один такт
+  }
+
   /** Drop whatever he is doing and stand still where he is. */
   function halt(i) {
     const a = agents[i];
@@ -373,5 +446,5 @@ export function createForgeWanderDirector(opts = {}) {
     active = false;
   }
 
-  return { attach, update, foePos, setZone, sendTo, sendHome, halt, isWalking, isStill, dispose };
+  return { attach, update, foePos, setZone, sendTo, sendHome, halt, setMode, isWalking, isStill, dispose };
 }

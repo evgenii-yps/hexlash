@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
 import * as THREE from 'three';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
@@ -41,6 +41,7 @@ import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
+import { stateOf as trainingStateOf } from '@/services/training.js';
 import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
@@ -636,6 +637,11 @@ let hoveredId = null;        // whose core the pointer is over (overview only)
 let currentId = null;
 let workingId = null;
 let director = null;         // the wander / errand director (forgeWander.js)
+let stopTrainingWatch = null; // наблюдатель за состояниями занятий — снять при уходе
+// ⚠️ ПЕРЕСКАЗАТЬ РЕЖИМЫ ПОСЛЕ КАЖДОГО attach. Режиссёр при attach собирает агентов
+//    заново — и все занимавшиеся тела молча вернулись бы к прогулкам. Случается
+//    на повороте экрана (см. applyPresence).
+let applyTraining = null;
 let mark = { x: 0, z: 0 };   // where the current fighter stands
 let compose = null;          // which plate step, how big, where the arc stands on it
 let rosterCount = 0;         // read once, at the moment the hall opens
@@ -776,6 +782,34 @@ onMounted(() => {
   portrait = viewH >= viewW;
   applyPresence(true);                 // build + place whoever this screen needs
   load.stage('roster');
+
+  // ── ЗАНЯТИЕ ВИДНО ТЕЛОМ — ради этого работа и делалась ───────────
+  //
+  // Три состояния — три разные вещи на плите, и ни одна из них не светится:
+  //   свободен — строллит по своей зоне, как и раньше
+  //   занят     — работает на месте: гоняет свои движения одно за другим
+  //   готов     — стоит смирно лицом к игроку, пока все остальные ходят
+  //
+  // Метка «готов» в сцене — именно неподвижность, а не свечение: в зале горит
+  // ровно одно ядро (выбранного) и одно тёплое облако (легенда), и третьего
+  // свечения здесь быть не может. Среди десяти бродящих тел неподвижное
+  // читается сразу и стоит ноль.
+  //
+  // Состояние спрашивается НЕ КАЖДЫЙ КАДР, а по изменению: за всё занятие оно
+  // меняется дважды, и опрашивать хранилище шестьдесят раз в секунду не за чем.
+  const trainingSig = computed(() => (store.getters['roster/fighters'] || [])
+    .map((f) => f.id + ':' + trainingStateOf(f)).join('|'));
+
+  applyTraining = () => {
+    if (!director) return;
+    const byId = new Map((store.getters['roster/fighters'] || []).map((f) => [f.id, f]));
+    for (let i = 0; i < roster.length; i++) {
+      const st = trainingStateOf(byId.get(roster[i].id) || null);
+      director.setMode(i, st === 'busy' ? 'drill' : st === 'ready' ? 'still' : 'wander');
+    }
+  };
+  stopTrainingWatch = watch(trainingSig, () => applyTraining?.());
+  applyTraining();
 
   // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
   //     the wander), floating LEGEND.height over the plate centre, drifting forever
@@ -1192,6 +1226,9 @@ function applyPresence(place) {
     director.attach(roster.map((r) => ({ fighter: r.fighter, zone: r.zone })), { reduced });
     const cur = roster.findIndex((r) => r.id === currentId);
     if (cur >= 0) director.halt(cur);
+    // attach собирает агентов с нуля — занятые и готовые обязаны
+    // получить своё заново, иначе поворот экрана тихо обрывает занятие в сцене.
+    applyTraining?.();
   }
 }
 
@@ -1372,6 +1409,8 @@ defineExpose({ select, exitWork, growTo });
 
 onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
+  if (stopTrainingWatch) { stopTrainingWatch(); stopTrainingWatch = null; }
+  applyTraining = null;
   if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; }
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
