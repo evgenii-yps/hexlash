@@ -28,7 +28,7 @@
 <template>
   <!-- Счётчик живых сторон. Только пока дерутся: на панели итога он не нужен —
        там уже сказано, чем всё кончилось. -->
-  <div v-if="showCount" class="of-hud" aria-live="polite">
+  <div v-if="onField" class="of-hud" aria-live="polite">
     <dl class="of-rows">
       <div class="of-row">
         <dt>{{ t.openField.sidesLeft }}</dt>
@@ -83,7 +83,7 @@
        режиме занято действием, а дальше займётся лучом лидера. Материал —
        существующий матовый хром (--chrome-*), тот же, что у кнопок дома. -->
   <button
-    v-if="showRecenter"
+    v-if="onField"
     type="button"
     class="of-recenter"
     :aria-label="recenterLabel"
@@ -142,32 +142,32 @@ import '@/components/panel/panel.css';
 const router = useRouter();
 
 const sidesLeft = computed(() => openFieldState.sidesLeft);
-// ДОСМОТР — ЭТО ТОЖЕ «ПОВЕРХ БОЯ». Счётчик сторон, строка лидера и уголок на
-// кромке остаются: поле дерётся дальше, и всё это по-прежнему про него. Уходят
-// они только вместе с боем — на панели итога.
+// ДОСМОТР — ЭТО ТОЖЕ «ПОВЕРХ БОЯ». Счётчик сторон, строка лидера, уголок на кромке
+// и кнопка наводки остаются: поле дерётся дальше, и всё это по-прежнему про него.
+// Уходят они только вместе с боем — на панели итога.
+//
+// ⚠️ ОДНО ИМЯ НА ВСЕХ. Раньше у счётчика было своё (showCount); теперь показание
+//    одно и то же для четырёх надписей, и второго имени ему заводить нельзя —
+//    они разошлись бы при первой же правке.
 const onField = computed(() => openFieldState.active
   && (openFieldState.phase === 'fight' || openFieldState.phase === 'spectate'));
-const showCount = computed(() => onField.value);
 const spectating = computed(() => openFieldState.active && openFieldState.phase === 'spectate');
 
 // Строка лидера. Корона на своей стороне — прямое обращение вместо позывного;
 // короны ещё нет — строки нет вовсе.
 const leaderLine = computed(() => {
-  if (!showCount.value) return null;
+  if (!onField.value) return null;
   if (openFieldState.leaderMine) return t.value.openField.youAreLeader;
   return openFieldState.leaderName || null;
 });
 // Уголок — только пока дерёмся и только когда корона за кадром.
-const leaderEdge = computed(() => (showCount.value ? openFieldState.leaderEdge : null));
+const leaderEdge = computed(() => (onField.value ? openFieldState.leaderEdge : null));
 const arrowStyle = computed(() => {
   const e = leaderEdge.value;
   if (!e) return null;
   return { left: `${e.x}%`, top: `${e.y}%`, transform: `translate(-50%, -50%) rotate(${e.angle}deg)` };
 });
 const showShort = computed(() => openFieldState.active && openFieldState.phase === 'short');
-// Кнопка наводки — весь бой, включая досмотр. На панели итога её нет: бой
-// кончился, и наводиться не на кого.
-const showRecenter = computed(() => onField.value);
 // ОДНА КНОПКА, ДВА НАЗНАЧЕНИЯ. Пока свои на поле — она ведёт к своим; свои пали
 // — вести некуда, и она ведёт к лидеру, туда, где поле решается.
 const recenterLabel = computed(() => (spectating.value
