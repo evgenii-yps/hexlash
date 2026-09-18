@@ -6,6 +6,11 @@
      пишет, надписи читают, ни одна сторона не лезет внутрь другой. Ровно так же
      устроены панели турнира и забега.
 
+     ПОЛОСА ДОСМОТРА. Своя сторона пала — место замерло, а поле дерётся дальше.
+     Поверх боя встаёт узкая полоса: слева место, справа дверь. Полная панель
+     итога в этот момент НЕ показывается — она сказала бы «всё кончилось» над
+     полем, которое ещё живёт; она ждёт либо конца поля, либо этой двери.
+
      ИТОГА БОЯ ЗДЕСЬ НЕТ НАМЕРЕННО. Победа и место показываются ОБЩЕЙ панелью
      итога (FightResultPanel): открытое поле — обычный бой, просто на двадцать
      тел, и заводить ему вторую панель значило бы, что игра говорит про исход
@@ -81,18 +86,35 @@
     v-if="showRecenter"
     type="button"
     class="of-recenter"
-    :aria-label="t.openField.recenter"
-    :title="t.openField.recenter"
+    :aria-label="recenterLabel"
+    :title="recenterLabel"
     @click="onRecenter"
   >
     <!-- Прицел: рамка с просветами и точка в середине. Читается как «навести на
-         своих», а не как «закрыть» или «в центр экрана». -->
+         своих», а не как «закрыть» или «в центр экрана».
+
+         ⚠️ ЗНАЧОК ОДИН НА ОБА НАЗНАЧЕНИЯ. В досмотре та же кнопка ведёт к лидеру
+            (подпись меняется, см. recenterLabel): это одно и то же действие —
+            «навести кадр туда, где смотреть», — и заводить ей второй значок
+            значило бы сказать глазу, что кнопок две. -->
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
       <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.6" />
       <circle cx="12" cy="12" r="1.6" fill="currentColor" />
     </svg>
   </button>
+
+  <!-- ПОЛОСА ДОСМОТРА. Узкая, снизу, матовая, БЕЗ ЗАТЕМНЕНИЯ ПОЛЯ: игрок остался
+       смотреть бой, и гасить ему этот бой было бы ровно наоборот тому, зачем
+       полоса заведена. Пальца сама не ловит — под ней живой бой и камера
+       крутится пальцем по всему экрану; ловит его только дверь.
+
+       Розового здесь нет: в этом режиме розовый принадлежит короне (луч, уголок
+       и позывной — одно и то же указание). Дверь матовая, как весь хром. -->
+  <div v-if="showSpectate" class="of-strip" aria-live="polite">
+    <span class="of-strip-place">{{ placeLine }}</span>
+    <button type="button" class="of-strip-leave" @click="onLeaveSpectate">{{ t.openField.leave }}</button>
+  </div>
 
   <!-- Бойцов не хватает. На поле не вышел никто, и дверь ровно одна. -->
   <ArenaPanel
@@ -111,14 +133,22 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { t, interpolate } from '@/locales/index.js';
-import { openFieldState, endOpenField, cameraReturnNow } from '@/services/openFieldRun.js';
+import {
+  openFieldState, endOpenField, cameraReturnNow, spectateLeaveNow,
+} from '@/services/openFieldRun.js';
 import ArenaPanel from '@/components/panel/ArenaPanel.vue';
 import '@/components/panel/panel.css';
 
 const router = useRouter();
 
 const sidesLeft = computed(() => openFieldState.sidesLeft);
-const showCount = computed(() => openFieldState.active && openFieldState.phase === 'fight');
+// ДОСМОТР — ЭТО ТОЖЕ «ПОВЕРХ БОЯ». Счётчик сторон, строка лидера и уголок на
+// кромке остаются: поле дерётся дальше, и всё это по-прежнему про него. Уходят
+// они только вместе с боем — на панели итога.
+const onField = computed(() => openFieldState.active
+  && (openFieldState.phase === 'fight' || openFieldState.phase === 'spectate'));
+const showCount = computed(() => onField.value);
+const spectating = computed(() => openFieldState.active && openFieldState.phase === 'spectate');
 
 // Строка лидера. Корона на своей стороне — прямое обращение вместо позывного;
 // короны ещё нет — строки нет вовсе.
@@ -135,10 +165,29 @@ const arrowStyle = computed(() => {
   return { left: `${e.x}%`, top: `${e.y}%`, transform: `translate(-50%, -50%) rotate(${e.angle}deg)` };
 });
 const showShort = computed(() => openFieldState.active && openFieldState.phase === 'short');
-// Кнопка «показать своих» — весь бой. На панели итога её нет: бой кончился, и
-// наводиться не на кого.
-const showRecenter = computed(() => openFieldState.active
-  && openFieldState.phase === 'fight');
+// Кнопка наводки — весь бой, включая досмотр. На панели итога её нет: бой
+// кончился, и наводиться не на кого.
+const showRecenter = computed(() => onField.value);
+// ОДНА КНОПКА, ДВА НАЗНАЧЕНИЯ. Пока свои на поле — она ведёт к своим; свои пали
+// — вести некуда, и она ведёт к лидеру, туда, где поле решается.
+const recenterLabel = computed(() => (spectating.value
+  ? t.value.openField.followLeader
+  : t.value.openField.recenter));
+
+// --- ПОЛОСА ДОСМОТРА.
+const showSpectate = computed(() => spectating.value && !!openFieldState.place);
+// Место заморожено в миг гибели своей стороны — то же самое число, что потом
+// встанет заголовком панели итога. Второго его расчёта здесь нет намеренно.
+const placeLine = computed(() => {
+  const pl = openFieldState.place;
+  return pl ? interpolate(t.value.openField.place, { n: pl.n, of: pl.of }) : '';
+});
+
+// ⚠️ Двойное нажатие безвредно: сцена сама проверяет, что досмотр ещё идёт, и
+//    второе нажатие приходит уже к остановленному полю (см. spectateLeaveNow).
+function onLeaveSpectate() {
+  spectateLeaveNow();
+}
 
 // ⚠️ Двойное нажатие безвредно: вторая наводка начинается с того места, где её
 //    застала первая (см. cameraReturnNow).
@@ -198,6 +247,66 @@ function onLeave() {
      (см. noteLeaderFrame в сцене), иначе половина значка ушла бы за край. */
 }
 .of-leader-arrow > svg { width: 100%; height: 100%; display: block; }
+
+/* ПОЛОСА ДОСМОТРА. Снизу во всю ширину, узкая, матовая. Затемнения под ней нет
+   намеренно: игрок остался СМОТРЕТЬ бой, и гасить ему этот бой значило бы ровно
+   обратное тому, зачем полоса заведена. Читаемость держит собственная подложка
+   полосы — тот же матовый хром, что у кнопок дома.
+
+   Пальца сама НЕ ЛОВИТ: под ней живой бой, и камера крутится пальцем по всему
+   экрану. Ловит его только дверь.
+
+   ⚠️ СНИЗУ, А НЕ СВЕРХУ. Сверху по центру стоит счётчик сторон со строкой
+      лидера, справа сверху — кнопка наводки и служебная кнопка DEV. В портрете
+      390 точек места им всем наверху не хватает. */
+.of-strip {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  z-index: var(--z-ui); pointer-events: none;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  /* Снизу — отступ на «домашнюю» полосу телефона, если она есть. */
+  padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  background: var(--chrome-glass);
+  -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass));
+  border-top: 1px solid var(--chrome-line);
+}
+
+/* МЕСТО. Моно и с табличными цифрами — то же, чем набран счётчик сторон: это
+   второе показание того же боя. Цифры табличные, потому что то же число потом
+   встанет заголовком панели итога, и прыгать ему нельзя. */
+.of-strip-place {
+  font-family: var(--font-mono); font-size: var(--t-xs);
+  letter-spacing: var(--ls-meta); text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ДВЕРЬ. Матовая, как весь хром: розовый в этом режиме принадлежит короне, и
+   звать игрока уйти с боя, который он сам остался смотреть, незачем.
+   Зона касания — не меньше общей нижней границы. */
+.of-strip-leave {
+  pointer-events: auto;
+  min-height: var(--h-btn-sm);
+  padding: var(--sp-2) var(--sp-4);
+  background: transparent;
+  border: 1px solid var(--chrome-line);
+  color: var(--chrome-ink);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-xs);
+  letter-spacing: var(--ls-title); text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--d-hover) var(--e-weight),
+              color var(--d-hover) var(--e-weight);
+}
+.of-strip-leave:hover { border-color: var(--chrome-rim); color: var(--ink); }
+.of-strip-leave:active { transform: scale(0.97); }
+.of-strip-leave:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+
+/* «Уменьшить движение»: перемещения и масштабирование выключаются, отклик на
+   палец — нет. Сжатие заменяется приглушением рамки. */
+@media (prefers-reduced-motion: reduce) {
+  .of-strip-leave:active { transform: none; border-color: var(--chrome-rim-hot); }
+}
 
 /* Кнопка «показать своих». Материал — существующий матовый хром, тот же, что у
    кнопок дома (.hs-chrome): матовое стекло, волосяная рамка, холодный текст.

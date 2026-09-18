@@ -101,8 +101,8 @@ import {
 } from '@/data/openFieldLayouts.js';
 import {
   openFieldState, startOpenField, shortOfFighters as ofShortOfFighters,
-  noteSidesLeft, noteLeader, finishOpenField, endOpenField,
-  bindCameraReturn,
+  noteSidesLeft, noteLeader, outOfOpenField, finishOpenField, endOpenField,
+  bindCameraReturn, bindSpectateLeave,
 } from '@/services/openFieldRun.js';
 import { buildBotSide } from '@/services/collapseRun.js';
 import { showFightResult, hideFightResult, bindFightAgain } from '@/services/fightResult.js';
@@ -251,6 +251,12 @@ let sinceTouch = 0;      // секунд тишины: от отпускания
 let aimT = -1;           // >= 0 — наводка едет, столько секунд она уже в пути
 let aimSnap = true;      // ближайшая наводка мгновенная (начало боя)
 let unbindCameraReturn = null;
+// ДОСМОТР: своя сторона пала, а поле дерётся дальше. Признак живёт здесь, рядом с
+// счётчиками камеры, по той же причине — его спрашивают каждый кадр (наводка
+// смотрит на лидера, а не на своих), и реактивная переменная на кадровом пути
+// была бы лишней работой на ровном месте.
+let ofSpectate = false;
+let unbindSpectateLeave = null;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
 // Loading-screen handle — see services/sceneLoading.js. The arena lifts the screen
@@ -964,10 +970,10 @@ onMounted(() => {
     //
     // Остался один свой — кадр встаёт по нему, это выходит само собой.
     //
-    // ⚠️ СВОИХ НЕ ОСТАЛОСЬ ВОВСЕ — ВОЗВРАЩАЕМ null, А НЕ КАДР ПО ВСЕМ. Матч для
-    //    игрока кончился; наводиться на чужую драку камера не должна ни сама, ни
-    //    по кнопке. Так прямо сказано в ТЗ, и так же честнее: наблюдение за чужим
-    //    боем — отдельная работа, которой ещё нет.
+    // ⚠️ СВОИХ НЕ ОСТАЛОСЬ ВОВСЕ — ВОЗВРАЩАЕМ null, А НЕ КАДР ПО ВСЕМ. Камера САМА
+    //    на чужую драку не наводится никогда: своих бойцов нет, наводиться не на
+    //    кого, и через пятнадцать секунд тишины она просто стоит. По кнопке — да:
+    //    в досмотре кнопка ведёт к лидеру, и у неё свой расчёт (spectatePose).
     let focus = list;
     let room = 0;
     if (openFieldMode) {
@@ -976,6 +982,16 @@ onMounted(() => {
       focus = mine;
       room = COMBAT_BALANCE.openField.camEngageRoom;
     }
+    return poseFromUnits(focus, room);
+  };
+
+  /**
+   * Сама арифметика кадра: середина названных тел и удаление, с которого они в
+   * него влезают. Вынесена из framePose, потому что считать это стало нужно по
+   * двум разным спискам — свои в бою и сторона-лидер в досмотре, — а второй записи
+   * той же арифметики быть не должно.
+   */
+  const poseFromUnits = (focus, room) => {
     _cen.set(0, 0, 0);
     for (const u of focus) _cen.add(u.f.group.position);
     _cen.divideScalar(focus.length);
@@ -1060,13 +1076,20 @@ onMounted(() => {
     return shown;
   };
 
-  const endFight = () => {
+  // ОСТАНОВИТЬ БОЙ. Вынесено из endFight, потому что теперь остановок две: конец
+  // поля и кнопка «уйти» на полосе досмотра. Второй записи этих пяти строк быть не
+  // должно — разойдутся.
+  const freezeBout = () => {
     fightActive = false;
     aiPlayer = false;
     aiOpponent = false;
     for (const u of field.living()) u.f.setAI(false); // победители перестают бить → оседают в стойку
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
+  };
+
+  const endFight = () => {
+    freezeBout();
     if (chainMode) { closeChainRound(); return; }
     if (collapseMode) { closeCollapseWave(); return; }
     // ИТОГ БОЯ. У забега свои панели и свой счёт раундов — там победа означает
@@ -1081,14 +1104,13 @@ onMounted(() => {
     // внутри отложенной панели — к её выходу состав уже может пересобраться.
     let ofOver = null;
     if (openFieldMode) {
-      finishOpenField(won, openFieldSidesAbove());
-      const place = interpolate(t.value.openField.place, {
-        n: openFieldState.place.n, of: openFieldState.place.of,
-      });
-      // Победа — общий заголовок VICTORY, место строкой под ним (оно там первое).
-      // Поражение — место И ЕСТЬ заголовок: «DEFEAT» на поле из двадцати сторон не
-      // говорит ничего, а «PLACE 7 OF 20» говорит всё.
-      ofOver = won ? { note: place } : { title: place, note: '' };
+      // ПОБЕДИТЕЛЬ — ТОЛЬКО ТОТ, КЕМ ПОЛЕ ДОИГРАЛО. Спрашиваем поле боя: оно одно
+      // знает, чья сторона осталась. Свою сторону по имени не называем — на
+      // победе заголовок и так говорит VICTORY.
+      const winSide = field.winnerSide();
+      const winner = (!won && winSide) ? ofLeaderName(winSide) : null;
+      finishOpenField(won, openFieldSidesAbove(), winner);
+      ofOver = ofResultLines(won);
     }
     resultTimer = setTimeout(() => {
       resultTimer = null;
@@ -1096,6 +1118,41 @@ onMounted(() => {
       // а не тем, что своя сторона осталась одна.
       showFightResult(won, raidMode ? 'raid' : null, ofOver);
     }, COMBAT_BALANCE.panelDelaySec * 1000);
+  };
+
+  /**
+   * СТРОКИ ИТОГА ОТКРЫТОГО ПОЛЯ. Собираются в одном месте, потому что путей к
+   * панели теперь три: победа, конец поля после досмотра и уход по кнопке.
+   *
+   * Победа — общий заголовок VICTORY, место строкой под ним (оно там первое).
+   * Поражение — место И ЕСТЬ заголовок: «DEFEAT» на поле из двадцати сторон не
+   * говорит ничего, а «PLACE 7 OF 20» говорит всё. Под ним — позывной того, кто
+   * поле выиграл; ушёл игрок раньше конца — победителя ещё нет, и строки нет.
+   */
+  const ofResultLines = (won) => {
+    const place = interpolate(t.value.openField.place, {
+      n: openFieldState.place.n, of: openFieldState.place.of,
+    });
+    if (won) return { note: place };
+    const w = openFieldState.winnerName;
+    return { title: place, note: w ? interpolate(t.value.openField.winner, { name: w }) : '' };
+  };
+
+  /**
+   * ИГРОК УШЁЛ С ДОСМОТРА. Поле останавливается В ЭТОТ ЖЕ МИГ — ни одного шага боя
+   * после нажатия, — и панель выходит СРАЗУ, без паузы.
+   *
+   * ⚠️ ПАУЗЫ ЗДЕСЬ НЕТ НАМЕРЕННО. Пауза перед панелью существует затем, чтобы
+   *    игрок успел увидеть, чем бой кончился. Здесь он не кончился, а прерван по
+   *    его же просьбе: ждать нечего, и ожидание читалось бы как залипшая кнопка.
+   */
+  const leaveSpectate = () => {
+    if (!openFieldMode || !ofSpectate || !fightActive) return;
+    freezeBout();
+    if (resultTimer) { clearTimeout(resultTimer); resultTimer = null; }
+    // Место уже заморожено досмотром, победителя нет — поле не доиграло.
+    finishOpenField(false, 0, null);
+    showFightResult(false, null, ofResultLines(false));
   };
 
   // ЗАБЕГ: раунд кончился. Своего показа исхода у арены нет — бой просто замирает,
@@ -1219,7 +1276,20 @@ onMounted(() => {
           refreshDevAliases();
           // Счётчик сторон наверху экрана. Обновляется на выбывании, а не каждый
           // кадр: меняться ему больше не от чего.
-          if (openFieldMode) noteSidesLeft(field.livingSides().length);
+          if (openFieldMode) {
+            noteSidesLeft(field.livingSides().length);
+            // СВОЯ СТОРОНА ПАЛА — НАЧИНАЕТСЯ ДОСМОТР. Место берётся ЗДЕСЬ, пока
+            // поле ещё не разобрано, и дальше не меняется ничем: чужие стороны
+            // доигрывают между собой, но все они и так выше нас.
+            //
+            // ⚠️ ДО `field.isOver()`, А НЕ ПОСЛЕ. Свои могут пасть последними в
+            //    матче: тогда в этом же кадре поле кончится, и порядок решает,
+            //    успеет ли место заморозиться до панели итога.
+            if (!ofSpectate && !field.living().some((u) => u.sideId === 'player')) {
+              ofSpectate = true;
+              outOfOpenField(openFieldSidesAbove());
+            }
+          }
           if (field.isOver()) endFight();
           return;
         }
@@ -1537,25 +1607,22 @@ onMounted(() => {
     });
   }
 
-  // ОТКРЫТОЕ ПОЛЕ. Своё правило конца боя, по образцу рейда и по своей причине:
-  // общее правило ждёт, пока на поле останется ОДНА сторона, а ТЗ говорит, что
-  // матч кончается для игрока в тот момент, когда пала ЕГО сторона. Без этого
-  // правила игрок после своей гибели смотрел бы, как чужие стороны доигрывают
-  // между собой ещё минуту, — а его место уже известно и измениться не может.
+  // ОТКРЫТОЕ ПОЛЕ: СВОЕГО ПРАВИЛА КОНЦА БОЯ ЗДЕСЬ БОЛЬШЕ НЕТ — И ЭТО ГЛАВНАЯ
+  // ПРАВКА РАБОТЫ «ДОСМОТР ПОСЛЕ ГИБЕЛИ».
   //
-  // Правило ставится один раз на весь заход и переживает «драться снова».
-  if (openFieldMode) {
-    field.setEndRule((units) => {
-      if (units.some((u) => u.sideId === 'player' && !u.dead)) return null; // свои живы — общее правило
-      // Свои пали. Победителя по-настоящему ещё нет, но для игрока бой кончился;
-      // отдаём любую живую сторону — панели нужно лишь «победил не я».
-      const other = units.find((u) => !u.dead && u.sideId !== 'player');
-      if (other) return other.sideId;
-      // Все пали в одном кадре — выше тот, чей боец погиб ПОЗЖЕ: ничьих нет.
-      const last = units.filter((u) => u.dead).sort((a, b) => b.order - a.order)[0];
-      return last ? last.sideId : 'player';
-    });
-  }
+  // Стояло так: «свои пали — бой кончился», по образцу рейда. Расчёт был на то,
+  // что место уже известно и досчитывать нечего. Цена оказалась выше выгоды —
+  // примерно в половине заходов игрок видел одну дуэль и вылетал, так и не увидев
+  // поля из двадцати бойцов, ради которого режим и делается.
+  //
+  // Теперь поле живёт по ОБЩЕМУ правилу («жива одна сторона»), как DUEL и SQUAD, а
+  // гибель своей стороны перестала быть концом боя и стала отдельным событием:
+  // место замораживается в тот же миг (outOfOpenField в обработчике выбывания), а
+  // поле доигрывает. Прекращает его либо сам конец поля, либо кнопка «уйти».
+  //
+  // ⚠️ НЕ ВОЗВРАЩАТЬ setEndRule СЮДА. Оно спрашивается и `isOver`, и `winnerSide`,
+  //    то есть любое правило здесь обрывает поле для ВСЕХ, а не только для игрока,
+  //    — и досмотр исчезает молча, не оставив ни одной ошибки на экране.
 
   // СКОЛЬКО СТОРОН ВЫШЕ НАС. Это и есть место минус один (см. placeOnElimination).
   //
@@ -1650,6 +1717,9 @@ onMounted(() => {
     //    оставался в состоянии «для игрока всё», то есть не показывался вовсе, а
     //    место на панели было от прошлого боя.
     if (openFieldMode && !openFieldShort) startOpenField(openFieldLayoutId);
+    // Досмотр — за бой, а не за заход на арену: новый бой начинается со своими на
+    // поле, и камера снова наводится на них, а не на лидера.
+    ofSpectate = false;
     // НОВЫЙ БОЙ — НАВОДКА СРАЗУ, ВСЕГДА. Включая «драться снова»: ручное положение
     // камеры от прошлого боя не переносится, иначе второй бой начинался бы с
     // чужого угла поля. Первый кадр боя ставится мгновенно (см. aimTick).
@@ -1981,11 +2051,29 @@ onMounted(() => {
     });
   };
 
+  /**
+   * КУДА ВЕДЁТ КНОПКА В ДОСМОТРЕ — на сторону-лидера, то есть на самую сильную
+   * живую сторону поля. Своих на поле нет, вести некуда, а лидер — это ровно то
+   * место, где поле решается; за ним же тянутся все остальные (он и есть магнит).
+   *
+   * Корону спрашиваем у поля боя: оно одно её считает, и второго расчёта силы
+   * сторон в проекте быть не должно.
+   *
+   * Короны ещё нет (первые секунды боя) — ведём по всем живым: пусто честнее
+   * только тогда, когда вести действительно некуда.
+   */
+  const spectatePose = (list) => {
+    if (!list.length) return null;
+    const crown = field.leaderSide();
+    const focus = crown ? list.filter((u) => u.sideId === crown) : list;
+    return poseFromUnits(focus.length ? focus : list, COMBAT_BALANCE.openField.camEngageRoom);
+  };
+
   /** Раз в кадр — вместо слежения. Открытое поле и только оно. */
   const aimTick = (dtSec, list) => {
-    const pose = framePose(list);
-    // Своих не осталось — камера стоит. Ни сама, ни по кнопке она на чужую драку
-    // не наводится: матч для игрока кончился.
+    // В ДОСМОТРЕ КАДР СЧИТАЕТСЯ ПО ЛИДЕРУ, А НЕ ПО СВОИМ: своих нет.
+    const pose = ofSpectate ? spectatePose(list) : framePose(list);
+    // Наводить не на кого — камера стоит.
     if (!pose) { aimT = -1; return; }
 
     // НАЧАЛО БОЯ — МГНОВЕННО, БЕЗ ПОДЪЕЗДА. Точка вращения стоит в середине поля,
@@ -2012,6 +2100,12 @@ onMounted(() => {
 
     // ПОКОЙ. Камере здесь делать нечего: она стоит. Считаем тишину.
     if (gesturing) { sinceTouch = 0; return; }
+    // ⚠️ В ДОСМОТРЕ НАВОДКИ ПО ТИШИНЕ НЕТ ВОВСЕ. Она заведена под один случай —
+    //    «игрок засмотрелся в чужой угол и потерял СВОИХ», — а своих больше нет.
+    //    Дёргать за руку кадр у того, кто просто смотрит чужой бой, незачем: за
+    //    лидером он идёт сам, кнопкой. Отсчёт тишины при этом держим сброшенным,
+    //    чтобы он не накопился и не выстрелил в следующем бою.
+    if (ofSpectate) { sinceTouch = 0; return; }
     sinceTouch += dtSec;
     if (sinceTouch < OF.camHoldSec) return;
     sinceTouch = 0;                                 // не сложилось — отсчёт заново
@@ -2024,6 +2118,9 @@ onMounted(() => {
   // движение, просто начатое пальцем, а не молчанием.
   if (openFieldMode) {
     unbindCameraReturn = bindCameraReturn(() => { sinceTouch = 0; startAim(); });
+    // Кнопка «уйти» на полосе досмотра — тот же шов и та же причина: полоса живёт
+    // снаружи сцены и внутрь за боем не лезет.
+    unbindSpectateLeave = bindSpectateLeave(leaveSpectate);
   }
 
   load.stage('controls');
@@ -2276,6 +2373,7 @@ onBeforeUnmount(() => {
   coverMesh?.dispose(); coverMesh = null; covers = null; coverNav = null;
   leaderBeams?.dispose(); leaderBeams = null;
   unbindCameraReturn?.(); // и способ вернуть слежение: камеры, которой он владел, больше нет
+  unbindSpectateLeave?.(); // и способ уйти с досмотра: боя, который он останавливал, больше нет
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
@@ -2328,11 +2426,19 @@ onBeforeUnmount(() => {
    ⚠️ Сначала стояла в левом верху и на узком экране НАЕЗЖАЛА на счётчик сторон:
    счётчик стоит по центру сверху, и в портрете 390 точек места им двоим не
    хватает. Снизу слева свободно: справа снизу — служебное показание, справа
-   сверху — кнопка DEV, сверху по центру — счётчик. */
+   сверху — кнопка DEV, сверху по центру — счётчик.
+
+   ⚠️ ПОДНЯТА НАД ПОЛОСОЙ ДОСМОТРА (работа «досмотр после гибели»). Свои пали —
+   снизу во всю ширину встаёт полоса с местом и дверью, и на прежних четырнадцати
+   точках служебное число уходило бы под неё ровно тогда, когда оно и нужно:
+   цена кадра в досмотре — отдельный пункт приёмки. Постоянный отступ вместо
+   условного намеренно — служебная строка и так живёт только в этом режиме и
+   только по служебному признаку, а состояние, от которого она зависела бы, — это
+   ещё одно место, где однажды заведётся расхождение. */
 .arena-fps {
   position: absolute;
   left: 14px;
-  bottom: 14px;
+  bottom: 72px;
   pointer-events: none;
   font-family: var(--font-mono, monospace);
   font-size: 10px;

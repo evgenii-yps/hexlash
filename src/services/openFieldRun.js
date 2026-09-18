@@ -11,6 +11,19 @@
 // всего этого нет по правилам: один бой от начала до конца. Поэтому файл
 // заметно короче турнирного, и раздувать его «на будущее» не надо.
 //
+// ДОСМОТР ПОСЛЕ ГИБЕЛИ. Раньше матч обрывался в тот миг, когда пала сторона
+// игрока: место уже известно, дальше считать нечего. Цена оказалась выше выгоды —
+// примерно в половине заходов игрок видел одну дуэль и вылетал, так и не увидев
+// поля из двадцати бойцов, ради которого режим и делается. Теперь между «свои
+// пали» и «поле доиграло» стоит своя фаза: место ЗАМОРОЖЕНО и больше не меняется,
+// а поле живёт, и игрок волен смотреть или уйти.
+//
+// ⚠️ МЕСТО СЧИТАЕТСЯ ОДИН РАЗ. Оно берётся в миг гибели своей стороны и дальше
+//    не пересчитывается ничем: чужие стороны, доигрывая между собой, все и так
+//    выше нас, и второй расчёт мог бы дать другое число там, где число обязано
+//    быть одним. Единственное исключение — победа: там своя сторона не падала
+//    вовсе, замораживать было нечего, и место считается на общих основаниях.
+//
 // ОТКУДА БЕРЁТСЯ МЕСТО. Правило живёт в data/openFieldLayouts.js
 // (placeOnElimination), потому что оно про раскладку, а не про ход боя. Здесь
 // только момент, когда его надо применить.
@@ -28,8 +41,9 @@
 //    а лишнее место, где однажды заведётся расхождение.
 //
 // Экспортирует: openFieldState, startOpenField, shortOfFighters, noteSidesLeft,
-//               noteLeader, finishOpenField, endOpenField, bindCameraReturn,
-//               cameraReturnNow.
+//               noteLeader, outOfOpenField, finishOpenField, endOpenField,
+//               bindCameraReturn, cameraReturnNow, bindSpectateLeave,
+//               spectateLeaveNow.
 
 import { reactive } from 'vue';
 import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
@@ -37,12 +51,17 @@ import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
 /**
  * Что показывают надписи поверх боя.
  *   active   — режим идёт (иначе поверх боя не рисуется ничего)
- *   phase    — 'fight' дерёмся · 'done' для игрока всё · 'short' бойцов не хватает
+ *   phase    — 'fight' дерёмся · 'spectate' свои пали, поле живёт, игрок смотрит
+ *              · 'done' всё кончилось · 'short' бойцов не хватает
  *   sides    — сколько сторон вышло на поле (это и есть M в «PLACE N OF M»)
  *   sidesLeft— сколько сторон ещё живо. Счётчик наверху показывает именно это
- *   place    — какое место занял игрок; null, пока бой для него идёт
+ *   place    — какое место занял игрок; null, пока бой для него идёт. С фазы
+ *              'spectate' ЗАМОРОЖЕНО: дальше не меняется, что бы ни было на поле
  *   outcome  — 'victory' сторона игрока осталась одна · 'out' пала
  *   shortBy  — скольких бойцов не хватило, чтобы вообще выйти на поле
+ *   winnerName — позывной победившей стороны; ставится только когда поле
+ *              ДОИГРАЛО до одной стороны. Ушёл по LEAVE — победителя ещё нет, и
+ *              строки нет: врать про него нельзя
  *
  * ЛИДЕР — магнит поля: одна сторона объявляется сильнейшей, и все идут на неё.
  *   leaderName — позывной стороны-лидера; null, пока короны нет
@@ -59,6 +78,7 @@ export const openFieldState = reactive({
   place: null,
   outcome: null,
   shortBy: 0,
+  winnerName: null,
   leaderName: null,
   leaderMine: false,
   leaderEdge: null,
@@ -87,6 +107,30 @@ export function cameraReturnNow() {
   return true;
 }
 
+// Кто умеет остановить поле и показать итог. Ставит сцена (только она владеет
+// боем), зовёт кнопка «уйти» на полосе досмотра. Тот же шов, что у камеры выше, и
+// по той же причине: кнопке нельзя лезть внутрь защищённой сцены за боем.
+let spectateLeave = null;
+
+/** Сцена отдаёт способ прекратить досмотр. Вернуть — снять. */
+export function bindSpectateLeave(fn) {
+  spectateLeave = typeof fn === 'function' ? fn : null;
+  return () => { if (spectateLeave === fn) spectateLeave = null; };
+}
+
+/**
+ * Игрок нажал «уйти» на полосе досмотра. Поле останавливается В ЭТОТ ЖЕ МИГ —
+ * ни одного шага боя после нажатия, — и сразу выходит панель итога.
+ *
+ * ⚠️ Двойное нажатие безвредно: сцена сама проверяет, что досмотр ещё идёт, и
+ *    второе нажатие приходит уже к остановленному полю.
+ */
+export function spectateLeaveNow() {
+  if (!spectateLeave) return false;
+  spectateLeave();
+  return true;
+}
+
 /** Бой начался. Зовётся на КАЖДЫЙ бой, включая «драться снова». */
 export function startOpenField(layoutId) {
   const L = getOfLayout(layoutId);
@@ -98,6 +142,7 @@ export function startOpenField(layoutId) {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = 0;
+  openFieldState.winnerName = null;
   // Корона — за бой, а не за заход на арену: «драться снова» выводит новые
   // стороны, и корона прошлого боя на них не переносится.
   clearLeader();
@@ -118,6 +163,7 @@ export function shortOfFighters(layoutId, have) {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = Math.max(0, L.perSide - have);
+  openFieldState.winnerName = null;
   clearLeader();
 }
 
@@ -157,20 +203,48 @@ export function noteLeader(name, mine, edge) {
 }
 
 /**
- * ДЛЯ ИГРОКА ВСЁ. Либо его сторона осталась одна (победа), либо пала (место).
+ * СВОЯ СТОРОНА ПАЛА, А ПОЛЕ ЖИВЁТ. Место берётся здесь и с этого мига НЕ
+ * МЕНЯЕТСЯ: чужие стороны доигрывают между собой, но все они и так выше нас, и
+ * подвинуть наше место не может ничто.
+ *
+ * ⚠️ ЭТО НЕ КОНЕЦ. Панели итога тут нет намеренно: поверх боя встаёт узкая
+ *    полоса с местом и дверью, а полная панель ждёт либо конца поля, либо того,
+ *    что игрок сам нажмёт «уйти». Показать итог сейчас значило бы сказать «всё
+ *    кончилось» над полем, которое ещё дерётся.
+ *
+ * `livingSides` — сколько ЧУЖИХ сторон живо в этот момент (см. finishOpenField).
+ */
+export function outOfOpenField(livingSides) {
+  openFieldState.phase = 'spectate';
+  openFieldState.outcome = 'out';
+  openFieldState.place = { n: placeOnElimination(livingSides), of: openFieldState.sides };
+}
+
+/**
+ * ВСЁ КОНЧИЛОСЬ. Либо сторона игрока осталась одна (победа), либо поле доиграло
+ * до одной стороны, пока игрок смотрел, либо он ушёл сам.
  *
  * `livingSides` — сколько сторон живо В ЭТОТ МОМЕНТ, НЕ СЧИТАЯ сторону игрока.
  * Победителю их ноль, и правило само даёт первое место.
  *
- * ⚠️ ОСТАТОК МАТЧА НЕ ДОСЧИТЫВАЕТСЯ. Так решено в ТЗ: сторона игрока выбыла —
- *    матч для него кончился, и дальнейшая возня чужих сторон на его место уже не
- *    влияет (все они и так выше). Считать их значило бы жечь кадры ради числа,
- *    которое уже известно.
+ * ⚠️ ЗАМОРОЖЕННОЕ МЕСТО НЕ ПЕРЕСЧИТЫВАЕТСЯ. Пришли сюда из досмотра — место уже
+ *    взято в миг гибели своей стороны, и второй расчёт мог бы дать другое число
+ *    там, где оно обязано быть одним (полоса поверх боя показала его игроку
+ *    минуту назад). Победа — единственное исключение: своя сторона не падала
+ *    вовсе, замораживать было нечего.
+ *
+ * @param {boolean} won выстояла ли сторона игрока
+ * @param {number} livingSides сколько чужих сторон живо
+ * @param {string|null} [winnerName] позывной победителя — только когда поле
+ *        ДОИГРАЛО. Ушёл по «уйти» — победителя ещё нет, и сюда идёт null.
  */
-export function finishOpenField(won, livingSides) {
+export function finishOpenField(won, livingSides, winnerName = null) {
   openFieldState.phase = 'done';
   openFieldState.outcome = won ? 'victory' : 'out';
-  openFieldState.place = { n: placeOnElimination(livingSides), of: openFieldState.sides };
+  if (won || !openFieldState.place) {
+    openFieldState.place = { n: placeOnElimination(livingSides), of: openFieldState.sides };
+  }
+  openFieldState.winnerName = winnerName || null;
 }
 
 /** Уйти из режима — гасит надписи. Зовётся при уходе с арены. */
@@ -180,5 +254,6 @@ export function endOpenField() {
   openFieldState.place = null;
   openFieldState.outcome = null;
   openFieldState.shortBy = 0;
+  openFieldState.winnerName = null;
   clearLeader();
 }
