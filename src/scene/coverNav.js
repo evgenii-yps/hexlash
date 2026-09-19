@@ -47,6 +47,11 @@ export function createCoverNav({ covers, bounds, now }) {
   const C = COMBAT_BALANCE.openField.cover;
   const cell = C.cellSize;
   const pad = C.bodyRadius;
+  // МЕШАЮЩИЕ БЛОКИ. Раскладка перестала быть постоянной: при сужении поля блоки,
+  // оказавшиеся за границей, уходят в пол, и обход обязан перестать их видеть —
+  // иначе бойцы огибали бы призрак. Пока никто не зовёт `setAlive`, это ровно та
+  // раскладка, что пришла, и поведение прежнее.
+  let live = covers;
 
   // --- СЕТКА. Начало в углу (-bounds.x, -bounds.z), клетка `cell`.
   const nx = Math.max(1, Math.ceil((bounds.x * 2) / cell));
@@ -69,14 +74,15 @@ export function createCoverNav({ covers, bounds, now }) {
   //
   //    За то, чтобы боец не скрёб по блоку боком, отвечает не сетка, а протяжка
   //    пути: она проверяет НАСТОЯЩИЙ отрезок с тем же радиусом тела.
-  {
+  const bake = () => {
     const grow = pad;
+    blocked.fill(0);
     for (let j = 0; j < nz; j += 1) {
       for (let i = 0; i < nx; i += 1) {
         const x = cx(i);
         const z = cz(j);
         let hit = false;
-        for (const c of covers) {
+        for (const c of live) {
           const ca = Math.cos(-c.a);
           const sa = Math.sin(-c.a);
           const dx = x - c.x;
@@ -88,7 +94,8 @@ export function createCoverNav({ covers, bounds, now }) {
         if (hit) blocked[j * nx + i] = 1;
       }
     }
-  }
+  };
+  bake();
 
   const free = (i, j) => i >= 0 && j >= 0 && i < nx && j < nz && !blocked[j * nx + i];
 
@@ -269,7 +276,7 @@ export function createCoverNav({ covers, bounds, now }) {
     if (dist <= C.steerMinDist) { const s = stateOf(unit); s.active = false; s.way = null; return null; }
     // Дорога свободна — тоже правда. Это же и есть самый частый случай, и он стоит
     // одной проверки отрезка вместо поиска пути.
-    if (!segmentHitsCovers(covers, me.x, me.z, foe.x, foe.z, pad)) {
+    if (!segmentHitsCovers(live, me.x, me.z, foe.x, foe.z, pad)) {
       const s = stateOf(unit);
       s.active = false; s.way = null;
       return null;
@@ -293,7 +300,7 @@ export function createCoverNav({ covers, bounds, now }) {
       const keep = s.way
         && Math.hypot(s.way.x - me.x, s.way.z - me.z) > cell * 0.75
         && Math.hypot(s.way.x - foe.x, s.way.z - foe.z) < dist
-        && !segmentHitsCovers(covers, me.x, me.z, s.way.x, s.way.z, pad);
+        && !segmentHitsCovers(live, me.x, me.z, s.way.x, s.way.z, pad);
       if (keep) {
         // Прежний обход годится — путь не ищем вовсе, только отодвигаем срок.
         s.nextAt = t + C.repathSec * (0.85 + s.seed * 0.3);
@@ -330,7 +337,7 @@ export function createCoverNav({ covers, bounds, now }) {
           const node = pathBuf[k];
           const wx = cx(node % nx);
           const wz = cz((node / nx) | 0);
-          if (!segmentHitsCovers(covers, me.x, me.z, wx, wz, pad)) { wi = k; break; }
+          if (!segmentHitsCovers(live, me.x, me.z, wx, wz, pad)) { wi = k; break; }
         }
         const node = pathBuf[wi];
         s.way = { x: cx(node % nx), z: cz((node / nx) | 0) };
@@ -361,7 +368,7 @@ export function createCoverNav({ covers, bounds, now }) {
    * оба пишут позицию мимо навигации.
    */
   const pushOut = (list) => {
-    for (const u of list) pushPointOutOfCovers(covers, u.f.group.position, pad);
+    for (const u of list) pushPointOutOfCovers(live, u.f.group.position, pad);
   };
 
   /**
@@ -377,5 +384,28 @@ export function createCoverNav({ covers, bounds, now }) {
     return n;
   };
 
-  return { steer, forget, pushOut, steeringCount, takeCost, grid: { nx, nz, blocked, cell } };
+  /**
+   * БЛОКОВ СТАЛО МЕНЬШЕ. Зовётся сужением поля, когда укрытия за границей ушли в
+   * пол: сетка проходимости печётся заново, и клетки под ушедшими блоками
+   * освобождаются.
+   *
+   * ⚠️ ПЕЧЬ ЗАНОВО, А НЕ ГАСИТЬ КЛЕТКИ ПО ОДНОЙ. Соседние блоки перекрываются
+   *    раздутием на радиус тела, и «погасить клетки одного» открыло бы дорогу
+   *    сквозь другой, ещё стоящий. Печь целиком дороже, но это происходит два-три
+   *    раза за матч (кольца уходят целиком) плюс один раз на начало боя, а не
+   *    каждый кадр. Сравнивать списки и печь «только если изменилось» не стали:
+   *    сравнение было бы на длине, а два РАЗНЫХ набора одной длины оно бы
+   *    пропустило. Зовущий и так зовёт только когда состав изменился.
+   *
+   * Пути, посчитанные до этого, не сбрасываются намеренно: они и так ведут по
+   * свободным клеткам, а каждый боец пересчитает свой в течение секунды.
+   *
+   * @param {object[]} next список ещё мешающих блоков
+   */
+  const setAlive = (next) => {
+    live = next;
+    bake();
+  };
+
+  return { steer, forget, pushOut, setAlive, steeringCount, takeCost, grid: { nx, nz, blocked, cell } };
 }

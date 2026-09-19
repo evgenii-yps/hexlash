@@ -41,7 +41,7 @@
 //    а лишнее место, где однажды заведётся расхождение.
 //
 // Экспортирует: openFieldState, startOpenField, shortOfFighters, noteSidesLeft,
-//               noteLeader, outOfOpenField, finishOpenField, endOpenField,
+//               noteClosingIn, noteLeader, outOfOpenField, finishOpenField, endOpenField,
 //               bindCameraReturn, cameraReturnNow, bindSpectateLeave,
 //               spectateLeaveNow.
 
@@ -63,6 +63,11 @@ import { getOfLayout, placeOnElimination } from '@/data/openFieldLayouts.js';
  *              ДОИГРАЛО до одной стороны. Ушёл по LEAVE — победителя ещё нет, и
  *              строки нет: врать про него нельзя
  *
+ * СУЖЕНИЕ ПОЛЯ — обратный отсчёт перед тем, как граница тронется с места.
+ *   closingIn — сколько секунд осталось (целое, 10..1); null — показывать нечего.
+ *               Показывается только в окно перед началом: до него сужения ещё
+ *               нет, после — граница уже идёт и считать нечего.
+ *
  * ЛИДЕР — магнит поля: одна сторона объявляется сильнейшей, и все идут на неё.
  *   leaderName — позывной стороны-лидера; null, пока короны нет
  *   leaderMine — корона на стороне игрока (тогда вместо позывного другая строка)
@@ -82,6 +87,7 @@ export const openFieldState = reactive({
   leaderName: null,
   leaderMine: false,
   leaderEdge: null,
+  closingIn: null,
 });
 
 // Кто умеет навести камеру на своих. Ставит сцена (только она владеет камерой),
@@ -146,6 +152,8 @@ export function startOpenField(layoutId) {
   // Корона — за бой, а не за заход на арену: «драться снова» выводит новые
   // стороны, и корона прошлого боя на них не переносится.
   clearLeader();
+  // Отсчёт — тоже за бой: у нового боя свои часы с нуля.
+  openFieldState.closingIn = null;
 }
 
 /**
@@ -165,6 +173,7 @@ export function shortOfFighters(layoutId, have) {
   openFieldState.shortBy = Math.max(0, L.perSide - have);
   openFieldState.winnerName = null;
   clearLeader();
+  openFieldState.closingIn = null;
 }
 
 /** Короны нет: ни имени, ни уголка. */
@@ -177,6 +186,20 @@ function clearLeader() {
 /** Сколько сторон ещё дерётся. Сцена зовёт это, когда число изменилось. */
 export function noteSidesLeft(n) {
   openFieldState.sidesLeft = Math.max(0, n | 0);
+}
+
+/**
+ * СКОЛЬКО ДО НАЧАЛА СУЖЕНИЯ. Зовётся сценой каждый кадр — часы боя знает она.
+ *
+ * ⚠️ ПИШЕМ ТОЛЬКО ПРИ ИЗМЕНЕНИИ, по той же причине, что у лидера: это реактивное
+ *    состояние, и одно и то же значение шестьдесят раз в секунду пересчитывало бы
+ *    надписи ни за чем.
+ *
+ * @param {number|null} n целые секунды до начала; null — показывать нечего
+ */
+export function noteClosingIn(n) {
+  const v = n === null || n === undefined ? null : Math.max(0, n | 0);
+  if (openFieldState.closingIn !== v) openFieldState.closingIn = v;
 }
 
 /**
@@ -256,4 +279,5 @@ export function endOpenField() {
   openFieldState.shortBy = 0;
   openFieldState.winnerName = null;
   clearLeader();
+  openFieldState.closingIn = null;
 }

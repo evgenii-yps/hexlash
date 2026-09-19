@@ -96,12 +96,14 @@ import { buildCoverLayout } from '@/data/openFieldCovers.js';
 import { buildCovers } from './buildCovers.js';
 import { createCoverNav } from './coverNav.js';
 import { createLeaderBeams } from './leaderBeam.js';
+import { createFieldShrink } from './fieldShrink.js';
+import { buildFieldBorder } from './fieldBorder.js';
 import {
   getOfLayout, parseOfLayoutId, ofSpawnPos, spawnRingRadius,
 } from '@/data/openFieldLayouts.js';
 import {
   openFieldState, startOpenField, shortOfFighters as ofShortOfFighters,
-  noteSidesLeft, noteLeader, outOfOpenField, finishOpenField, endOpenField,
+  noteSidesLeft, noteClosingIn, noteLeader, outOfOpenField, finishOpenField, endOpenField,
   bindCameraReturn, bindSpectateLeave,
 } from '@/services/openFieldRun.js';
 import { buildBotSide } from '@/services/collapseRun.js';
@@ -245,6 +247,11 @@ let covers = null;
 let coverMesh = null;
 let coverNav = null;
 let leaderBeams = null;
+// СУЖЕНИЕ ПОЛЯ: правило границы (fieldShrink) и её контур на полу (fieldBorder).
+// Оба живут столько же, сколько сцена, и сбрасываются на каждый бой — как и
+// обход. В прочих режимах — null.
+let shrink = null;
+let fieldBorder = null;
 let camPrevSet = false;  // поза прошлого кадра уже снята
 let gesturing = false;   // палец на холсте прямо сейчас
 let sinceTouch = 0;      // секунд тишины: от отпускания и от конца прошлой наводки
@@ -873,6 +880,17 @@ onMounted(() => {
     //     (см. presence выше), и розовый, занятый в этом режиме действием, тут же
     //     достаётся короне. Кто корона — знает поле боя; здесь только показ.
     leaderBeams = createLeaderBeams({ scene, color: pink, groundY: arena.refs.topY });
+    // --- СУЖЕНИЕ ПОЛЯ. Граница трогается с КОЛЬЦА ВЫХОДА, а не с кромки плиты:
+    //     вне кольца лежит только запас до края, драться там всё равно негде.
+    //     Правило и его контур заводятся один раз на сцену и сбрасываются на
+    //     каждый бой — ровно как обход укрытий.
+    //
+    //     ⚠️ Контур НЕ СВЕТИТСЯ. Он матовый и лежит на полу: на этом поле
+    //        светится только луч над короной, и второго свечения не появляется.
+    shrink = createFieldShrink({ startRadius: spawnRingRadius(ofLayout), covers });
+    fieldBorder = buildFieldBorder(arena.refs.topY);
+    fieldBorder.setReducedMotion(reducedMotion);
+    scene.add(fieldBorder.mesh);
   }
   load.stage('arena');
 
@@ -1110,6 +1128,10 @@ onMounted(() => {
     fightActive = false;
     aiPlayer = false;
     aiOpponent = false;
+    // Бой кончился — граница уходит вместе с ним. Оставить её значило бы держать
+    // на полу правило матча, которого больше нет, под панелью итога.
+    fieldBorder?.setVisible(false);
+    noteClosingIn(null);
     for (const u of field.living()) u.f.setAI(false); // победители перестают бить → оседают в стойку
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
@@ -1748,6 +1770,18 @@ onMounted(() => {
     //    оставался в состоянии «для игрока всё», то есть не показывался вовсе, а
     //    место на панели было от прошлого боя.
     if (openFieldMode && !openFieldShort) startOpenField(openFieldLayoutId);
+    // СУЖЕНИЕ — НА КАЖДЫЙ БОЙ С НУЛЯ. «Драться снова» выводит новое поле: блоки,
+    // ушедшие в пол в прошлом матче, обязаны стоять, а обход — снова их видеть.
+    // Сама граница состояния не держит: она считается от времени боя, а оно уже
+    // обнулено выше (clocks.startBout).
+    if (shrink) {
+      shrink.reset();
+      coverMesh?.reset();
+      coverNav?.setAlive(covers);
+      shrink.takeNavDirty();          // состав уже отдан выше — признак гасим здесь
+      fieldBorder?.setVisible(false);
+      noteClosingIn(null);
+    }
     // Досмотр — за бой, а не за заход на арену: новый бой начинается со своими на
     // поле, и камера снова наводится на них, а не на лидера.
     ofSpectate = false;
@@ -2254,6 +2288,36 @@ onMounted(() => {
     // ноль именно здесь.
     coverNav?.pushOut(onPlate);
 
+    // ГРАНИЦА ПОЛЯ — ПОСЛЕДНЕЙ ИЗ ВСЕХ, КТО ПИШЕТ ПОЗИЦИЮ. Их четверо: сам боец,
+    // расталкивание тел, выталкивание из укрытий и вот это. Правило «наружу не
+    // остаёмся» обязано стоять после трёх остальных — иначе любой из них вытолкнул
+    // бы тело обратно за границу, и игрок увидел бы бойца снаружи.
+    //
+    // ⚠️ ГРАНИЦА НЕ РАНИТ. Здесь нет ни строки про урон, и расчёт урона этой
+    //    правкой не тронут: тело снаружи получает сдвиг к середине, и только.
+    if (shrink && fightActive) {
+      const boutT = clocks.elapsed();
+      // Один вызов на кадр: он и тела возвращает, и блоки за границей отправляет
+      // в пол. До 90-й секунды не делает НИЧЕГО — см. причину в fieldShrink.
+      const { radius: R, sink } = shrink.step(onPlate, boutT);
+      // Обход перестаёт видеть ушедший блок — иначе бойцы огибали бы призрак.
+      //
+      // ⚠️ УХОДИТ БЛОК НЕ ОДНИМ МИГОМ. Осуждённый начинает опускаться, но мешать
+      //    перестаёт только когда скрылся в полу: что видно глазу, то и не
+      //    пускает. Разбор — в шапке fieldShrink.js.
+      if (sink.length) coverMesh?.sink(sink);
+      if (shrink.takeNavDirty()) coverNav?.setAlive(shrink.liveCovers());
+      // Контур появляется вместе с обратным отсчётом: это одно предупреждение.
+      fieldBorder.setVisible(shrink.shown(boutT));
+      fieldBorder.set(R);
+      fieldBorder.tick(t);
+      noteClosingIn(shrink.closingIn(boutT));
+    }
+    // ОПУСКАЮЩИЕСЯ БЛОКИ ДВИГАЮТСЯ И ПОСЛЕ КОНЦА БОЯ — иначе блок, которому
+    // осталось полшага, замер бы наполовину в полу под панелью итога. Пусто почти
+    // всегда: внутри стоит выход по «никто не опускается».
+    coverMesh?.tick(frameMs / 1000);
+
     // ПЛАШКИ ЗДОРОВЬЯ: развести по экрану (scene/hpStagger.js). Проход по тем же
     // живым телам и с тем же условием «больше двух» — при двух телах он не
     // выполняется вовсе, и бой один на один считается ровно как считался.
@@ -2412,6 +2476,7 @@ onBeforeUnmount(() => {
   hideFightResult();   // уходим с арены — панель итога уходит с нами
   endOpenField();      // и счётчик сторон открытого поля: считать больше нечего
   coverMesh?.dispose(); coverMesh = null; covers = null; coverNav = null;
+  fieldBorder?.dispose(); fieldBorder = null; shrink = null;
   leaderBeams?.dispose(); leaderBeams = null;
   unbindCameraReturn?.(); // и способ вернуть слежение: камеры, которой он владел, больше нет
   unbindSpectateLeave?.(); // и способ уйти с досмотра: боя, который он останавливал, больше нет
