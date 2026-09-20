@@ -1,10 +1,16 @@
-// gateEmblems.js — ОБЪЁМНЫЕ ЭМБЛЕМЫ ПЯТИ ОСТРОВОВ РЕЖИМА.
+// gateEmblems.js — ОБЪЁМНЫЕ ЭМБЛЕМЫ ШЕСТИ ОСТРОВОВ РЕЖИМА.
 //
 // До них остров режима отличался от соседнего только подписью и цветом ядра, и
 // игрок читал ворота словами. Эмблема отвечает на «что тут за бой» раньше, чем
 // подпись: две фигуры через разлом — это поединок, шесть — команда на команду,
 // цепь — череда боёв, большой с гребнем среди четверых — налёт на вожака, кольцо
-// осколков — выбывание.
+// осколков — выбывание, маяк с расходящимися лучами — открытое поле: сигнал идёт
+// во все стороны разом, и на него сходятся все.
+//
+// ФИГУР У МАЯКА НЕТ ВОВСЕ, и это не упущение. Двадцать сторон нарисовать телами
+// нельзя: на плите ворот они встанут в одно пятно (та же беда, из-за которой у
+// SQUAD фигуры мельче, чем у DUEL). Поэтому открытое поле говорит не составом, а
+// тем, что на этом поле есть: одна точка, к которой идут все.
 //
 // ГЕОМЕТРИЯ ФИГУРЫ ОДНА НА ВСЕ ЭМБЛЕМЫ — та самая, что стоит кольцом учеников на
 // острове FORGE дома (figureGeometry из modePlates). Не похожая, а буквально та
@@ -176,6 +182,57 @@ export const GATE_EMBLEMS = {
     apex: 0.62,       // доля высоты композиции — где висит кристалл
     crystalR: 0.24,
     period: 9.0,      // секунд на оборот кристалла
+  },
+
+  // ── OPENFIELD: маяк, от которого расходятся три луча ──
+  // Все размеры — ДОЛИ ВЫСОТЫ КОМПОЗИЦИИ (H), как у остальных эмблем: плита —
+  // единственная мерка, которая есть у острова, и привязка к ней держит
+  // пропорцию при любом её размере.
+  openfield: {
+    // Профиль башни — пара «радиус, высота» снизу вверх. Одна поверхность на
+    // всю башню: подошва, ствол с сужением, воротник галереи, перехват под
+    // фонарём и крыша. Пять отдельных мешей дали бы пять вызовов отрисовки там,
+    // где хватает одного, а семья эмблем держится на двух-трёх.
+    //
+    // ⚠️ ПЕРЕХВАТ (пара строк с радиусом 0.075) СТОИТ ВНУТРИ ФОНАРЯ и наружу не
+    //    виден: фонарь шире (0.130). Он здесь затем, что точёная поверхность не
+    //    умеет разрыва, а фонарю нужно место — иначе он сидел бы на стволе
+    //    наростом, а не стоял бы в проёме галереи.
+    profile: [
+      [0.300, 0.000], [0.235, 0.045], [0.150, 0.100],
+      [0.100, 0.600], [0.175, 0.645], [0.175, 0.685],
+      [0.075, 0.700], [0.075, 0.860],
+      [0.165, 0.880], [0.000, 1.000],
+    ],
+    sides: 6,          // столько же граней, сколько у звеньев цепи: мир огранён
+
+    // Фонарь — светящееся ТЕЛО (форма и свет одним предметом), как гребень
+    // вожака и кристалл турнира. Он и есть единственное свечение эмблемы.
+    lampR: 0.130,
+    lampY0: 0.695,
+    lampY1: 0.870,
+
+    // Лучи. Три, а не один и не два, и это замер, а не вкус. Один луч половину
+    // оборота смотрит от зрителя и эмблема на это время остаётся без движения;
+    // два лежат на одной прямой и уходят за кромку вместе. Три расходятся на
+    // 120°, и на экране их всегда видно минимум два.
+    //
+    // ЛУЧИ ЛЕЖАТ ПЛАШМЯ, в горизонтальной плоскости фонаря. Ворота смотрят на
+    // острова сверху-сбоку, поэтому плоский луч виден всегда; поставь его на
+    // ребро — и он повторил бы беду цепи, которая с фронта складывалась в
+    // пятно.
+    //
+    // ⚠️ ДЛИНА МЕРИТСЯ ПО КОРОТКОЙ СТОРОНЕ ПЛИТЫ (halfD), А НЕ ПО ДЛИННОЙ. Луч
+    //    ходит по кругу, а плита не квадратная (2.2 × 1.7): отмерь его по
+    //    ширине — и полоборота спустя остриё висит в воздухе за передней
+    //    кромкой. Кольцо осколков у турнира решает то же самое эллипсом (rx/rz),
+    //    но там кольцо стоит на месте, а здесь предмет вращается, и эллипс
+    //    пришлось бы пересчитывать каждый кадр.
+    beams: 3,
+    beamNear: 0.18,    // где луч начинается, доля ПОЛУГЛУБИНЫ плиты
+    beamFar: 0.86,     // где кончается остриём — не доходя до кромки
+    beamHalfW: 0.11,   // полуширина у фонаря; к острию сходится в точку
+    period: 16.0,      // секунд на оборот — медленнее всех: маяк не торопится
   },
 };
 
@@ -514,10 +571,89 @@ function buildCollapseEmblem({ color, topY, H }) {
   return { group, top: apexY + c.crystalR, tick, still, dispose };
 }
 
+// ───────────────────────────── OPENFIELD ─────────────────────────────
+// Маяк: гранёная башня, светящийся фонарь под крышей и три луча, лежащие плашмя
+// и медленно обходящие поле. Свечение — фонарь и его лучи: это один свет, а не
+// два (луч — то, что фонарь испускает), и другого света у эмблемы нет.
+function buildOpenFieldEmblem({ color, halfD, topY, H }) {
+  const o = GATE_EMBLEMS;
+  const f = o.openfield;
+  const group = new THREE.Group();
+
+  // — башня одной точёной поверхностью —
+  const pts = f.profile.map(([r, y]) => new THREE.Vector2(r * H, y * H));
+  const towerGeo = new THREE.LatheGeometry(pts, f.sides);
+  const towerMat = matteMat(o.body);
+  const tower = new THREE.Mesh(towerGeo, towerMat);
+  tower.position.y = topY;
+  group.add(tower);
+
+  // — фонарь: форма и свет одним предметом —
+  const lampH = (f.lampY1 - f.lampY0) * H;
+  const lampGeo = new THREE.CylinderGeometry(f.lampR * H, f.lampR * H, lampH, f.sides);
+  const lampMat = litBodyMat(color);
+  const lampBase = lampMat.color.clone();
+  const lamp = new THREE.Mesh(lampGeo, lampMat);
+  lamp.position.y = (f.lampY0 + f.lampY1) / 2 * H;
+
+  // — лучи: треугольник остриём наружу, полоса поперёк —
+  // Остриё, а не обрубленный конец: у луча нет места, где он кончается, и
+  // искать его глазу не приходится. Мягкость краям даёт та же полоса, которой
+  // светится разлом у DUEL, — цвет несёт она.
+  const near = f.beamNear * halfD;
+  const far = f.beamFar * halfD;
+  const w = f.beamHalfW * halfD;
+  const beamGeo = new THREE.BufferGeometry();
+  beamGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+    near, 0, -w,
+    near, 0, w,
+    far, 0, 0,
+  ], 3));
+  // Полоса ложится ПОПЕРЁК луча: у неё горячая середина и прозрачные края.
+  beamGeo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 0, 1, 1, 0.5], 2));
+  const bandTex = makeHaloBandTexture(color);
+  const beamMat = glowMat(0xffffff, bandTex);
+  const beams = new THREE.InstancedMesh(beamGeo, beamMat, f.beams);
+  beams.frustumCulled = false;
+  for (let i = 0; i < f.beams; i++) {
+    _q.setFromEuler(_e.set(0, (i / f.beams) * Math.PI * 2, 0));
+    _p.set(0, 0, 0);
+    _s.setScalar(1);
+    beams.setMatrixAt(i, _m.compose(_p, _q, _s));
+  }
+  beams.instanceMatrix.needsUpdate = true;
+
+  // Фонарь и лучи ходят ОДНИМ предметом: луч — это то, что светит фонарь, и
+  // разъехаться они не могут.
+  const spin = new THREE.Group();
+  spin.position.y = topY;
+  spin.add(lamp);
+  spin.add(beams);
+  beams.position.y = lamp.position.y;
+  group.add(spin);
+
+  const w2 = (Math.PI * 2) / f.period;
+  const tick = (t, lit, level) => {
+    towerMat.color.setHex(o.body).multiplyScalar(level);
+    lampMat.color.copy(lampBase).multiplyScalar(level);
+    lampMat.emissiveIntensity = (o.emitRest + (o.emitLit - o.emitRest) * lit) * level;
+    beamMat.opacity = (o.glowRest + o.glowLit * lit) * level;
+    if (t !== null) spin.rotation.y = t * w2;
+  };
+  const still = () => { spin.rotation.y = 0; };
+  const dispose = () => {
+    towerGeo.dispose(); towerMat.dispose();
+    lampGeo.dispose(); lampMat.dispose();
+    beamGeo.dispose(); beamMat.dispose(); bandTex.dispose(); beams.dispose();
+  };
+  // Верх — конёк крыши: выше маяка ничего не стоит.
+  return { group, top: topY + H, tick, still, dispose };
+}
+
 /**
  * Собрать эмблему острова.
  *
- * @param {string} kind  'duel' | 'squad' | 'chain' | 'raid' | 'collapse'
+ * @param {string} kind  'duel' | 'squad' | 'chain' | 'raid' | 'collapse' | 'openfield'
  * @param {object} p
  *   color  — цвет режима (он же цвет свечения)
  *   halfW / halfD — полуразмеры плиты
@@ -534,5 +670,6 @@ export function buildGateEmblem(kind, p) {
   if (kind === 'chain') return buildChainEmblem(args);
   if (kind === 'raid') return buildRaidEmblem(args);
   if (kind === 'collapse') return buildCollapseEmblem(args);
+  if (kind === 'openfield') return buildOpenFieldEmblem(args);
   return null;
 }
