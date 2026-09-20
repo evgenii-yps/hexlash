@@ -190,6 +190,7 @@ export default {
       chain: "3 fights in a row. HP carries over. Lose once — the run is over.",
       raid: "3 allies join you. Bring down the boss.",
       collapse: "Win every round to take the tournament. Lose once — you're out.",
+      openfield: "Twenty sides enter one field. No rounds, no pairs — last side standing wins.",
     },
     // Командный бой: сколько бойцов с каждой стороны. Переключатель стоит только
     // в SQUAD — у дуэли выбора нет.

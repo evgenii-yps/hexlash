@@ -26,6 +26,7 @@
 //
 // Экспортирует: OPEN_FIELD_NAME, OPEN_FIELD_LAYOUTS, OF_LAYOUT_IDS,
 //               DEFAULT_OF_LAYOUT_ID, getOfLayout, parseOfLayoutId,
+//               ofLayoutByPerSide, ofLayoutNameByPerSide,
 //               ofBodyCount, ofSpawnPos, placeOnElimination.
 
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
@@ -37,10 +38,10 @@ import { COMBAT_BALANCE } from '@/data/combatBalance.js';
  * режима (`openfield`) — внутренний, он в адресе и в коде, и переименование
  * подписи его не трогает.
  *
- * ⚠️ РЕЖИМА НЕТ В ТАБЛИЦЕ РЕЖИМОВ (data/arenaModes.js) НАМЕРЕННО. Всё, что там
- *    лежит, ворота показывают островом; открытое поле до работы «остров в
- *    воротах» игроку не видно и живёт только за служебным признаком. Заведи его
- *    там раньше времени — и в воротах появится дверь в незаконченный режим.
+ * ⚠️ ТАБЛИЦА РЕЖИМОВ БЕРЁТ ИМЯ ОТСЮДА. 20.09.2026 у открытого поля появился свой
+ *    остров в воротах, и `data/arenaModes.js` импортирует эту строку, а не
+ *    переписывает её к себе. Два места, где живёт одно имя, разошлись бы на
+ *    первой же правке — а имя ещё будет меняться (оно рабочее).
  */
 export const OPEN_FIELD_NAME = 'HUNT';
 
@@ -85,6 +86,22 @@ export function parseOfLayoutId(raw) {
   if (raw === undefined || raw === null || raw === '') return null;
   const v = String(raw).toLowerCase();
   return OF_LAYOUT_IDS.includes(v) ? v : DEFAULT_OF_LAYOUT_ID;
+}
+
+/**
+ * Раскладка по РАЗМЕРУ СТОРОНЫ. Переключатель в воротах выбирает число бойцов —
+ * 1, 2 или 4, — и это число и есть `perSide`. Второго списка соответствий нет:
+ * он разошёлся бы с таблицей выше при первой же правке.
+ * @param {number} n сколько бойцов в стороне
+ */
+export function ofLayoutByPerSide(n) {
+  return OPEN_FIELD_LAYOUTS.find((l) => l.perSide === n)
+    || OPEN_FIELD_LAYOUTS.find((l) => l.id === DEFAULT_OF_LAYOUT_ID);
+}
+
+/** Подпись раскладки по размеру стороны — её показывает переключатель в воротах. */
+export function ofLayoutNameByPerSide(n) {
+  return ofLayoutByPerSide(n).name;
 }
 
 /** Сколько тел на поле в этой раскладке. Считается, не хранится — см. шапку. */

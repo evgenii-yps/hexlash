@@ -164,6 +164,7 @@ import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import { ARENA_MODES, defaultSizeFor } from '@/data/arenaModes.js';
 import { layoutNameByPerSide } from '@/data/collapseLayouts.js';
+import { ofLayoutByPerSide, ofLayoutNameByPerSide } from '@/data/openFieldLayouts.js';
 import ArenaGateScene from '@/scene/ArenaGateScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import RunInterrupted from '@/components/chain/RunInterrupted.vue';
@@ -244,20 +245,26 @@ const shortBy = computed(() => Math.max(0, size.value - fighters.value.length));
 // значило бы переучивать без причины. Трём новым островам цвета взяты из
 // палитры ядер (tokens.css, --core-*): своих заводить нельзя.
 //
-// Оранжевый ядра RAIDER (#FFA526) НЕ ВЗЯТ ни для одного из трёх, хотя он в
-// палитре: он почти неотличим от золота SQUAD (#FFB21D), и два таких острова в
-// одном кадре читались бы как один режим в двух экземплярах. Оставшихся трёх
-// цветов на три острова хватает ровно, и повторять ничего не пришлось.
+// ОРАНЖЕВЫЙ RAIDER (#FFA526) БЫЛ ОТЛОЖЕН, И ТЕПЕРЬ ВЗЯТ. 17.09.2026 его не брали
+// потому, что он почти неотличим от золота SQUAD (#FFB21D), и два таких острова
+// в одном кадре читались бы как один режим в двух экземплярах. Условие было
+// «нигде не рядом» — и оно выполняется: на шести островах золото стоит в дальнем
+// ряду (лёжа) или в первой паре (стоя), а маяк — в противоположном углу. Ни в
+// одной из двух раскладок они не оказываются соседями ни по ряду, ни по столбцу.
+// Это последний цвет палитры ядер; седьмому острову брать было бы нечего, и
+// заводить новый цвет ради него нельзя — палитра закрыта.
 //
-// Порядок соседства проверен по списку: бирюза стоит рядом с золотом, красный
-// рядом с бирюзой, фиолетовый рядом с красным — соседи нигде не совпадают и
-// нигде не близки по тону.
+// Порядок соседства проверен по обеим раскладкам: лёжа ряды «бирюза-золото-
+// бирюза» и «красный-фиолетовый-оранжевый», стоя пары «бирюза-золото»,
+// «бирюза-красный», «фиолетовый-оранжевый». Соседи нигде не совпадают и нигде не
+// близки по тону.
 const MODE_CORE = {
-  duel:     '#4DD9FF',   // холодный — как стоял
-  squad:    '#FFB21D',   // тёплый — как стоял
-  chain:    '#2ED6B0',   // --core-skala   (BULWARK)
-  raid:     '#FF3344',   // --core-natisk  (ONSLAUGHT)
-  collapse: '#9461FF',   // --core-zasada  (AMBUSH)
+  duel:      '#4DD9FF',   // холодный — как стоял
+  squad:     '#FFB21D',   // тёплый — как стоял
+  chain:     '#2ED6B0',   // --core-skala   (BULWARK)
+  raid:      '#FF3344',   // --core-natisk  (ONSLAUGHT)
+  collapse:  '#9461FF',   // --core-zasada  (AMBUSH)
+  openfield: '#FFA526',   // --core-nalet   (RAIDER)
 };
 
 const modeItems = computed(() => ARENA_MODES.map((m) => ({
@@ -317,6 +324,11 @@ function tagOf(id) { return tags.items[id] || EMPTY_TAG; }
 // имён разошёлся бы с сеткой турнира при первой правке.
 function sizeLabel(n) {
   if (modeId.value === 'collapse') return layoutNameByPerSide(n);
+  // У открытого поля имена те же — SOLO / DUO / QUAD, — но ТАБЛИЦА СВОЯ: чисел
+  // сторон там другие (20 / 10 / 5 против 16 / 8 / 4). Спросить имя у турнира
+  // значило бы связать два режима так, что правка одного молча поехала бы в
+  // другой.
+  if (modeId.value === 'openfield') return ofLayoutNameByPerSide(n);
   return interpolate(t.value.gate.sizeLabel, { n });
 }
 
@@ -397,7 +409,28 @@ function pickSize(n) {
 
 function onRefused() {}
 
-function toArena() { router.push('/play/arena'); }
+// ДОРОГА В БОЙ. Одна на все режимы — `/play/arena`; что за бой, арена читает из
+// сейфа, куда ворота положили режим и размер состава.
+//
+// ⚠️ У ОТКРЫТОГО ПОЛЯ РАСКЛАДКА ЕДЕТ ОТДЕЛЬНО, В АДРЕСЕ. Арена умеет читать её
+// оттуда с самого появления режима (`?openfield=solo|duo|quad`), и этого хватает:
+// состав игрока она и так берёт из сейфа, как у всех. Причина ровно одна —
+// `src/scene/ArenaScene.vue` в списке защищённых файлов, и выбор из ворот там
+// пришлось бы прописывать внутри. Правило проекта в таком случае — управлять
+// снаружи, а не править внутри; признак в адресе и есть эта ручка снаружи.
+//
+// Числа не переписываются: раскладку выбирает тот же размер состава (1 / 2 / 4),
+// что лежит в сейфе, и превращает его в ключ та же таблица, что строит поле.
+//
+// Если владелец разрешит вскрыть арену, здесь останется голый `/play/arena`, а
+// там появятся четыре строки по образцу турнира (`gateMode === 'collapse'`).
+function toArena() {
+  if (modeId.value === 'openfield') {
+    router.push({ path: '/play/arena', query: { openfield: ofLayoutByPerSide(size.value).id } });
+    return;
+  }
+  router.push('/play/arena');
+}
 
 async function goBack() {
   // Назад с выбора бойцов — к выбору режима, а не сразу из ворот: игрок сделал
