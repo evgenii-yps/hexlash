@@ -51,6 +51,11 @@
          смотреть. Показывается только на открытом поле: замерять двадцать тел
          больше негде, а в бою один на один это лишняя надпись поверх экрана. -->
     <div v-if="DEV_MODE && openFieldMode" class="arena-fps">{{ fpsReadout }}</div>
+    <!-- КАМЕРА ОТЦЕПЛЕНА. Метка нужна затем, что отличить свободный полёт от
+         обычного кадра по картинке нельзя, а забытый полёт на показе выглядит
+         как сломанная камера. Приглушённая и мелкая НАМЕРЕННО: её увидят на
+         показе инвестору, и ярким служебным ярлыком там светить нечем. -->
+    <div v-if="freeFlying" class="arena-freecam">FREE CAM · ESC</div>
     <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
     <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ rdReadout }}<br>{{ mdlReadout }}<br>{{ nkReadout }}</div>
   </div>
@@ -111,6 +116,8 @@ import { showFightResult, hideFightResult, bindFightAgain } from '@/services/fig
 import { useRouter, useRoute } from 'vue-router';
 import { t, interpolate } from '@/locales/index.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
+import { FREE_CAM_MODE } from '@/services/freeCamMode.js';
+import { createFreeCam } from './freeCam.js';
 
 // Model-brain request (hybrid intention layer). Injected into each fighter; it
 // POSTs the WORD context to the backend on a fight break and resolves to
@@ -155,6 +162,10 @@ const postShowcase = (phase) => {
 // toggle (the only way back during the SIG auto-cycle). Без служебного режима и
 // в режиме показа остаётся false навсегда → панель и телеметрия не создаются.
 const panelVisible = ref(DEV_MODE && !showcase);
+// Летит ли камера прямо сейчас — по этому признаку показывается метка. Пишется
+// в кадре, поэтому меняется только при СМЕНЕ состояния: запись в ref каждый
+// кадр будила бы перерисовку разметки шестьдесят раз в секунду.
+const freeFlying = ref(false);
 // Dev readout — both fighters' stamina (силы) + charge (заряд), refreshed live
 // (throttled) in the loop so the spend / recover can be watched. Temporary.
 const staReadout = ref('STA  P —  ·  O —');
@@ -221,6 +232,10 @@ const sigRight = ref('raider');
 const neutralColor = ref(false);
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
+// СВОБОДНАЯ КАМЕРА — служебный режиссёрский полёт (scene/freeCam.js). Заводится
+// ТОЛЬКО при взведённом ?freecam=1; без признака остаётся null, и ни один
+// обработчик клавиш не вешается. Бой она не трогает: только смотрит.
+let freeCam = null;
 // ПОЛЕ БОЯ — кто на плите, кто кому враг, кончился ли бой (см. battleField.js).
 // `fighter` и `opponent` выше остались: на них висит вся служебная панель, и они
 // показывают ПЕРВОГО бойца игрока и ПЕРВОГО чужого. В бою один на один это те же
@@ -1134,6 +1149,10 @@ onMounted(() => {
     noteClosingIn(null);
     for (const u of field.living()) u.f.setAI(false); // победители перестают бить → оседают в стойку
     if (DEV_MODE && !showcase) panelVisible.value = true; // bout over → bring the dev panel back
+    // Бой кончился, пока камера в полёте: отпускаем её сами. Итог боя игрок
+    // должен увидеть обычным кадром, а не с высоты, и жать Esc ради этого
+    // не должен.
+    freeCam?.release();
     postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
   };
 
@@ -1895,6 +1914,21 @@ onMounted(() => {
   controls.maxPolarAngle = 1.45; // ~83°, never dip under the slab
   controls.update();
 
+  // СВОБОДНАЯ КАМЕРА. Коробку, за которую её не выпускать, меряем ПОЛЕМ, а не
+  // числом: у дуэли плита маленькая, у открытого поля огромная, и одно число на
+  // обоих дало бы либо клетку, либо пустоту. Потолок высоты камера считает сама
+  // от этой же полуширины и от пропорций кадра.
+  //
+  // `rest` — РАБОЧЕЕ удаление режима, то, с которого сцена обычно смотрит бой.
+  // Оно нужно только возврату по Esc: без него «законной» позой оказывался
+  // дальний предел орбиты, а на открытом поле он больше сотни единиц.
+  if (FREE_CAM_MODE) {
+    freeCam = createFreeCam(camera, controls, renderer.domElement, {
+      span: openFieldMode ? ofRingR + COMBAT_BALANCE.openField.edgeMargin : 8,
+      rest: openFieldMode ? COMBAT_BALANCE.openField.camMaxDistance : 10,
+    });
+  }
+
   if (openFieldMode) {
     // ДАЛЬНЯЯ ПЛОСКОСТЬ ОТСЕЧЕНИЯ — ТОЖЕ ОТ ПОЛЯ, А НЕ ЧИСЛОМ. Арена видит на сто
     // единиц: этого хватало плите 6 на 4 и не хватает полю, отодвинувшись от
@@ -2255,8 +2289,13 @@ onMounted(() => {
     //    вокруг нашего вызова выходит нулевой. Замер это и показал: отъезд с 12 до
     //    119 при наибольшей разнице 1.6e-14, то есть тяга к середине не сработала
     //    ни разу и поле уезжало за кромку.
-    controls.update();
-    const inputMoved = camPrevSet
+    // СВОБОДНАЯ КАМЕРА ИДЁТ ПЕРВОЙ И, ПОКА ЛЕТИТ, ЗАБИРАЕТ КАДР СЕБЕ. Орбиту в
+    // это время не обновляем вовсе: она выправила бы камеру под свой коридор,
+    // то есть отняла бы у полёта и высоту, и наклон.
+    const flying = freeCam ? freeCam.tick(frameMs / 1000) : false;
+    if (freeFlying.value !== flying) freeFlying.value = flying;
+    if (!flying) controls.update();
+    const inputMoved = !flying && camPrevSet
       && (camera.position.distanceTo(_camWas) > 1e-4 || controls.target.distanceTo(_tgtWas) > 1e-4);
     // Камера: не уехал ли взгляд с поля и туман — за отъездом. Тяга к середине —
     // только пока камера едет от ввода (см. её причину). Всё это — только на
@@ -2347,7 +2386,12 @@ onMounted(() => {
     if (leaderBeams) noteLeaderFrame(onPlate, frameMs / 1000);
     // КАДР. На открытом поле камера СТОИТ и наводится по случаю (aimTick), в пяти
     // прежних режимах — подъезжает к живым каждый кадр, как было принято глазами.
-    if (openFieldMode) aimTick(frameMs / 1000, onPlate);
+    // ⚠️ ПОКА КАМЕРА В ПОЛЁТЕ, СЛЕЖЕНИЕ МОЛЧИТ — ОБА ЕГО ВИДА. Иначе сцена
+    //    тянула бы камеру к бойцам, а игрок от них, и кадр дрожал бы между
+    //    двумя хозяевами. Возврат из полёта сам приведёт камеру в законную позу,
+    //    а дальше её подхватит это же слежение — то, которое у режима своё.
+    if (flying) { /* камерой правит игрок */ }
+    else if (openFieldMode) aimTick(frameMs / 1000, onPlate);
     else frameLiving(onPlate);
     // Запомнить, какой мы оставили камеру: со следующим кадром эта поза станет
     // мерой того, сдвинул ли её игрок.
@@ -2484,6 +2528,7 @@ onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
+  freeCam?.dispose(); freeCam = null; // и клавиши полёта: зажатых не остаётся
   if (onKeydown) window.removeEventListener('keydown', onKeydown);
   if (renderer) renderer.setAnimationLoop(null);
   if (controls) controls.dispose();
@@ -2552,6 +2597,26 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.6);
   background: rgba(8, 10, 18, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+/* МЕТКА СВОБОДНОЙ КАМЕРЫ. Семья та же, что у строки цены кадра: моноширинный,
+   мелкий, приглушённый, на тёмной подложке. Своего цвета не берёт — ни розового,
+   ни какого-либо акцента: розовый в игре принадлежит главному действию, а это
+   служебная метка, которую будут видеть на показе. Угол ПРАВЫЙ ВЕРХНИЙ: левый
+   нижний занят ценой кадра, правый нижний — служебными кнопками, а верх в бою
+   свободен. */
+.arena-freecam {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  pointer-events: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(8, 10, 18, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   padding: 4px 8px;
 }
