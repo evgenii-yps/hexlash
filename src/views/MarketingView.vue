@@ -4,8 +4,6 @@
       <!-- fixed background (shared with the auth screen) -->
       <LandingBackground
         :accent="accentRgb"
-        :intensity="config.intensity"
-        :shape="config.shape"
         :scanlines="config.scanlines"
         :grain="config.grain"
       />
@@ -45,10 +43,10 @@ const rootRef = ref(null);
 
 // Static config — ported from the reference TWEAK_DEFAULTS (app.jsx). The
 // design tool's live Tweaks panel is intentionally NOT ported (per the brief).
+// intensity + shape ушли вместе с холстом ромбов (20.09.2026): у волны нет
+// ни силы узора, ни выбора фигуры — она задана геометрией в LandingBackground.
 const config = {
   accent: '#ff0069',
-  intensity: 8,
-  shape: 'shard',
   grain: true,
   scanlines: true,
 };

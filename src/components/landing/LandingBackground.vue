@@ -1,13 +1,60 @@
 <template>
-  <!-- Shared landing background: opaque base wash + mouse-reactive HexGrid canvas
-       + ambient pink glow (breathe) + vignette + optional scanlines/grain.
-       Extracted from MarketingView's inline .bg-fixed so the auth screen reuses
-       the exact same look + behaviour. Accent is a prop (landing 255,0,105;
-       auth 255,0,105 = #FF0069) — drives both the canvas and the glow. -->
+  <!-- Общий фон лендинга и экрана входа. Рисунок — «чистая волна»: семь
+       вложенных шестиугольных колец из одной точки за словом HEXLASH, плюс
+       едва различимая сотовая фактура в центре.
+
+       ⚠️ ВТОРОЙ ЭКЗЕМПЛЯР РИСУНКА ЖИВЁТ В public/deckinvestors/index.html
+       (блок «ВОЛНА»). Менять парой. Общего источника быть не может: дека —
+       статическая страница вне сборки, а общий файл означал бы новый сетевой
+       запрос, который для обеих страниц запрещён.
+
+       ⚠️ НИЧЕГО НЕ ДВИЖЕТСЯ. Здесь были: реакция узора на курсор, дыхание
+       подсветки и летящие частицы — сняты 20.09.2026 по решению владельца.
+       Волна — рисунок с центром; слой, который едет за курсором, превращает
+       её в желе. Полосы и зерно оставлены — это плёночная фактура, а не узор.
+       Новые петли заводить нельзя. -->
   <div class="lp-bg" :style="bgVars" aria-hidden="true">
     <div class="lp-bg__base"></div>
-    <HexGrid :accent="accent" :intensity="intensity" :shape="shape" />
-    <div class="lp-bg__glow"></div>
+
+    <!-- Сила розового во всей волне — одним числом (--lp-wave-strength).
+         Лендинг 1, дека 0.5. -->
+    <div class="lp-bg__wave">
+      <!-- Сотовая фактура. Своя svg без viewBox: единицы = точки экрана,
+           поэтому сторона ячейки ровно 24 точки на любой ширине. Маска
+           гасит её от центра волны к краям. -->
+      <svg class="lp-bg__comb" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="lpWaveComb" width="41.57" height="72" patternUnits="userSpaceOnUse">
+            <path
+              d="M0 0V12L20.78 24L41.57 12 M20.78 24V48 M0 72V60L20.78 48L41.57 60"
+              fill="none"
+              stroke="currentColor"
+              stroke-opacity=".5"
+              stroke-width="1"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#lpWaveComb)" />
+      </svg>
+
+      <!-- Семь колец. viewBox в долях базового радиуса R (R = 100 единиц),
+           центр 850,850. Толщина линии не растёт вместе с радиусом —
+           за это отвечает vector-effect. -->
+      <svg class="lp-bg__rings" viewBox="0 0 1700 1700" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="currentColor" vector-effect="non-scaling-stroke">
+          <polygon points="850,750 763.4,800 763.4,900 850,950 936.6,900 936.6,800" stroke-opacity=".34" stroke-width="2" vector-effect="non-scaling-stroke"/>
+          <polygon points="850,677 700.18,763.5 700.18,936.5 850,1023 999.82,936.5 999.82,763.5" stroke-opacity=".26" stroke-width="1.8" vector-effect="non-scaling-stroke"/>
+          <polygon points="850,591 625.7,720.5 625.7,979.5 850,1109 1074.3,979.5 1074.3,720.5" stroke-opacity=".2" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+          <polygon points="850,486 534.77,668 534.77,1032 850,1214 1165.23,1032 1165.23,668" stroke-opacity=".15" stroke-width="1.4" vector-effect="non-scaling-stroke"/>
+          <polygon points="850,355 421.32,602.5 421.32,1097.5 850,1345 1278.68,1097.5 1278.68,602.5" stroke-opacity=".11" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+          <polygon points="850,195 282.75,522.5 282.75,1177.5 850,1505 1417.25,1177.5 1417.25,522.5" stroke-opacity=".08" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+          <polygon points="850,5 118.21,427.5 118.21,1272.5 850,1695 1581.79,1272.5 1581.79,427.5" stroke-opacity=".055" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        </g>
+      </svg>
+
+      <div class="lp-bg__glow"></div>
+    </div>
+
     <div class="lp-bg__vignette"></div>
     <div v-if="scanlines" class="lp-bg__scanlines"></div>
     <div v-if="grain" class="lp-bg__grain"></div>
@@ -16,17 +63,14 @@
 
 <script setup>
 import { computed } from 'vue';
-import HexGrid from './HexGrid.vue';
 
 const props = defineProps({
   accent: { type: Array, default: () => [255, 0, 105] },
-  intensity: { type: Number, default: 8 },
-  shape: { type: String, default: 'shard' },
   scanlines: { type: Boolean, default: true },
   grain: { type: Boolean, default: true },
 });
 
-// One accent → both the canvas (prop) and the CSS glow (custom property).
+// Один акцент → и линии волны, и подсветка.
 const bgVars = computed(() => ({ '--lp-bg-accent': props.accent.join(', ') }));
 </script>
 
@@ -36,45 +80,82 @@ const bgVars = computed(() => ({ '--lp-bg-accent': props.accent.join(', ') }));
   top: 0;
   left: 0;
   right: 0;
-  /* Pin to the LARGE viewport height (100lvh) rather than inset:0 / 100vh, which
-     resolve against the *dynamic* viewport. On iOS Safari + Android Chrome the
-     URL bar shows/hides during scroll, changing that height and making the
-     background (and its canvas) resize + visibly jump on every scroll. 100lvh is
-     a stable value that ignores the URL bar. 100vh is the fallback for browsers
-     without lvh support. */
+  /* Высота — 100lvh, а не inset:0 / 100vh. На телефоне при прокрутке прячется
+     и показывается адресная строка, от этого «живая» высота экрана меняется, и
+     закреплённый слой дёргается вместе с ней. 100lvh эту строку игнорирует;
+     100vh — запасной вариант для браузеров постарше. */
   height: 100vh;
   height: 100lvh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  --lp-bg-base: var(--void);
+
+  /* ⚠️ ГЕОМЕТРИЯ ВОЛНЫ ПРАВИТСЯ ЗДЕСЬ.
+     --lp-wave-r — базовый радиус R: 8.5% ширины окна, но не меньше 88 точек.
+     --lp-wave-cy — центр волны по вертикали (46% высоты первого экрана).
+     --lp-wave-strength — сила розового во всей волне одним числом. */
+  --lp-wave-r: max(8.5vw, 88px);
+  --lp-wave-cy: 46%;
+  --lp-wave-strength: 1;
 }
+
+/* Ровная подложка. Прежняя размывка carbon→void снята: волна задаёт
+   глубину сама, а второй градиент под ней её только мылил. */
 .lp-bg__base {
   position: absolute;
   inset: 0;
-  background: radial-gradient(140% 90% at 50% 30%, var(--carbon) 0%, var(--carbon) 46%, var(--lp-bg-base) 80%);
+  background: var(--void);
 }
+
+.lp-bg__wave {
+  position: absolute;
+  inset: 0;
+  color: rgb(var(--lp-bg-accent));
+  opacity: var(--lp-wave-strength);
+}
+
+.lp-bg__comb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  -webkit-mask-image: radial-gradient(circle at 50% var(--lp-wave-cy),
+    rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .12) 55%, rgba(0, 0, 0, 0) 100%);
+  mask-image: radial-gradient(circle at 50% var(--lp-wave-cy),
+    rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .12) 55%, rgba(0, 0, 0, 0) 100%);
+}
+
+/* Коробка колец — квадрат 17R, чтобы крайнее кольцо (8.45R) поместилось
+   целиком. Центр коробки ставится на центр волны. */
+.lp-bg__rings {
+  position: absolute;
+  left: 50%;
+  top: var(--lp-wave-cy);
+  width: calc(var(--lp-wave-r) * 17);
+  height: calc(var(--lp-wave-r) * 17);
+  transform: translate(-50%, -50%);
+  display: block;
+  overflow: visible;
+}
+
 .lp-bg__glow {
   position: absolute;
   left: 50%;
-  top: 42%;
-  width: min(60vw, 820px);
-  height: min(60vw, 820px);
+  top: 44%;
+  width: 52%;
+  height: 44%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(var(--lp-bg-accent), 0.14) 0%, rgba(var(--lp-bg-accent), 0.04) 40%, transparent 68%);
-  filter: blur(8px);
-  animation: lpbg-breathe 6s ease-in-out infinite;
+  background: radial-gradient(closest-side, rgba(var(--lp-bg-accent), .16) 0%, rgba(var(--lp-bg-accent), 0) 72%);
 }
-@keyframes lpbg-breathe {
-  0%, 100% { opacity: .55; transform: translate(-50%, -50%) scale(.92); }
-  50% { opacity: .9; transform: translate(-50%, -50%) scale(1.06); }
-}
+
 .lp-bg__vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 50% 50%, transparent 50%, color-mix(in srgb, var(--void) 55%, transparent) 100%);
-  box-shadow: inset 0 0 220px 60px color-mix(in srgb, var(--void) 70%, transparent);
+  background: radial-gradient(120% 100% at 50% 48%,
+    rgba(8, 8, 10, 0) 36%, rgba(8, 8, 10, .9) 100%);
 }
+
 .lp-bg__scanlines {
   position: absolute;
   inset: 0;
