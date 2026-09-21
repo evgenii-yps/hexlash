@@ -260,10 +260,10 @@
            «r, g, b» плавно не меняется, а два слоя — меняются. -->
       <div class="cp-wave" :class="`cp-wave--${surface}`" ref="waveEl">
         <div class="cp-wave__layer" :style="{ opacity: layerAOn ? 1 : 0 }">
-          <LandingBackground :accent="accentA" :grain="false" />
+          <LandingBackground :accent="accentA" :grain="false" :with-core="false" />
         </div>
         <div class="cp-wave__layer" :style="{ opacity: layerAOn ? 0 : 1 }">
-          <LandingBackground :accent="accentB" :grain="false" />
+          <LandingBackground :accent="accentB" :grain="false" :with-core="false" />
         </div>
         <!-- Ядро стоит ровно в первом кольце волны: его контур И ЕСТЬ это
              кольцо, волны расходятся прямо от края ядра. Размер снимается с
@@ -314,7 +314,7 @@ import LandingBackground from '@/components/landing/LandingBackground.vue';
 import { HexlashMark } from '@/components/brand/hexlashMark.js';
 import { CORES, CRYSTALS, RESOURCE } from '@/data/upgradeData.js';
 import { CORE_STYLES, coreStyleInfo } from '@/data/coreStyles.js';
-import { coreHue, coreRgb } from '@/data/sceneTokens.js';
+import { accentRgb } from '@/data/coreCycle.js';
 
 /* ── Страница закрыта от поисковиков ───────────────────────────────────
    Тегом, а не robots.txt: строка запрета в robots.txt публична и работает
@@ -401,24 +401,16 @@ const BG_SECTIONS = [
 const activeIndex = ref(0);
 const activeCore = computed(() => BG_SECTIONS[activeIndex.value]?.core ?? null);
 
-/* Акцент читается из файла токенов — второго объявления цвета не заводим. */
-const PINK_FALLBACK = [255, 0, 105];
-function accentFor(coreId) {
-  try {
-    if (!coreId) {
-      const raw = getComputedStyle(document.documentElement).getPropertyValue('--pink-rgb').trim();
-      return raw ? raw.split(',').map((n) => Number(n.trim())) : PINK_FALLBACK;
-    }
-    return coreRgb(coreHue(coreId)).split(',').map((n) => Number(n.trim()));
-  } catch (e) {
-    return PINK_FALLBACK;
-  }
-}
+/* Акцент читается из файла токенов — второго объявления цвета не заводим.
+   Запасного числа здесь тоже нет: запасное число и есть второе объявление,
+   и именно так цвета в проекте однажды разъехались. Не прочиталось — падаем
+   громко (accentRgb бросает). */
+const accentFor = accentRgb;
 
 /* Два слоя волны — перетекание по прозрачности. */
 const layerAOn = ref(true);
-const accentA = ref(PINK_FALLBACK);
-const accentB = ref(PINK_FALLBACK);
+const accentA = ref(accentFor(null));
+const accentB = ref(accentFor(null));
 watch(activeCore, (id) => {
   const next = accentFor(id);
   if (layerAOn.value) accentB.value = next; else accentA.value = next;
@@ -753,9 +745,8 @@ onBeforeUnmount(() => {
 /* ── Прототип фона ──────────────────────────────────────────────────── */
 .cp-wave { position: fixed; inset: 0; z-index: var(--z-scene); pointer-events: none; }
 .cp-wave__layer { position: absolute; inset: 0; transition: opacity var(--d-panel) var(--e-settle); }
-/* Первое (самое маленькое) кольцо волны не рисуется: его место занял контур
-   ядра — одна линия, а не две. Гасится СНАРУЖИ, компонент лендинга не
-   тронут. Остальные шесть колец как были. */
+/* У волны фигура выключена (with-core=false) — превью ставит своё ядро,
+   чтобы переключать варианты оформления. Значит первое кольцо гасим здесь. */
 .cp-wave :deep(.lp-bg__rings polygon:first-of-type) { display: none; }
 /* Дека — половина яркости ВСЕГО фона: и колец, и ядра. Ядро — часть фона,
    а не вещь поверх него, поэтому гаснет вместе с кольцами. */

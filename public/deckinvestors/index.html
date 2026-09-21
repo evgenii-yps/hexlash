@@ -102,9 +102,13 @@ a:hover{color:#F6F4F6}
   height:100vh;height:100lvh;
   overflow:hidden;
   /* ⚠️ ГЕОМЕТРИЯ ВОЛНЫ ПРАВИТСЯ ЗДЕСЬ.
-     --wr — базовый радиус R: 8.5% ширины окна, но не меньше 88 точек.
-     --wcy — центр волны по вертикали (46% высоты экрана). */
-  --wr:max(8.5vw,88px);
+     --wr — базовый радиус R: 8.5% ширины окна, но не меньше 112 точек.
+     --wcy — центр волны по вертикали (46% высоты экрана).
+     ⚠️ Нижняя граница поднята с 88 до 112 (21.09.2026) — в центре волны
+     теперь стоит ядро, и на телефоне радиус всегда упирается именно в эту
+     границу. То же число стоит в --lp-wave-r у лендинга: два экземпляра
+     рисунка меняются ПАРОЙ. */
+  --wr:max(8.5vw,112px);
   --wcy:46%;
 }
 /* ⚠️ ЗАМЕТНОСТЬ ВОЛНЫ НА ДЕКЕ РЕГУЛИРУЕТСЯ ОДНИМ ЧИСЛОМ.
@@ -113,7 +117,23 @@ a:hover{color:#F6F4F6}
    поверх них.
    ⚠️ ПОТОЛОК ЗАДАЁТ ТЕКСТ, А НЕ ВКУС: если волна начинает читаться поверх цифр
    в таблицах и карточках — снизить шагом. */
-.dk-wave__ink{position:absolute;inset:0;color:#FF0069;opacity:.5}
+.dk-wave__ink{position:absolute;inset:0;color:rgb(var(--dk-r) var(--dk-g) var(--dk-b));opacity:.5}
+/* Три числа акцента объявлены типом, иначе они не перетекают: браузер не
+   знает, что «255» — число, и меняет его скачком. Так же сделано на лендинге
+   (LandingBackground.vue). */
+@property --dk-r{syntax:'<number>';inherits:true;initial-value:255}
+@property --dk-g{syntax:'<number>';inherits:true;initial-value:0}
+@property --dk-b{syntax:'<number>';inherits:true;initial-value:105}
+.dk-wave{--dk-r:255;--dk-g:0;--dk-b:105}
+/* Цвет меняется при прокрутке — ЕДИНСТВЕННОЕ движение, разрешённое этому
+   слою (решение 21.09.2026, уточняет запись 20.09). Фигура и кольца стоят
+   неподвижно.
+   ⚠️ Переход объявлен ТОЛЬКО на время смены. Постоянный переход на
+   наследуемом свойстве заставляет браузер считать поддерево изменяемым и
+   пересчитывать его при каждой прокрутке; на лендинге это стоило трёх
+   миллисекунд кадра на медленном телефоне. Класс снимает сценарий. */
+.dk-wave.is-shifting{transition:--dk-r 420ms cubic-bezier(.2,.8,.2,1),--dk-g 420ms cubic-bezier(.2,.8,.2,1),--dk-b 420ms cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){.dk-wave.is-shifting{transition:none}}
 /* Коробка колец — квадрат 17R, чтобы крайнее кольцо (8.45R) поместилось
    целиком. Центр коробки ставится на центр волны. */
 /* Толщина линии не растёт вместе с радиусом — за это отвечает vector-effect. */
@@ -126,12 +146,64 @@ a:hover{color:#F6F4F6}
 .dk-wave__glow{
   position:absolute;left:50%;top:44%;width:52%;height:44%;
   transform:translate(-50%,-50%);
-  background:radial-gradient(closest-side,rgba(255,0,105,.16) 0%,rgba(255,0,105,0) 72%);
+  background:radial-gradient(closest-side,rgb(var(--dk-r) var(--dk-g) var(--dk-b)/.16) 0%,rgb(var(--dk-r) var(--dk-g) var(--dk-b)/0) 72%);
 }
 .dk-wave__vignette{
   position:absolute;inset:0;
   background:radial-gradient(120% 100% at 50% 48%,rgba(8,8,10,0) 36%,rgba(8,8,10,.9) 100%);
 }
+/* --- A2. Ядро в центре волны -----------------------------------------------
+   Разметку фигуры пишет скрипт (см. метки ЯДРО:НАЧАЛО / ЯДРО:КОНЕЦ), а красит
+   её этот блок. Координаты у деки и у игры общие, оформление у каждой
+   поверхности своё — как и у всего остального на этой странице.
+
+   ⚠️ Контур фигуры И ЕСТЬ первое кольцо волны, поэтому размер выведен из
+   радиуса волны: у рисунка ядра внешний радиус 86 в боксе 200. Второго числа
+   для размера нет — двинется волна, двинется и ядро. */
+.dk-wave__ring1{display:none}
+/* ⚠️ Ядро стоит ПОВЕРХ защиты чтения, а не под ней. Защита придумана против
+   колец, расчерчивающих текст, — стирать ею фигуру не её работа: кольца по
+   всему экрану, а фигура одна и в середине. Текст на деке закрывают
+   собственные подложки карточек, а не этот слой.
+   Цвет фигура берёт сама (вне слоя колец она его не наследует), яркость —
+   четверть: половина от лендинга, где фигура и так идёт вполсилы. */
+.dk-core-slot{
+  position:absolute;left:50%;top:var(--wcy);transform:translate(-50%,-50%);
+  width:calc(var(--wr) * 200 / 86);height:calc(var(--wr) * 200 / 86);
+  color:rgb(var(--dk-r) var(--dk-g) var(--dk-b));
+  opacity:.25;
+}
+.dk-core{display:block;width:100%;height:100%;overflow:visible;color:currentColor}
+/* Тело и ветки. Фигура на витрине не светится геройски: яркость низкая, форма
+   неподвижна. */
+.dk-core__shard{fill:#08080A;fill-opacity:.9;stroke:#F6F4F6;stroke-opacity:.13;stroke-width:1}
+.dk-core__vein{stroke:none}
+.dk-core__gem{fill:currentColor;fill-opacity:.9;stroke:currentColor;stroke-width:1}
+.dk-core__facet{fill:#F6F4F6;fill-opacity:.52;stroke:none}
+/* Сердце. Ореол приглушён отдельно: мягкое пятно в середине размывало бы
+   строки текста, которые проходят через центр экрана. */
+.dk-core__glow{opacity:.42}
+.dk-core__stone{fill:#08080A;stroke:currentColor;stroke-width:1.4;stroke-opacity:.9}
+.dk-core__table{fill:none;stroke:currentColor;stroke-width:1;stroke-opacity:.72}
+.dk-core__cut{stroke:currentColor;stroke-width:.9;stroke-opacity:.6}
+.dk-core__seed{fill:currentColor;fill-opacity:1}
+.dk-core__rim{fill:none;stroke:currentColor;stroke-width:1.4;stroke-opacity:.5}
+/* Розовый раздел. У ядер розового нет — это цвет бренда. Поэтому на розовом
+   горит ТОЛЬКО центр, ровным нейтральным светом, а ветки, грани и контур
+   уходят в тень. */
+.dk-wave.is-neutral .dk-core__vein,
+.dk-wave.is-neutral .dk-core__fusion,
+.dk-wave.is-neutral .dk-core__facet{opacity:0}
+.dk-wave.is-neutral .dk-core__gem{fill:#08080A;stroke:#F6F4F6;stroke-opacity:.06}
+.dk-wave.is-neutral .dk-core__shard{stroke-opacity:.05}
+.dk-wave.is-neutral .dk-core__body polygon{opacity:.18}
+.dk-wave.is-neutral .dk-core__rim{stroke:#5D5D66;stroke-opacity:.26}
+.dk-wave.is-neutral .dk-core__stone{stroke:#F6F4F6;stroke-opacity:.34}
+.dk-wave.is-neutral .dk-core__table,
+.dk-wave.is-neutral .dk-core__cut{stroke:#F6F4F6;stroke-opacity:.22}
+.dk-wave.is-neutral .dk-core__seed{fill:#F6F4F6}
+.dk-wave.is-neutral .dk-core__glow{opacity:.42;color:#F6F4F6}
+
 /* Защита чтения. Мягкое затемнение по центру, под текстовой колонкой: сильнее
    всего волна видна по краям страницы, а не под буквами. */
 .dk-wave__shield{
@@ -518,6 +590,23 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
         href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
 </noscript>
 
+<!-- Круг цветов витрины. Пишет node scripts/sync-core-figure.mjs: порядок из
+     src/data/coreCycle.js, значения из src/styles/tokens.css. Руками между
+     метками не править — перепишут при следующем прогоне. -->
+<!-- ЦВЕТА:НАЧАЛО -->
+  <style>
+  /* Круг цветов витрины. НЕ ПРАВИТЬ РУКАМИ: написано
+     node scripts/sync-core-figure.mjs — порядок из src/data/coreCycle.js,
+     значения из src/styles/tokens.css. Второго объявления цвета в проекте
+     быть не должно, поэтому сюда они ПЕРЕНОСЯТСЯ, а не вписываются. */
+  .dk-wave[data-core="pink"]{--dk-r:255;--dk-g:0;--dk-b:105}
+  .dk-wave[data-core="natisk"]{--dk-r:255;--dk-g:51;--dk-b:68}
+  .dk-wave[data-core="nalet"]{--dk-r:255;--dk-g:165;--dk-b:38}
+  .dk-wave[data-core="skala"]{--dk-r:46;--dk-g:214;--dk-b:176}
+  .dk-wave[data-core="zasada"]{--dk-r:148;--dk-g:97;--dk-b:255}
+  </style>
+  <script>window.DK_CORE_CYCLE=["pink","natisk","nalet","skala","zasada"];</script>
+<!-- ЦВЕТА:КОНЕЦ -->
 </head>
 <body>
 <div class="dk-page" style="background:#08080A;min-height:100vh">
@@ -531,7 +620,10 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
     <!-- Кольца. viewBox в долях базового радиуса R (R = 100 единиц), центр 850,850. -->
     <svg class="dk-wave__rings" viewBox="0 0 1700 1700" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke="currentColor">
-<polygon points="850,750 763.4,800 763.4,900 850,950 936.6,900 936.6,800" stroke-opacity=".34" stroke-width="2"/>
+<!-- Первое кольцо (r = R) НЕ рисуется: его место занял контур ядра — одна
+           линия, а не две. Оставлено скрытым, чтобы шаг колец читался глазами и
+           никто не пересчитал остальные шесть. -->
+<polygon class="dk-wave__ring1" points="850,750 763.4,800 763.4,900 850,950 936.6,900 936.6,800" stroke-opacity=".34" stroke-width="2"/>
 <polygon points="850,677 700.18,763.5 700.18,936.5 850,1023 999.82,936.5 999.82,763.5" stroke-opacity=".26" stroke-width="1.8"/>
 <polygon points="850,591 625.7,720.5 625.7,979.5 850,1109 1074.3,979.5 1074.3,720.5" stroke-opacity=".2" stroke-width="1.5"/>
 <polygon points="850,486 534.77,668 534.77,1032 850,1214 1165.23,1032 1165.23,668" stroke-opacity=".15" stroke-width="1.4"/>
@@ -541,9 +633,129 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
       </g>
     </svg>
     <div class="dk-wave__glow"></div>
+
   </div>
   <div class="dk-wave__vignette"></div>
   <div class="dk-wave__shield"></div>
+  <!-- Ядро в центре волны. Разметку пишет node scripts/sync-core-figure.mjs
+       из src/data/coreFigure.js — того же файла, что рисует ядро в игре.
+       Руками между метками не править: перепишут при следующем прогоне. -->
+  <div class="dk-core-slot">
+<!-- ЯДРО:НАЧАЛО -->
+  <!-- Фигура ядра. НЕ ПРАВИТЬ РУКАМИ: написана
+       node scripts/sync-core-figure.mjs из src/data/coreFigure.js —
+       того же файла, что рисует ядро в игре. Вариант «heart», состояние
+       фоновое, все грани горят. Оформление — блок «A2. Ядро» в стилях. -->
+  <svg class="dk-core" viewBox="0 0 200 200" aria-hidden="true">
+    <defs>
+      <radialGradient id="dkCoreGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".55"/>
+        <stop offset="45%" stop-color="currentColor" stop-opacity=".18"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="dkCoreInner" gradientUnits="userSpaceOnUse" cx="100" cy="100" r="86">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".16"/>
+        <stop offset="55%" stop-color="currentColor" stop-opacity=".05"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="dkCoreFlow-a" gradientUnits="userSpaceOnUse" x1="100" y1="100" x2="100" y2="22.6">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".95"/>
+        <stop offset="70%" stop-color="currentColor" stop-opacity=".70"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity=".30"/>
+      </linearGradient>
+      <linearGradient id="dkCoreFlow-b" gradientUnits="userSpaceOnUse" x1="100" y1="100" x2="167.03" y2="138.7">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".95"/>
+        <stop offset="70%" stop-color="currentColor" stop-opacity=".70"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity=".30"/>
+      </linearGradient>
+      <linearGradient id="dkCoreFlow-c" gradientUnits="userSpaceOnUse" x1="100" y1="100" x2="32.97" y2="138.7">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".95"/>
+        <stop offset="70%" stop-color="currentColor" stop-opacity=".70"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity=".30"/>
+      </linearGradient>
+      <radialGradient id="dkCoreZone-ab" gradientUnits="userSpaceOnUse" cx="123.83" cy="86.24" r="70.52">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".9"/>
+        <stop offset="40%" stop-color="currentColor" stop-opacity=".38"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="dkCoreZone-bc" gradientUnits="userSpaceOnUse" cx="100" cy="127.52" r="70.52">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".9"/>
+        <stop offset="40%" stop-color="currentColor" stop-opacity=".38"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="dkCoreZone-ca" gradientUnits="userSpaceOnUse" cx="76.17" cy="86.24" r="70.52">
+        <stop offset="0%" stop-color="currentColor" stop-opacity=".9"/>
+        <stop offset="40%" stop-color="currentColor" stop-opacity=".38"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <g class="dk-core__body">
+      <polygon points="100,100 100,14 174.48,57 174.48,143" fill="#F6F4F6" fill-opacity="0.013"/>
+      <polygon points="100,100 174.48,143 100,186 25.52,143" fill="#F6F4F6" fill-opacity="0.006"/>
+      <polygon points="100,100 25.52,143 25.52,57 100,14" fill="#F6F4F6" fill-opacity="0.022"/>
+      <polygon points="100,14 174.48,57 174.48,143 100,186 25.52,143 25.52,57" fill="url(#dkCoreInner)"/>
+    </g>
+    <g class="dk-core__fusion">
+      <polygon points="100,100 100,14 174.48,57 174.48,143" fill="url(#dkCoreZone-ab)" opacity="1.000"/>
+      <polygon points="100,100 174.48,143 100,186 25.52,143" fill="url(#dkCoreZone-bc)" opacity="1.000"/>
+      <polygon points="100,100 25.52,143 25.52,57 100,14" fill="url(#dkCoreZone-ca)" opacity="1.000"/>
+    </g>
+    <g class="dk-core__branches">
+      <polygon class="dk-core__shard" points="108.5,100 104,22.6 96,22.6 91.5,100"/>
+      <polygon class="dk-core__shard" points="95.75,107.36 165.03,142.16 169.03,135.24 104.25,92.64"/>
+      <polygon class="dk-core__shard" points="95.75,92.64 30.97,135.24 34.97,142.16 104.25,107.36"/>
+      <polygon class="dk-core__vein" points="105,100 102.56,22.6 97.44,22.6 95,100" fill="url(#dkCoreFlow-a)"/>
+      <polygon class="dk-core__vein" points="97.5,104.33 165.75,140.92 168.31,136.48 102.5,95.67" fill="url(#dkCoreFlow-b)"/>
+      <polygon class="dk-core__vein" points="97.5,95.67 31.69,136.48 34.25,140.92 102.5,104.33" fill="url(#dkCoreFlow-c)"/>
+    </g>
+    <g class="dk-core__nodes">
+      <polygon class="dk-core__gem" points="100,53.95 101.87,57 100,59.97 97.81,57"/>
+      <polygon class="dk-core__facet" points="100,55.6 100.86,57 100,58.37 98.99,57"/>
+      <polygon class="dk-core__gem" points="100,44.45 102.91,47.97 100,51.61 97.21,47.97"/>
+      <polygon class="dk-core__facet" points="100,46.35 101.34,47.97 100,49.64 98.72,47.97"/>
+      <polygon class="dk-core__gem" points="100,35.11 103.12,39.37 100,43.32 96.63,39.37"/>
+      <polygon class="dk-core__facet" points="100,37.41 101.44,39.37 100,41.19 98.45,39.37"/>
+      <polygon class="dk-core__gem" points="100,25.68 103.19,30.77 100,35.35 96.03,30.77"/>
+      <polygon class="dk-core__facet" points="100,28.43 101.47,30.77 100,32.87 98.17,30.77"/>
+      <polygon class="dk-core__gem" points="100,15.42 104.21,22.17 100,28.58 94.77,22.17"/>
+      <polygon class="dk-core__facet" points="100,19.07 101.94,22.17 100,25.12 97.59,22.17"/>
+      <polygon class="dk-core__gem" points="139.54,122.83 136.05,123.56 134.83,120.11 138.36,119.55"/>
+      <polygon class="dk-core__facet" points="138.3,122.11 136.69,122.45 136.13,120.86 137.76,120.6"/>
+      <polygon class="dk-core__gem" points="148.02,127.72 143.65,128.45 142.13,124.33 146.35,123.78"/>
+      <polygon class="dk-core__facet" points="146.42,126.8 144.41,127.13 143.71,125.24 145.65,124.99"/>
+      <polygon class="dk-core__gem" points="156.03,132.35 151.2,132.57 149.14,128.37 153.91,127.88"/>
+      <polygon class="dk-core__facet" points="154.13,131.25 151.91,131.35 150.96,129.42 153.15,129.19"/>
+      <polygon class="dk-core__gem" points="163.77,136.82 158.27,137.54 155.69,132.15 161.48,131.97"/>
+      <polygon class="dk-core__facet" points="161.71,135.63 159.18,135.96 157.99,133.48 160.66,133.4"/>
+      <polygon class="dk-core__gem" points="172.56,141.89 165.16,142.8 161.56,135.54 169.53,135.24"/>
+      <polygon class="dk-core__facet" points="169.78,140.29 166.37,140.7 164.71,137.36 168.38,137.22"/>
+      <polygon class="dk-core__gem" points="60.16,123 61.85,119.91 65.39,119.98 63.68,123.09"/>
+      <polygon class="dk-core__facet" points="61.56,122.19 62.34,120.77 63.97,120.8 63.18,122.23"/>
+      <polygon class="dk-core__gem" points="51.72,127.88 53.8,124.04 57.98,124.26 56.14,128.09"/>
+      <polygon class="dk-core__facet" points="53.46,126.87 54.42,125.11 56.34,125.21 55.49,126.97"/>
+      <polygon class="dk-core__gem" points="43.98,132.35 45.9,127.55 51.08,128.24 48.97,132.87"/>
+      <polygon class="dk-core__facet" points="45.88,131.25 46.76,129.04 49.14,129.36 48.17,131.49"/>
+      <polygon class="dk-core__gem" points="35.81,137.06 38.51,131.95 44.19,132.22 41.56,137.24"/>
+      <polygon class="dk-core__facet" points="38.1,135.74 39.34,133.39 41.95,133.52 40.74,135.82"/>
+      <polygon class="dk-core__gem" points="26.52,142.42 30.43,135.16 37.95,135.83 34.93,142.96"/>
+      <polygon class="dk-core__facet" points="29.8,140.53 31.6,137.19 35.06,137.49 33.67,140.78"/>
+    </g>
+    <g class="dk-core__heart">
+      <circle class="dk-core__glow" cx="100" cy="100" r="62" fill="url(#dkCoreGlow)"/>
+      <polygon class="dk-core__stone" points="100,66 129.44,83 129.44,117 100,134 70.56,117 70.56,83"/>
+      <polygon class="dk-core__table" points="100,82.32 115.31,91.16 115.31,108.84 100,117.68 84.69,108.84 84.69,91.16"/>
+      <line class="dk-core__cut" x1="100" y1="82.32" x2="100" y2="66"/>
+      <line class="dk-core__cut" x1="115.31" y1="91.16" x2="129.44" y2="83"/>
+      <line class="dk-core__cut" x1="115.31" y1="108.84" x2="129.44" y2="117"/>
+      <line class="dk-core__cut" x1="100" y1="117.68" x2="100" y2="134"/>
+      <line class="dk-core__cut" x1="84.69" y1="108.84" x2="70.56" y2="117"/>
+      <line class="dk-core__cut" x1="84.69" y1="91.16" x2="70.56" y2="83"/>
+      <polygon class="dk-core__seed" points="100,85 112.99,92.5 112.99,107.5 100,115 87.01,107.5 87.01,92.5"/>
+    </g>
+    <polygon class="dk-core__rim" points="100,14 174.48,57 174.48,143 100,186 25.52,143 25.52,57"/>
+  </svg>
+<!-- ЯДРО:КОНЕЦ -->
+  </div>
 </div>
 <div style="position:fixed;top:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.09);z-index:20"><div data-progress="1" style="height:2px;background:#FF0069;transform:scaleX(0);transform-origin:left"></div></div>
 
@@ -1985,6 +2197,58 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
       });
     };
     sweep();
+  }
+
+  /* --- Цвет фона по разделам ----------------------------------------------
+     Листаешь — фон перетекает из цвета в цвет: розовый бренда, потом четыре
+     ядра игры по очереди, потом снова по кругу. Пролистал — увидел все четыре
+     ядра, не читая.
+
+     Ведёт РАЗДЕЛ, а не таймер и не положение прокрутки в пикселях: активен
+     тот, что пересекает середину экрана. Обработчика на каждый кадр нет,
+     прокрутка не перехватывается.
+
+     Порядок и значения приходят готовыми (блок ЦВЕТА наверху файла): их пишет
+     node scripts/sync-core-figure.mjs из src/data/coreCycle.js и файла
+     токенов. Здесь их нет и быть не должно.
+
+     Первый экран общий для обоих языков и идёт нулевым — он розовый. Дальше
+     считаются разделы ТОГО языка, что открыт: у скрытого слоя размеров нет,
+     наблюдатель по нему молчит. */
+  var wave = document.querySelector('.dk-wave');
+  var cycle = window.DK_CORE_CYCLE || ['pink'];
+  if (wave) {
+    var shiftTimer = null;
+    var paint = function (i) {
+      var name = cycle[((i % cycle.length) + cycle.length) % cycle.length];
+      if (wave.getAttribute('data-core') === name) return;
+      /* Переход включается ПЕРЕД сменой и снимается, когда доиграл: держать
+         его постоянно — платить кадрами на каждой прокрутке. */
+      wave.classList.add('is-shifting');
+      if (shiftTimer) clearTimeout(shiftTimer);
+      shiftTimer = setTimeout(function () { wave.classList.remove('is-shifting'); }, 700);
+      wave.setAttribute('data-core', name);
+      wave.classList.toggle('is-neutral', name === 'pink');
+    };
+    paint(0);
+
+    var order = function (el) {
+      /* Первый экран — ноль. Остальное нумеруется внутри своего языкового
+         слоя, поэтому оба языка дают одинаковый круг. */
+      var layer = el.closest('[data-layer]');
+      if (!layer) return 0;
+      var mine = [].slice.call(layer.querySelectorAll(':scope > section'));
+      var k = mine.indexOf(el);
+      return k < 0 ? 0 : k + 1;
+    };
+
+    if (window.IntersectionObserver) {
+      var secs = [].slice.call(document.querySelectorAll('main section'));
+      var cio = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) paint(order(e.target)); });
+      }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+      secs.forEach(function (el) { cio.observe(el); });
+    }
   }
 
   /* --- Окно с ареной ------------------------------------------------------

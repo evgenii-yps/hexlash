@@ -123,8 +123,8 @@
         <polygon v-else class="hc-shard" :points="b.shard" />
 
         <template v-if="cfg.walls">
-          <line class="hc-wall hc-wall--hi" :x1="b.hiX1" :y1="b.hiY1" :x2="b.hiX2" :y2="b.hiY2" />
-          <line class="hc-wall hc-wall--lo" :x1="b.loX1" :y1="b.loY1" :x2="b.loX2" :y2="b.loY2" />
+          <line class="hc-wall hc-wall--hi" :x1="b.hi.x1" :y1="b.hi.y1" :x2="b.hi.x2" :y2="b.hi.y2" />
+          <line class="hc-wall hc-wall--lo" :x1="b.lo.x1" :y1="b.lo.y1" :x2="b.lo.x2" :y2="b.lo.y2" />
         </template>
 
         <g :clip-path="`url(#hcLit-${uid}-${b.id})`" :style="{ opacity: b.lit > 0 ? 1 : 0 }" class="hc-flowwrap">
@@ -157,11 +157,11 @@
     <!-- 5 · ЦЕНТР. Самая яркая точка фигуры. Ярче — чем больше веток
          задействовано, четыре ступени в --hc-lum. -->
     <g class="hc-heart">
-      <circle class="hc-heart__glow" :cx="C" :cy="C" :r="cfg.heartGlow" :fill="`url(#hcGlow-${uid})`" />
-      <polygon class="hc-heart__body" :points="heartOuter" />
+      <circle class="hc-heart__glow" :cx="C" :cy="C" :r="heart.glowR" :fill="`url(#hcGlow-${uid})`" />
+      <polygon class="hc-heart__body" :points="heart.outer" />
       <g v-if="cfg.heartFacets !== 'none' && !simple" class="hc-heart__cuts">
-        <polygon v-if="cfg.heartFacets === 'table'" class="hc-heart__table" :points="heartTable" />
-        <line v-for="(l, i) in heartCuts" :key="`hc-${i}`" :x1="l[0]" :y1="l[1]" :x2="l[2]" :y2="l[3]" />
+        <polygon v-if="cfg.heartFacets === 'table'" class="hc-heart__table" :points="heart.table" />
+        <line v-for="(l, i) in heart.cuts" :key="`hc-${i}`" :x1="l[0]" :y1="l[1]" :x2="l[2]" :y2="l[3]" />
       </g>
       <!-- Знак манеры своего ядра. Рисунок берётся из нынешней иконки
            (coreFacets в upgradeGeometry) — второй копии координат нет. -->
@@ -171,7 +171,7 @@
         :transform="sigilTransform"
         v-html="sigilInner"
       />
-      <polygon v-if="cfg.heartSeed > 0" class="hc-heart__seed" :points="heartInner" />
+      <polygon v-if="heart.seed" class="hc-heart__seed" :points="heart.seed" />
     </g>
 
     <!-- 6 · КОНТУР. Тонкий, цветом ядра. У варианта «без рамки» его нет
@@ -183,35 +183,13 @@
 
 <script setup>
 import { computed, useId } from 'vue';
-import { coreStyleCfg, CORE_STYLE_IDS } from '@/data/coreStyles.js';
+import { CORE_STYLE_IDS } from '@/data/coreStyles.js';
+import { coreFigure, TILT } from '@/data/coreFigure.js';
 import { coreFacets } from '@/data/upgradeGeometry.js';
 
-/* ── Каркас ─────────────────────────────────────────────────────────────
-   Бокс 200×200, центр 100,100, внешний радиус 86. Шестиугольник вершиной
-   вверх: вершины через 60°, лучи идут в каждую вторую — вверх (-90°),
-   вправо-вниз (30°), влево-вниз (150°). Эти числа общие для всех вариантов;
-   всё, что варианты меняют, лежит в src/data/coreStyles.js. */
-const BOX = 200;
-const C = 100;
-const R = 86;
-
-const RAY_DEG = { a: -90, b: 30, c: 150 };   // вверх · вправо-вниз · влево-вниз
-const HEX_DEG = [-90, -30, 30, 90, 150, 210];
-/* Знаки манеры нарисованы для бокса 200×200 с внешним гексом r=78. */
-const SIGIL_SRC_R = 78;
-
-const rad = (d) => (d * Math.PI) / 180;
-const px = (v) => Math.round(v * 100) / 100;
-const pt = (deg, r, cx = C, cy = C) => [cx + Math.cos(rad(deg)) * r, cy + Math.sin(rad(deg)) * r];
-const poly = (pts) => pts.map((p) => `${px(p[0])},${px(p[1])}`).join(' ');
-const hex = (r, cx = C, cy = C) => poly(HEX_DEG.map((d) => pt(d, r, cx, cy)));
-
-/* Неровность огранки — стабильная, а не случайная: один и тот же кристалл
-   обязан выглядеть одинаково между перерисовками. */
-function wobble(seed) {
-  const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
-  return (x - Math.floor(x)) * 2 - 1;   // −1..1
-}
+/* ⚠️ Координат фигуры ЗДЕСЬ НЕТ. Вся математика — в src/data/coreFigure.js,
+   и она же питает деку (статическую страницу вне сборки) через
+   scripts/sync-core-figure.mjs. Этот файл только рисует и красит. */
 
 const props = defineProps({
   /* Идентификатор ядра. null — нейтральное состояние: центр горит ровным
@@ -224,6 +202,10 @@ const props = defineProps({
   zoneMode: { type: String, default: 'fusion' },
   /* Вариант ОФОРМЛЕНИЯ каркаса — см. src/data/coreStyles.js. */
   styleId: { type: String, default: 'origin', validator: (v) => CORE_STYLE_IDS.includes(v) },
+  /* Готовое значение цвета вместо цвета ядра. Нужно фону витрины: там цвет
+     перетекает между разделами, и фигура обязана течь вместе с кольцами, а не
+     перещёлкиваться. Пусто — цвет берётся из ядра, как обычно. */
+  hue: { type: String, default: '' },
   size: { type: Number, default: 128 },
   breathe: { type: Boolean, default: false },
   /* normal · muted (без свечения) · selected · foe (тусклее) · background */
@@ -236,201 +218,44 @@ const props = defineProps({
    счётчик заводился заново на каждый экземпляр и все получали «1». Браузер
    на одинаковый url(#…) берёт ПЕРВЫЙ такой элемент в документе, поэтому на
    листе все ядра красились градиентами первого — свет в каналах у BULWARK и
-   AMBUSH был красный. Сплошной цвет (центр, контур, кристаллы) при этом был
-   верный, что и маскировало дефект. */
+   AMBUSH был красный. */
 const uid = useId();
-const cfg = computed(() => coreStyleCfg(props.styleId));
 const simple = computed(() => props.size < 48);
 
-const lit = computed(() => ({
-  a: Math.max(0, Math.min(5, Number(props.branches?.a) || 0)),
-  b: Math.max(0, Math.min(5, Number(props.branches?.b) || 0)),
-  c: Math.max(0, Math.min(5, Number(props.branches?.c) || 0)),
+const fig = computed(() => coreFigure({
+  styleId: props.styleId,
+  branches: props.branches,
+  simple: simple.value,
 }));
 
-/* Задействована ветка = в ней горит хотя бы одна грань.
-   Ступеней четыре: 0 / 1 / 2 / 3 ветки. */
-const engaged = computed(() => ['a', 'b', 'c'].filter((k) => lit.value[k] > 0).length);
-const LUM = [0.1, 0.36, 0.64, 1];
+const BOX = computed(() => fig.value.box);
+const C = computed(() => fig.value.c);
+const R = computed(() => fig.value.r);
+const cfg = computed(() => fig.value.cfg);
+const branches3 = computed(() => fig.value.branches);
+const zones3 = computed(() => fig.value.zones);
+const rimPoints = computed(() => fig.value.rim);
+const heart = computed(() => fig.value.heart);
 
 /* У нейтральной фигуры (первый экран витрины) центр горит ВСЕГДА: розового
    у ядер нет, и показать бренд нечем, кроме ровного нейтрального света в
    сердцевине. Ветки при этом остаются тёмными — они просто не зажжены. */
 const rootVars = computed(() => ({
-  '--hc-hue': props.core ? `var(--core-${props.core})` : 'var(--ink)',
-  '--hc-lum': String(props.core ? LUM[engaged.value] : 1),
+  '--hc-hue': props.hue || (props.core ? `var(--core-${props.core})` : 'var(--ink)'),
+  '--hc-lum': String(props.core ? fig.value.lum : 1),
   '--hc-beat': props.core ? `var(--d-pulse-${props.core})` : 'var(--d-loop)',
   '--hc-flow-w': `${cfg.value.flowW}`,
 }));
 
 const label = computed(() => {
-  const n = lit.value.a + lit.value.b + lit.value.c;
+  const l = fig.value.lit;
+  const n = l.a + l.b + l.c;
   return `${props.core ? props.core.toUpperCase() : 'NEUTRAL'} core, ${n} of 5 facets lit`;
-});
-
-/* Ветка: тело канала, светящаяся жила, радиус обрезки света, пять граней. */
-const branches3 = computed(() => {
-  const k = cfg.value;
-  return ['a', 'b', 'c'].map((id, bi) => {
-    const deg = RAY_DEG[id];
-    const dx = Math.cos(rad(deg));
-    const dy = Math.sin(rad(deg));
-    const nx = -dy;   // перпендикуляр
-    const ny = dx;
-    const n = lit.value[id];
-
-    const tipR = R * k.tipFrac;
-    const [tipX, tipY] = [C + dx * tipR, C + dy * tipR];
-
-    /* Тело ветки: сужающийся кристалл (полуширина от chanW0 к chanW1). */
-    const at = (t, w) => [C + dx * t + nx * w, C + dy * t + ny * w];
-    const shard = poly([
-      at(0, k.chanW0), at(tipR, k.chanW1), at(tipR, -k.chanW1), at(0, -k.chanW0),
-    ]);
-    /* Жила внутри кристалла — уже тела, той же формы. */
-    const vw0 = Math.min(k.chanW0, k.flowW * 0.5 + 1.5);
-    const vw1 = Math.min(k.chanW1, k.flowW * 0.28 + 0.6);
-    const vein = poly([
-      at(0, vw0), at(tipR, vw1), at(tipR, -vw1), at(0, -vw0),
-    ]);
-
-    const wallOff = k.chanW0;
-    const wallA = 15;
-    const wallB = R * 0.9;
-    const wall = (sign) => ({
-      x1: C + dx * wallA + nx * wallOff * sign,
-      y1: C + dy * wallA + ny * wallOff * sign,
-      x2: C + dx * wallB + nx * wallOff * sign,
-      y2: C + dy * wallB + ny * wallOff * sign,
-    });
-    /* Освещена та стенка, что смотрит вверх-влево: свет в зале один и сверху. */
-    const up = ny < 0 || (ny === 0 && nx < 0);
-    const hi = wall(up ? 1 : -1);
-    const lo = wall(up ? -1 : 1);
-
-    const nodes = k.nodeT.map((t, i) => {
-      const tip = i === k.nodeT.length - 1;
-      const r = tip && simple.value ? k.tipRsimple : k.nodeR[i];
-      const cx = C + dx * t * R;
-      const cy = C + dy * t * R;
-      const along = r * k.nodeLong;
-      const across = r * 0.88;
-      /* Четыре угла ромба; при nodeRough > 0 каждый угол чуть сбит — огранка
-         перестаёт быть правильной, кристалл выглядит выращенным. */
-      const w = (corner, amp) => 1 + wobble(bi * 17 + i * 5 + corner) * k.nodeRough * amp;
-      const gem = (kx) => poly([
-        [cx + dx * along * kx * w(0, 0.5), cy + dy * along * kx * w(0, 0.5)],
-        [cx + nx * across * kx * w(1, 0.8), cy + ny * across * kx * w(1, 0.8)],
-        [cx - dx * along * kx * w(2, 0.3), cy - dy * along * kx * w(2, 0.3)],
-        [cx - nx * across * kx * w(3, 0.8), cy - ny * across * kx * w(3, 0.8)],
-      ]);
-      return { i: i + 1, lit: i < n, points: gem(1), inner: gem(0.46) };
-    });
-
-    /* Свет доходит до последней горящей грани и обнимает её. */
-    const litR = n > 0 ? px(R * k.nodeT[n - 1] + k.nodeR[n - 1] * 0.9) : 0;
-
-    return {
-      id, lit: n, litR,
-      tipX: px(tipX), tipY: px(tipY),
-      shard, vein,
-      hiX1: px(hi.x1), hiY1: px(hi.y1), hiX2: px(hi.x2), hiY2: px(hi.y2),
-      loX1: px(lo.x1), loY1: px(lo.y1), loX2: px(lo.x2), loY2: px(lo.y2),
-      nodes,
-    };
-  });
-});
-
-/* Зона = кит между двумя соседними лучами: центр → вершина → промежуточная
-   вершина шестиугольника → вершина. Сила сплава = МЕНЬШАЯ из двух глубин:
-   гибрид силён настолько, насколько вложена более слабая из пары. */
-/* Ступени блика по пластинам: свет в зале один и сверху, поэтому верхняя
-   левая пластина ловит его сильнее, нижняя почти не ловит. Внутренний ramp
-   рисунка, палитру не расширяет. */
-const TILT = {
-  high: [0.14, 0.07, 0.025],
-  mid:  [0.03, 0.085, 0.05],
-  low:  [0.02, 0.045, 0.012],
-};
-
-const ZONE_DEF = [
-  { id: 'ab', from: 'a', to: 'b', mid: -30, shade: 'mid',  cdeg: -30 },  // верх-право
-  { id: 'bc', from: 'b', to: 'c', mid: 90,  shade: 'low',  cdeg: 90 },   // низ
-  { id: 'ca', from: 'c', to: 'a', mid: 210, shade: 'high', cdeg: 210 },  // верх-лево
-];
-
-/* Кратчайшая разница углов, в градусах, в (−180, 180]. */
-function angDelta(a, b) {
-  let d = ((b - a + 540) % 360) - 180;
-  return d;
-}
-
-const zones3 = computed(() => {
-  const inset = cfg.value.plateInset;
-  return ZONE_DEF.map((z) => {
-    const [cxp, cyp] = pt(z.cdeg, R * 0.32);
-    const aFrom = RAY_DEG[z.from];
-    const aTo = RAY_DEG[z.to];
-    const corners = [[C, C], pt(aFrom, R), pt(z.mid, R), pt(aTo, R)];
-
-    /* Пластина. Внешний край ОСТАЁТСЯ на R — силуэт складывают сами
-       пластины, внешней линии у этого варианта нет. Щели открываются там,
-       где им место: вдоль лучей (края отведены от ветки) и у ступицы
-       (внутренний угол вынесен наружу по биссектрисе), — сквозь них виден
-       свет ядра. Прежний вариант сжимал пластину к её центру тяжести, и три
-       плоские грани сходились в точку: получалась та самая коробка. */
-    const da = inset > 0 ? (Math.atan2(inset, R) * 180) / Math.PI : 0;
-    const eFrom = aFrom + Math.sign(angDelta(aFrom, z.mid)) * da;
-    const eTo = aTo + Math.sign(angDelta(aTo, z.mid)) * da;
-    const hub = pt(z.mid, inset * 1.9);
-    const pFrom = pt(eFrom, R);
-    const pTo = pt(eTo, R);
-    const plate = poly([hub, pFrom, pt(z.mid, R), pTo]);
-
-    return {
-      id: z.id,
-      shade: z.shade,
-      strength: Math.min(lit.value[z.from], lit.value[z.to]),
-      points: poly(corners),
-      plate,
-      /* Наклон пластины: блик идёт поперёк, от одного луча к другому.
-         Разные концы у трёх пластин — разный наклон, плоскость перестаёт
-         читаться гранью куба. */
-      tx1: px(pFrom[0]), ty1: px(pFrom[1]), tx2: px(pTo[0]), ty2: px(pTo[1]),
-      cx: px(cxp), cy: px(cyp), r: px(R * 0.82),
-    };
-  });
-});
-
-const rimPoints = computed(() => hex(R));
-const heartOuter = computed(() => hex(cfg.value.heartR));
-const heartInner = computed(() => hex(cfg.value.heartSeed));
-/* Огранка сердцевины. Мелкому камню хватает трёх рёбер к вершинам; крупному
-   нужна площадка — иначе три ребра продолжают ветки и камень читается кубиком
-   внутри внешнего шестиугольника. */
-const heartTable = computed(() => hex(cfg.value.heartR * 0.52));
-const heartCuts = computed(() => {
-  const r = cfg.value.heartR;
-  if (cfg.value.heartFacets === 'table') {
-    // шесть коротких рёбер от площадки к вершинам камня
-    return HEX_DEG.map((d) => {
-      const [x1, y1] = pt(d, r * 0.52);
-      const [x2, y2] = pt(d, r);
-      return [px(x1), px(y1), px(x2), px(y2)];
-    });
-  }
-  return [-90, 30, 150].map((d) => {
-    const [x, y] = pt(d, r);
-    return [px(x), px(y), C, C];
-  });
 });
 
 /* Знак манеры — разметка нынешней иконки ядра как есть, вписанная в сердце. */
 const sigilInner = computed(() => (props.core ? coreFacets(props.core) : ''));
-const sigilTransform = computed(() => {
-  const s = cfg.value.heartR / SIGIL_SRC_R;
-  return `translate(${px(C - C * s)} ${px(C - C * s)}) scale(${px(s)})`;
-});
+const sigilTransform = computed(() => fig.value.sigilTransform);
 </script>
 
 <style scoped>
@@ -582,16 +407,24 @@ const sigilTransform = computed(() => {
   filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 55%, transparent));
 }
 
-/* Нейтральная фигура: контур тёмный и едва заметный. Светлый контур читался
-   белым шестиугольником и лез в глаза как логотип — а логотип единственный,
-   у кого белая обводка. Горит только центр. */
+/* Нейтральная фигура (розовый раздел витрины): ГОРИТ ТОЛЬКО ЦЕНТР, всё
+   остальное уходит в тень. Светлый контур читался белым шестиугольником и
+   лез в глаза как логотип — а логотип единственный, у кого белая обводка.
+   Ветки, грани и огранка тоже приглушены: на первом экране лендинга фигура
+   стоит прямо под подзаголовком, и светлый каркас спорил с текстом. */
 .hc--neutral .hc-rim {
   stroke: var(--ink-off);
-  stroke-opacity: .3;
+  stroke-opacity: .26;
   filter: none;
 }
-.hc--neutral .hc-shard { stroke-opacity: .07; }
-.hc--neutral .hc-zone { fill-opacity: .02; }
+.hc--neutral .hc-shard { stroke-opacity: .05; fill-opacity: .95; }
+.hc--neutral .hc-groove { opacity: .95; }
+.hc--neutral .hc-zone { fill-opacity: .014; }
+.hc--neutral .hc-inner { opacity: .18; }
+.hc--neutral .hc-node.is-dark .hc-node__gem { stroke-opacity: .06; }
+.hc--neutral .hc-heart__body { stroke-opacity: .34; }
+.hc--neutral .hc-heart__cuts line,
+.hc--neutral .hc-heart__table { stroke-opacity: .22; }
 
 /* ── Состояния ──────────────────────────────────────────────────────── */
 /* Приглушённое: свечения нет вовсе, плоский цвет — для полок, где ядер много.
@@ -612,10 +445,23 @@ const sigilTransform = computed(() => {
 .hc--selected .hc-s--frameless .hc-zone,
 .hc-s--frameless.hc--selected .hc-zone { stroke-opacity: .3; }
 
+/* На фоне СНЯТЫ ВСЕ размытия — включая свечение контура. Слой волны
+   закреплён относительно окна, и при прокрутке браузер пересобирает его
+   каждый кадр; размытие внутри закреплённого слоя он закэшировать не может.
+   Замер на медленном телефоне (шестикратное замедление): с размытиями
+   середина кадра 22.3 мс, без них — вровень со страницей без фигуры.
+   Сама фигура от этого не тускнеет: свет несут заливки, а не ореолы. */
 .hc--background .hc-flow,
 .hc--background .hc-vein,
 .hc--background .hc-node.is-lit .hc-node__gem,
+.hc--background .hc-rim,
+.hc--background .hc-sigil,
 .hc--background .hc-heart__seed { filter: none; }
+/* Ореол центра на фоне приглушён отдельно от остальной фигуры. Сам он света
+   не несёт — это мягкое пятно, и именно оно размывало строку текста, которая
+   проходит ровно через середину. Каркас (ветки, грани, контур) остаётся в
+   полную силу: фигура должна быть заметной, размывать её целиком нельзя. */
+.hc--background .hc-heart__glow { opacity: calc(var(--hc-lum) * .42); }
 .hc--background { opacity: .5; }
 
 .hc-fusion__zone { transition: opacity var(--d-panel) var(--e-settle); }
