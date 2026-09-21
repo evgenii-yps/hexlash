@@ -54,8 +54,13 @@
     <!-- КАМЕРА ОТЦЕПЛЕНА. Метка нужна затем, что отличить свободный полёт от
          обычного кадра по картинке нельзя, а забытый полёт на показе выглядит
          как сломанная камера. Приглушённая и мелкая НАМЕРЕННО: её увидят на
-         показе инвестору, и ярким служебным ярлыком там светить нечем. -->
-    <div v-if="freeFlying" class="arena-freecam">FREE CAM · ESC</div>
+         показе инвестору, и ярким служебным ярлыком там светить нечем.
+         ⚠️ ДВА СОСТОЯНИЯ, А НЕ ОДНО. Раньше метка появлялась только ПОСЛЕ
+         первого движения камеры, и «признак не взвёлся» было не отличить от
+         «клавиши не доходят»: в обоих случаях экран одинаково молчит. Поэтому
+         при взведённом признаке метка стоит в кадре СРАЗУ, в состоянии
+         «готово», и меняет надпись, когда камера отцепилась. -->
+    <div v-if="freeCamOn" class="arena-freecam">{{ freeFlying ? 'FREE CAM · ESC' : 'FREE CAM · READY' }}</div>
     <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
     <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ rdReadout }}<br>{{ mdlReadout }}<br>{{ nkReadout }}</div>
   </div>
@@ -166,6 +171,8 @@ const panelVisible = ref(DEV_MODE && !showcase);
 // в кадре, поэтому меняется только при СМЕНЕ состояния: запись в ref каждый
 // кадр будила бы перерисовку разметки шестьдесят раз в секунду.
 const freeFlying = ref(false);
+// Признак «полёт разрешён» — для метки готовности. Читается один раз, не меняется.
+const freeCamOn = FREE_CAM_MODE;
 // Dev readout — both fighters' stamina (силы) + charge (заряд), refreshed live
 // (throttled) in the loop so the spend / recover can be watched. Temporary.
 const staReadout = ref('STA  P —  ·  O —');

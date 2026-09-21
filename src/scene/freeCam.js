@@ -109,6 +109,33 @@ const KEYS_DOWN  = ['ShiftLeft', 'ShiftRight'];
 // Все клавиши движения одним списком — по нему и узнаётся «игрок тронул камеру».
 const KEYS_MOVE = [...KEYS_FWD, ...KEYS_BACK, ...KEYS_LEFT, ...KEYS_RIGHT, ...KEYS_UP, ...KEYS_DOWN];
 
+// ЗАПАСНОЙ ПУТЬ ПО БУКВЕ — на случай, когда браузер не назвал физическую клавишу.
+//
+// ⚠️ ОСНОВНОЙ ПУТЬ — ИМЕННО ФИЗИЧЕСКАЯ КЛАВИША (`e.code`), и трогать его нельзя.
+//    Она одна и та же на любой раскладке: на русской клавиша W даёт букву «ц», и
+//    сверка по букве сломала бы движение ровно там, где им пользуются. Этот
+//    список — НЕ замена, а добавка на редкий случай, когда `e.code` приходит
+//    пустым (некоторые экранные клавиатуры, удалённый рабочий стол, часть
+//    способов ввода). Тогда узнать клавишу больше не по чему, и мы смотрим на
+//    букву — сразу в обеих раскладках, чтобы добавка не оказалась англоязычной.
+const LETTER_TO_CODE = {
+  w: 'KeyW', ц: 'KeyW',
+  s: 'KeyS', ы: 'KeyS',
+  a: 'KeyA', ф: 'KeyA',
+  d: 'KeyD', в: 'KeyD',
+};
+
+/** Физическая клавиша события. Пусто — пробуем узнать её по букве. */
+function codeOf(e) {
+  if (e.code) return e.code;
+  const k = typeof e.key === 'string' ? e.key.toLowerCase() : '';
+  if (k === ' ' || k === 'spacebar') return 'Space';
+  if (k === 'shift') return 'ShiftLeft';
+  if (k === 'control') return 'ControlLeft';
+  if (k.startsWith('arrow')) return 'Arrow' + k.slice(5, 6).toUpperCase() + k.slice(6);
+  return LETTER_TO_CODE[k] || '';
+}
+
 /** Печатает ли игрок в поле ввода. Тогда клавиши движения камеру не двигают. */
 function typing(target) {
   if (!target || !target.tagName) return false;
@@ -250,19 +277,22 @@ export function createFreeCam(camera, controls, dom, opts = {}) {
   const onKeyDown = (e) => {
     if (typing(e.target)) return;
     if (e.code === 'Escape' || e.key === 'Escape') { if (active) release(); return; }
+    const code = codeOf(e);
     // ⚠️ УСКОРИТЕЛЬ ЗАПОМИНАЕМ ДО ПРОВЕРКИ НА КЛАВИШУ ДВИЖЕНИЯ. Ctrl движением не
     //    является, и ранний выход ниже не дал бы ему попасть в набор зажатых —
     //    ускорение не срабатывало бы вовсе. Сам по себе он полёт не начинает:
     //    отцепляет камеру только клавиша движения.
-    if (e.code === 'ControlLeft' || e.code === 'ControlRight') { held.add(e.code); return; }
-    if (!KEYS_MOVE.includes(e.code)) return;
+    if (code === 'ControlLeft' || code === 'ControlRight') { held.add(code); return; }
+    if (!KEYS_MOVE.includes(code)) return;
     // Пробел листает страницу, стрелки её прокручивают — на время полёта это
     // чужое поведение нам мешает.
     e.preventDefault();
-    held.add(e.code);
+    held.add(code);
     if (!active) grab();
   };
-  const onKeyUp = (e) => { held.delete(e.code); };
+  // Отпускание узнаём тем же способом, что и нажатие: иначе клавиша, добавленная
+  // в набор по букве, осталась бы в нём навсегда и камера ехала бы сама.
+  const onKeyUp = (e) => { held.delete(codeOf(e)); };
   // ⚠️ ОТПУСКАНИЕ ЛОВИМ И ПРИ ПОТЕРЕ ФОКУСА. Переключили вкладку с зажатым W —
   //    события «отпустил» не будет, и камера уехала бы сама.
   const onBlur = () => { held.clear(); };
