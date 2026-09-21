@@ -2494,14 +2494,26 @@ onMounted(() => {
 
   // --- Dev keys on preview: F = FIGHT · B = block · V = feint · G = stagger ·
   //     C = charge (fill, then discharge). (F is FIGHT, so feint is on V.)
-  onKeydown = (e) => {
-    if (e.key === 'f') onFight();
-    else if (e.key === 'b') onBlockToggle();
-    else if (e.key === 'v') onDevFeint();
-    else if (e.key === 'g') onDevStagger();
-    else if (e.key === 'c') onDevCharge();
-  };
-  window.addEventListener('keydown', onKeydown);
+  //
+  // ⚠️ ТОЛЬКО В СЛУЖЕБНОМ РЕЖИМЕ. Раньше слушатель вешался всегда, и любой игрок,
+  //    нажав F, перезапускал себе бой, а B / V / G / C меняли ход боя на ходу.
+  //    Пока клавиатурой пользовался один человек, это никому не мешало; с
+  //    21.09.2026 камера есть у всех, игроков к клавишам поощряют — и служебные
+  //    клавиши закрыты тем же признаком, что и служебная панель.
+  //
+  // ⚠️ САМА ЛОГИКА БОЯ НЕ ТРОНУТА. Изменено ровно одно — УСЛОВИЕ, при котором
+  //    клавиши слушаются. Те же обработчики остались на кнопках служебной панели,
+  //    а она и так живёт по этому же признаку.
+  if (DEV_MODE && !showcase) {
+    onKeydown = (e) => {
+      if (e.key === 'f') onFight();
+      else if (e.key === 'b') onBlockToggle();
+      else if (e.key === 'v') onDevFeint();
+      else if (e.key === 'g') onDevStagger();
+      else if (e.key === 'c') onDevCharge();
+    };
+    window.addEventListener('keydown', onKeydown);
+  }
 
   // --- Responsive to the container box (embedded + resize/rotate).
   resizeObserver = new ResizeObserver(() => {

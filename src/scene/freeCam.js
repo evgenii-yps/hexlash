@@ -42,7 +42,7 @@ export const FREE_CAM = {
   // открытого боя (радиус кольца выхода около 30) пересекалось секунд за пять:
   // быстрее — не успеваешь целиться, медленнее — показ превращается в ожидание.
   speed: 12,
-  boost: 2.0,        // множитель при зажатом Ctrl — «примерно вдвое» из ТЗ
+  boost: 2.0,        // множитель при зажатом Shift — «примерно вдвое» из ТЗ
   // Разгон и торможение. Мгновенная скорость даёт рывок на старте, а на показе
   // рывок читается как сбой. Число — доля, которую скорость добирает за секунду.
   ease: 12,
@@ -105,8 +105,20 @@ const KEYS_BACK  = ['KeyS', 'ArrowDown'];
 const KEYS_LEFT  = ['KeyA', 'ArrowLeft'];
 const KEYS_RIGHT = ['KeyD', 'ArrowRight'];
 const KEYS_UP    = ['Space'];
-const KEYS_DOWN  = ['ShiftLeft', 'ShiftRight'];
+const KEYS_DOWN  = ['KeyQ'];
+// УСКОРИТЕЛЬ — SHIFT, И ЭТО НЕ КЛАВИША ДВИЖЕНИЯ: сам по себе полёт он не
+// начинает, только умножает скорость, пока зажат.
+//
+// ⚠️ CTRL УБРАН ИЗ УПРАВЛЕНИЯ НАСОВСЕМ (решение владельца 21.09.2026), и
+//    возвращать его нельзя. Сочетания Ctrl с буквами перехватывает сам браузер
+//    раньше страницы и отменить их страница не может: Ctrl+W закрывал бы
+//    вкладку прямо посреди боя, Ctrl+S предлагал сохранить страницу, Ctrl+D —
+//    добавить в закладки. Пока камера была служебной, на это натыкался один
+//    человек; теперь она у всех.
+// ⚠️ ВНИЗ — Q, А НЕ C: C занята служебной клавишей боя (заряд).
+const KEYS_BOOST = ['ShiftLeft', 'ShiftRight'];
 // Все клавиши движения одним списком — по нему и узнаётся «игрок тронул камеру».
+// Ускорителя здесь нет намеренно: он движением не является.
 const KEYS_MOVE = [...KEYS_FWD, ...KEYS_BACK, ...KEYS_LEFT, ...KEYS_RIGHT, ...KEYS_UP, ...KEYS_DOWN];
 
 // ЗАПАСНОЙ ПУТЬ ПО БУКВЕ — на случай, когда браузер не назвал физическую клавишу.
@@ -123,6 +135,7 @@ const LETTER_TO_CODE = {
   s: 'KeyS', ы: 'KeyS',
   a: 'KeyA', ф: 'KeyA',
   d: 'KeyD', в: 'KeyD',
+  q: 'KeyQ', й: 'KeyQ',
 };
 
 /** Физическая клавиша события. Пусто — пробуем узнать её по букве. */
@@ -131,7 +144,6 @@ function codeOf(e) {
   const k = typeof e.key === 'string' ? e.key.toLowerCase() : '';
   if (k === ' ' || k === 'spacebar') return 'Space';
   if (k === 'shift') return 'ShiftLeft';
-  if (k === 'control') return 'ControlLeft';
   if (k.startsWith('arrow')) return 'Arrow' + k.slice(5, 6).toUpperCase() + k.slice(6);
   return LETTER_TO_CODE[k] || '';
 }
@@ -278,11 +290,12 @@ export function createFreeCam(camera, controls, dom, opts = {}) {
     if (typing(e.target)) return;
     if (e.code === 'Escape' || e.key === 'Escape') { if (active) release(); return; }
     const code = codeOf(e);
-    // ⚠️ УСКОРИТЕЛЬ ЗАПОМИНАЕМ ДО ПРОВЕРКИ НА КЛАВИШУ ДВИЖЕНИЯ. Ctrl движением не
-    //    является, и ранний выход ниже не дал бы ему попасть в набор зажатых —
+    // ⚠️ УСКОРИТЕЛЬ ЗАПОМИНАЕМ ДО ПРОВЕРКИ НА КЛАВИШУ ДВИЖЕНИЯ. Shift движением
+    //    не является, и ранний выход ниже не дал бы ему попасть в набор зажатых —
     //    ускорение не срабатывало бы вовсе. Сам по себе он полёт не начинает:
-    //    отцепляет камеру только клавиша движения.
-    if (code === 'ControlLeft' || code === 'ControlRight') { held.add(code); return; }
+    //    отцепляет камеру только клавиша движения. Отменять «родное» действие
+    //    тоже не надо: Shift сам по себе в браузере ничего не делает.
+    if (KEYS_BOOST.includes(code)) { held.add(code); return; }
     if (!KEYS_MOVE.includes(code)) return;
     // Пробел листает страницу, стрелки её прокручивают — на время полёта это
     // чужое поведение нам мешает.
@@ -351,7 +364,7 @@ export function createFreeCam(camera, controls, dom, opts = {}) {
 
     // ── полёт ──
     // Движение считается ОТ ВЗГЛЯДА и по горизонтали: «вперёд» — туда, куда
-    // смотрит камера, а не на север плиты. Вертикаль отдельно, Space/Shift.
+    // смотрит камера, а не на север плиты. Вертикаль отдельно, Space/Q.
     _fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
     // ⚠️ ЗНАК «ВБОК» ПРОВЕРЯЕТСЯ ТАК, И ПЕРЕВОРАЧИВАТЬ ЕГО НЕЛЬЗЯ. В осях сцены
     //    «вперёд» — это -Z, «вверх» — +Y, «вправо» — +X. Произведение вперёд×вверх
@@ -371,7 +384,7 @@ export function createFreeCam(camera, controls, dom, opts = {}) {
     if (KEYS_DOWN.some((k) => held.has(k))) upDown -= 1;
 
     if (_move.lengthSq() > 0) _move.normalize();
-    const boost = (held.has('ControlLeft') || held.has('ControlRight')) ? O.boost : 1;
+    const boost = KEYS_BOOST.some((k) => held.has(k)) ? O.boost : 1;
     const want = O.speed * boost;
 
     // Разгон и торможение — иначе старт и остановка читаются рывком.
