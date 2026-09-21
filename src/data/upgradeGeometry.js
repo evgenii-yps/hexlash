@@ -41,13 +41,22 @@ const FACETS = {
     <circle class="seed" cx="100" cy="100" r="5"/>`,
 };
 
-/* SVG ядра — центральный объект, единственное свечение экрана */
-export function coreSVG(kind, { seed = false } = {}) {
-  let inner = FACETS[kind] || '';
-  inner = inner
+/* Внутренний рисунок ядра БЕЗ обёртки — подставленные шестиугольники.
+   Вынесено отдельной функцией, чтобы знак манеры можно было взять в другую
+   фигуру (превью новой формы ядра, /dev/core), НЕ копируя координаты: копия
+   рисунка — это ровно то, как в проекте однажды оказалось два разных логотипа.
+   coreSVG ниже зовёт её же, поведение прежнее. Бокс тот же: 200×200, внешний
+   гекс r=78 @ (100,100). */
+export function coreFacets(kind) {
+  return (FACETS[kind] || '')
     .replace('__H56__', hexPts(100, 100, 56))
     .replace('__H44__', hexPts(100, 100, 44))
     .replace('__H34__', hexPts(100, 100, 34));
+}
+
+/* SVG ядра — центральный объект, единственное свечение экрана */
+export function coreSVG(kind, { seed = false } = {}) {
+  const inner = coreFacets(kind);
   const seedDot = seed ? `<circle class="seed" cx="100" cy="100" r="6"/>` : '';
   return `<svg viewBox="0 0 200 200" aria-hidden="true">
     <polygon class="hex-line" points="${hexPts(100, 100, 78)}"/>
