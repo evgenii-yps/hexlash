@@ -261,6 +261,11 @@ const devRoutes = [
     // плоские иконки, панель боя и слоты выбора — до того, как баффы попадут в
     // бой. Ничего не встраивает, тот же принцип, что и у /dev/core.
     {path: '/dev/buffs', name: 'DevBuffsPreview', component: () => import('@/views/DevBuffsPreviewView.vue')},
+    // /dev/forge — макет зала FORGE в новом виде (ТЗ 23.09.2026): интерфейс зала
+    // предметами внутри сцены вместо плоских панелей. Ничего не встраивает —
+    // настоящий зал живёт по адресу /play/pve и этой страницей не задет. Тот же
+    // принцип скрытия, что у /dev/core и /dev/buffs.
+    {path: '/dev/forge', name: 'DevForgeMockup', component: () => import('@/views/DevForgeMockupView.vue')},
 ];
 
 const routes = [
