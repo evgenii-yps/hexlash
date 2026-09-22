@@ -22,7 +22,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { coreFigure, vortexRings, VORTEX, CUT_COLOR, CUT_WIDTH, MODES } from '../src/data/coreFigure.js';
+import { coreFigure, vortexRings, VORTEX, FACETS, MODES } from '../src/data/coreFigure.js';
 import { CORE_CYCLE } from '../src/data/coreCycle.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -123,8 +123,13 @@ put('    </radialGradient>');
 /* Круги-заполнители: стоят в середине ядра, растут наружу. */
 f.branches.forEach((b, i) => {
   if (!LIT[i]) return;
+  /* Шесть остановок. Ветке, которая зажигает меньше пяти частей, лишние
+     приходят равными последней: шаг проходит, радиус не меняется. */
+  const stops = [];
+  for (let k = 0; k <= FACETS; k++) stops.push(`--f${k}:${b.stops[Math.min(k, LIT[i])]}`);
+  stops.push(`--f-final:${b.stops[LIT[i]]}`);
   put(`    <clipPath id="dkFlow-${b.id}">`);
-  put(`      <circle cx="0" cy="0" r="1" data-core-flow="${i + 1}" style="--facet-from:${b.flowStart};--facet-to:${b.flowEnd(LIT[i])}"/>`);
+  put(`      <circle cx="0" cy="0" r="1" data-core-flow="${i + 1}" style="${stops.join(';')}"/>`);
   put('    </clipPath>');
 });
 put('  </defs>');
@@ -145,24 +150,12 @@ if (f.m.zone > 0) {
 for (const b of f.branches) {
   put(`  <polygon points="${b.points}" fill="#120f17" stroke="currentColor" stroke-opacity="${f.m.branch}" stroke-width="1.3" stroke-linejoin="round"/>`);
 }
-/* Разрезы между гранями — видны и когда грань погасла. */
-put(`  <g stroke="${CUT_COLOR}" stroke-width="${CUT_WIDTH}" stroke-linecap="butt">`);
-for (const b of f.branches) {
-  for (const c of b.cuts) {
-    put(`    <line x1="${c.x1}" y1="${c.y1}" x2="${c.x2}" y2="${c.y2}"/>`);
-  }
-}
-put('  </g>');
-/* Горящие грани. */
+/* Горящая часть ветки — одна сплошная полоса без делений. */
 put('  <g class="hc-facets">');
 f.branches.forEach((b, i) => {
   if (!LIT[i]) return;
   put(`    <g clip-path="url(#dkFlow-${b.id})">`);
-  put('      <g data-core-lit="1">');
-  for (const fa of b.facets) {
-    put(`        <polygon points="${fa.points}" fill="currentColor" fill-opacity="${f.m.facet}"/>`);
-  }
-  put('      </g>');
+  put(`      <polygon data-core-lit="1" points="${b.strip}" fill="currentColor" fill-opacity="${f.m.facet}"/>`);
   put('    </g>');
 });
 put('  </g>');

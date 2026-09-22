@@ -1,25 +1,31 @@
-/* HEXLASH — МЕДЛЕННОЕ ЗАПОЛНЕНИЕ ГРАНЕЙ ЯДРА (22.09.2026).
+/* HEXLASH — МЕДЛЕННОЕ ЗАПОЛНЕНИЕ ГРАНЕЙ ЯДРА (22.09.2026, правка v1.1).
 
    ⚠️ ЕДИНСТВЕННОЕ МЕСТО, ГДЕ ЖИВЁТ РАСПИСАНИЕ ЦИКЛА. Отсюда его берут обе
    поверхности: приложение подключает файл сборкой (src/main.js), деку
    заполняет scripts/sync-core-figure.mjs, вставляя текст этого файла в
    статическую страницу. Второй копии быть не должно.
 
-   ЧТО ПРОИСХОДИТ. На ветках ядра пять граней. Свет вытекает из сердца и
-   ползёт к вершине, зажигая грани одну за другой; когда включается вторая
-   ветка — проявляется зона сплава между ними и сердце становится ярче. Всё
-   держится, гаснет вместе, пауза, цикл сначала. Это показ того, как в игре
-   растёт боец.
+   ЧТО ПРОИСХОДИТ. Ветка — один цельный клин БЕЗ ВИДИМЫХ ДЕЛЕНИЙ. Свет
+   вытекает из сердца и ползёт к концу ветки, но не ровно: дошёл до границы
+   очередной пятой части — коротко встал — пошёл дальше. Глаз считает шаги по
+   остановкам, как у полосы загрузки, которая движется рывками по 20%.
+   Когда включается вторая ветка, проявляется зона сплава между ними и сердце
+   становится ярче. Всё держится, гаснет вместе, пауза, цикл сначала.
 
-   ⚠️ ДЛИТЕЛЬНОСТЬ ЦИКЛА — ОДНО ЧИСЛО, --core-cycle НИЖЕ. Все доли внутри
+   ⚠️ РАЗРЕЗОВ МЕЖДУ ГРАНЯМИ БЫТЬ НЕ ДОЛЖНО. Они были в первой версии и сняты
+   22.09.2026: владелец их не просил. Шаги показывает движение, а не линии.
+
+   ⚠️ ДЛИТЕЛЬНОСТЬ ЦИКЛА — ОДНО ЧИСЛО, --core-cycle ниже. Все доли внутри
    заданы процентами от него, так что цикл растягивается и сжимается целиком.
+   Шаг = 12% цикла: 9% свет идёт (0.9 с), 3% стоит (0.3 с). Пять шагов по
+   двум веткам — 60% цикла, то есть 6 секунд.
 
    ⚠️ ЧЕМ АНИМИРУЕМ. Только прозрачность и растяжение круга-заполнителя
    внутри обрезки. Фильтров размытия нет, вся фигура каждый кадр не
    перерисовывается — иначе телефон не держит 16.7 мс на кадр.
 
-   Координат здесь нет ни одной: середина фигуры и радиусы приходят
-   переменными из разметки (--core-c, --facet-from, --facet-to). */
+   Координат здесь нет ни одной: середина фигуры и радиусы остановок приходят
+   переменными из разметки (--core-c, --f0…--f5). */
 
 /* ⚠️ ОДНА НАСТРОЙКА НА ВЕСЬ ЦИКЛ. Владелец просил «раз в 10 секунд».
    Объявлена на самой фигуре, а не на :root, чтобы не заводить глобальную
@@ -30,106 +36,153 @@
   --core-cycle: 10s;
 }
 
-/* ── Обрезка: круг из середины ядра растёт наружу ──────────────────────────
-   Свет «втекает» в грань от края, ближнего к сердцу, — потому что видно
-   ровно то, что попало внутрь растущего круга. Фронт получается слегка
-   дугой, и это читается как свет, вытекающий из сердца. */
+/* ── Шаги света ───────────────────────────────────────────────────────────
+   Круг-обрезка стоит в середине ядра и растёт наружу: видно ровно то, что в
+   него попало. Свет «втекает» в ветку от края, ближнего к сердцу, а фронт
+   получается лёгкой дугой — она и есть видимая граница движения, отдельная
+   линия не нужна.
 
-/* Первая ветка: наливается сразу. */
-@keyframes hxFacetFlow1 {
-  0%        { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-from)); }
-  32%, 100% { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)); }
+   --f0 — старт у края сердца, --f1…--f5 — концы пяти частей. Ветке, которая
+   зажигает меньше пяти, лишние остановки приходят равными последней: шаг
+   проходит, но радиус не меняется, и на экране ничего не происходит. */
+
+/* Первая ветка: шаги с самого начала. */
+@keyframes hxFacetStep1 {
+  0%         { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
+  9%,  12%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
+  21%, 24%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
+  33%, 36%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
+  45%, 48%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
+  57%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
 }
-/* Вторая ветка: ждёт, пока дойдёт первая. */
-@keyframes hxFacetFlow2 {
-  0%, 30%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-from)); }
-  52%, 100% { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)); }
-}
-/* Третья ветка: только в запасном режиме «все 15». */
-@keyframes hxFacetFlow3 {
-  0%, 58%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-from)); }
-  80%, 100% { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)); }
+/* Вторая ветка: ждёт, пока пройдёт три шага первой. */
+@keyframes hxFacetStep2 {
+  0%,  36%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
+  45%, 48%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
+  57%, 60%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
+  69%, 72%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
+  81%, 84%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
+  93%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
 }
 
 /* ── Общая жизнь горящего слоя: держится, гаснет вместе, пауза ──────────── */
 @keyframes hxFacetLit {
-  0%, 72%   { opacity: 1; }
-  87%, 100% { opacity: 0; }
-}
-/* В запасном режиме заполнение длится дольше — держим и гасим позже. */
-@keyframes hxFacetLitAll {
-  0%, 84%   { opacity: 1; }
-  94%, 100% { opacity: 0; }
+  0%,  80%   { opacity: 1; }
+  95%, 100%  { opacity: 0; }
 }
 
 /* ── Зона сплава: проявляется, когда включилась соседняя ветка ─────────── */
 @keyframes hxFacetZone2 {
-  0%, 30%   { opacity: 0; }
-  40%, 72%  { opacity: 1; }
-  87%, 100% { opacity: 0; }
-}
-@keyframes hxFacetZone3 {
-  0%, 58%   { opacity: 0; }
-  68%, 84%  { opacity: 1; }
-  94%, 100% { opacity: 0; }
+  0%,  36%   { opacity: 0; }
+  44%, 80%   { opacity: 1; }
+  95%, 100%  { opacity: 0; }
 }
 
 /* ── Сердце ярче с каждой задействованной веткой ───────────────────────── */
 @keyframes hxFacetHeart {
-  0%        { opacity: 0; }
-  20%, 30%  { opacity: var(--lift1); }
-  45%, 72%  { opacity: var(--lift2); }
-  87%, 100% { opacity: 0; }
-}
-@keyframes hxFacetHeartAll {
-  0%        { opacity: 0; }
-  16%, 20%  { opacity: var(--lift1); }
-  36%, 40%  { opacity: var(--lift2); }
-  56%, 84%  { opacity: var(--lift3); }
-  94%, 100% { opacity: 0; }
+  0%         { opacity: 0; }
+  8%,  36%   { opacity: var(--lift1); }
+  44%, 80%   { opacity: var(--lift2); }
+  95%, 100%  { opacity: 0; }
 }
 
 /* ── Что к чему привязано ─────────────────────────────────────────────── */
-[data-core-flow="1"] { animation: hxFacetFlow1 var(--core-cycle) linear infinite; }
-[data-core-flow="2"] { animation: hxFacetFlow2 var(--core-cycle) linear infinite; }
-[data-core-flow="3"] { animation: hxFacetFlow3 var(--core-cycle) linear infinite; }
+[data-core-flow="1"] { animation: hxFacetStep1 var(--core-cycle) linear infinite; }
+[data-core-flow="2"] { animation: hxFacetStep2 var(--core-cycle) linear infinite; }
 
 [data-core-lit]      { animation: hxFacetLit var(--core-cycle) linear infinite; }
 [data-core-zone="2"] { animation: hxFacetZone2 var(--core-cycle) linear infinite; }
-[data-core-zone="3"] { animation: hxFacetZone3 var(--core-cycle) linear infinite; }
 [data-core-heart]    { animation: hxFacetHeart var(--core-cycle) linear infinite; }
 
-/* Запасной режим «все 15 граней»: то же самое, но расписание плотнее. */
-.hc-facets--all [data-core-lit]   { animation-name: hxFacetLitAll; }
-.hc-facets--all [data-core-heart] { animation-name: hxFacetHeartAll; }
+/* ── Запасной режим «все 15 граней» ───────────────────────────────────────
+   ⚠️ ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН. Включается свойством fill-all у HexCore; на
+   служебной странице /dev/core для него есть переключатель. Пятнадцать шагов
+   в те же десять секунд не влезают по 1.2 с, поэтому шаг здесь 4.6% цикла
+   (0.46 с): 3.45% идёт, 1.15% стоит. Метка стоит на корне фигуры, а не на
+   горящем слое: круги-обрезки лежат в <defs>, до них селектор от слоя не
+   достаёт. */
+@keyframes hxFacetStep1All {
+  0%            { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
+  3.45%,  4.6%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
+  8.05%,  9.2%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
+  12.65%, 13.8% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
+  17.25%, 18.4% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
+  21.85%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
+}
+@keyframes hxFacetStep2All {
+  0%,     23%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
+  26.45%, 27.6% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
+  31.05%, 32.2% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
+  35.65%, 36.8% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
+  40.25%, 41.4% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
+  44.85%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
+}
+@keyframes hxFacetStep3All {
+  0%,     46%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
+  49.45%, 50.6% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
+  54.05%, 55.2% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
+  58.65%, 59.8% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
+  63.25%, 64.4% { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
+  67.85%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
+}
+@keyframes hxFacetLitAll {
+  0%,  84%   { opacity: 1; }
+  96%, 100%  { opacity: 0; }
+}
+@keyframes hxFacetZone2All {
+  0%,  23%   { opacity: 0; }
+  31%, 84%   { opacity: 1; }
+  96%, 100%  { opacity: 0; }
+}
+@keyframes hxFacetZone3All {
+  0%,  46%   { opacity: 0; }
+  54%, 84%   { opacity: 1; }
+  96%, 100%  { opacity: 0; }
+}
+@keyframes hxFacetHeartAll {
+  0%         { opacity: 0; }
+  6%,  23%   { opacity: var(--lift1); }
+  29%, 46%   { opacity: var(--lift2); }
+  52%, 84%   { opacity: var(--lift3); }
+  96%, 100%  { opacity: 0; }
+}
+
+[data-core-all] [data-core-flow="1"] { animation-name: hxFacetStep1All; }
+[data-core-all] [data-core-flow="2"] { animation-name: hxFacetStep2All; }
+[data-core-all] [data-core-flow="3"] { animation: hxFacetStep3All var(--core-cycle) linear infinite; }
+[data-core-all] [data-core-lit]      { animation-name: hxFacetLitAll; }
+[data-core-all] [data-core-zone="2"] { animation-name: hxFacetZone2All; }
+[data-core-all] [data-core-zone="3"] { animation: hxFacetZone3All var(--core-cycle) linear infinite; }
+[data-core-all] [data-core-heart]    { animation-name: hxFacetHeartAll; }
 
 /* ── Смена раздела посреди цикла ───────────────────────────────────────── */
 /* Горящие грани гаснут вместе со сменой цвета, а не исчезают рывком. Снятие
-   класса перезапускает цикл с нуля — в новом цвете. */
+   метки перезапускает цикл с нуля — в новом цвете.
+   ⚠️ Метка стоит на корне фигуры: круги-обрезки лежат в <defs>, и селектор
+   от горящего слоя до них не достаёт. */
 .hc-facets {
   transition: opacity 420ms cubic-bezier(.2, .8, .2, 1);
 }
-.hc-facets.is-swap {
+[data-core-swap] .hc-facets {
   opacity: 0;
 }
-.hc-facets.is-swap [data-core-flow],
-.hc-facets.is-swap [data-core-lit],
-.hc-facets.is-swap [data-core-zone],
-.hc-facets.is-swap [data-core-heart] {
+[data-core-swap] [data-core-flow],
+[data-core-swap] [data-core-lit],
+[data-core-swap] [data-core-zone],
+[data-core-swap] [data-core-heart] {
   animation: none;
 }
 
 /* ── «Уменьшить движение» в настройках устройства ──────────────────────── */
-/* Анимации нет, стоит конечное состояние: грани горят, зона сплава видна,
-   сердце поднято. Игрок видит результат, просто без движения. */
+/* Движения нет, стоит конечное состояние: ветки горят до своей последней
+   остановки, зона сплава видна, сердце поднято. Игрок видит результат. */
 @media (prefers-reduced-motion: reduce) {
-  .hc-facets,
-  .hc-facets * {
+  .hc-facets {
     transition: none !important;
   }
   [data-core-flow] {
     animation: none !important;
-    transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)) !important;
+    transform: translate(var(--core-c), var(--core-c)) scale(var(--f-final)) !important;
   }
   [data-core-lit],
   [data-core-zone] {
