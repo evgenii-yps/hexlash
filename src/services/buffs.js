@@ -34,8 +34,7 @@ import {
   armDiceCharge, clearDiceCharge, clearAllDiceCharges, diceChargeOf, watchDiceCharge,
 } from './buffStrike.js';
 import {
-  readStock, readKit, defaultKitFrom, spendFromStock, refundToStock,
-  ensureStarterStock, writeKit,
+  readStock, readKit, defaultKitFrom, spendFromStock, ensureStarterStock, writeKit,
 } from './buffStock.js';
 
 /**
@@ -122,7 +121,7 @@ export function unbindBuffArena() {
   A.canvas.removeEventListener('pointerdown', onPointerDown);
   A.canvas.removeEventListener('pointerup', onPointerUp);
   if (unwatchDice) { unwatchDice(); unwatchDice = null; }
-  buffEndFight({ refund: false }); // уход с арены — не конец боя, возвращать нечего
+  buffEndFight(); // не брошенное ничего не стоило — возвращать нечего
   disposeFlying();
   A = null;
 }
@@ -130,9 +129,16 @@ export function unbindBuffArena() {
 // ── Начало и конец боя ───────────────────────────────────────────────────
 
 /**
- * НОВЫЙ БОЙ. Набор берётся из запаса и СРАЗУ списывается (правило 4 говорит
- * «сгорает при применении», но списать надо до боя — иначе два боя подряд
- * потратили бы один и тот же бафф дважды). Неиспользованное вернётся в конце.
+ * НОВЫЙ БОЙ. Набор — это просто список того, что игрок взял с собой; из запаса
+ * НИЧЕГО не списывается, пока бафф не брошен.
+ *
+ * ⚠️ СНАЧАЛА БЫЛО НАОБОРОТ: набор списывался на старте, а неиспользованное
+ *    возвращалось в конце. Замер в браузере поймал дыру: игрок обновляет
+ *    страницу посреди боя — вкладка умирает, вернуть некому, а новый бой
+ *    списывает ещё один набор. Запас 1·1·1 превращался в 0·0·0 за одно нажатие
+ *    F5. Списание в момент броска (правило 4 ТЗ дословно: «сгорает сразу после
+ *    применения») чинит это само собой: не брошен — значит не потрачен, и
+ *    возвращать нечего.
  */
 export function buffStartFight() {
   if (!A) return;
@@ -143,10 +149,14 @@ export function buffStartFight() {
   // Игрок мог не заходить в слоты вовсе — тогда набор собирается сам, по
   // правилу «по одному каждого вида, если есть; иначе чем есть».
   const wanted = saved.some((x) => x) ? saved : defaultKitFrom(stock);
+  // Чего в запасе нет — в бой не идёт. Считаем по ходу, чтобы три одинаковых
+  // при двух в запасе дали два, а не три.
+  const left = { ...stock };
   kit = [];
   for (const id of wanted) {
-    if (!id) continue;
-    if (spendFromStock(id)) kit.push(id); // чего нет в запасе — в бой не идёт
+    if (!id || !(left[id] > 0)) continue;
+    left[id] -= 1;
+    kit.push(id);
   }
   kitInitial = [...kit];
   botKit = rollBotKit();
@@ -157,15 +167,11 @@ export function buffStartFight() {
 }
 
 /**
- * БОЙ КОНЧИЛСЯ. Эффекты просто прекращаются (правило 8), неиспользованные
- * баффы возвращаются в запас (правило 5).
+ * БОЙ КОНЧИЛСЯ. Эффекты просто прекращаются (правило 8). Неиспользованные баффы
+ * возвращать не нужно: они и не списывались (правило 5 выполняется само собой —
+ * см. пояснение у buffStartFight).
  */
-export function buffEndFight({ refund = true } = {}) {
-  if (refund && kit.length) {
-    const back = {};
-    for (const id of kit) back[id] = (back[id] || 0) + 1;
-    refundToStock(back);
-  }
+export function buffEndFight() {
   kit = [];
   kitInitial = [];
   botKit = [];
@@ -301,7 +307,11 @@ function applyBuff(id, unit, own) {
   if (own) {
     const i = kit.indexOf(id);
     if (i < 0) return false;
-    kit.splice(i, 1);                                           // правило 4
+    // СПИСАНИЕ РОВНО ЗДЕСЬ — в момент броска (правило 4). Запас мог опустеть
+    // между воротами и боем (вторая вкладка, сброс прогресса): тогда бросок
+    // просто не состоится, и карточка останется на месте.
+    if (!spendFromStock(id)) return false;
+    kit.splice(i, 1);
   } else {
     const i = botKit.indexOf(id);
     if (i < 0) return false;
@@ -422,15 +432,48 @@ export function buffTick(dt, t) {
 
 // ── Значки над бойцами ───────────────────────────────────────────────────
 
+/**
+ * ГДЕ СТОИТ ЗНАЧОК.
+ *
+ * ⚠️ НЕ НАД ГОЛОВОЙ. Над головой уже живёт плашка здоровья (scene/hpIndicator.js,
+ *    её основание — на высоте 2.05), и первая версия ставила значок ровно туда:
+ *    на снимке экрана он налез на чужую полоску здоровья. ТЗ этого прямо не
+ *    разрешает — «панель не должна перекрывать бойцов и полоски здоровья», и к
+ *    значку это относится ровно так же.
+ *
+ *    Поэтому значок стоит НА УРОВНЕ ГРУДИ и сдвинут вбок на экране: читается как
+ *    «на этом бойце», но в полосу плашки не заходит никогда, на любом отдалении
+ *    камеры. Сдвиг в точках экрана, а не в мире, — иначе на отдалении он
+ *    схлопывался бы обратно к телу.
+ */
+const BADGE_BODY_Y = 1.30;   // высота на теле — грудь, ниже плашки здоровья
+const BADGE_SIDE_PX = 40;    // сдвиг вбок на экране, точек
+
 const _prj = new THREE.Vector3();
 const _fwd = new THREE.Vector3();
 const _off = new THREE.Vector3();
 
-/** Состав списка меняется редко — отдельно от покадрового пересчёта мест. */
+/**
+ * Состав списка меняется редко — отдельно от покадрового пересчёта мест.
+ *
+ * ⚠️ ЗАПИСЬ БОЙЦА В СОСТОЯНИЕ ЭКРАНА НЕ КЛАДЁТСЯ, И ЭТО НЕ ПРИДИРКА. Состояние
+ *    реактивное: всё, что в него положено, Vue оборачивает своей обёрткой — в том
+ *    числе вглубь, до тел Three.js. Обёртка не равна самому бойцу, и поиск
+ *    effects.get(обёртка) промахивался бы мимо: значок молча не показывался
+ *    вовсе (поймано снимком экрана — над бойцом было пусто). Плюс заворачивать
+ *    трёхмерные тела в слежение — дорого без всякой нужды.
+ *
+ *    Поэтому наружу уходят только простые значения, а сами бойцы лежат рядом, в
+ *    обычной памяти, и сходятся с состоянием по ключу.
+ */
+const badgeUnits = new Map(); // ключ значка → запись бойца (вне реактивности)
+
 function syncBadgesList() {
+  badgeUnits.clear();
   const want = [];
   for (const [unit, e] of effects) {
-    want.push({ key: e.key, unit, id: e.id, mono: BUFF_META[e.id].mono, own: e.own, face: e.face, ring: 1, x: -9999, y: -9999, on: false });
+    badgeUnits.set(e.key, unit);
+    want.push({ key: e.key, id: e.id, mono: BUFF_META[e.id].mono, own: e.own, face: e.face, ring: 1, x: -9999, y: -9999, on: false });
   }
   buffFightState.badges = want;
 }
@@ -441,9 +484,10 @@ function syncBadges() {
   const r = A.canvas.getBoundingClientRect();
   A.camera.getWorldDirection(_fwd);
   for (const b of buffFightState.badges) {
-    const e = effects.get(b.unit);
+    const unit = badgeUnits.get(b.key);
+    const e = unit && effects.get(unit);
     if (!e) { b.on = false; continue; }
-    const f = b.unit.f;
+    const f = unit.f;
     // Остаток: у полотенца и ведра — время, у кубика — заряженные удары.
     if (e.id === 'dice') {
       const c = diceChargeOf(f);
@@ -455,10 +499,12 @@ function syncBadges() {
     // Место на экране — над головой. За спиной у камеры проекция
     // переворачивается и дала бы значок не с той стороны, поэтому такой кадр
     // просто прячется.
-    _prj.copy(f.group.position); _prj.y += 2.15;
+    _prj.copy(f.group.position); _prj.y += BADGE_BODY_Y;
     if (_fwd.dot(_off.copy(_prj).sub(A.camera.position)) <= 0) { b.on = false; continue; }
     _prj.project(A.camera);
-    b.x = r.left + (_prj.x * 0.5 + 0.5) * r.width;
+    // Свой — справа от бойца, чужой — слева: если тела сошлись вплотную, два
+    // значка всё равно не лягут друг на друга.
+    b.x = r.left + (_prj.x * 0.5 + 0.5) * r.width + (b.own ? BADGE_SIDE_PX : -BADGE_SIDE_PX);
     b.y = r.top + (-_prj.y * 0.5 + 0.5) * r.height;
     b.on = true;
   }

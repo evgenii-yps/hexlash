@@ -16,8 +16,14 @@
 // МАГАЗИНА ЗДЕСЬ НЕТ. Пополнения не существует, запас только тратится — кроме
 // одного стартового подарка. Покупка за LASH — работа 3.
 //
-// Экспортирует: readStock, readKit, writeKit, spendFromStock, refundToStock,
-//               defaultKitFrom, ensureStarterStock.
+// Экспортирует: readStock, readKit, writeKit, spendFromStock, defaultKitFrom,
+//               ensureStarterStock.
+//
+// ⚠️ ВОЗВРАТА В ЗАПАС ЗДЕСЬ НЕТ, И ЭТО НЕ ПРОПУСК. Бафф списывается в момент
+//    броска, а не перед боем, — значит неиспользованный и не списывался.
+//    Возвращать нечего. Почему так, а не иначе, — в шапке buffStartFight
+//    (services/buffs.js): списание перед боем теряло баффы на обновлении
+//    страницы.
 import { readSection, writeSection } from './playerProgress.js';
 import { BUFF_IDS, BUFF_BALANCE } from '@/data/buffBalance.js';
 
@@ -100,24 +106,6 @@ export function spendFromStock(id) {
   const stock = { ...cur.stock, [id]: cur.stock[id] - 1 };
   write({ stock, kit: cur.kit, gifted: cur.gifted });
   return true;
-}
-
-/**
- * Вернуть в запас. Так возвращаются НЕИСПОЛЬЗОВАННЫЕ баффы после боя (правило 5
- * ТЗ): в бой они уходят списанными, и если не брошены — приходят обратно.
- * @param {Record<string, number>} counts сколько чего вернуть
- */
-export function refundToStock(counts) {
-  const cur = read();
-  const stock = { ...cur.stock };
-  let any = false;
-  for (const id of BUFF_IDS) {
-    const n = counts && counts[id];
-    if (Number.isFinite(n) && n > 0) { stock[id] += Math.floor(n); any = true; }
-  }
-  if (!any) return cur.stock;
-  write({ stock, kit: cur.kit, gifted: cur.gifted });
-  return stock;
 }
 
 /**

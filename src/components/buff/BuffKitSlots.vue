@@ -13,7 +13,7 @@
      обычно. Ничего не блокируется: магазина ещё нет (работа 3), и запереть
      игрока за баффами было бы нечестно. -->
 <template>
-  <div class="bks" role="group" :aria-label="t.gate.buffKit">
+  <div class="bks" :class="{ 'is-stacked': stacked }" role="group" :aria-label="t.gate.buffKit">
     <span class="bks-label">{{ t.gate.buffKit }}</span>
     <div class="bks-row">
       <button
@@ -43,6 +43,12 @@ import { readStock, readKit, writeKit, defaultKitFrom, ensureStarterStock } from
 import towel from '@/assets/images/buff_towel.png';
 import bucket from '@/assets/images/buff_bucket.png';
 import dice from '@/assets/images/buff_dice.png';
+
+defineProps({
+  // Над рядом стоит выбор размера состава? Тогда ряд опускается под него.
+  // У дуэли такого выбора нет вовсе, и ряд встаёт на его место.
+  stacked: { type: Boolean, default: false },
+});
 
 const ICONS = { towel, bucket, dice };
 
@@ -83,12 +89,17 @@ function cycle(i) {
 </script>
 
 <style scoped>
+/* ⚠️ РЯД СТОИТ СВЕРХУ, А НЕ СНИЗУ. Снизу он налезал на кнопку боя и на имя
+   выбранного бойца — поймано снимком экрана. Сверху свободно: там только полоса
+   «назад» и выбор размера состава, то есть ровно те же решения перед боем. */
 .bks {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--sp-6) + 96px);
+  top: calc(var(--sp-6) + 44px);
   z-index: 10; pointer-events: auto;
   display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
 }
+/* Командный бой: сверху уже стоит выбор размера состава — опускаемся под него. */
+.bks.is-stacked { top: calc(var(--sp-6) + 44px + 52px); }
 .bks-label, .bks-note {
   font-family: var(--font-mono); font-size: var(--t-micro);
   letter-spacing: var(--ls-title); text-transform: uppercase;
@@ -117,7 +128,8 @@ function cycle(i) {
 
 /* Телефон лёжа: высоты мало — ряд ужимается, чтобы не наезжать на кнопку боя. */
 @media (max-height: 460px) {
-  .bks { bottom: calc(var(--sp-3) + 72px); gap: 0; }
+  .bks { top: calc(var(--sp-3) + 38px); gap: 0; }
+  .bks.is-stacked { top: calc(var(--sp-3) + 38px + 44px); }
   .bks-slot { width: 56px; height: 56px; }
   .bks-icon { width: 22px; height: 22px; }
   .bks-label { display: none; }
