@@ -424,7 +424,10 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-core :deep(.seed) { fill: var(--ink); }
 .ft-core:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 4px; }
 .ftree[data-level="crystal"] .ft-core { transform: translate(-50%, -50%) scale(.5); cursor: default; }
-.ftree[data-level="face"] .ft-core { transform: translate(-50%, calc(-50% - 74px)) scale(.2); opacity: .4; cursor: default; }
+/* На уровне граней ядра не видно: оно стояло крошечным призраком ровно там,
+   где идёт список, и налезало на первую карточку. Где игрок находится, говорит
+   полоса CORE · CRYSTAL · FACET наверху. */
+.ftree[data-level="face"] .ft-core { transform: translate(-50%, calc(-50% - 74px)) scale(.2); opacity: 0; cursor: default; }
 
 /* ghosts — depth scaffold on CORE level */
 .ft-ghosts { position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .45s var(--e-weight); }
@@ -451,6 +454,16 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ftree[data-level="crystal"] .ft-crystal, .ftree[data-level="face"] .ft-crystal.sel {
   opacity: 1; pointer-events: auto;
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(1); }
+/* ⚠️ НА УРОВНЕ ГРАНЕЙ КРИСТАЛЛ ЛОЖИТСЯ СТРОКОЙ. Столбиком он занимал 85 точек
+   от верха камеры, а список начинается с 49-й — замерено: 31–38 точек
+   перекрытия, и подпись «RAM 0/5» читалась внутри первой карточки как часть её
+   названия. Было так и до этой правки; со строчными карточками стало заметно.
+   Строкой он занимает 34 и список остаётся на месте — ни высоты не теряем, ни
+   налезания. Уровень кристалла (он же «сердце») виден по-прежнему. */
+.ftree[data-level="face"] .ft-crystal.sel {
+  flex-direction: row; align-items: center; gap: var(--sp-2); width: auto; white-space: nowrap;
+  transform: translate(-50%, -50%) translate(0, -101px) scale(1); }
+.ftree[data-level="face"] .ft-crystal.sel .shard { width: 34px; height: 34px; }
 .ft-crystal .shard { width: 54px; height: 54px; position: relative; transition: transform .3s var(--e-weight); }
 .ft-crystal:hover .shard { transform: translateY(-2px); }
 .ft-crystal .shard :deep(svg) { width: 100%; height: 100%; overflow: visible; }
@@ -473,22 +486,60 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-crystal .ratio b { color: var(--core-ink); font-weight: 700; }
 .ft-crystal.full .ratio b { color: var(--ink); }
 
-/* facets */
+/* ── грани ────────────────────────────────────────────────────────────────
+   КАРТОЧКА — СТРОКА, А НЕ ПЛИТКА (22.09.2026). Плитками их было четыре в ряд
+   по 79 точек, а подписей на карточке четыре: название, число, фраза и
+   состояние. Замерено на всех телефонных ширинах 320–414: карточка выходила
+   79×75 при нужных контенту 112–134, и две нижние подписи («HARDER HITS»,
+   «UNTRAINED») оказывались ЗА нижним краем карточки — их срезала фаска
+   clip-path. Длинные названия («BREAKTHROUGH») вылезали вбок и срезались там
+   же. На компьютере то же самое: панель зала шире 380 точек не бывает, и
+   плитка в ней всегда около 80 точек.
+
+   Поэтому одна колонка и раскладка внутри карточки строкой:
+     [ гекс ] [ название ] [ число ]
+              [ фраза    ] [ состояние ]
+   Названию достаётся ~165 точек при 320 — самое длинное в игре («FEINT TO
+   INTERRUPT») занимает ~133. Разметку это не трогает: подписи те же, их
+   расставляет сетка по именованным местам. */
 .ft-facets[hidden] { display: none; }
 .ft-facets { position: absolute; left: 0; right: 0; top: 54px; bottom: 38px; padding: var(--sp-1) var(--sp-3); z-index: 6;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: var(--sp-2);
+  display: grid; grid-template-columns: 1fr; gap: var(--sp-2);
+  /* ⚠️ min-content, а НЕ auto. С auto строка не растёт: замерено — карточке
+     с перенесённым на две строки названием нужно 56 точек, строка оставалась
+     52, и нижние подписи уходили под фаску. Контрольная пара рендеров:
+     auto → карточка 52 при нужных 56; min-content → 58, остальные по-прежнему
+     52. Нижний предел держит min-height самой карточки.
+
+     Числа подобраны так, что самое длинное название игры («FEINT TO
+     INTERRUPT», 134 точки) помещается в одну строку на всех вертикальных
+     ширинах телефона и на компьютере — там все карточки ровно 52. Узкий
+     случай один: телефон ЛЁЖА, где панель зала всего 300 точек; там
+     длинное название переносится и его карточка становится 58. Лучше
+     ступенька, чем срезанный текст. */
+  grid-auto-rows: min-content;
   overflow-y: auto; scrollbar-width: thin; align-content: start; }
 .ft-facets::-webkit-scrollbar { width: 4px; }
 .ft-facets::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-none); }
 .ft-face { position: relative; border: 1px solid var(--line); background: var(--fill-1);
-  padding: var(--sp-2) var(--sp-1) var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
-  cursor: pointer; min-height: 44px;
+  padding: var(--sp-2);
+  display: grid; align-items: center;
+  /* ⚠️ Правая колонка НЕ ПО СОДЕРЖИМОМУ, а от 70 точек. Подпись состояния
+     меняет длину («OPEN» → «LIT»), и колонка по содержимому на этом сжималась,
+     дёргая название на 7 точек ровно в момент нажатия. 70 — измеренная ширина
+     самого длинного состояния игры («UNTRAINED», 69 точек); появится длиннее —
+     колонка вырастет, а не срежет. */
+  grid-template-columns: auto minmax(0, 1fr) minmax(70px, auto);
+  grid-template-areas: "hex nm  pct"
+                       "hex tag st";
+  column-gap: var(--sp-2); row-gap: var(--sp-1);
+  cursor: pointer; min-height: 52px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
   transition: border-color .2s, background .2s, transform .12s;
   -webkit-tap-highlight-color: transparent; }
 .ft-face:active { transform: scale(.96); }
 .ft-face:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 2px; }
-.ft-face .fhex { width: 26px; height: 26px; color: var(--ink-off); transition: color .25s var(--e-weight); }
+.ft-face .fhex { grid-area: hex; width: 26px; height: 26px; color: var(--ink-off); transition: color .25s var(--e-weight); }
 .ft-face .fhex :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .ft-face .fhex :deep(.ln) { stroke: currentColor; fill: none; stroke-width: 1.5; }
 .ft-face .fhex :deep(.fl) { fill: transparent; }
@@ -497,14 +548,19 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-face .fhex :deep(.mask) { transform: translateY(0); }
 /* Слой вспышки: в покое прозрачен, живёт только 0.3 с в конце налива. */
 .ft-face .fhex :deep(.fx) { fill: var(--core); opacity: 0; }
-.ft-face .fl-nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: var(--ls-title); text-transform: uppercase;
-  color: var(--ink); text-align: center; }
-.ft-face .fl-pct { font-size: var(--t-sm); font-weight: 700; line-height: 1; color: var(--core-ink); }
+.ft-face .fl-nm { grid-area: nm; font-size: var(--t-micro); font-weight: 600; letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink); text-align: left; line-height: 1.2; }
+.ft-face .fl-pct { grid-area: pct; font-size: var(--t-sm); font-weight: 700; line-height: 1; color: var(--core-ink);
+  text-align: right; }
 /* Подписи меняют цвет вместе с гексом, а не щёлкают на кадр раньше него. */
 .ft-face .fl-pct, .ft-face .fl-tag, .ft-face .fl-st { transition: color .25s var(--e-weight); }
-.ft-face .fl-tag { font-size: var(--t-micro); letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink-off);
-  line-height: 1.15; text-align: center; }
-.ft-face .fl-st { font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off); }
+.ft-face .fl-tag { grid-area: tag; font-size: var(--t-micro); letter-spacing: var(--ls-tight); text-transform: uppercase;
+  color: var(--ink-off); line-height: 1.2; text-align: left; }
+.ft-face .fl-st { grid-area: st; font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase;
+  color: var(--ink-off); text-align: right; line-height: 1.2; white-space: nowrap; }
+/* Страховка: если название когда-нибудь окажется длиннее строки, оно
+   переносится, а не срезается фаской карточки. */
+.ft-face .fl-nm, .ft-face .fl-tag { overflow-wrap: anywhere; }
 .ft-face.lit { border-color: var(--core-sup); background: color-mix(in srgb, var(--core) 10%, transparent); }
 .ft-face.lit .fhex { color: var(--core); }
 .ft-face.lit .fhex :deep(.fl) { fill: var(--core); }
@@ -572,7 +628,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 }
 @media (max-width: 1023px) {
   .ft-core { width: 108px; height: 108px; }
-  .ft-facets { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); top: 48px; }
+  .ft-facets { top: 48px; }
   .ft-step .lb { display: none; }
   .ft-step { padding: 0 var(--sp-3); }
 }
