@@ -172,8 +172,8 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import BuffsPreviewScene from '@/scene/BuffsPreviewScene.vue';
-import BuffCard from '@/components/dev/BuffCard.vue';
-import BuffBadge from '@/components/dev/BuffBadge.vue';
+import BuffCard from '@/components/buff/BuffCard.vue';
+import BuffBadge from '@/components/buff/BuffBadge.vue';
 // Сохранённые в репозитории иконки — ими страница показывает панель, значок и
 // слоты сразу, без нажатия «снять иконку». Кнопка снимка остаётся: ею иконка
 // пересобирается заново, если предмет в 3D изменится.

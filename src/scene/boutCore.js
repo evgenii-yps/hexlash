@@ -23,6 +23,9 @@
 
 import * as THREE from 'three';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
+// Заряд кубика. Файл нарочно крошечный и без тяжёлых ввозов — его тянет за собой
+// мгновенный бой, считающий чужие пары без сцены. См. шапку buffStrike.js.
+import { diceMulFor, noteDiceHit } from '@/services/buffStrike.js';
 
 /**
  * НАКАЛ — ДВА СТОРОЖА, БЕРЁТСЯ БÓЛЬШИЙ. Они закрывают РАЗНЫЕ случаи, и снимать
@@ -150,9 +153,22 @@ export function boutHooks({ field, unit, clocks, steer = null }) {
     },
     // attacker's strike damage × накал; foe softens by toughness / block.
     // Real HP dealt → clean exchange → накал resets.
+    //
+    // КУБИК (баффы, 22.09.2026) ложится СЮДА ЖЕ, рядом с накалом, и по той же
+    // причине: это единственное место, где урон бьющего умножается на что-то
+    // внешнее. Без заряда diceMulFor возвращает РОВНО ЕДИНИЦУ, и число уходит в
+    // takeDamage в точности то же, что уходило.
+    //
+    // ЗАРЯД ТРАТИТ ТОЛЬКО ПОПАВШИЙ УДАР. Промах и уклон дают ноль снятого
+    // здоровья; заблокированный удар здоровье снимает (блок режет примерно
+    // вдвое, но не в ноль) — его отличает отметка на самом бойце.
     onImpact: (raw, pen, intr, pt, w) => {
       const x = foe();
-      if (x?.takeDamage(raw * clocks.escalationMult(), pen, intr, pt, w) > 0) clocks.noteExchange();
+      if (!x) return;
+      const diceMul = diceMulFor(unit.f);
+      const dealt = x.takeDamage(raw * clocks.escalationMult() * diceMul, pen, intr, pt, w);
+      if (dealt > 0) clocks.noteExchange();
+      if (diceMul !== 1) noteDiceHit(unit.f, dealt, !!(x.wasLastHitBlocked && x.wasLastHitBlocked()));
     },
     // замах: ЗАСАДА рядом разворачивается на него, цель поднимает блок
     onAttackStart: () => { field.noteWindup(unit); foe()?.noteIncomingAttack?.(); },

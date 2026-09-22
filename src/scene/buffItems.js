@@ -33,8 +33,8 @@
 // манекен стоит лицом к камере (+Z), предметы — на своих постаментах МЕЖДУ
 // манекеном и камерой, чуть дальше по Z. «К манекену» = в сторону МЕНЬШЕГО Z.
 //
-// Экспортирует: BUFF_ITEMS (настройки), buildStand, buildTowel, buildBucket,
-// buildDice.
+// Экспортирует: BUFF_ITEMS (настройки), buildActionGlow, buildStand, buildTowel,
+// buildBucket, buildDice.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue, coreRgb } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -105,12 +105,47 @@ function pinkGlowMat(opacity, map = null) {
 const EASE_SETTLE = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
 
 /**
+ * РОЗОВАЯ ЛУЖИЦА — свечение действия. Отдельная запись затем, что нужна она
+ * теперь в двух местах: под постаментом на странице-макете и под ногами бойца в
+ * бою, когда бафф срабатывает. Вторая копия тех же строк разошлась бы с первой.
+ *
+ * ⚠️ В ПОКОЕ ПОЧТИ НЕ ТЛЕЕТ. Розовое принадлежит действию, а тем же розовым
+ *    светится ядро бойца (решение владельца 23.09.2026, Decisions Log 101).
+ *    Полная яркость — только на время самой анимации, через setActive(true, dt).
+ */
+export function buildActionGlow() {
+  const p = BUFF_ITEMS.puddle;
+  // Цвет лужицы — из токена, не число: rgb-строка выводится из --pink тем же
+  // способом, каким sceneTokens.js выводит rgba() для цвета ядра (coreRgb()).
+  const rgb = coreRgb(leaderHue());
+  const tex = makeRadialTexture(`rgba(${rgb}, 0.9)`, `rgba(${rgb}, 0)`, 0.5);
+  const geo = new THREE.PlaneGeometry(p.r * 2, p.r * 2);
+  const mat = pinkGlowMat(p.restOpacity, tex);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = 0.003;
+
+  // Уровень свечения — приглушённый в покое, полный на срабатывании. Кто зовёт,
+  // тот и решает, «активно» ли сейчас; само приближение к цели — плавное,
+  // тяжёлое, не рывком.
+  let level = p.restOpacity;
+  const setActive = (active, dt) => {
+    const target = active ? p.activeOpacity : p.restOpacity;
+    level += (target - level) * Math.min(1, dt * p.lerp);
+    mat.opacity = level;
+  };
+  /** Зажечь сразу, без разгона — для броска, который длится меньше разгона. */
+  const setLevel = (v) => { level = v; mat.opacity = v; };
+
+  return { mesh, setActive, setLevel, dispose: () => { geo.dispose(); mat.dispose(); tex.dispose(); } };
+}
+
+/**
  * Тёмный постамент + розовая лужица под ним. Форма одна на все три предмета —
  * различие несут только предметы сверху.
  */
 export function buildStand() {
   const o = BUFF_ITEMS.stand;
-  const p = BUFF_ITEMS.puddle;
   const group = new THREE.Group();
 
   const bodyGeo = new THREE.CylinderGeometry(o.r, o.r2, o.h, 8);
@@ -119,32 +154,14 @@ export function buildStand() {
   body.position.y = o.h / 2;
   group.add(body);
 
-  // Цвет лужицы — из токена, не число: rgb-строка выводится из --pink тем же
-  // способом, каким sceneTokens.js выводит rgba() для цвета ядра (coreRgb()).
-  const rgb = coreRgb(leaderHue());
-  const tex = makeRadialTexture(`rgba(${rgb}, 0.9)`, `rgba(${rgb}, 0)`, 0.5);
-  const glowGeo = new THREE.PlaneGeometry(p.r * 2, p.r * 2);
-  const glowMatI = pinkGlowMat(p.restOpacity, tex);
-  const glow = new THREE.Mesh(glowGeo, glowMatI);
-  glow.rotation.x = -Math.PI / 2;
-  glow.position.y = 0.003;
-  group.add(glow);
-
-  // Уровень свечения лужицы — приглушённый в покое, полный на срабатывании.
-  // Вызывающая сцена решает, «активен» ли предмет прямо сейчас (по его
-  // состоянию), само приближение к цели — плавное, тяжёлое, не рывком.
-  let level = p.restOpacity;
-  function setActive(active, dt) {
-    const target = active ? p.activeOpacity : p.restOpacity;
-    level += (target - level) * Math.min(1, dt * p.lerp);
-    glowMatI.opacity = level;
-  }
+  const glow = buildActionGlow();
+  group.add(glow.mesh);
 
   const dispose = () => {
     bodyGeo.dispose(); bodyMat.dispose();
-    glowGeo.dispose(); glowMatI.dispose(); tex.dispose();
+    glow.dispose();
   };
-  return { group, topY: o.h, setActive, dispose };
+  return { group, topY: o.h, setActive: glow.setActive, dispose };
 }
 
 /** Вспышка на манекене — билборд-спрайт, аддитивный, розовый. */

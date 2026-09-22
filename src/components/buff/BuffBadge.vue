@@ -1,10 +1,21 @@
-<!-- BuffBadge — значок баффа над бойцом (Блок 4 страницы /dev/buffs), свой /
-     чужой. Отдельный SFC-файл — см. пояснение в BuffCard.vue (тот же приём). -->
+<!-- BuffBadge — значок баффа над бойцом, свой / чужой. Отдельный SFC-файл — см.
+     пояснение в BuffCard.vue (тот же приём), и та же причина держать ОДНУ копию
+     на макет и на бой.
+
+     КОЛЬЦО. Без `ring` оно убывает само, петлёй — так значок показывают на
+     макете, где никакого баффа на самом деле нет. В бою `ring` передают числом
+     от 1 до 0: у полотенца и ведра это оставшееся время, у кубика — оставшиеся
+     заряженные удары. -->
 <template>
   <div class="bb-badge" :class="own ? 'is-own' : 'is-foe'">
     <svg class="bb-ring" viewBox="0 0 44 44">
       <circle class="bb-ring__bg" cx="22" cy="22" r="19" />
-      <circle class="bb-ring__fg" cx="22" cy="22" r="19" />
+      <circle
+        class="bb-ring__fg"
+        :class="{ 'is-driven': ring !== null }"
+        cx="22" cy="22" r="19"
+        :style="ring !== null ? { strokeDashoffset: RING_LEN * (1 - Math.max(0, Math.min(1, ring))) } : null"
+      />
     </svg>
     <div class="bb-icon">
       <img v-if="icon" :src="icon" alt="" />
@@ -20,7 +31,11 @@ defineProps({
   mono: { type: String, default: '?' },
   own: { type: Boolean, default: true },
   face: { type: Number, default: null },
+  // 1 — только что бросили, 0 — кончилось. Не передан — кольцо крутится само
+  // (показ на макете). Число здесь и длина окружности ниже — одно и то же 2π·19.
+  ring: { type: Number, default: null },
 });
+const RING_LEN = 119.4;
 </script>
 
 <style scoped>
@@ -51,6 +66,8 @@ defineProps({
   stroke-dashoffset: 0;
   animation: bb-ring-deplete 6s linear infinite;
 }
+/* Кольцом правят снаружи — своя петля не нужна, иначе две подачи спорили бы. */
+.bb-ring__fg.is-driven { animation: none; }
 /* Правило движения (§6 hexlash-design): у петли одинаковые кадры 0% и 100% —
    при «уменьшить движение» кольцо встаёт в полное (только что применённый
    бафф), не в середину убывания. */

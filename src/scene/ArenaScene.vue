@@ -85,6 +85,11 @@ import { setPlateVariant } from './hpIndicator.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
+// БАФФЫ (ТЗ 22.09.2026, работа 2). Сцена НЕ знает ни одного правила баффов и ни
+// одного их числа: она только говорит «вот плита, вот камера, вот палец, вот
+// живые бойцы» и «бой начался / кончился / прошёл кадр». Всё остальное —
+// services/buffs.js. Пять строк ниже — это весь след баффов в защищённой сцене.
+import { bindBuffArena, unbindBuffArena, buffStartFight, buffEndFight, buffTick } from '@/services/buffs.js';
 import { countLit } from '@/data/upgradeTree.js';
 import { composeChainFoe, composeSquadFoes, composeRaid } from '@/data/foeCompose.js';
 import { facetPhrase } from '@/data/facetReadout.js';
@@ -1151,6 +1156,7 @@ onMounted(() => {
   // должно — разойдутся.
   const freezeBout = () => {
     fightActive = false;
+    buffEndFight(); // эффекты прекращаются, неиспользованные баффы — обратно в запас
     aiPlayer = false;
     aiOpponent = false;
     // Бой кончился — граница уходит вместе с ним. Оставить её значило бы держать
@@ -1779,6 +1785,9 @@ onMounted(() => {
   refreshDevAliases();
   load.stage('fighters');
 
+  // БАФФЫ — привязка. На деке их нет: там окно показа, а не игрок с набором.
+  if (!showcase) bindBuffArena({ scene, camera, canvas: canvasEl.value, field, reduced: reducedMotion });
+
   // FIGHT (key F / button): clean re-run — dispose both, respawn fresh at full
   // HP + neutral, then both fight autonomously until one is eliminated.
   runFight = () => {
@@ -1791,6 +1800,7 @@ onMounted(() => {
     aiOpponent = true;
     fightActive = true;
     clocks.startBout(); // arm the stalemate safeguard (gate) — оба отсчёта с нуля
+    if (!showcase) buffStartFight(); // новый бой — новый набор баффов у игрока и у бота
     // ОТСЧЁТ СТОРОН — НА КАЖДЫЙ БОЙ, И ИМЕННО ЗДЕСЬ.
     //
     // ⚠️ Сначала он стоял рядом со сбором новых соперников («драться снова»), и
@@ -2402,6 +2412,7 @@ onMounted(() => {
     // сцена только показывает — и она же одна знает камеру, поэтому уголок «лидер
     // за кадром» считается здесь, а не в надписях.
     if (leaderBeams) noteLeaderFrame(onPlate, frameMs / 1000);
+    buffTick(frameMs / 1000, t); // баффы: срок эффектов, лечение, бот, подача, места значков
     // КАДР. На открытом поле камера СТОИТ и наводится по случаю (aimTick), в пяти
     // прежних режимах — подъезжает к живым каждый кадр, как было принято глазами.
     // ⚠️ ПОКА КАМЕРА В ПОЛЁТЕ, СЛЕЖЕНИЕ МОЛЧИТ — ОБА ЕГО ВИДА. Иначе сцена
@@ -2555,6 +2566,7 @@ onBeforeUnmount(() => {
   unbindCameraReturn?.(); // и способ вернуть слежение: камеры, которой он владел, больше нет
   unbindSpectateLeave?.(); // и способ уйти с досмотра: боя, который он останавливал, больше нет
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
+  unbindBuffArena();   // и баффы: палец ловить нечем, класть предметы некуда
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
