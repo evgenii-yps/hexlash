@@ -12,7 +12,7 @@
   <svg
     class="hc"
     :class="`hc--${mode}`"
-    :data-core-all="fillAll ? '1' : null"
+    :data-core-five="fillFive ? '1' : null"
     :data-core-swap="swapping ? '1' : null"
     :viewBox="`0 0 ${fig.box} ${fig.box}`"
     :width="size || undefined"
@@ -47,7 +47,7 @@
       <!-- Круг-заполнитель: стоит в середине ядра, растёт наружу. Радиусы
            приходят переменными, расписание — в src/styles/core-facets.css. -->
       <clipPath v-for="b in litBranches" :key="`cp${b.id}`" :id="id('flow-' + b.id)">
-        <circle cx="0" cy="0" r="1" :data-core-flow="b.slot" :style="b.stopVars" />
+        <circle cx="0" cy="0" r="1" :data-core-flow="b.flow" :style="b.stopVars" />
       </clipPath>
     </defs>
 
@@ -72,7 +72,7 @@
       <polygon
         v-for="z in litZones"
         :key="`lz${z.id}`"
-        :data-core-zone="z.slot"
+        :data-core-zone="z.track"
         :points="z.points"
         :opacity="m.zone"
         :fill="url('zone')"
@@ -147,7 +147,7 @@
     <!-- Сердце ярче с каждой задействованной веткой. -->
     <g v-if="showFacets" class="hc-facets">
       <circle
-        :data-core-heart="1"
+        :data-core-heart="fillFive ? 'pair' : 'all'"
         :cx="fig.c" :cy="fig.c" :r="fig.heart.glowR"
         :fill="url('gemglow')"
         :style="liftVars"
@@ -193,24 +193,27 @@ const props = defineProps({
   /* Медленное заполнение граней. На розовых разделах и на входе выключено:
      там по правилу горит только сердце. */
   fill: { type: Boolean, default: true },
-  /* ⚠️ ЗАПАСНОЙ РЕЖИМ, ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН. false — как в игре: горит не
-     больше пяти граней (3 на первой ветке + 2 на второй), боец дорос до
-     потолка и стал гибридом. true — загораются все пятнадцать. Владелец
-     просил оставить второй вариант наготове; переключается этим одним
-     свойством. */
-  fillAll: { type: Boolean, default: false },
+  /* ⚠️ ЗАПАСНОЙ РЕЖИМ, ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН. false — основной ход: все три
+     ветки идут одновременно и доходят до вершины, горят все пятнадцать
+     граней. true — прежнее правило «не больше пяти, как в игре»: три на
+     первой ветке, две на второй, третья не участвует. Владелец просил
+     оставить его наготове; переключается этим одним свойством.
+     ⚠️ В САМОЙ ИГРЕ правило «не больше пяти» не меняется — это только фон. */
+  fillFive: { type: Boolean, default: false },
   /* Метка раздела. Сменилась — горящие грани гаснут вместе со сменой цвета,
      и цикл стартует заново в новом цвете. */
   cycleKey: { type: [String, Number, null], default: null },
 });
 
-/* Сколько граней зажигает каждая ветка. Порядок веток — верхняя, правая
-   нижняя, левая нижняя: он же порядок заполнения. */
-const LIT_DEFAULT = [3, 2, 0];
-const LIT_ALL = [FACETS, FACETS, FACETS];
+/* Сколько граней зажигает каждая ветка и по какой дорожке кадров идёт.
+   Порядок веток — верхняя, правая нижняя, левая нижняя.
+   Основной ход: все три одновременно, до вершины.
+   Запасной «3 + 2»: первая и вторая по очереди, третья не участвует. */
+const RUN_ALL = [{ lit: FACETS, flow: 1 }, { lit: FACETS, flow: 1 }, { lit: FACETS, flow: 1 }];
+const RUN_FIVE = [{ lit: 3, flow: 1 }, { lit: 2, flow: 2 }, { lit: 0, flow: 1 }];
 
-/* Насколько ярче становится сердце с каждой задействованной веткой.
-   Приглушённый режим поднимает мягче — доли те же, масштаб от m.facet. */
+/* Насколько ярче становится сердце. Приглушённый режим поднимает мягче —
+   доли те же, масштаб от m.facet. */
 const LIFT = [0.40, 0.75, 1.0];
 
 /* ⚠️ useId, а не свой счётчик. Счётчик, объявленный на верхнем уровне
@@ -228,7 +231,7 @@ const m = computed(() => MODES[props.mode] || MODES.full);
 /* Заполнение имеет смысл только там, где грани вообще видны. */
 const showFacets = computed(() => props.fill && m.value.facet > 0);
 
-const litCounts = computed(() => (props.fillAll ? LIT_ALL : LIT_DEFAULT));
+const run = computed(() => (props.fillFive ? RUN_FIVE : RUN_ALL));
 
 /* Ветки, которые участвуют в цикле, с их местом в очереди и радиусами
    остановок. Ветке, которая зажигает меньше пяти частей, лишние остановки
@@ -236,34 +239,31 @@ const litCounts = computed(() => (props.fillAll ? LIT_ALL : LIT_DEFAULT));
    ничего не происходит. */
 const litBranches = computed(() => fig.value.branches
   .map((b, i) => {
-    const lit = litCounts.value[i];
+    const { lit, flow } = run.value[i];
     const stopVars = {};
     for (let k = 0; k <= FACETS; k++) {
       stopVars[`--f${k}`] = String(b.stops[Math.min(k, lit)]);
     }
     /* Конечное состояние — для «уменьшить движение». */
     stopVars['--f-final'] = String(b.stops[lit]);
-    return { ...b, slot: i + 1, lit, stopVars };
+    return { ...b, flow, lit, stopVars };
   })
   .filter((b) => b.lit > 0));
 
-/* Зоны сплава: между первой и второй веткой, а в запасном режиме — ещё и
-   между второй и третьей. Номер — место ветки, с приходом которой зона
-   проявляется. */
-const litZones = computed(() => {
-  const out = [{ ...fig.value.zones[0], slot: 2 }];
-  if (props.fillAll) out.push({ ...fig.value.zones[1], slot: 3 });
-  return out;
-});
+/* Зоны сплава. Основной ход: все три проявляются по мере заполнения.
+   Запасной «3 + 2»: одна, между двумя работающими ветками. */
+const litZones = computed(() => (props.fillFive
+  ? [{ ...fig.value.zones[0], track: '2' }]
+  : fig.value.zones.map((z) => ({ ...z, track: 'all' }))));
 
 const liftVars = computed(() => {
   const k = m.value.facet / MODES.full.facet;
-  const n = props.fillAll ? 3 : 2;
   const v = LIFT.map((x) => (x * k).toFixed(3));
+  const max = props.fillFive ? v[1] : v[2];
   return {
-    '--lift1': v[0], '--lift2': v[1], '--lift3': v[2],
+    '--lift1': v[0], '--lift2': v[1], '--lift-max': max,
     /* Конечное состояние — для «уменьшить движение». */
-    '--lift-final': v[n - 1],
+    '--lift-final': max,
   };
 });
 
@@ -283,6 +283,9 @@ onBeforeUnmount(() => { if (swapTimer) clearTimeout(swapTimer); });
    таблице стилей нет ни одной. */
 const rootStyle = computed(() => ({
   '--core-c': `${fig.value.c}px`,
+  /* Докуда доходит зона сплава. В приглушённом режиме мягче — доля та же,
+     что у неподвижных зон под ней. */
+  '--zone-max': (m.value.zone / MODES.full.zone).toFixed(3),
   ...(props.hue ? { color: props.hue } : null),
 }));
 </script>

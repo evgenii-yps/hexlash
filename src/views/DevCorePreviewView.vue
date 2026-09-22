@@ -36,9 +36,9 @@
           @click="fill = !fill"
         >заполнение: {{ fill ? 'вкл' : 'выкл' }}</button>
         <button
-          type="button" class="cp-chip" :class="{ 'is-on': fillAll }"
-          @click="fillAll = !fillAll"
-        >{{ fillAll ? 'все 15 граней' : '5 граней' }}</button>
+          type="button" class="cp-chip" :class="{ 'is-on': fillFive }"
+          @click="fillFive = !fillFive"
+        >{{ fillFive ? 'запасной: 3 + 2' : 'все 15 граней' }}</button>
       </div>
     </header>
 
@@ -52,7 +52,7 @@
         </p>
         <div class="cp-grid">
           <figure v-for="s in SECTIONS" :key="`c${s.id || 'pink'}`" class="cp-cell">
-            <HexCore :mode="mode" :hue="hueOf(s.id)" :flicker="flicker" :fill="fill" :fill-all="fillAll" />
+            <HexCore :mode="mode" :hue="hueOf(s.id)" :flicker="flicker" :fill="fill" :fill-five="fillFive" />
             <figcaption>{{ s.name }}</figcaption>
           </figure>
         </div>
@@ -67,7 +67,7 @@
         </p>
         <div class="cp-grid">
           <figure v-for="m in MODE_IDS" :key="`m${m}`" class="cp-cell">
-            <HexCore :mode="m" :hue="hue" :flicker="flicker" :fill="fill" :fill-all="fillAll" />
+            <HexCore :mode="m" :hue="hue" :flicker="flicker" :fill="fill" :fill-five="fillFive" />
             <figcaption>{{ m }}</figcaption>
           </figure>
         </div>
@@ -87,7 +87,7 @@
             <div class="cp-shot" :style="shot(390, 844, .6)">
               <div class="cp-shot__in" :style="{ width: '390px', height: '844px', transform: 'scale(.6)' }">
                 <CoreVortex
-                  :mode="mode" :flicker="flicker" :fill="fill" :fill-all="fillAll"
+                  :mode="mode" :flicker="flicker" :fill="fill" :fill-five="fillFive"
                   :core-r="104" core-cy="40.05%" :ring-count="6"
                   :style="{ color: hue }"
                 />
@@ -100,7 +100,7 @@
             <div class="cp-shot" :style="shot(1440, 900, .5)">
               <div class="cp-shot__in" :style="{ width: '1440px', height: '900px', transform: 'scale(.5)' }">
                 <CoreVortex
-                  :mode="mode" :flicker="flicker" :fill="fill" :fill-all="fillAll"
+                  :mode="mode" :flicker="flicker" :fill="fill" :fill-five="fillFive"
                   :core-r="250" core-cy="47.78%" :ring-count="7"
                   :style="{ color: hue }"
                 />
@@ -113,7 +113,7 @@
             <div class="cp-shot" :style="shot(1440, 900, .5)">
               <div class="cp-shot__in" :style="{ width: '1440px', height: '900px', transform: 'scale(.5)', opacity: .5 }">
                 <CoreVortex
-                  mode="muted" :flicker="flicker" :fill="fill" :fill-all="fillAll"
+                  mode="muted" :flicker="flicker" :fill="fill" :fill-five="fillFive"
                   :core-r="220" core-cy="33.33%" :ring-count="7"
                   :style="{ color: hue }"
                 />
@@ -155,8 +155,8 @@ const section = ref(null);
 const mode = ref('full');
 const flicker = ref(true);
 const fill = ref(true);
-/* Запасной режим «все 15 граней» — по умолчанию выключен, как в продукте. */
-const fillAll = ref(false);
+/* Запасной режим «3 + 2» — по умолчанию выключен, как в продукте. */
+const fillFive = ref(false);
 
 /* Цвет берём тем же путём, что лендинг и дека: из файла токенов. */
 const hueOf = (id) => `rgb(${accentRgb(id).join(' ')})`;

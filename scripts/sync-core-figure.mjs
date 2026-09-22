@@ -33,11 +33,27 @@ const DECK = join(ROOT, 'public/deckinvestors/index.html');
 const MODE = 'muted';
 /* Колец на деке семь — как на компьютере (эталон). */
 const RINGS = VORTEX.count.desktop;
-/* Сколько граней зажигает каждая ветка. Как в игре: не больше пяти всего.
-   ⚠️ Та же раскладка, что в HexCore.vue (LIT_DEFAULT) — меняются парой. */
-const LIT = [3, 2, 0];
+/* Сколько граней зажигает каждая ветка и по какой дорожке кадров идёт.
+   ⚠️ Та же раскладка, что в HexCore.vue (RUN_ALL / RUN_FIVE) — меняются парой.
+   Основной ход: все три ветки одновременно доходят до вершины, горят все
+   пятнадцать граней. */
+const RUN_ALL = [{ lit: FACETS, flow: 1 }, { lit: FACETS, flow: 1 }, { lit: FACETS, flow: 1 }];
+/* ⚠️ ЗАПАСНОЙ РЕЖИМ «3 + 2», ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН. Прежнее правило «горит не
+   больше пяти граней, как в игре»: три на первой ветке, две на второй, третья
+   не участвует. Владелец просил держать наготове. Включается одним FIVE ниже
+   (и парой — свойством fill-five у HexCore). В самой игре правило не меняется. */
+const RUN_FIVE = [{ lit: 3, flow: 1 }, { lit: 2, flow: 2 }, { lit: 0, flow: 1 }];
+const FIVE = false;
+const RUN = FIVE ? RUN_FIVE : RUN_ALL;
+/* Зоны сплава. Основной ход: все три проявляются по мере заполнения.
+   Запасной «3 + 2»: одна, между двумя работающими ветками. */
+const ZONES = FIVE ? [{ i: 0, track: '2' }] : [0, 1, 2].map((i) => ({ i, track: 'all' }));
+const HEART = FIVE ? 'pair' : 'all';
 /* Насколько ярче сердце с каждой веткой; масштаб — от яркости режима. */
 const LIFT = [0.40, 0.75, 1.0].map((v) => +(v * MODES[MODE].facet / MODES.full.facet).toFixed(3));
+const LIFT_MAX = FIVE ? LIFT[1] : LIFT[2];
+/* Докуда доходит зона сплава: доля от яркости неподвижных зон под ней. */
+const ZONE_MAX = +(MODES[MODE].zone / MODES.full.zone).toFixed(3);
 
 const BLOCKS = [
   ['<!-- ВИХРЬ:НАЧАЛО -->', '<!-- ВИХРЬ:КОНЕЦ -->', 'кольца'],
@@ -95,7 +111,7 @@ const put = (s) => core.push(s);
 put('<!-- Фигура ядра «Печать». НЕ ПРАВИТЬ РУКАМИ: написана');
 put('     node scripts/sync-core-figure.mjs из src/data/coreFigure.js — того же');
 put('     файла, что рисует ядро на лендинге. Режим яркости — ' + MODE + '. -->');
-put(`<svg class="dk-core" viewBox="0 0 ${f.box} ${f.box}" style="--core-c:${f.c}px" aria-hidden="true">`);
+put(`<svg class="dk-core" viewBox="0 0 ${f.box} ${f.box}" style="--core-c:${f.c}px;--zone-max:${ZONE_MAX}" aria-hidden="true">`);
 put('  <defs>');
 put('    <radialGradient id="dkPlate">');
 put('      <stop offset="0" stop-color="#191420" stop-opacity=".95"/>');
@@ -122,14 +138,15 @@ put('      <stop offset="1" stop-color="currentColor" stop-opacity="0"/>');
 put('    </radialGradient>');
 /* Круги-заполнители: стоят в середине ядра, растут наружу. */
 f.branches.forEach((b, i) => {
-  if (!LIT[i]) return;
+  const { lit, flow } = RUN[i];
+  if (!lit) return;
   /* Шесть остановок. Ветке, которая зажигает меньше пяти частей, лишние
      приходят равными последней: шаг проходит, радиус не меняется. */
   const stops = [];
-  for (let k = 0; k <= FACETS; k++) stops.push(`--f${k}:${b.stops[Math.min(k, LIT[i])]}`);
-  stops.push(`--f-final:${b.stops[LIT[i]]}`);
+  for (let k = 0; k <= FACETS; k++) stops.push(`--f${k}:${b.stops[Math.min(k, lit)]}`);
+  stops.push(`--f-final:${b.stops[lit]}`);
   put(`    <clipPath id="dkFlow-${b.id}">`);
-  put(`      <circle cx="0" cy="0" r="1" data-core-flow="${i + 1}" style="${stops.join(';')}"/>`);
+  put(`      <circle cx="0" cy="0" r="1" data-core-flow="${flow}" style="${stops.join(';')}"/>`);
   put('    </clipPath>');
 });
 put('  </defs>');
@@ -141,10 +158,12 @@ if (f.m.zone > 0) {
     put(`  <polygon points="${z.points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
   }
 }
-/* Зона сплава: проявляется, когда включается вторая ветка. */
+/* Зоны сплава: проявляются по мере заполнения веток. */
 if (f.m.zone > 0) {
   put('  <g class="hc-facets">');
-  put(`    <polygon data-core-zone="2" points="${f.zones[0].points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
+  for (const z of ZONES) {
+    put(`    <polygon data-core-zone="${z.track}" points="${f.zones[z.i].points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
+  }
   put('  </g>');
 }
 for (const b of f.branches) {
@@ -153,7 +172,7 @@ for (const b of f.branches) {
 /* Горящая часть ветки — одна сплошная полоса без делений. */
 put('  <g class="hc-facets">');
 f.branches.forEach((b, i) => {
-  if (!LIT[i]) return;
+  if (!RUN[i].lit) return;
   put(`    <g clip-path="url(#dkFlow-${b.id})">`);
   put(`      <polygon data-core-lit="1" points="${b.strip}" fill="currentColor" fill-opacity="${f.m.facet}"/>`);
   put('    </g>');
@@ -169,7 +188,7 @@ put(`  <polygon points="${f.inner}" fill="none" stroke="currentColor" stroke-opa
 put(`  <circle cx="${f.c}" cy="${f.c}" r="${f.heart.glowR}" fill="url(#dkGemGlow)"/>`);
 /* Сердце ярче с каждой задействованной веткой. */
 put('  <g class="hc-facets">');
-put(`    <circle data-core-heart="1" cx="${f.c}" cy="${f.c}" r="${f.heart.glowR}" fill="url(#dkGemGlow)" style="--lift1:${LIFT[0]};--lift2:${LIFT[1]};--lift3:${LIFT[2]};--lift-final:${LIFT[1]}"/>`);
+put(`    <circle data-core-heart="${HEART}" cx="${f.c}" cy="${f.c}" r="${f.heart.glowR}" fill="url(#dkGemGlow)" style="--lift1:${LIFT[0]};--lift2:${LIFT[1]};--lift-max:${LIFT_MAX};--lift-final:${LIFT_MAX}"/>`);
 put('  </g>');
 put(`  <polygon points="${f.heart.frame}" fill="#0b0910" stroke="currentColor" stroke-opacity="${f.m.heart}" stroke-width="${f.heart.frameW}" stroke-linejoin="round"/>`);
 put(`  <polygon points="${f.heart.ring}" fill="none" stroke="currentColor" stroke-opacity="${+(f.m.heart * 0.35).toFixed(4)}" stroke-width="1"/>`);

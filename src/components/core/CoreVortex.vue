@@ -34,7 +34,7 @@
         :mode="mode"
         :flicker="flicker"
         :fill="fill"
-        :fill-all="fillAll"
+        :fill-five="fillFive"
         :cycle-key="cycleKey"
       />
     </div>
@@ -52,7 +52,7 @@ const props = defineProps({
   flicker: { type: Boolean, default: true },
   /* Медленное заполнение граней — см. HexCore. */
   fill: { type: Boolean, default: true },
-  fillAll: { type: Boolean, default: false },
+  fillFive: { type: Boolean, default: false },
   cycleKey: { type: [String, Number, null], default: null },
   /* ⚠️ Три числа ниже задаются ТОЛЬКО служебной страницей /dev/core, где
      «Вихрь» показан макетами в рамках заданного размера: там ширина рамки не
