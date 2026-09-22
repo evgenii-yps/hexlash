@@ -1094,6 +1094,24 @@ export function buildFighter(
   let windupVulnUntil = 0; // loop time the early-windup vuln window ends (0 = not vuln)
   let staggerUntil = 0; // loop time the stagger lock ends
 
+  // --- БАФФЫ (ТЗ 22.09.2026, работа 2). ТРИ ДОБАВЛЕНИЯ, ВСЕ ВЫКЛЮЧЕНЫ ПО
+  //     УМОЛЧАНИЮ. Пока бафф не брошен, buffPaceMul === 1 и buffCadenceMul()
+  //     === 1, то есть каждая строка расчёта ниже даёт РОВНО ТО ЖЕ ЧИСЛО, что
+  //     давала до этой правки (умножение на единицу в IEEE754 точное). Это
+  //     проверяется прогоном scripts/fight-regression.mjs: бой с зажатым зерном
+  //     обязан совпасть с эталоном до правки побайтно.
+  //
+  //     Сам бафф живёт СНАРУЖИ (services/buffs.js) — здесь только рычаги,
+  //     которых у бойца не было: подлечить, идти и бить чаще, выйти из сбива
+  //     раньше. Ни одно правило боя, ни одно число баланса отсюда не читается и
+  //     не меняется: что и на сколько крутить, решает файл чисел баффов.
+  let buffPaceMul = 1; // ВЕДРО: >1 — двигается и бьёт быстрее. 1 = баффа нет
+  let lastHitBlocked = false; // ОТМЕТКА ДЛЯ КУБИКА: последний прилетевший удар ушёл в блок
+  // Пауза между ударами — величина ОБРАТНАЯ темпу: бить чаще значит ждать
+  // меньше. Тот же вид, что у соседнего staminaCadenceMul (усталость растягивает
+  // паузу), и стоит он ровно там же, где стоит тот.
+  const buffCadenceMul = () => 1 / buffPaceMul;
+
   // --- Charge (заряд) — built by patience, spent on one empowered strike. `charge`
   //     0..stats.chargeMax (start empty). A released strike captures its boost into
   //     chargeShotPower / chargeShotPen at launch (charge already spent) and
@@ -1459,7 +1477,7 @@ export function buildFighter(
     let tvx = 0;
     let tvz = 0;
     if (intent.on) {
-      const bspeed = band.speed * moveScale; // intention manner (slow / fast) rides on the band speed
+      const bspeed = band.speed * moveScale * buffPaceMul; // intention manner (slow / fast) rides on the band speed · ВЕДРО множит сверху (1 = баффа нет)
       let ts = bspeed;
       const cm = Math.hypot(move.vx, move.vz);
       const brakeDist = (cm * cm) / (2 * band.decel) + 0.05; // distance to bleed off at decel
@@ -1939,6 +1957,7 @@ export function buildFighter(
   // a dodge / block-to-near-nothing returns 0, so pure evasion doesn't reset накал.
   const takeDamage = (dmg, attackerPen = 0, attackerInterruptBonus = 0, contactPoint = null, weight = 0) => {
     if (state !== 'alive') return 0;
+    lastHitBlocked = false; // БАФФЫ: отметка на ЭТОТ удар, поднимется ниже, если удар ушёл в блок
     // SEAM (NOT wired): a future fatigue pass could scale the dodge chance + the
     // block strength below by stamina (a spent fighter slips / guards worse) —
     // left unwired on purpose so the fight isn't penalised on every axis at once.
@@ -1972,6 +1991,7 @@ export function buildFighter(
     if (blocking) {
       const cut = THREE.MathUtils.clamp(stats.blockMitigation * (1 - attackerPen), 0, 0.9);
       blockMul = 1 - cut;
+      lastHitBlocked = true; // БАФФЫ: заблокированный удар не тратит заряд кубика (ТЗ)
       if (onBlock) onBlock(); // recognisable successful-block event
       armRiposte(sb.blockCounter || 0); // ВОЛНОЛОМ-1/5 — a block opens the riposte window
     }
@@ -2014,6 +2034,63 @@ export function buildFighter(
     }
     return lost; // HP dealt this hit → the stalemate safeguard's clean-exchange signal
   };
+
+  // --- РЫЧАГИ БАФФОВ. Три способности, которых у бойца не было. Каждая делает
+  //     РОВНО ОДНУ вещь и ничего вокруг не трогает: не крутит случайность, не
+  //     играет клипов, не сбивает намерение, не трогает ни силы, ни заряд.
+  //     Вызываются только снаружи (services/buffs.js); пока их никто не зовёт,
+  //     бой идёт как шёл.
+
+  /**
+   * ПОЛОТЕНЦЕ — подлечить. Доля от ПОЛНОГО здоровья, как и урон считается долей.
+   *
+   * ⚠️ НЕ takeDamage С МИНУСОМ. Там по дороге стоят уклон (лечение могло бы
+   *    «промахнуться»), блок (срезал бы его вдвое), срыв собственного замаха и
+   *    клип «получил по корпусу» — всё это к лечению отношения не имеет. И
+   *    здоровье там не прижато к потолку, то есть полоска ушла бы за сто.
+   *    Поэтому отдельная короткая запись, и в ней ровно одно действие.
+   *
+   * @param {number} frac доля полного здоровья (0.2 = двадцать процентов)
+   * @returns {number} сколько здоровья реально добавилось
+   */
+  const heal = (frac) => {
+    if (state !== 'alive' || !(frac > 0)) return 0;
+    const before = hp;
+    hp = Math.min(maxHp, hp + frac * maxHp); // потолок — полное здоровье, выше не бывает
+    const gained = hp - before;
+    if (gained > 0) updateBar();
+    return gained;
+  };
+
+  /**
+   * ПОЛОТЕНЦЕ — выйти из сбива раньше. Оставшийся замок укорачивается во
+   * столько-то раз.
+   *
+   * ⚠️ ЗОВЁТСЯ ОДИН РАЗ НА СБИВ, а не каждый кадр: каждый кадр укорачивал бы
+   *    замок снова и снова, и сбива не стало бы вовсе. Кто именно зовёт — тот и
+   *    следит (снаружи это край «сбили» по isStaggered).
+   *
+   * @param {number} mul во сколько укоротить остаток (0.5 = вдвое быстрее)
+   */
+  const shortenStagger = (mul) => {
+    if (state !== 'alive' || !(mul > 0) || mul >= 1) return;
+    if (lastT >= staggerUntil) return; // сбива сейчас нет — укорачивать нечего
+    const was = staggerUntil;
+    staggerUntil = lastT + (was - lastT) * mul;
+    const cut = was - staggerUntil;
+    // Сбив паркует у себя и следующий удар, и текущую тактику — иначе боец
+    // встал бы раньше, но стоял бы дальше без дела.
+    if (ai.nextAt >= was) ai.nextAt = Math.max(lastT, ai.nextAt - cut);
+    if (nav.until >= was) nav.until = staggerUntil;
+  };
+
+  /**
+   * ВЕДРО — идти и бить чаще. Один множитель, который читают ровно три строки
+   * расчёта выше (скорость полосы хода и две паузы между ударами).
+   *
+   * @param {number} mul 1 — баффа нет (и расчёт в точности прежний), 1.3 — на треть быстрее
+   */
+  const setBuffPace = (mul) => { buffPaceMul = Number.isFinite(mul) && mul > 0 ? mul : 1; };
 
   // --- TEMPORARY reflex: "decide to raise the guard" (spinal cord until the
   //     model supplies a real «brace» intent). The DECISION lives HERE and ONLY
@@ -2063,7 +2140,7 @@ export function buildFighter(
     if (onFeint) onFeint(); // readable feint event (ФИНТ-branch seam)
     if (onAttackStart) onAttackStart(); // SAME threat signal as a real attack → the bluff
     // Short follow so a real punish can land inside the advantage window.
-    ai.nextAt = t + FEINT.dur + Math.max(0.05, lerp(0.3, 0.1, tempo01)) * staminaCadenceMul();
+    ai.nextAt = t + FEINT.dur + Math.max(0.05, lerp(0.3, 0.1, tempo01)) * staminaCadenceMul() * buffCadenceMul(); // ВЕДРО укорачивает паузу (1 = баффа нет)
   };
   // --- TEMPORARY reflex: "decide to feint instead of a real strike" (spinal cord
   //     until the model supplies a real «deceive» intent — it will replace ONLY
@@ -2120,7 +2197,7 @@ export function buildFighter(
     // frequent light" read) even at equal tempo. LOW STAMINA stretches the pause
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
-    const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
+    const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul() * buffCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases) · ВЕДРО укорачивает паузу (1 = баффа нет)
     ai.nextAt = t + atk.dur + pause;
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
@@ -2358,7 +2435,7 @@ export function buildFighter(
     stamina = THREE.MathUtils.clamp(stamina - B.staminaCostPunch, 0, staminaMax); // spend силы (punch-equivalent)
     // Cadence tracks tempo (+ a weight term), stretched by LOW STAMINA, so the
     // static fallback reads fast-light vs slow-heavy AND tires like the animated path.
-    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, effTempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, effTempo01)) * staminaCadenceMul(); // effTempo01 folds in the intention's tempo bias
+    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, effTempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, effTempo01)) * staminaCadenceMul() * buffCadenceMul(); // effTempo01 folds in the intention's tempo bias · ВЕДРО укорачивает паузу (1 = баффа нет)
   };
   const setAI = (b) => {
     ai.on = b;
@@ -2705,6 +2782,11 @@ export function buildFighter(
     getModelRequestCount: () => modelRequestsThisBout, // model wakes this bout (dev counter — confirm 5–10, not 80)
     eliminate,
     takeDamage,
+    // БАФФЫ — рычаги и одна отметка. Выключены, пока их никто не зовёт.
+    heal,             // ПОЛОТЕНЦЕ: подлечить на долю полного здоровья
+    shortenStagger,   // ПОЛОТЕНЦЕ: укоротить остаток сбива (звать раз на сбив)
+    setBuffPace,      // ВЕДРО: множитель хода и частоты ударов (1 = баффа нет)
+    wasLastHitBlocked: () => lastHitBlocked, // КУБИК: последний прилетевший удар ушёл в блок
     getHp: () => hp,
     maxHp,
     stats, // боевой лист: { strikePower, toughness, mobility }
