@@ -190,6 +190,60 @@ for (const size of SIZES) {
   await ctx.close();
 }
 
+// ── Три одинаковых · отмена выбора · страница-макет цела ─────────────────
+{
+  console.log('\n── КРАЙНИЕ СЛУЧАИ ────────────────────────────────────────');
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => { failed += 1; console.log('  ✗ ошибка на странице:', e.message); });
+
+  await page.goto(`${BASE}/play`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => {
+    const raw = JSON.parse(sessionStorage.getItem('hexlash_progress') || '{}');
+    const list = raw?.roster?.fighters || [];
+    raw.prefight = { core: list[0].core, squad: [list[0].id], mode: 'duel', n: 1 };
+    raw.buffs = { stock: { towel: 3, bucket: 0, dice: 0 }, kit: ['towel', 'towel', 'towel'], gifted: true };
+    sessionStorage.setItem('hexlash_progress', JSON.stringify(raw));
+  });
+  await page.goto(`${BASE}/play/arena`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.bfo-cards .bc-card', { timeout: 30000 });
+  const cards = await page.locator('.bfo-cards .bc-card').count();
+  const count = await page.locator('.bfo-cards .bc-count').first().textContent();
+  ok(cards === 1 && count === '×3', 'три одинаковых складываются в одну карточку ×3',
+     `(карточек ${cards}, счётчик ${count})`);
+
+  // Отмена: тап мимо бойца ничего не тратит.
+  await page.locator('.bfo-cards .bc-card').first().click();
+  await page.waitForTimeout(300);
+  ok(await page.locator('.bfo-mark').count() >= 1, 'цель подсветилась');
+  await page.mouse.click(60, 120); // заведомо пустой угол плиты
+  await page.waitForTimeout(300);
+  const afterMiss = await page.locator('.bfo-cards .bc-count').first().textContent();
+  ok(afterMiss === '×3', 'тап мимо бойца ничего не потратил', `(счётчик ${afterMiss})`);
+  ok(await page.locator('.bfo-mark').count() === 0, 'и снял выбор');
+
+  // Повторный тап по карточке — тоже отмена.
+  await page.locator('.bfo-cards .bc-card').first().click();
+  await page.waitForTimeout(250);
+  await page.locator('.bfo-cards .bc-card').first().click();
+  await page.waitForTimeout(250);
+  ok(await page.locator('.bfo-mark').count() === 0, 'повторный тап по карточке снимает выбор');
+
+  // Страница-макет работы 1 не пострадала: карточка и значок переехали, но
+  // остались теми же.
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
+  await page.goto(`${BASE}/dev/buffs`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(2500);
+  const mockCards = await page.locator('.bc-card').count();
+  const mockBadges = await page.locator('.bb-badge').count();
+  ok(mockCards >= 12 && mockBadges >= 4, 'страница-макет /dev/buffs цела',
+     `(карточек ${mockCards}, значков ${mockBadges})`);
+  await page.screenshot({ path: `${OUT}/dev-buffs-page.png`, fullPage: false });
+  await ctx.close();
+}
+
 await browser.close();
 console.log(`\nСнимки: ${OUT}`);
 console.log(failed === 0 ? '✓ ВСЁ СОШЛОСЬ' : `✗ НЕ СОШЛОСЬ: ${failed}`);
