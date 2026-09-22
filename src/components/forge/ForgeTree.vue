@@ -1,10 +1,24 @@
 <!-- ForgeTree — the fighter's upgrade tree, as a PANEL inside the FORGE hall.
 
      The mechanic is the one that used to live on the pre-fight upgrade screen
-     (UpgradeView): drill down CORE → CRYSTAL → FACET, tap a facet to light it,
-     two guards (the crystal's own limit and the fighter's point pool). Same
-     geometry helpers, same facet readout, same face states — the contract
+     (UpgradeView): drill down CORE → CRYSTAL → FACET, tap a facet to light it.
+     Same geometry helpers, same facet readout, same face states — the contract
      ('lit' | 'open' | 'locked') is unchanged.
+
+     ГРАНЬ ОТКРЫВАЕТСЯ ЗАНЯТИЕМ (18.09.2026). К двум прежним стражам —
+     пределу кристалла и набору очков — добавился третий: зажечь может только
+     боец, отработавший занятие. Дерево само ничего не решает — отказ приходит
+     готовым сверху (`gates`), и это тот же отказ, который вынесет список
+     бойцов: две копии правила разошлись бы.
+
+     ОТКАЗ ГОВОРИТ СЛОВАМИ, НО НЕ ЗДЕСЬ. У грани есть своя подпись
+     состояния («UNTRAINED») и тряска на нажатие, а ПРИЧИНУ ЦЕЛИКОМ говорит
+     строка панели под деревом (.fp-hint в ForgePanel).
+
+     ⚠️ Почему не в строке внизу камеры, где она напрашивалась: та строка
+        СКРЫТА, пока у бойца не зажжено ни одной грани (.fp-tree.is-fresh
+        .ft-foot { display: none } в forge.css) — а это ровно тот случай, в котором
+        причина нужна больше всего. Измерено: коробка 0×0.
 
      What is NOT carried over is that screen's furniture: it was a full-page
      composition (page background, headline, big stepper, bottom action bar) and
@@ -117,6 +131,10 @@ const props = defineProps({
   tree: { type: Array, default: () => [] },
   spent: { type: Number, default: 0 },
   resource: { type: Number, default: 5 },
+  // ТРЕТИЙ СТРАЖ — ЗАНЯТИЕ. Приходит сверху готовым: { light, quench } — ключ
+  // причины или null. Дерево его НЕ СЧИТАЕТ и не знает ни про часы, ни про
+  // состояния бойца — иначе правило жило бы в двух местах. Слова — у панели.
+  gates: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(['toggle']);
 
@@ -166,7 +184,7 @@ function faceClass(f) {
     lit: f.state === 'lit',
     open: f.state === 'open',
     locked: f.state === 'locked',
-    blocked: f.state === 'open' && (atLimit || noPts),
+    blocked: f.state === 'open' && (atLimit || noPts || !!props.gates.light),
     shake: shakeFaceId.value === f.id,
     pour: pourId.value === f.id,
     quench: quenchId.value === f.id,
@@ -178,6 +196,9 @@ function faceLabel(f) {
   const cr = selCrystalObj.value;
   if (cr && litCount(cr) >= cr.limit) return t.value.forge.stLimit;
   if (props.spent >= props.resource) return t.value.forge.stNoPts;
+  // Порядок важен: предел кристалла и пустой набор — это навсегда, а
+  // неотработанное занятие — до ближайшего занятия. Сначала непоправимое.
+  if (props.gates.light) return t.value.forge.stUntrained;
   return t.value.forge.stOpen;
 }
 
@@ -249,9 +270,16 @@ function onFace(f) {
   if (pourId.value === f.id) return;
   if (f.state === 'locked') { deny(f.id); return; }
   const wasLit = f.state === 'lit';
-  const atLimit = litCount(cr) >= cr.limit;
-  const noPts = props.spent >= props.resource;
-  if (!wasLit && (atLimit || noPts)) { deny(f.id); return; }
+  // ГАСИМ. Свой отказ и своя причина: гасить нельзя, пока не забрано
+  // прошлое право — иначе прав стало бы два, а копиться им нельзя.
+  if (wasLit) {
+    if (props.gates.quench) { deny(f.id); return; }   // причина — строкой панели
+    emit('toggle', { crystalId: cr.id, faceId: f.id });
+    return;
+  }
+  // ЗАЖИГАЕМ. Сначала два прежних стража, потом третий — занятие.
+  if (litCount(cr) >= cr.limit || props.spent >= props.resource) { deny(f.id); return; }
+  if (props.gates.light) { deny(f.id); return; }      // причина — строкой панели
   emit('toggle', { crystalId: cr.id, faceId: f.id });
 }
 

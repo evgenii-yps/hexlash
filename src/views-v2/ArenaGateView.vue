@@ -157,7 +157,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t, interpolate } from '@/locales/index.js';
@@ -286,6 +286,10 @@ const previewForge = (() => {
   const n = parseInt(route.query.forge || '0', 10);
   return Number.isFinite(n) && n > 0 ? n : 0;
 })();
+
+// Занятие могло кончиться, пока игрок шёл сюда. Спрашиваем часы, иначе карточка
+// осталась бы запертой «IN THE FORGE» у бойца, который давно свободен.
+onMounted(() => store.dispatch('roster/settleTraining'));
 
 const fighterItems = computed(() => fighters.value.map((f, i) => {
   const core = getCore(f.core);

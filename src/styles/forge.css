@@ -112,13 +112,24 @@
   background: var(--core); color: var(--core);
   box-shadow: var(--glow-select);
 }
+/* СОСТОЯНИЕ И СЧЁТ БОЁВ — одна форма на две строки. Состояние появилось
+   18.09.2026 вместе с тренировкой; своей геометрии ему не заводим — две почти
+   одинаковых строки с разными отступами читаются как ошибка вёрстки. */
+.fp-state,
 .fp-fights {
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
   margin-top: var(--sp-3);
   font-size: var(--t-micro); letter-spacing: var(--ls-title); text-transform: uppercase;
 }
+.fp-state .k,
 .fp-fights .k { color: var(--ink-off); }
+.fp-state .v,
 .fp-fights .v { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+/* Три слова различаются ТОЛЬКО ЯРКОСТЬЮ ЧЕРНИЛ, без новых цветов и без
+   свечения: розовый и свечение принадлежат действию, а не служебному состоянию. */
+.fp-state.is-free .v  { color: var(--ink-off); }
+.fp-state.is-busy .v  { color: var(--ink-dim); }
+.fp-state.is-ready .v { color: var(--ink); font-weight: 700; }
 
 /* ── the scrolling middle ────────────────────────────────────────────────── */
 .fp-scroll {
@@ -134,7 +145,37 @@
 }
 .fp-label .c { letter-spacing: var(--ls-title); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 
-/* ── 2 · tree ────────────────────────────────────────────────────────────── */
+/* ── 2 · train — грань открывается занятием (18.09.2026) ──────────────
+   ОДНА КНОПКА И ОДНА СТРОКА. Кнопка — из семьи вторичных (та же, что
+   .fp-retry): матовый хром, холодный ободок на касании. НИКАКОГО РОЗОВОГО:
+   он принадлежит главному действию и экономике, а занятие — служебное
+   состояние бойца. Ни полос заполнения, ни процентов, ни остатка времени
+   здесь нет и появиться не должно: ход занятия показывает тело в зале. */
+.fp-train { display: flex; flex-direction: column; align-items: flex-start; }
+.fp-train-btn {
+  min-height: var(--h-btn-sm); padding: 0 var(--sp-5);
+  font: inherit; font-size: var(--t-xs); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink);
+  border: 1px solid var(--line-strong); background: var(--fill-1);
+  border-radius: var(--r-none); cursor: pointer;
+  transition: background var(--d-fast), border-color var(--d-fast),
+              box-shadow var(--d-hover), transform var(--d-press);
+}
+.fp-train-btn:hover { background: var(--fill-2); border-color: var(--chrome-rim); }
+/* Отклик на палец обязателен: у телефона нет наведения, и молчаливая
+   кнопка читается как промах. Ободок хром-холодный, никогда не розовый. */
+.fp-train-btn:active { transform: translateY(1px); box-shadow: var(--glow-touch); }
+.fp-train-btn:disabled { color: var(--ink-off); border-color: var(--line); cursor: default; }
+.fp-train-btn:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: 2px; }
+/* Отмена тише начала: это шаг назад, а не действие экрана. */
+.fp-train-btn.is-cancel { color: var(--ink-dim); }
+.fp-train-note {
+  margin-top: var(--sp-2);
+  font-size: var(--t-micro); line-height: 1.35; letter-spacing: var(--ls-tight);
+  text-transform: uppercase; color: var(--ink-off); text-wrap: balance;
+}
+
+/* ── 3 · tree ────────────────────────────────────────────────────────────── */
 .fp-tree { display: flex; flex-direction: column; min-width: 0; }
 /* The tree was written for a wider box. In the panel the depth rail and the
    spend counter share one narrow line, so the counter is kept off the wrap. */
@@ -204,7 +245,7 @@
 .fp-retry:disabled { color: var(--ink-off); border-color: var(--line); cursor: default; }
 .fp-retry:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: 2px; }
 
-/* ── 3 · style ───────────────────────────────────────────────────────────── */
+/* ── 4 · style ───────────────────────────────────────────────────────────── */
 .fp-style-v {
   display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-2);
   font-size: var(--t-xs); letter-spacing: var(--ls-title); text-transform: uppercase;
@@ -212,7 +253,7 @@
 .fp-style-v .b { color: var(--ink); font-weight: 700; white-space: nowrap; }
 .fp-style-v .ph { color: var(--ink-off); }
 
-/* ── 4 · roster ──────────────────────────────────────────────────────────── */
+/* ── 5 · roster ──────────────────────────────────────────────────────────── */
 .fp-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0;
   display: flex; flex-direction: column; gap: var(--sp-1); }
 .fp-row {
@@ -227,13 +268,21 @@
 }
 .fp-row .sw { width: 6px; height: 6px; flex: none; background: var(--core); }
 .fp-row .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+/* СОСТОЯНИЕ В СТРОКЕ — только когда есть что сказать (см. ForgePanel).
+   Не сжимается и не переносится: имя рядом уже умеет обрезаться многоточием,
+   а два сжимающихся элемента в одной строке дерутся за место. */
+.fp-row .st {
+  flex: none; font-size: var(--t-micro); letter-spacing: var(--ls-wide);
+  color: var(--ink-off); white-space: nowrap;
+}
+.fp-row .st.is-ready { color: var(--ink); }
 .fp-row:hover { background: var(--fill-2); color: var(--ink); }
 .fp-row:active { transform: translateY(1px); transition-duration: var(--d-press); }
 .fp-row:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }
 /* the selected one — marked by its own core down the left edge, no glow */
 .fp-row.on { color: var(--ink); background: var(--fill-2); border-left-color: var(--core); }
 
-/* ── 5 · guest ───────────────────────────────────────────────────────────
+/* ── 6 · guest ───────────────────────────────────────────────────────────
    Подвал держал плиту FIGHT и строку причины под ней — они сняты 15.09.2026
    (работа D): из зала в бой больше не уходят. Осталась строка гостя, и подвал
    рисуется только вместе с ней (см. ForgePanel.vue), иначе под списком висел
@@ -268,11 +317,17 @@
       There is not enough height for both the tree and the list above the fold,
       and the list is the one that has to be there — it is how you change who
       you are working on. The tree keeps its place in the reading order on a
-      wide screen; here it is what you scroll to. */
+      wide screen; here it is what you scroll to.
+
+      ЗАНЯТИЕ — СРАЗУ ЗА СПИСКОМ (18.09.2026). Порядок чтения на короткой
+      панели: выбрать бойца → дать ему занятие → посмотреть, из чего он сложен →
+      дерево. Без явного номера занятие встало бы перед списком и отодвинуло
+      вниз ровно то, ради чего этот перелом и заведён. */
 @media (orientation: portrait), (orientation: landscape) and (max-width: 1023px) {
   .fp-roster { order: 1; }
-  .fp-style  { order: 2; }
-  .fp-tree   { order: 3; }
+  .fp-train  { order: 2; }
+  .fp-style  { order: 3; }
+  .fp-tree   { order: 4; }
 }
 
 /* ── phone, upright: a band along the BOTTOM ─────────────────────────────

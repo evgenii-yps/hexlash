@@ -119,6 +119,9 @@ export default {
     stLocked: "Locked",
     stLimit: "Limit",
     stNoPts: "No pts",
+    // Грань видна, но занятие под неё не отработано. Молчаливой недоступности
+    // быть не должно: игрок обязан понимать, что именно мешает.
+    stUntrained: "Untrained",
     buildEmpty: "NOTHING LIT YET",
 
     // ── the hall's PANEL (the block beside the 3D hall) ──────────────────
@@ -126,6 +129,27 @@ export default {
     // (HEXARCH и прочее) сюда не попадает: игрок его не видит.
     selected: "SELECTED",
     fightsLabel: "FIGHTS",
+    // ── тренировка (18.09.2026) ──────────────────────────────────
+    // Три слова на три состояния. Ни цифр, ни процентов, ни остатка времени:
+    // занятие — событие, а не накопление, и его ход показывает тело в зале.
+    stateLabel: "STATE",
+    stFree: "FREE",
+    stTraining: "TRAINING",
+    // Метка «готов». Самое простое слово из возможных: оно читается и в шапке,
+    // и в узкой строке списка, и не притворяется наградой.
+    stReady: "READY",
+    // кнопка
+    trainStart: "TRAIN",
+    trainCancel: "CANCEL",
+    // причины отказа — спокойными словами, без восклицаний
+    whyBusy: "HE IS WORKING · LET HIM FINISH",
+    whyReady: "HIS LESSON IS DONE · LIGHT A FACET TO TAKE IT",
+    whyFull: "EVERY FACET IS LIT · NOTHING LEFT TO WORK FOR",
+    whyUntrained: "A FACET IS EARNED, NOT PICKED · TRAIN HIM FIRST",
+    whyHolds: "ONE LESSON, ONE FACET · LIGHT THE ONE HE EARNED FIRST",
+    // строка под кнопкой, пока занятие идёт — ни чисел, ни полосы
+    trainingNote: "HE IS DRILLING IN THE HALL",
+    readyNote: "HIS LESSON IS DONE · ONE FACET IS HIS TO LIGHT",
     // шапка — по одному состоянию на строку
     headNoPick: "NO FIGHTER",
     headNoPickSub: "PICK ONE FROM THE ROSTER",

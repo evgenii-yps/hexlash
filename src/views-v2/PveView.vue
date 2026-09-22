@@ -43,10 +43,16 @@
         :tree-status="treeStatus"
         :load-step="loadStep"
         :retrying="retrying"
+        :states="states"
+        :assign-why="assignWhy"
+        :light-why="lightWhy"
+        :quench-why="quenchWhy"
         @pick="onPick"
         @toggle="onToggle"
         @new-fighter="onNewFighter"
         @retry="onRetry"
+        @train="onTrain"
+        @cancel-train="onCancelTrain"
       />
     </Transition>
 
@@ -86,6 +92,7 @@ import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
+import { stateOf, facetGate, anyLesson, startClock, stopClock } from '@/services/training.js';
 import PveScene from '@/scene/PveScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import ForgePanel from '@/components/forge/ForgePanel.vue';
@@ -118,6 +125,83 @@ const rosterMax = computed(() => store.getters['roster/max']);
 const coreVars = computed(() => (picked.value
   ? { '--core': pickedCore.value.hue, '--core-sup': pickedCore.value.sup }
   : {}));
+
+// ── ТРЕНИРОВКА ──────────────────────────────────────────────
+// Зал — единственный экран, где занятие назначают и отменяют. Он же держит
+// часы — но только пока открыт и только пока кто-то занимается.
+//
+// ⚠️ ЧАСЫ — НЕ ХРАНИЛИЩЕ ВРЕМЕНИ. Занятие держит срок окончания, поэтому
+//    занятие, кончившееся пока игрок был на арене или обновлял страницу,
+//    оказывается кончившимся в тот момент, когда на него посмотрели (ТЗ §6.1–§6.2).
+//    Часы нужны ровно для того, чтобы подпись в ОТКРЫТОМ зале сменилась сама.
+const trainingTick = ref(0);   // дёргается часами — по нему пересчитываются состояния
+
+// Состояние КАЖДОГО бойца, одной картой: её читают и панель (слова), и сцена
+// (тело). Две разные карты разошлись бы в первом же кадре после конца занятия.
+const states = computed(() => {
+  trainingTick.value;                       // зависимость от часов — без неё не пересчитается
+  const out = {};
+  for (const f of fighters.value) out[f.id] = stateOf(f);
+  return out;
+});
+
+// Почему выбранному нельзя: три отказа, все из одного набора правил.
+const assignWhy = computed(() => {
+  trainingTick.value;
+  return picked.value ? store.getters['roster/assignBlock'](picked.value.id) : 'none';
+});
+const lightWhy = computed(() => {
+  trainingTick.value;
+  return picked.value ? facetGate(picked.value, true) : 'none';
+});
+const quenchWhy = computed(() => {
+  trainingTick.value;
+  return picked.value ? facetGate(picked.value, false) : 'none';
+});
+
+function settle() {
+  store.dispatch('roster/settleTraining');
+  trainingTick.value += 1;
+}
+// Часы заводятся только когда есть что ждать, и встают, когда ждать нечего.
+function armClock() {
+  if (!anyLesson(fighters.value)) { stopClock(); return; }
+  startClock(() => {
+    settle();
+    return anyLesson(fighters.value);       // false → часы встают сами
+  });
+}
+function onTrain(id) {
+  store.dispatch('roster/assignLesson', id);
+  // УШЁЛ ЗАНИМАТЬСЯ — ВЫШЁЛ ИЗ СОСТАВА.
+  //
+  // Состав боя лежит в сейфе и переживает уход с экрана, а экраны состава
+  // давно умеют показывать занятого запертой карточкой «IN THE FORGE». До
+  // тренировки это было недостижимо (занятых не бывало); теперь — достижимо, и
+  // боец, оставшийся в составе, попал бы в ловушку: карточка заперта, а значит
+  // и снять его с состава нельзя — той же самой запертостью.
+  //
+  // Убираем его ЗДЕСЬ, а не правилом внутри состава: решение принял игрок
+  // именно здесь, и только здесь понятно, почему боец из состава вышел. Экран
+  // состава неполный состав и так отрабатывает — он просит добрать словами.
+  //
+  // Снимаем ТОЛЬКО если занятие правда началось: отказ (потолок, уже готов)
+  // не должен трогать состав вообще.
+  if (store.getters['roster/trainingState'](id) === 'busy'
+      && store.getters['prefight/inSquad'](id)) {
+    store.dispatch('prefight/toggleSquad', id);
+  }
+  trainingTick.value += 1;
+  armClock();
+}
+function onCancelTrain(id) {
+  store.dispatch('roster/cancelLesson', id);
+  trainingTick.value += 1;
+  armClock();
+}
+// Занятие могло кончиться, пока зала не было на экране: спрашиваем при входе.
+onMounted(() => { settle(); armClock(); });
+onBeforeUnmount(stopClock);
 
 // The guest honesty line moved here with the tree — this is where the work that
 // would be lost now happens.

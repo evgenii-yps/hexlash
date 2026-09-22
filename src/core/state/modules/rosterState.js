@@ -15,6 +15,22 @@
 // carries that this build does not know about is ignored on restore rather than
 // crashing, so a roster written by a future version cannot break an older one.
 //
+// ТРЕНИРОВКА ЖИВЁТ ЗДЕСЬ (18.09.2026). У бойца три состояния, и они выводятся
+// из ДВУХ полей, а не хранятся третьим словом:
+//
+//   свободен  — lesson пуст, ready ложь
+//   занят     — lesson есть и его срок ещё не вышел
+//   готов     — ready истина (занятие отработано, право на грань не забрано)
+//
+// ≠ НИКОГДА БОЛЬШЕ ОДНОГО НЕЗАБРАННОГО ПРАВА. Готовому нельзя назначить
+//   занятие, а погасить грань можно только тому, у кого права нет. Иначе право
+//   КОПИТСЯ, а копиться в этой работе ничему нельзя (ТЗ §4.1).
+//
+// `busy` — ПРОИЗВОДНОЕ от lesson, а не вторая правда. Поле осталось потому,
+// что его уже читают два экрана состава («IN THE FORGE», карточка не нажимается), и
+// держится в согласии одной мутацией SETTLE. Само оно НЕ СОХРАНЯЕТСЯ: сохранённое
+// «занят» разошлось бы со сроком занятия в первый же раз, когда срок вышел без нас.
+//
 // WHO IS SELECTED lives here too (15.09.2026). It used to be plain component
 // state inside the FORGE hall, so a refresh — or a trip to the arena and back —
 // silently threw the choice away and the hall re-picked the oldest fighter. It is
@@ -26,6 +42,7 @@ import { CORES, RESOURCE } from '@/data/upgradeData.js';
 import { buildTree, litIdsOf, countLit } from '@/data/upgradeTree.js';
 import { pickCallsign } from '@/data/callsigns.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
+import { LESSON_MS, lessonEndsAt, assignGate, facetGate, stateOf } from '@/services/training.js';
 
 // ───────────────────────────── CONFIG ─────────────────────────────
 // Cap. Ten is what the FORGE hall is laid out for: one arc, one personal zone per
@@ -62,11 +79,13 @@ function makeFighter(callsign, core) {
         createdAt: Date.now(),
         upgrade: null,        // working upgrade tree, built on demand (see ensureTree)
         record: null,         // ← fights / wins land here
-        // Занят ли боец. Сегодня всегда false и меняться ему негде: тренировки в
-        // игре ещё нет. Поле заведено заранее, потому что экран выбора состава
-        // уже обязан показывать «на тренировке» затемнённой карточкой, а читать
-        // этот признак ему иначе неоткуда. Появится тренировка — она пишет сюда,
-        // и экран оживает сам, без правок.
+        // ТРЕНИРОВКА. Занятие — не накопление, а событие: началось и кончилось.
+        // Хранится один СРОК — когда оно кончится, — а не остаток и не доля
+        // пройденного: остаток пришлось бы тикать и сохранять, а срок просто лежит
+        // и переживает и обновление страницы, и поход на арену (ТЗ §6.1–§6.2).
+        lesson: null,         // { until } — идёт занятие; null — не идёт
+        ready: false,         // занятие отработано, право на грань не забрано
+        // ПРОИЗВОДНОЕ от lesson — см. шапку файла. Читают экраны состава.
         busy: false,
     };
 }
@@ -85,6 +104,10 @@ function newId() {
 // selected" is the absence of the key, not a stored null.
 // `seeded` — стартовая тройка уже выдана. См. ниже, почему она не может быть
 // просто «ростер не пуст».
+// `tr` — срок идущего занятия, `rdy` — незабранное право на грань. Пишутся
+// только когда есть: боец, который не занимался, не должен стоить места в сейфе.
+// ⚠️ `busy` БОЛЬШЕ НЕ ПИШЕТСЯ: оно производное от срока, и сохранённое «занят»
+//    разошлось бы со сроком в первый же раз, когда занятие кончилось без нас.
 function snapshotOf(s) {
     // ⚠️ Пустой ростер БОЛЬШЕ НЕ СТИРАЕТ секцию. Раньше стирал — и это ровно то,
     // что ломало бы обещание «распустил всех → тройка заново не выдаётся»:
@@ -96,7 +119,8 @@ function snapshotOf(s) {
             const row = { id: f.id, callsign: f.callsign, core: f.core, createdAt: f.createdAt };
             const lit = litIdsOf(f.upgrade);
             if (Object.keys(lit).length) row.lit = lit;
-            if (f.busy) row.busy = true;   // пишется, только когда боец правда занят
+            if (f.lesson) row.tr = f.lesson.until;
+            if (f.ready) row.rdy = true;
             return row;
         }),
     };
@@ -107,6 +131,20 @@ function snapshotOf(s) {
 
 function persist(s) {
     writeSection(SECTION, snapshotOf(s));
+}
+
+// ЗАНЯТИЕ ИЗ СЕЙФА. Срок берётся, только если он вообще похож на срок и не
+// уходит в будущее дальше, чем одно занятие: переведённые назад часы не должны
+// запереть бойца в занятии навсегда. Мусор — это просто «свободен».
+//
+// Старые сейфы этих полей не несут вовсе, и все тамошние бойцы начинают
+// свободными — ровно как требует ТЗ §4.4. Зажжённые грани при этом не трогаются.
+function restoreLesson(raw) {
+    if (!Number.isFinite(raw)) return null;
+    const until = Math.floor(raw);
+    if (until <= Date.now()) return null;                  // срок вышел без нас
+    if (until > Date.now() + LESSON_MS) return null;       // часы уехали — не запираем
+    return { until };
 }
 
 // Rebuild from the save, keeping only records this build can actually read.
@@ -136,7 +174,11 @@ function restore() {
             createdAt: typeof f.createdAt === 'number' ? f.createdAt : 0,
             upgrade: lit ? buildTree(f.core, lit) : null,
             record: null,
-            busy: f.busy === true,
+            lesson: restoreLesson(f.tr),
+            // Срок вышел, пока вкладка была закрыта — это не потеря, а отработанное
+            // занятие: игрок найдёт бойца готовым, а не свободным.
+            ready: f.rdy === true || (Number.isFinite(f.tr) && f.tr <= Date.now()),
+            busy: false,   // производное; выставит SETTLE ниже
         });
     }
     // The saved selection is kept ONLY if it still points at somebody who
@@ -150,7 +192,27 @@ function restore() {
     return { fighters: out, pickedId, seeded: saved ? saved.seeded === true : false };
 }
 
+// ЗАНЯТИЕ КОНЧИЛОСЬ — единственное место, где занятый становится готовым.
+//
+// Зовётся и по часам из открытого зала, и при входе на экраны состава, и один
+// раз при подъёме списка. Идемпотентно и стоит ноль: бойцов десять.
+// Возвращает true, если что-то изменилось — только тогда нужна запись в сейф.
+function settleList(list, now) {
+    let changed = false;
+    for (const f of list) {
+        const on = !!f.lesson && f.lesson.until > now;
+        if (f.lesson && !on) {          // срок вышел — занятие отработано
+            f.lesson = null;
+            f.ready = true;
+            changed = true;
+        }
+        if (f.busy !== on) { f.busy = on; changed = true; }
+    }
+    return changed;
+}
+
 const restored = restore();
+settleList(restored.fighters, Date.now());
 
 /** Три бойца разных ядер, имена — существующим раздатчиком позывных. */
 function makeStarterRoster() {
@@ -199,6 +261,21 @@ const getters = {
     // never a stale copy. Null when nobody is selected, or when the stored id
     // stopped matching anybody.
     picked: (s) => s.fighters.find((f) => f.id === s.pickedId) || null,
+    // СОСТОЯНИЕ И ВОРОТА — через список бойцов, чтобы экраны не заводили
+    // своих копий проверки. Сами правила живут в services/training.js — и там же
+    // их берёт действие ниже, так что отказ и объяснение не могут разойтись.
+    trainingState: (s) => (id) => stateOf(s.fighters.find((f) => f.id === id) || null),
+    /** Причина, по которой занятие нельзя назначить, или null. */
+    assignBlock: (s) => (id) => {
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f) return 'none';
+        return assignGate(f, countLit(f.upgrade), RESOURCE);
+    },
+    /** Причина, по которой грань нельзя зажечь, или null. */
+    lightBlock: (s) => (id) => {
+        const f = s.fighters.find((x) => x.id === id);
+        return f ? facetGate(f, true) : 'none';
+    },
     // Points spent / available FOR ONE FIGHTER — the pool is per fighter, not
     // shared across the roster (owner's call, 24.08).
     spentOf: (s) => (id) => {
@@ -226,13 +303,39 @@ const mutations = {
         f.upgrade = tree;
         persist(s);
     },
-    SET_FACE(s, { id, crystalId, faceId, faceState }) {
+    // ГРАНЬ И ПРАВО МЕНЯЮТСЯ ОДНОЙ ЗАПИСЬЮ. Раздели их на две мутации — и
+    // между ними появился бы миг, когда грань уже горит, а право ещё не забрано.
+    // `right`: 'spend' — забрать право · 'return' — вернуть · ничего — не трогать.
+    SET_FACE(s, { id, crystalId, faceId, faceState, right }) {
         const f = s.fighters.find((x) => x.id === id);
         const cr = f && f.upgrade && f.upgrade.find((c) => c.id === crystalId);
         const face = cr && cr.faces.find((x) => x.id === faceId);
         if (!face) return;
         face.state = faceState;
+        if (right === 'spend') f.ready = false;
+        else if (right === 'return') f.ready = true;
         persist(s);
+    },
+    // НАЗНАЧИТЬ ЗАНЯТИЕ. Повторное нажатие приходит к уже занятому и ничего
+    // не делает — занятие начинается один раз (ТЗ §6.7).
+    START_LESSON(s, { id, until }) {
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f || f.lesson || f.ready) return;
+        f.lesson = { until };
+        f.busy = true;
+        persist(s);
+    },
+    // ОТМЕНА. Боец возвращается в «свободен», право НЕ выдаётся (ТЗ §6.3).
+    CANCEL_LESSON(s, id) {
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f || !f.lesson) return;
+        f.lesson = null;
+        f.busy = false;
+        persist(s);
+    },
+    // Сроки вышли — занятые становятся готовыми. См. settleList.
+    SETTLE(s) {
+        if (settleList(s.fighters, Date.now())) persist(s);
     },
     REMOVE(s, id) {
         const i = s.fighters.findIndex((f) => f.id === id);
@@ -263,6 +366,27 @@ const actions = {
     dismiss({ commit }, id) {
         commit('REMOVE', id);
     },
+    /**
+     * Назначить бойцу занятие. Возвращает причину отказа или null, если началось:
+     * панель тем же ключом говорит словами, почему не вышло.
+     */
+    assignLesson({ state: s, commit }, id) {
+        commit('SETTLE');                       // спросить часы ПЕРЕД решением
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f) return 'none';
+        const why = assignGate(f, countLit(f.upgrade), RESOURCE);
+        if (why) return why;
+        commit('START_LESSON', { id, until: lessonEndsAt() });
+        return null;
+    },
+    /** Отменить занятие. Право не выдаётся. */
+    cancelLesson({ commit }, id) {
+        commit('CANCEL_LESSON', id);
+    },
+    /** Спросить часы: кто успел отработать занятие. */
+    settleTraining({ commit }) {
+        commit('SETTLE');
+    },
     /** Select this fighter (or nobody, with null). Survives a refresh. */
     pick({ commit }, id) {
         commit('PICK', id || null);
@@ -286,13 +410,21 @@ const actions = {
         const face = cr && cr.faces.find((x) => x.id === faceId);
         if (!face || face.state === 'locked') return false;
 
-        if (face.state === 'lit') {                       // give the point back
-            commit('SET_FACE', { id, crystalId, faceId, faceState: 'open' });
+        if (face.state === 'lit') {                       // погасить
+            // Погашение ВОЗВРАЩАЕТ право — иначе одно промахнувшееся нажатие
+            // стоило бы игроку целого занятия. Но только тому, у кого права нет:
+            // иначе их стало бы два, а копиться праву нельзя (ТЗ §4.1).
+            if (facetGate(f, false)) return false;
+            commit('SET_FACE', { id, crystalId, faceId, faceState: 'open', right: 'return' });
             return true;
         }
+        // ЗАЖЕЧЬ МОЖЕТ ТОЛЬКО ГОТОВЫЙ. Прежний свободный путь закрыт: грань
+        // открывается занятием, а не нажатием (ТЗ §4.3). Это ЗАСЛОН, а не оформление:
+        // дерево считает те же ворота, но его можно миновать, а эту строку — нет.
+        if (facetGate(f, true)) return false;
         const litHere = cr.faces.filter((x) => x.state === 'lit').length;
         if (litHere >= cr.limit || countLit(f.upgrade) >= RESOURCE) return false;
-        commit('SET_FACE', { id, crystalId, faceId, faceState: 'lit' });
+        commit('SET_FACE', { id, crystalId, faceId, faceState: 'lit', right: 'spend' });
         return true;
     },
 };
