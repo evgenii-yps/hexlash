@@ -136,16 +136,22 @@ put('    <radialGradient id="dkGemGlow">');
 put('      <stop offset="0" stop-color="currentColor" stop-opacity=".5"/>');
 put('      <stop offset="1" stop-color="currentColor" stop-opacity="0"/>');
 put('    </radialGradient>');
-/* Круги-заполнители: стоят в середине ядра, растут наружу. */
+/* Круги-заполнители: стоят в середине ядра, растут наружу.
+   ⚠️ ОДИН НА ВСЕ ВЕТКИ С ОДИНАКОВЫМ ХОДОМ — как в HexCore.vue. Печать
+   симметрична, свет расходится из середины кругом: трём веткам основного
+   хода нужна одна обрезка, а не три одинаковых. */
+const clipKey = (i) => `${RUN[i].flow}-${RUN[i].lit}`;
+const clips = new Set();
 f.branches.forEach((b, i) => {
   const { lit, flow } = RUN[i];
-  if (!lit) return;
+  if (!lit || clips.has(clipKey(i))) return;
+  clips.add(clipKey(i));
   /* Шесть остановок. Ветке, которая зажигает меньше пяти частей, лишние
      приходят равными последней: шаг проходит, радиус не меняется. */
   const stops = [];
   for (let k = 0; k <= FACETS; k++) stops.push(`--f${k}:${b.stops[Math.min(k, lit)]}`);
   stops.push(`--f-final:${b.stops[lit]}`);
-  put(`    <clipPath id="dkFlow-${b.id}">`);
+  put(`    <clipPath id="dkFlow-${clipKey(i)}">`);
   put(`      <circle cx="0" cy="0" r="1" data-core-flow="${flow}" style="${stops.join(';')}"/>`);
   put('    </clipPath>');
 });
@@ -158,25 +164,31 @@ if (f.m.zone > 0) {
     put(`  <polygon points="${z.points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
   }
 }
-/* Зоны сплава: проявляются по мере заполнения веток. */
+/* Зоны сплава: проявляются по мере заполнения веток. Прозрачность ведёт
+   группа, а не каждая зона: одна анимация вместо трёх. */
 if (f.m.zone > 0) {
   put('  <g class="hc-facets">');
+  put(`    <g data-core-zone="${ZONES[0].track}">`);
   for (const z of ZONES) {
-    put(`    <polygon data-core-zone="${z.track}" points="${f.zones[z.i].points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
+    put(`      <polygon points="${f.zones[z.i].points}" fill="url(#dkZone)"/>`);
   }
+  put('    </g>');
   put('  </g>');
 }
 for (const b of f.branches) {
   put(`  <polygon points="${b.points}" fill="#120f17" stroke="currentColor" stroke-opacity="${f.m.branch}" stroke-width="1.3" stroke-linejoin="round"/>`);
 }
-/* Горящая часть ветки — одна сплошная полоса без делений. */
+/* Горящая часть ветки — одна сплошная полоса без делений. Общая жизнь слоя
+   (держится — гаснет — пауза) ведёт группа: одна анимация вместо трёх. */
 put('  <g class="hc-facets">');
+put('    <g data-core-lit="1">');
 f.branches.forEach((b, i) => {
   if (!RUN[i].lit) return;
-  put(`    <g clip-path="url(#dkFlow-${b.id})">`);
-  put(`      <polygon data-core-lit="1" points="${b.strip}" fill="currentColor" fill-opacity="${f.m.facet}"/>`);
-  put('    </g>');
+  put(`      <g clip-path="url(#dkFlow-${clipKey(i)})">`);
+  put(`        <polygon points="${b.strip}" fill="currentColor" fill-opacity="${f.m.facet}"/>`);
+  put('      </g>');
 });
+put('    </g>');
 put('  </g>');
 for (const s of f.sides) {
   put(`  <g data-core-flick="1" style="--core-flick-dur:${s.dur}s;--core-flick-del:${s.del}s">`);

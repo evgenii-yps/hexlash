@@ -45,10 +45,16 @@
       </radialGradient>
 
       <!-- Круг-заполнитель: стоит в середине ядра, растёт наружу. Радиусы
-           приходят переменными, расписание — в src/styles/core-facets.css. -->
-      <clipPath v-for="b in litBranches" :key="`cp${b.id}`" :id="id('flow-' + b.id)">
-        <circle cx="0" cy="0" r="1" :data-core-flow="b.flow" :style="b.stopVars" />
-      </clipPath>
+           приходят переменными, расписание — в src/styles/core-facets.css.
+           ⚠️ ОДИН НА ВСЕ ВЕТКИ С ОДИНАКОВЫМ ХОДОМ. Печать симметрична, свет
+           расходится из середины кругом — трём веткам основного хода нужна
+           одна обрезка, а не три одинаковых. Три анимации вместо одной стоили
+           лишнего времени кадра на медленном телефоне. -->
+      <template v-if="showFacets">
+        <clipPath v-for="c in litClips" :key="`cp${c.key}`" :id="id('flow-' + c.key)">
+          <circle cx="0" cy="0" r="1" :data-core-flow="c.flow" :style="c.stopVars" />
+        </clipPath>
+      </template>
     </defs>
 
     <!-- Ореол вокруг фигуры. -->
@@ -67,16 +73,19 @@
       />
     </template>
 
-    <!-- Зона сплава. Проявляется, когда включается соседняя ветка. -->
+    <!-- Зоны сплава. Проявляются по мере заполнения веток.
+         ⚠️ Прозрачность ведёт ГРУППА, а не каждая зона: анимаций три было,
+         стала одна. Своей прозрачности у зон внутри нет — её целиком задаёт
+         расписание (--zone-max). -->
     <g v-if="showFacets && m.zone > 0" class="hc-facets">
-      <polygon
-        v-for="z in litZones"
-        :key="`lz${z.id}`"
-        :data-core-zone="z.track"
-        :points="z.points"
-        :opacity="m.zone"
-        :fill="url('zone')"
-      />
+      <g :data-core-zone="zoneTrack">
+        <polygon
+          v-for="z in litZones"
+          :key="`lz${z.id}`"
+          :points="z.points"
+          :fill="url('zone')"
+        />
+      </g>
     </g>
 
     <!-- Три ветки-клина. Без шипов, кристаллов и узоров внутри. -->
@@ -94,17 +103,16 @@
     <!-- Горящая часть ветки. Одна сплошная полоса без делений: пятью её
          делает не рисунок, а остановки растущего круга-обрезки. -->
     <g v-if="showFacets" class="hc-facets">
-      <g
-        v-for="b in litBranches"
-        :key="`lit${b.id}`"
-        :clip-path="`url(#${id('flow-' + b.id)})`"
-      >
-        <polygon
-          :data-core-lit="1"
-          :points="b.strip"
-          fill="currentColor"
-          :fill-opacity="m.facet"
-        />
+      <!-- ⚠️ Общая жизнь слоя (держится — гаснет — пауза) ведёт ГРУППА:
+           анимаций было по одной на ветку, стала одна на все. -->
+      <g :data-core-lit="1">
+        <g
+          v-for="b in litBranches"
+          :key="`lit${b.id}`"
+          :clip-path="`url(#${id('flow-' + b.clipKey)})`"
+        >
+          <polygon :points="b.strip" fill="currentColor" :fill-opacity="m.facet" />
+        </g>
       </g>
     </g>
 
@@ -240,21 +248,32 @@ const run = computed(() => (props.fillFive ? RUN_FIVE : RUN_ALL));
 const litBranches = computed(() => fig.value.branches
   .map((b, i) => {
     const { lit, flow } = run.value[i];
-    const stopVars = {};
-    for (let k = 0; k <= FACETS; k++) {
-      stopVars[`--f${k}`] = String(b.stops[Math.min(k, lit)]);
-    }
-    /* Конечное состояние — для «уменьшить движение». */
-    stopVars['--f-final'] = String(b.stops[lit]);
-    return { ...b, flow, lit, stopVars };
+    return { ...b, flow, lit, clipKey: `${flow}-${lit}` };
   })
   .filter((b) => b.lit > 0));
 
+/* Обрезки. Ветки с одинаковой дорожкой и одинаковым числом частей идут
+   след в след, и обрезка им нужна одна: у основного хода — одна на все три,
+   у запасного «3 + 2» — две. */
+const litClips = computed(() => {
+  const seen = new Map();
+  for (const b of litBranches.value) {
+    if (seen.has(b.clipKey)) continue;
+    const stopVars = {};
+    for (let k = 0; k <= FACETS; k++) {
+      stopVars[`--f${k}`] = String(b.stops[Math.min(k, b.lit)]);
+    }
+    /* Конечное состояние — для «уменьшить движение». */
+    stopVars['--f-final'] = String(b.stops[b.lit]);
+    seen.set(b.clipKey, { key: b.clipKey, flow: b.flow, stopVars });
+  }
+  return [...seen.values()];
+});
+
 /* Зоны сплава. Основной ход: все три проявляются по мере заполнения.
    Запасной «3 + 2»: одна, между двумя работающими ветками. */
-const litZones = computed(() => (props.fillFive
-  ? [{ ...fig.value.zones[0], track: '2' }]
-  : fig.value.zones.map((z) => ({ ...z, track: 'all' }))));
+const litZones = computed(() => (props.fillFive ? [fig.value.zones[0]] : fig.value.zones));
+const zoneTrack = computed(() => (props.fillFive ? '2' : 'all'));
 
 const liftVars = computed(() => {
   const k = m.value.facet / MODES.full.facet;
