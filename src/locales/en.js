@@ -320,6 +320,7 @@ export default {
     tabDecor: "Decor",
     tabCurrency: "Currency",
     tabSpecials: "Specials",
+    tabBuffs: "Buffs",
     // DEV console — owner tool, temporary. Goes out with the tab.
     tabDev: "Dev",
     ledeDev: "Owner controls. Nothing on this tab is part of the game.",
@@ -337,6 +338,20 @@ export default {
       "Furnish your floor. Each piece is cut from the same low-poly stock as the arena — but now it carries the light of the core it’s tuned to. Colour tells you which core; it never buys you an edge.",
     ledeCurrency:
       "Top up $HEX. Bigger packs carry more free $HEX and a better rate — the value ladder rewards going large.",
+    // БАФФЫ. Единственный раздел магазина, который трогает бой, — и потому
+    // единственный, который НЕ продаётся за $HEX. Строка ниже говорит это прямо:
+    // общий девиз магазина «косметика не трогает бой» здесь не подходит.
+    ledeBuffs:
+      "Throw-in items for the fight. Bought with LASH, which you earn by fighting — never with $HEX.",
+    buffs: {
+      towel: "Restores health. Faster get-up.",
+      bucket: "Moves faster. Closes distance sooner.",
+      dice: "Roll for bonus damage. Never a bad roll.",
+    },
+    buffHave: "You have",          // "You have ×3"
+    buffBought: "Added to stock",  // короткое подтверждение на карточке
+    buffNeed: "Need {n} more LASH",
+    buffEarn: "LASH comes from fights.",
     ledeSpecials:
       "Rotating deals, a free daily drop and a starter bundle. Timers and rewards run on the Stage-2 economy.",
     // decor sub-tabs
@@ -432,6 +447,11 @@ export default {
   },
   // ИТОГ БОЯ — панель после любого боя, кроме забега. До неё арена не сообщала
   // исход никак: бой замирал, и на экране не оставалось ни одной кнопки.
+  // LASH — игровые монеты. Имя собственное, английскими буквами, как названия
+  // баффов: переводить его некуда, проект только на английском.
+  lash: {
+    unit: "LASH",
+  },
   fight: {
     victory: "Victory",
     victoryNote: "Your side is the last one standing.",

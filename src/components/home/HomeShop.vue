@@ -28,7 +28,11 @@
          Brand / cabinet / back live in the strip (which scrolls with the page). -->
     <div class="sb-head">
       <div v-if="tab !== 'dev'" class="sb-top">
-        <div class="sb-bal"><span class="hx-dia"></span><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
+        <!-- ДВЕ ВАЛЮТЫ, НО НИКОГДА ОДНОВРЕМЕННО. На вкладке баффов счёт — LASH, на
+             остальных — $HEX. Показать их рядом значило бы намекнуть на обмен, а
+             обмена нет и не будет: $HEX платит за внешний вид, LASH — за бой. -->
+        <div v-if="tab === 'buffs'" class="sb-bal"><b>{{ lash }}</b>&nbsp;<i>{{ t.lash.unit }}</i></div>
+        <div v-else class="sb-bal"><span class="hx-dia"></span><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
       </div>
       <h1 class="sb-h1">{{ t.shop.title }}</h1>
       <div class="sb-tabs">
@@ -38,7 +42,9 @@
 
     <!-- body — part of the single page flow (no inner scroller) -->
     <div class="sb-body">
-      <span v-if="tab !== 'dev'" class="sb-creed"><span class="dot"></span>{{ t.shop.creed }}</span>
+      <!-- ⚠️ ДЕВИЗ «КОСМЕТИКА НЕ ТРОГАЕТ БОЙ» НА ВКЛАДКЕ БАФФОВ НЕ ВИСИТ. Баффы
+           бой как раз трогают, и повторить там общий девиз значило бы соврать. -->
+      <span v-if="tab !== 'dev' && tab !== 'buffs'" class="sb-creed"><span class="dot"></span>{{ t.shop.creed }}</span>
       <div class="sb-lede">{{ t.shop['lede' + cap(tab)] }}</div>
 
       <!-- ═════════ DECOR ═════════ -->
@@ -71,6 +77,32 @@
                 <div v-if="ownedItems.has(it.kind)" class="btn owned">{{ t.shop.owned.toUpperCase() }}</div>
                 <button v-else type="button" class="btn buy" @click="openBuy(it)">{{ t.shop.buy.toUpperCase() }}<span aria-hidden="true">→</span></button>
               </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ═════════ BUFFS ═════════
+           Единственный раздел магазина, который трогает бой. Покупка мгновенная
+           и без вопросов: одна штука за тап, спрашивать «вы уверены?» на цене в
+           один бой — значит мешать. Модалки подтверждения здесь нет намеренно. -->
+      <template v-else-if="tab === 'buffs'">
+        <div class="grid buffs">
+          <div v-for="(id, i) in BUFF_IDS" :key="id" class="bfcard sb-anim"
+               :style="{ animationDelay: (0.05 + i * 0.06) + 's' }">
+            <div class="bf-art"><img :src="BUFF_ICONS[id]" :alt="BUFF_META[id].name" /></div>
+            <div class="bf-meta">
+              <div class="bf-name">{{ BUFF_META[id].name }}</div>
+              <div class="bf-line">{{ t.shop.buffs[id] }}</div>
+              <div class="bf-have">{{ t.shop.buffHave }} ×{{ stock[id] || 0 }}</div>
+              <div class="buy-row">
+                <div class="price"><b>{{ buffPrice }}</b><i>{{ t.lash.unit }}</i></div>
+                <button type="button" class="btn buy" :disabled="!canAfford" @click="onBuyBuff(id)">{{ t.shop.buy.toUpperCase() }}</button>
+              </div>
+              <!-- Подтверждение живёт на самой карточке и гаснет само: это
+                   сообщение о случившемся, а не окно, которое надо закрыть. -->
+              <div v-if="bought === id" class="bf-ok">{{ t.shop.buffBought }}</div>
+              <div v-else-if="!canAfford" class="bf-need">{{ needLine }} · {{ t.shop.buffEarn }}</div>
             </div>
           </div>
         </div>
@@ -255,6 +287,13 @@ import { t } from '@/locales/index.js';
 import { CORES as ROSTER_CORES } from '@/data/upgradeData.js';
 import '@/styles/shop.css';
 import { CORE_HUE, coreSup, coreRgb } from '@/data/sceneTokens.js';
+import { BUFF_IDS, BUFF_META } from '@/data/buffBalance.js';
+import { LASH } from '@/data/lashBalance.js';
+import { ensureStarterLash, readLash, spendLash } from '@/services/lash.js';
+import { readStock, addToStock, ensureStarterStock } from '@/services/buffStock.js';
+import buffTowel from '@/assets/images/buff_towel.png';
+import buffBucket from '@/assets/images/buff_bucket.png';
+import buffDice from '@/assets/images/buff_dice.png';
 
 defineProps({ balance: { type: String, default: '2,480' } });
 defineEmits(['back']);
@@ -264,7 +303,7 @@ const stageTwoLive = false;     // master flag: false ⇒ Currency/Specials/clai
 
 // DEV console — owner tool, temporary. One flag + one TABS entry to remove it.
 const devTabLive = true;
-const TABS = devTabLive ? ['decor', 'currency', 'specials', 'dev'] : ['decor', 'currency', 'specials'];
+const TABS = devTabLive ? ['decor', 'buffs', 'currency', 'specials', 'dev'] : ['decor', 'buffs', 'currency', 'specials'];
 const tab = ref('decor');
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -493,4 +532,40 @@ const coreName = (id) => (coreOf(id) ? coreOf(id).name : id);
 const coreHue = (id) => (coreOf(id) ? coreOf(id).hue : 'var(--ink-off)');
 function onRecruit() { store.dispatch('roster/recruit', giveCore.value); }
 function onDismiss(id) { store.dispatch('roster/dismiss', id); }
+
+// ── БАФФЫ — единственный товар за LASH ──────────────────────────────────────
+// Ни одного числа здесь нет: цена берётся из data/lashBalance.js, запас и счёт —
+// из своих слоёв. Магазин только сводит их вместе.
+const BUFF_ICONS = { towel: buffTowel, bucket: buffBucket, dice: buffDice };
+const buffPrice = LASH.buffPrice;
+const lash = ref(0);
+const stock = ref({});
+const bought = ref(null);   // на какой карточке сейчас висит подтверждение
+let okTimer = null;
+
+const canAfford = computed(() => lash.value >= buffPrice);
+const needLine = computed(() => t.value.shop.buffNeed.replace('{n}', buffPrice - lash.value));
+
+onMounted(() => {
+  // Стартовые монеты и стартовый подарок — те же две отметки «выдано однажды».
+  // Магазин может оказаться первым экраном, который игрок откроет.
+  lash.value = ensureStarterLash();
+  ensureStarterStock();
+  stock.value = readStock();
+});
+onBeforeUnmount(() => { if (okTimer) clearTimeout(okTimer); });
+
+/**
+ * ⚠️ ПОРЯДОК ВАЖЕН: сперва списать монеты, и только на успехе выдать предмет.
+ *    Обратный порядок оставлял бы щель «выдали, но не списали».
+ */
+function onBuyBuff(id) {
+  if (!spendLash(buffPrice)) return;   // не хватило — кнопка и так погашена
+  addToStock(id, 1);
+  lash.value = readLash();
+  stock.value = readStock();
+  bought.value = id;
+  if (okTimer) clearTimeout(okTimer);
+  okTimer = setTimeout(() => { bought.value = null; okTimer = null; }, 1600);
+}
 </script>

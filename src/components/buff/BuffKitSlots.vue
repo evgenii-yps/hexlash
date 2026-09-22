@@ -14,7 +14,10 @@
      игрока за баффами было бы нечестно. -->
 <template>
   <div class="bks" :class="{ 'is-stacked': stacked }" role="group" :aria-label="t.gate.buffKit">
-    <span class="bks-label">{{ t.gate.buffKit }}</span>
+    <div class="bks-head">
+      <span class="bks-label">{{ t.gate.buffKit }}</span>
+      <span class="bks-lash">{{ lash }} {{ t.lash.unit }}</span>
+    </div>
     <div class="bks-row">
       <button
         v-for="(slot, i) in slots" :key="i"
@@ -40,6 +43,7 @@ import { ref, computed, onMounted } from 'vue';
 import { t } from '@/locales/index.js';
 import { BUFF_IDS, BUFF_META, BUFF_BALANCE } from '@/data/buffBalance.js';
 import { readStock, readKit, writeKit, defaultKitFrom, ensureStarterStock } from '@/services/buffStock.js';
+import { ensureStarterLash } from '@/services/lash.js';
 import towel from '@/assets/images/buff_towel.png';
 import bucket from '@/assets/images/buff_bucket.png';
 import dice from '@/assets/images/buff_dice.png';
@@ -53,6 +57,9 @@ defineProps({
 const ICONS = { towel, bucket, dice };
 
 const stock = ref({});
+// Счёт монет. Тратится он в магазине, а показывается и здесь: игрок, у которого
+// кончились баффы, должен видеть, есть ли ему на что их докупить.
+const lash = ref(0);
 const slots = ref(Array(BUFF_BALANCE.kitSlots).fill(null));
 const hasAny = computed(() => BUFF_IDS.some((id) => (stock.value[id] || 0) > 0));
 
@@ -60,6 +67,9 @@ onMounted(() => {
   // Стартовый подарок выдаётся здесь, при первом же заходе на выбор бойца: это
   // первое место, где игрок вообще может увидеть свои баффы.
   ensureStarterStock();
+  // Стартовые монеты — там же, где стартовый подарок баффов: это первый экран,
+  // где счёт вообще виден.
+  lash.value = ensureStarterLash();
   stock.value = readStock();
   const saved = readKit();
   slots.value = saved.some((x) => x) ? saved : defaultKitFrom(stock.value);
@@ -100,6 +110,11 @@ function cycle(i) {
 }
 /* Командный бой: сверху уже стоит выбор размера состава — опускаемся под него. */
 .bks.is-stacked { top: calc(var(--sp-6) + 44px + 52px); }
+.bks-head { display: flex; align-items: baseline; gap: var(--sp-2); }
+.bks-lash {
+  font-family: var(--font-mono); font-size: var(--t-micro);
+  letter-spacing: var(--ls-title); color: var(--ink-dim);
+}
 .bks-label, .bks-note {
   font-family: var(--font-mono); font-size: var(--t-micro);
   letter-spacing: var(--ls-title); text-transform: uppercase;

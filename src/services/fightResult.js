@@ -13,8 +13,15 @@
 // там означает не «бой выигран», а «идём дальше». Арена включает этот итог
 // только вне забега — см. её же endFight.
 //
+// ЗАРАБОТОК LASH ТОЖЕ ЗДЕСЬ, И ЭТО НЕ СЛУЧАЙНО. Конец боя — единственное место,
+// где известно «бой кончился и вот чем». Если бы монеты начисляла сцена, их
+// пришлось бы начислять в каждом её выходе из боя; если бы панель — они бы
+// начислялись заново на каждом её показе. Здесь же вызов ровно один на бой.
+//
 // Экспортирует: fightResultState, showFightResult, hideFightResult, bindFightAgain.
 import { reactive } from 'vue';
+import { LASH } from '@/data/lashBalance.js';
+import { ensureStarterLash, addLash } from './lash.js';
 
 /**
  * Что показывает панель итога.
@@ -38,6 +45,8 @@ export const fightResultState = reactive({
   // лежит готовая строка, и панель по-прежнему не знает ни одного режима.
   titleOver: null,
   noteOver: null,
+  // СКОЛЬКО МОНЕТ ДАЛ ЭТОТ БОЙ. 0 — панель про монеты молчит.
+  lashGain: 0,
 });
 
 // Кто умеет начать новый бой. Ставит арена (только она это умеет), зовёт панель.
@@ -60,6 +69,22 @@ export function bindFightAgain(fn) {
  *                 у titleOver выше. Не передан — панель говорит как говорила.
  */
 export function showFightResult(won, kind = null, over = null) {
+  // ⚠️ НАЧИСЛЕНИЕ РОВНО ОДНО НА БОЙ. Панель уже на экране — значит этот бой уже
+  //    посчитан, и второй вызов (случайный повтор, два пути к итогу) не должен
+  //    дать вторых монет. Выйти нельзя: строки итога всё равно надо обновить, —
+  //    поэтому сторожится именно начисление, а не весь показ.
+  //
+  //    Обновление страницы вторых монет тоже не даёт: счётчик живёт в памяти, и
+  //    после перезагрузки панели итога на экране нет — арена собирает новый бой.
+  //    Уход из боя на полпути не даёт вовсе ничего: сюда просто не приходят.
+  if (!fightResultState.visible) {
+    ensureStarterLash();
+    // Ничьей у боя сейчас нет: сторона либо выстояла, либо пала. Число под неё
+    // в data/lashBalance.js уже лежит — появится ничья, её подставят сюда.
+    const gain = won ? LASH.rewardWin : LASH.rewardLose;
+    addLash(gain);
+    fightResultState.lashGain = gain;
+  }
   fightResultState.outcome = won ? 'victory' : 'defeat';
   fightResultState.kind = kind || null;
   fightResultState.titleOver = (over && over.title) || null;
@@ -74,6 +99,7 @@ export function hideFightResult() {
   fightResultState.kind = null;
   fightResultState.titleOver = null;
   fightResultState.noteOver = null;
+  fightResultState.lashGain = 0;
 }
 
 /**

@@ -10,6 +10,10 @@
     :note="note"
     :muted="state.outcome === 'defeat'"
   >
+    <!-- ЗАРАБОТОК. Строка, а не украшение: это единственное место, где игрок
+         видит, что бой принёс монеты. Розового тут нет — розовая на панели
+         ровно одна кнопка, «драться снова». -->
+    <p v-if="state.lashGain > 0" class="fr-lash">+{{ state.lashGain }} {{ t.lash.unit }}</p>
     <template #actions>
       <div class="fr-actions">
         <button type="button" class="ap-go" @click="onAgain">{{ t.fight.again }}</button>
@@ -63,4 +67,12 @@ function onGate() {
 /* Две кнопки столбиком: главная сверху, дверь под ней. На узком экране порядок
    тот же — так палец первым встречает то, что игрок нажмёт чаще. */
 .fr-actions { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+/* Заработок — моноширинным, как все числа игры, и спокойным цветом: это
+   сообщение, а не награда с фанфарами. */
+.fr-lash {
+  margin: 0;
+  font-family: var(--font-mono); font-size: var(--t-sm);
+  letter-spacing: var(--ls-title); color: var(--ink-soft);
+}
 </style>

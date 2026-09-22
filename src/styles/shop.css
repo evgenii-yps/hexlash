@@ -197,6 +197,24 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .dtag.new { color: var(--c); border-color: rgba(var(--c-rgb), 0.45); background: rgba(var(--c-rgb), 0.08); }
 .dtag.feat { color: var(--ink); border: 0; background: var(--c); box-shadow: 0 0 16px rgba(var(--c-rgb), 0.5); }
 
+/* ── БАФФЫ ── единственный товар за LASH. Карточка нарочно проще витринной:
+   предмет, строка о деле, сколько есть, цена. Ни ядра, ни свечения под товаром —
+   бафф ничьему ядру не принадлежит, а свечение на вкладке одно: кнопка BUY. */
+.bfcard { position: relative; display: flex; gap: var(--sp-4); align-items: center;
+  border: 1px solid var(--line); background: var(--fill-1); }
+.bf-art { flex: none; display: grid; place-items: center;
+  background: radial-gradient(70% 70% at 50% 45%, var(--panel) 0%, var(--void) 85%);
+  border-right: 1px solid var(--line); }
+.bf-art img { width: 70%; height: 70%; object-fit: contain; }
+.bf-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bf-name { font-weight: 800; letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink); }
+.bf-line { font-family: var(--font-mono); color: var(--ink-dim); letter-spacing: var(--ls-tight); line-height: 1.5; }
+.bf-have { font-family: var(--font-mono); color: var(--ink-soft); letter-spacing: var(--ls-meta); }
+/* Подтверждение и отказ занимают одну и ту же строку — карточка от покупки не
+   прыгает. Оба спокойные: ни зелёного «успеха», ни тревожного красного. */
+.bf-ok, .bf-need { font-family: var(--font-mono); color: var(--ink-off); letter-spacing: var(--ls-meta); }
+.bf-ok { color: var(--ink-soft); }
+
 .dmeta { display: flex; flex-direction: column; }
 .dname { font-weight: 800; letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink); }
 .dsub { font-family: var(--font-mono); color: var(--ink-dim); letter-spacing: var(--ls-tight); line-height: 1.5; }
@@ -222,6 +240,11 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .btn.soon .sbadge { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta); color: var(--pink);
   border-left: 1px solid var(--line); padding-left: var(--sp-2); margin-left: var(--sp-1); }
 .btn[disabled] { opacity: 0.7; cursor: not-allowed; }
+/* ⚠️ ПОГАСШАЯ КНОПКА НЕ СВЕТИТСЯ. Розовое свечение — обещание «нажми»; на
+   кнопке, которая не нажимается, оно врёт. Наведение на неё тоже ничего не
+   делает: ярче становилась даже мёртвая. */
+.btn.buy[disabled] { box-shadow: none; background: var(--fill-2); color: var(--ink-off); }
+.btn.buy[disabled]:hover { box-shadow: none; filter: none; }
 
 /* hover-life: lift + the core bloom & ring come up; border takes the core */
 .dcard:hover { transform: translateY(-3px); border-color: rgba(var(--c-rgb), 0.45);
@@ -355,8 +378,11 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .sb-top { margin-bottom: var(--sp-4); }
 .sb-bal { font-size: var(--t-sm); padding: var(--sp-2) var(--sp-3); }
 .sb-h1 { font-size: var(--t-2xl); }
-.sb-tabs { margin-top: var(--sp-4); }
-.sb-tab { font-size: var(--t-xs); padding: var(--sp-4) var(--sp-1); }
+/* Просвет между вкладками заведён вместе с пятой вкладкой (BUFFS): на телефоне
+   вкладки делят ширину поровну, и у двух длинных имён рядом подписи вставали
+   вплотную — читалось как одно слово. */
+.sb-tabs { margin-top: var(--sp-4); gap: var(--sp-2); }
+.sb-tab { font-size: var(--t-xs); padding: var(--sp-4) var(--sp-1); white-space: nowrap; }
 .sb-tab i { font-size: var(--t-micro); }
 .sb-body { padding: var(--sp-4) var(--sp-4) var(--sp-5); }
 .sb-creed { font-size: var(--t-micro); padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-4); }
@@ -380,6 +406,16 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .buy-row { margin-top: var(--sp-3); }
 .price { font-size: var(--t-md); }
 .btn { font-size: var(--t-base); padding: var(--sp-3) var(--sp-5); }
+
+.bf-art { width: 96px; align-self: stretch; }
+.bf-meta { padding: var(--sp-4) var(--sp-4) var(--sp-4) 0; gap: var(--sp-1); }
+.bf-name { font-size: var(--t-lg); }
+.bf-line { font-size: var(--t-micro); }
+.bf-have { font-size: var(--t-micro); }
+.bf-ok, .bf-need { font-size: var(--t-micro); margin-top: var(--sp-2); }
+.bfcard .buy-row { margin-top: var(--sp-3); }
+/* Кнопка BUY — та же, что на витрине: свой размер ей здесь не нужен, а меньший
+   размер уронил бы её ниже пальца. */
 
 .ccard { flex-direction: column; }
 .cc-top { gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) 0; }
@@ -453,6 +489,15 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
   .buy-row { margin-top: var(--sp-4); }
   .price { font-size: var(--t-lg); }
   .btn { font-size: var(--t-md); padding: var(--sp-3) var(--sp-5); }
+
+  .grid.buffs { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); align-items: stretch; }
+  .grid.buffs .bfcard { flex-direction: column; align-items: stretch; gap: 0; }
+  .bf-art { width: 100%; height: 180px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .bf-meta { padding: var(--sp-5); gap: var(--sp-2); }
+  .bf-name { font-size: var(--t-xl); }
+  .bf-line { font-size: var(--t-xs); }
+  .bf-have { font-size: var(--t-xs); }
+  .bf-ok, .bf-need { font-size: var(--t-micro); margin-top: var(--sp-2); }
 
   .grid.currency { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); justify-items: center; }
   .grid.currency .ccard { width: 100%; }

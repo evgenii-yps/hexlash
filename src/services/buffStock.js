@@ -13,11 +13,13 @@
 //    привязка к аккаунту — отдельная работа после демо. Строку ТЗ «переживает
 //    закрытие игры» владелец разрешил читать как «переживает перезагрузку».
 //
-// МАГАЗИНА ЗДЕСЬ НЕТ. Пополнения не существует, запас только тратится — кроме
-// одного стартового подарка. Покупка за LASH — работа 3.
+// ПОПОЛНЕНИЕ — ОДНИМ ВХОДОМ. Запас растёт в двух случаях: стартовый подарок и
+// покупка в магазине. Оба идут через addToStock — списание монет при этом здесь
+// НЕ живёт: про деньги знает services/lash.js, про штуки — этот файл, и мешать
+// их в одном месте значит однажды списать монеты, не выдав предмет.
 //
-// Экспортирует: readStock, readKit, writeKit, spendFromStock, defaultKitFrom,
-//               ensureStarterStock.
+// Экспортирует: readStock, readKit, writeKit, spendFromStock, addToStock,
+//               defaultKitFrom, ensureStarterStock.
 //
 // ⚠️ ВОЗВРАТА В ЗАПАС ЗДЕСЬ НЕТ, И ЭТО НЕ ПРОПУСК. Бафф списывается в момент
 //    броска, а не перед боем, — значит неиспользованный и не списывался.
@@ -74,6 +76,24 @@ export function ensureStarterStock() {
   for (const id of BUFF_IDS) stock[id] += BUFF_BALANCE.starterStock[id] || 0;
   write({ stock, kit: cur.kit, gifted: true });
   return stock;
+}
+
+/**
+ * Положить в запас. Единственный путь пополнения, кроме стартового подарка.
+ *
+ * ⚠️ МОНЕТЫ СПИСЫВАЕТ НЕ ЭТОТ ФАЙЛ. Магазин сперва списывает LASH и только на
+ *    успехе зовёт сюда: так «списали, но не выдали» невозможно, а обратный
+ *    порядок такую щель оставлял бы.
+ *
+ * @returns {number} сколько этого вида стало после пополнения
+ */
+export function addToStock(id, count = 1) {
+  const n = Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+  const cur = read();
+  if (!BUFF_IDS.includes(id) || n === 0) return cur.stock[id] || 0;
+  const stock = { ...cur.stock, [id]: cur.stock[id] + n };
+  write({ stock, kit: cur.kit, gifted: cur.gifted });
+  return stock[id];
 }
 
 /** Сколько чего есть. Всегда полная форма, даже если раздела ещё нет. */
