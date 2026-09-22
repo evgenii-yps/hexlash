@@ -111,6 +111,11 @@
       >{{ sizeLabel(n) }}</button>
     </div>
 
+    <!-- БАФФЫ — три слота «В бой». Стоят там же, где выбор размера состава: это
+         второе и последнее, что игрок решает перед выходом на плиту. Пока
+         бойцов не набрано, ряд не показывается — решать нечего. -->
+    <BuffKitSlots v-if="!diving && stage === 'squad' && fighters.length" />
+
     <!-- Строка у кнопки: ПРАВИЛА выбранного режима — чем этот бой отличается от
          прочих. Пока бойцов не хватает, на её месте стоит нехватка: просить
          прочитать правила боя, в который нельзя выйти, — значит говорить не о
@@ -159,6 +164,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import BuffKitSlots from '@/components/buff/BuffKitSlots.vue';
 import store from '@/core/state/store.js';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';

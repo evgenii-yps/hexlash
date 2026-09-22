@@ -179,8 +179,18 @@ export default {
   // Ворота арены — пространство за дверью ARENA. Имена и строки самих режимов
   // лежат в data/arenaModes.js рядом с их размерами состава: они игровые данные,
   // а не оформление, и раздваивать их между двумя файлами нечем.
+  // Баффы в бою: короткая строка под панелью карточек. Больше слов у баффов нет
+  // — имена предметов (TOWEL / BUCKET / DICE) собственные и не переводятся.
+  buffs: {
+    tapFighter: "TAP YOUR FIGHTER",
+    noTarget: "NO TARGET — A BUFF IS ALREADY RUNNING",
+  },
   gate: {
     soon: "SOON",
+    // Баффы — три слота «В бой» на шаге выбора бойца (ТЗ 22.09.2026, работа 2).
+    buffKit: "Take into the fight",
+    buffEmpty: "EMPTY",
+    buffNone: "No buffs in stock — the fight starts without them.",
     // Боец на тренировке: остров затемнён и не нажимается. До демо не
     // встречается — ставить бойца на тренировку пока некому.
     forge: "FORGE",

@@ -28,6 +28,7 @@
 import { reactive } from 'vue';
 import * as THREE from 'three';
 import { BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie } from '@/data/buffBalance.js';
+import { DEV_MODE } from './devMode.js';
 import { buildTowel, buildBucket, buildDice, buildActionGlow } from '@/scene/buffItems.js';
 import {
   armDiceCharge, clearDiceCharge, clearAllDiceCharges, diceChargeOf, watchDiceCharge,
@@ -44,7 +45,7 @@ import {
  *   armedKey — какая карточка выбрана (ждёт тапа по бойцу) или null
  *   badges   — значки над бойцами: { key, id, mono, own, face, ring, x, y }
  *   marks    — подсветка целей: места своих бойцов, на которых можно бросить
- *   hint     — короткая подсказка под панелью (что сейчас делать)
+ *   hint     — ключ подсказки под панелью ('tapFighter' | 'noTarget' | '')
  */
 export const buffFightState = reactive({
   active: false,
@@ -82,6 +83,22 @@ const flying = [];
 let nowT = 0;
 
 let unwatchDice = null;
+
+/**
+ * СЛУЖЕБНОЕ: выставить грань кубика вручную. Нужно ровно для одного — проверить
+ * все шесть граней подряд, не бросая кубик сто раз.
+ *
+ * ⚠️ ТОЛЬКО ПОД ?dev=1 И ТОЛЬКО НА ВИД. Признак служебного режима подставит кто
+ *    угодно из адресной строки, поэтому он не управляет ничем, что стоит денег,
+ *    и не даёт преимущества: сейчас бои с ботом, наград нет. То же правило и та
+ *    же причина, что у служебной панели арены (см. services/devMode.js). Как
+ *    появятся бои с живыми людьми и награды — бросок уедет на сервер
+ *    (Decisions Log 100), и эта дырка закроется вместе с ним.
+ */
+let devFace = null;
+export function setDevDiceFace(n) {
+  devFace = DEV_MODE && n >= 1 && n <= 6 ? Math.floor(n) : null;
+}
 
 // ── Привязка / отвязка ───────────────────────────────────────────────────
 
@@ -219,9 +236,9 @@ export function cancelBuffArm() {
 function updateHint() {
   if (!buffFightState.active) { buffFightState.hint = ''; return; }
   if (!buffFightState.armedKey) { buffFightState.hint = ''; return; }
-  buffFightState.hint = eligibleTargets().length
-    ? 'TAP YOUR FIGHTER'
-    : 'NO TARGET — A BUFF IS ALREADY RUNNING';
+  // Отдаём КЛЮЧ, а не готовую строку: слова живут в локали, а этот файл про
+  // правила. Разбирает ключ панель — она одна умеет говорить.
+  buffFightState.hint = eligibleTargets().length ? 'tapFighter' : 'noTarget';
 }
 
 // Палец: тап, а не протяжка. Порог тот же, каким арена отличает тап от
@@ -305,7 +322,8 @@ function applyBuff(id, unit, own) {
     e.until = nowT + o.durationSec;
     f.setBuffPace(o.paceMul);
   } else if (id === 'dice') {
-    const face = rollDie();                      // ЕДИНСТВЕННЫЙ бросок на всю игру
+    // Служебная грань — только под ?dev=1; у игрока здесь всегда честный бросок.
+    const face = (DEV_MODE && devFace) || rollDie(); // ЕДИНСТВЕННЫЙ бросок на всю игру
     const row = BUFF_BALANCE.dice.faces[face];
     e.face = face;
     e.until = Infinity;                          // у кубика не время, а заряженные удары

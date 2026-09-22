@@ -33,7 +33,17 @@
 
     <!-- Нижняя панель. Три карточки в ряд, на каждой — сколько осталось. -->
     <div class="bfo-bar">
-      <p v-if="s.hint" class="bfo-hint">{{ s.hint }}</p>
+      <!-- СЛУЖЕБНОЕ, только под ?dev=1: выставить грань кубика, чтобы проверить
+           все шесть подряд. Игроку не видно; у него грань всегда случайная. -->
+      <div v-if="DEV_MODE" class="bfo-dev">
+        <button
+          v-for="n in 6" :key="n"
+          type="button" class="bfo-dev-btn" :class="{ on: devFace === n }"
+          @click="pickFace(n)"
+        >{{ n }}</button>
+        <button type="button" class="bfo-dev-btn" :class="{ on: devFace === null }" @click="pickFace(null)">RND</button>
+      </div>
+      <p v-if="s.hint" class="bfo-hint">{{ t.buffs[s.hint] }}</p>
       <div class="bfo-cards">
         <BuffCard
           v-for="c in s.cards" :key="c.key"
@@ -49,7 +59,10 @@
 <script setup>
 import BuffCard from './BuffCard.vue';
 import BuffBadge from './BuffBadge.vue';
-import { buffFightState as s, armBuffCard } from '@/services/buffs.js';
+import { t } from '@/locales/index.js';
+import { ref } from 'vue';
+import { DEV_MODE } from '@/services/devMode.js';
+import { buffFightState as s, armBuffCard, setDevDiceFace } from '@/services/buffs.js';
 // Те же три снимка, что владелец принял на странице-макете. Своих иконок у боя
 // нет намеренно: вторая копия разошлась бы с принятой.
 import towel from '@/assets/images/buff_towel.png';
@@ -57,6 +70,11 @@ import bucket from '@/assets/images/buff_bucket.png';
 import dice from '@/assets/images/buff_dice.png';
 
 const ICONS = { towel, bucket, dice };
+
+// Служебный выбор грани. Живёт здесь, а не в правилах: правила про грань знают
+// только то, что её бросают.
+const devFace = ref(null);
+function pickFace(n) { devFace.value = n; setDevDiceFace(n); }
 </script>
 
 <style scoped>
@@ -101,6 +119,17 @@ const ICONS = { towel, bucket, dice };
   gap: var(--sp-1);
   padding: var(--sp-2) var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
 }
+.bfo-dev {
+  display: flex; gap: 4px; pointer-events: auto; margin-bottom: var(--sp-1);
+}
+.bfo-dev-btn {
+  min-width: 22px; padding: 2px 5px;
+  font-family: var(--font-mono); font-size: var(--t-micro);
+  color: var(--ink-off); background: var(--panel);
+  border: 1px solid var(--line); cursor: pointer;
+}
+.bfo-dev-btn.on { color: var(--ink); border-color: var(--ink-dim); }
+
 .bfo-hint {
   margin: 0;
   font-family: var(--font-mono);
