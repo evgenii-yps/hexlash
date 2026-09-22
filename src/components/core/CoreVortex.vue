@@ -50,7 +50,8 @@ const props = defineProps({
   /* full — цветные разделы, muted — дека, quiet — розовые разделы и вход. */
   mode: { type: String, default: 'full' },
   flicker: { type: Boolean, default: true },
-  /* Медленное заполнение граней — см. HexCore. */
+  /* Медленное заполнение граней — см. HexCore. Включено везде; выключатель
+     нужен только странице разбора /dev/core. */
   fill: { type: Boolean, default: true },
   fillFive: { type: Boolean, default: false },
   cycleKey: { type: [String, Number, null], default: null },
