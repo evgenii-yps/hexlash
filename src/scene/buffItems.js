@@ -4,13 +4,25 @@
 // без реализма и без фото-текстур: тот же язык, каким собраны эмблемы ворот
 // (gateEmblems.js) — матовое тело + один розовый акцент, там где акцент нужен.
 //
-// ⚠️ Розовое свечение здесь — ОСОЗНАННОЕ ИСКЛЮЧЕНИЕ из «одно свечение на экран»,
-// то же самое, каким уже пользуется /dev/core (там пять цветов горят одновременно
-// ради сравнения). Это витрина трёх предметов рядом, не игровой экран.
+// ⚠️ СВЕЧЕНИЯ В ПОКОЕ ЗДЕСЬ НЕТ. Сначала под каждым предметом постоянно тлела
+// розовая лужица (и это было записано как исключение из «одного свечения на
+// экран» — как на /dev/core). Владелец такое исключение отклонил 23.09.2026:
+// розовое принадлежит действию, а тем же розовым светится ядро бойца. Правило
+// теперь простое и исключения не требует — см. блок «Правка 23.09.2026» ниже.
 //
 // Материал предметов — MATERIALS.decor / decorDark из sceneTokens.js: они уже
-// объявлены, второго тона декора здесь не заводится. Розовый читается из --pink
-// (тот же приём, что leaderHue() в sceneTokens.js), не новое число.
+// объявлены, второго тона декора здесь не заводится. Розовый читается ЧЕРЕЗ
+// leaderHue() — тот же геттер, которым уже пользуется маяк лидера в сцене
+// пространства (см. sceneTokens.js «Маяк лидера... это РОЗОВЫЙ проекта»),
+// второго чтения --pink здесь не заводится.
+//
+// ⚠️ Правка 23.09.2026 (принято владельцем): «розовое свечение принадлежит
+// действию». В покое предметы матовые, почти без свечения — лужица под
+// постаментом еле тлеет (BUFF_ITEMS.puddle.restOpacity). Розовая вспышка на
+// полную яркость — только на время самой анимации срабатывания
+// (buildStand().setActive(true, dt), вызывается снаружи по состоянию предмета).
+// Причина, помимо правила: тот же розовый несёт ядро бойца — гореть ИМ и
+// декору одновременно в покое означало бы два источника одного сигнала.
 //
 // Никакой предмет не трогает buildFighter.js — манекен получает удары только
 // через СВОИ внешние спецэффекты (вспышка, частицы) плюс уже существующий метод
@@ -24,20 +36,17 @@
 // Экспортирует: BUFF_ITEMS (настройки), buildStand, buildTowel, buildBucket,
 // buildDice.
 import * as THREE from 'three';
-import { MATERIALS } from '../data/sceneTokens.js';
+import { MATERIALS, leaderHue, coreRgb } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
-
-function pinkHex() {
-  const raw = typeof document === 'undefined'
-    ? '#FF0069'
-    : getComputedStyle(document.documentElement).getPropertyValue('--pink').trim();
-  return raw || '#FF0069';
-}
 
 // ───────────────────────────── Настройки ─────────────────────────────
 export const BUFF_ITEMS = {
   stand: { r: 0.30, r2: 0.34, h: 0.09 },
-  puddle: { r: 0.78, opacity: 0.65 },
+  // В покое почти не тлеет (матовый предмет), на срабатывании — полная
+  // розовая вспышка. lerp — скорость подхода к цели, тот же приём, что
+  // CORE_GLOW.lerp у ядра бойца (sceneTokens.js), число своё — предмет не
+  // ядро, а зависимость только числовая, не цветовая.
+  puddle: { r: 0.78, restOpacity: 0.05, activeOpacity: 0.85, lerp: 6.0 },
   idleSpinPeriod: 10.0, // спокойный оборот на постаменте, секунд
 
   towel: {
@@ -84,7 +93,7 @@ function decorMat(dark = false) {
 function pinkGlowMat(opacity, map = null) {
   return new THREE.MeshBasicMaterial({
     map,
-    color: new THREE.Color(pinkHex()),
+    color: new THREE.Color(leaderHue()),
     transparent: true,
     opacity,
     depthWrite: false,
@@ -101,6 +110,7 @@ const EASE_SETTLE = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 
  */
 export function buildStand() {
   const o = BUFF_ITEMS.stand;
+  const p = BUFF_ITEMS.puddle;
   const group = new THREE.Group();
 
   const bodyGeo = new THREE.CylinderGeometry(o.r, o.r2, o.h, 8);
@@ -109,24 +119,40 @@ export function buildStand() {
   body.position.y = o.h / 2;
   group.add(body);
 
-  const tex = makeRadialTexture('rgba(255,0,105,0.9)', 'rgba(255,0,105,0)', 0.5);
-  const glowGeo = new THREE.PlaneGeometry(BUFF_ITEMS.puddle.r * 2, BUFF_ITEMS.puddle.r * 2);
-  const glowMatI = pinkGlowMat(BUFF_ITEMS.puddle.opacity, tex);
+  // Цвет лужицы — из токена, не число: rgb-строка выводится из --pink тем же
+  // способом, каким sceneTokens.js выводит rgba() для цвета ядра (coreRgb()).
+  const rgb = coreRgb(leaderHue());
+  const tex = makeRadialTexture(`rgba(${rgb}, 0.9)`, `rgba(${rgb}, 0)`, 0.5);
+  const glowGeo = new THREE.PlaneGeometry(p.r * 2, p.r * 2);
+  const glowMatI = pinkGlowMat(p.restOpacity, tex);
   const glow = new THREE.Mesh(glowGeo, glowMatI);
   glow.rotation.x = -Math.PI / 2;
   glow.position.y = 0.003;
   group.add(glow);
 
+  // Уровень свечения лужицы — приглушённый в покое, полный на срабатывании.
+  // Вызывающая сцена решает, «активен» ли предмет прямо сейчас (по его
+  // состоянию), само приближение к цели — плавное, тяжёлое, не рывком.
+  let level = p.restOpacity;
+  function setActive(active, dt) {
+    const target = active ? p.activeOpacity : p.restOpacity;
+    level += (target - level) * Math.min(1, dt * p.lerp);
+    glowMatI.opacity = level;
+  }
+
   const dispose = () => {
     bodyGeo.dispose(); bodyMat.dispose();
     glowGeo.dispose(); glowMatI.dispose(); tex.dispose();
   };
-  return { group, topY: o.h, dispose };
+  return { group, topY: o.h, setActive, dispose };
 }
 
 /** Вспышка на манекене — билборд-спрайт, аддитивный, розовый. */
 function buildFlash() {
-  const tex = makeRadialTexture('rgba(255,255,255,0.95)', 'rgba(255,0,105,0)', 0.45);
+  // Горячая середина — белая (сама вспышка, не бренд-цвет), край — розовый из
+  // токена: та же rgb-строка, что и у лужицы под постаментом.
+  const rgb = coreRgb(leaderHue());
+  const tex = makeRadialTexture('rgba(255,255,255,0.95)', `rgba(${rgb}, 0)`, 0.45);
   const mat = new THREE.MeshBasicMaterial({
     map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0,
   });

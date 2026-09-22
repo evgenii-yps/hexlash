@@ -20,6 +20,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
 import { buildFighter } from './buildFighter.js';
 import { buildStand, buildTowel, buildBucket, buildDice, BUFF_ITEMS } from './buffItems.js';
+import { leaderHue } from '../data/sceneTokens.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -48,7 +49,13 @@ const SLOTS = {
 const MANNEQUIN_SHOULDER = new THREE.Vector3(0, 1.15, MANNEQUIN_Z + 0.32); // мировая точка посадки полотенца
 
 let towelObj = null, bucketObj = null, diceObj = null;
+let towelStand = null, bucketStand = null, diceStand = null;
 let standObjs = [];
+
+// Предмет «активен» — то есть проигрывает анимацию срабатывания — во всех
+// состояниях, кроме «на постаменте» и «уже осел». Только в эти кадры лужица
+// под ним берёт полную розовую яркость (см. buffItems.js «Правка 23.09.2026»).
+const isActive = (state) => state !== 'idle' && state !== 'resting';
 
 // FPS-счётчик — только когда включён (для §«Проверка и сдача»: замер кадров).
 let fpsAcc = 0, fpsFrames = 0;
@@ -96,9 +103,11 @@ onMounted(() => {
   scene.add(floor);
 
   // Манекен — существующий боец, вызванный, не переписанный. Нейтральный цвет:
-  // это тренировочный манекен, а не конкретное ядро.
+  // это тренировочный манекен, а не конкретное ядро. hue всё равно передаётся
+  // из токена (не числом) — neutralColor гасит ядро, но объявления цвета здесь
+  // быть не должно ни для чего.
   const foePoint = new THREE.Vector3(0, 0, -1.1);
-  fighter = buildFighter('#FF0069', {
+  fighter = buildFighter(leaderHue(), {
     side: 'player',
     neutralColor: true,
     bounds: { x: 2, z: 2 },
@@ -125,6 +134,9 @@ onMounted(() => {
     stand.group.position.set(slot.x, 0, slot.z);
     scene.add(stand.group);
     standObjs.push(stand);
+    if (key2 === 'towel') towelStand = stand;
+    else if (key2 === 'bucket') bucketStand = stand;
+    else diceStand = stand;
 
     if (key2 === 'bucket') {
       obj.group.position.set(slot.x, BUFF_ITEMS.stand.h, slot.z);
@@ -147,6 +159,13 @@ onMounted(() => {
     towelObj.tick(dt, elapsed, reduced);
     bucketObj.tick(dt, elapsed, reduced);
     diceObj.tick(dt, elapsed, reduced);
+
+    // Лужица под каждым постаментом — приглушённая в покое, полная розовая
+    // на время срабатывания. Решает, «активен» ли предмет, само состояние его
+    // же анимации — снаружи, а не внутри buffItems.js.
+    towelStand.setActive(isActive(towelObj.state), dt);
+    bucketStand.setActive(isActive(bucketObj.state), dt);
+    diceStand.setActive(isActive(diceObj.state), dt);
 
     renderer.render(scene, camera);
 
@@ -207,9 +226,29 @@ function captureIcon(kind, size = 256) {
 
   const s = new THREE.Scene();
   s.add(obj.group);
+
+  // Камера целится в ЦЕНТР самого предмета, а не в условную точку: полотенце,
+  // ведро и кубик стоят на разной высоте, и с общей точкой прицела кубик
+  // уезжал в угол кадра. Центр берём из габаритной коробки — работает для
+  // любого предмета, без числа на каждый.
+  //
+  // ⚠️ Коробку собираем ТОЛЬКО по видимым мешам. Box3.setFromObject() считает и
+  // спрятанные: у кубика это спрайт вспышки, висящий выше тела, — он утягивал
+  // прицел вверх, и кубик уезжал вниз кадра.
+  const box = new THREE.Box3();
+  const bTmp = new THREE.Box3();
+  obj.group.updateWorldMatrix(true, true);
+  obj.group.traverse((o) => {
+    if (!o.isMesh || !o.visible || !o.geometry) return;
+    if (o.isInstancedMesh && o.count === 0) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    bTmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
+    box.union(bTmp);
+  });
+  const mid = box.getCenter(new THREE.Vector3());
   const c = new THREE.PerspectiveCamera(38, 1, 0.1, 10);
-  c.position.set(0.75, 0.65, 0.95);
-  c.lookAt(0, kind === 'bucket' ? 0.14 : 0.06, 0);
+  c.position.set(mid.x + 0.75, mid.y + 0.6, mid.z + 0.95);
+  c.lookAt(mid);
   const k = new THREE.DirectionalLight(0xffffff, 2.2);
   k.position.set(2, 3, 2);
   s.add(k);

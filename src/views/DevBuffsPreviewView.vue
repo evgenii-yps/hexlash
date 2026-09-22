@@ -27,10 +27,10 @@
         <p class="bx-note">
           Предметы крутятся на тёмной подставке рядом с манекеном — существующим
           бойцом из игры (вызван через <code>buildFighter</code>, файлы боя не
-          правились). Розовое свечение под подставками — осознанное исключение
-          из «одного свечения на экран», то же самое, каким уже пользуется
-          страница ядер <code>/dev/core</code>: это витрина трёх предметов рядом,
-          не игровой экран.
+          правились). В покое предметы матовые, почти без свечения: розовое
+          принадлежит действию, а тем же розовым светится ядро бойца. Розовая
+          вспышка загорается под предметом только на время его анимации —
+          нажмите «проиграть анимацию» и смотрите на подставку.
         </p>
 
         <div class="bx-stage">
@@ -68,8 +68,11 @@
         <p class="bx-note">
           Отрендерены из тех же 3D-предметов, отдельным снимком (свой офскрин-
           рендер, прозрачный фон) — в бою 3D в панели не используется, только
-          плоская картинка. Кнопка сохраняет PNG на диск; ниже эти же снимки
-          подставлены в панель боя, значок и слоты, чтобы макет был цельным.
+          плоская картинка. Эти три снимка уже лежат в репозитории
+          (<code>src/assets/images/buff_*.png</code>) и подставлены ниже в панель
+          боя, значок и слоты — их же возьмёт работа 2. «Снять иконку»
+          пересобирает снимок заново (если предмет в 3D поменяется),
+          «Скачать PNG» сохраняет текущий на диск.
         </p>
         <div class="bx-icon-row">
           <div v-for="it in ITEM_META" :key="it.id" class="bx-icon-cell">
@@ -171,6 +174,12 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import BuffsPreviewScene from '@/scene/BuffsPreviewScene.vue';
 import BuffCard from '@/components/dev/BuffCard.vue';
 import BuffBadge from '@/components/dev/BuffBadge.vue';
+// Сохранённые в репозитории иконки — ими страница показывает панель, значок и
+// слоты сразу, без нажатия «снять иконку». Кнопка снимка остаётся: ею иконка
+// пересобирается заново, если предмет в 3D изменится.
+import iconTowel from '@/assets/images/buff_towel.png';
+import iconBucket from '@/assets/images/buff_bucket.png';
+import iconDice from '@/assets/images/buff_dice.png';
 
 const ITEM_META = [
   { id: 'towel', name: 'TOWEL', mono: 'T' },
@@ -196,7 +205,7 @@ const SECTIONS = [
 
 const sceneRef = ref(null);
 const showFps = ref(false);
-const icons = reactive({ towel: null, bucket: null, dice: null });
+const icons = reactive({ towel: iconTowel, bucket: iconBucket, dice: iconDice });
 const slots = ref(['towel', 'bucket', 'dice']);
 
 function snapIcon(id) {
