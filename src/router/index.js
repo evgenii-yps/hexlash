@@ -257,6 +257,10 @@ const devRoutes = [
     // владельца. Страница закрывает себя от поисковиков тегом robots (не через
     // robots.txt — строка запрета там публична и работает как указатель).
     {path: '/dev/core', name: 'DevCorePreview', component: () => import('@/views/DevCorePreviewView.vue')},
+    // /dev/buffs — превью баффов (ТЗ 22.09.2026, «Баффы и LASH»): 3D-предметы,
+    // плоские иконки, панель боя и слоты выбора — до того, как баффы попадут в
+    // бой. Ничего не встраивает, тот же принцип, что и у /dev/core.
+    {path: '/dev/buffs', name: 'DevBuffsPreview', component: () => import('@/views/DevBuffsPreviewView.vue')},
 ];
 
 const routes = [
