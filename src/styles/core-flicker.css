@@ -1,0 +1,38 @@
+/* HEXLASH — МЕРЦАНИЕ КОНТУРА ЯДРА (22.09.2026).
+
+   ⚠️ ЕДИНСТВЕННОЕ МЕСТО, ГДЕ ЖИВУТ СТОП-КАДРЫ. Отсюда их берут обе
+   поверхности: приложение подключает файл сборкой (см. HexCore.vue), деку
+   заполняет scripts/sync-core-figure.mjs, вставляя текст этого файла в
+   статическую страницу. Второй копии быть не должно.
+
+   Мерцает только группа каждой из шести сторон контура — широкая и чёткая
+   линии вместе. Анимируется одна прозрачность: ни формы, ни размытия, ни
+   перерисовки фигуры. Длительность и задержка у каждой стороны свои, они
+   приходят разметкой (--core-flick-dur / --core-flick-del).
+
+   Значения стоп-кадров перенесены из эталона:
+   docs/design-handoff/core_seal/references/design-source/Core.dc.html */
+
+@keyframes hxCoreFlick {
+  0%, 38% { opacity: 1; }
+  40%     { opacity: .22; }
+  42%     { opacity: 1; }
+  60%     { opacity: 1; }
+  61%     { opacity: .12; }
+  63%     { opacity: .8; }
+  64%     { opacity: .28; }
+  66%     { opacity: 1; }
+  100%    { opacity: 1; }
+}
+
+[data-core-flick] {
+  animation: hxCoreFlick var(--core-flick-dur) linear var(--core-flick-del) infinite;
+}
+
+/* «Уменьшить движение» в настройках устройства — стороны стоят ровно. */
+@media (prefers-reduced-motion: reduce) {
+  [data-core-flick] {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

@@ -3,6 +3,12 @@
 // Свод — docs/design-system/A-SISTEMA.md, файл — src/styles/tokens.css.
 import './styles/tokens.css'
 import './assets/main.css'
+// Стоп-кадры мерцания контура ядра. Подключены глобально, а не из
+// компонента: из компонента сборка выносила их отдельным файлом, и на
+// лендинге появлялся лишний сетевой запрос ради одного килобайта.
+// Сам файл — единственный источник этих значений и для деки тоже
+// (её заполняет scripts/sync-core-figure.mjs).
+import './styles/core-flicker.css'
 
 import {createApp, watch} from 'vue'
 import {createVuetify} from 'vuetify'

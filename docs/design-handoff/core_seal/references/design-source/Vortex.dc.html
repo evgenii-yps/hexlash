@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative;width:{{ wpx }};height:{{ hpx }};overflow:hidden;background:#08080a">
+  <div style="position:absolute;inset:0">{{ rings }}</div>
+  <div style="position:absolute;left:{{ coreLeft }};top:{{ coreTop }};width:{{ coreSize }};height:{{ coreSize }}">
+    <dc-import name="Core" color="{{ color }}" variant="{{ variant }}" mode="{{ mode }}" flicker="{{ flicker }}" hint-size="100%,100%"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;color&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF0069&quot;,&quot;options&quot;:[&quot;#FF0069&quot;,&quot;#FF3344&quot;,&quot;#FFA526&quot;,&quot;#2ED6B0&quot;,&quot;#9461FF&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;],&quot;default&quot;:&quot;A&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;muted&quot;,&quot;quiet&quot;],&quot;default&quot;:&quot;full&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;flicker&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;w&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:390,&quot;tsType&quot;:&quot;number&quot;},&quot;h&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:844,&quot;tsType&quot;:&quot;number&quot;},&quot;cx&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:195,&quot;tsType&quot;:&quot;number&quot;},&quot;cy&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:338,&quot;tsType&quot;:&quot;number&quot;},&quot;coreR&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:105,&quot;tsType&quot;:&quot;number&quot;},&quot;rings&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6,&quot;tsType&quot;:&quot;number&quot;},&quot;step&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:5,&quot;tsType&quot;:&quot;number&quot;},&quot;scale&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:1.34,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const h = React.createElement, p = this.props;
+    const W = p.w ?? 390, H = p.h ?? 844;
+    const color = p.color ?? '#FF0069';
+    const mode = p.mode ?? 'full';
+    const cx = p.cx ?? W / 2, cy = p.cy ?? H * .4;
+    const coreR = p.coreR ?? W * .27;
+    const count = p.rings ?? 6, step = p.step ?? 5, scale = p.scale ?? 1.34;
+    const baseOp = mode === 'quiet' ? .12 : mode === 'muted' ? .18 : .28;
+    const ring = (r, rot, op, k) => h('polygon', {
+      key: 'r' + k, fill: 'none', stroke: color, strokeOpacity: op, strokeWidth: 1,
+      points: [0, 1, 2, 3, 4, 5].map(i => {
+        const a = (-90 + 60 * i + rot) * Math.PI / 180;
+        return (cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1);
+      }).join(' ')
+    });
+    const els = [];
+    for (let k = count - 1; k >= 0; k--)
+      els.push(ring(coreR * 1.5 * Math.pow(scale, k), step * (k + 1), baseOp * Math.pow(.76, k), k));
+    return {
+      color, mode, variant: p.variant ?? 'A', flicker: p.flicker ?? true,
+      wpx: W + 'px', hpx: H + 'px',
+      coreLeft: (cx - coreR) + 'px', coreTop: (cy - coreR) + 'px', coreSize: (coreR * 2) + 'px',
+      rings: h('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', height: '100%', style: { display: 'block' } }, els)
+    };
+  }
+}
+</script>
+</body>
+</html>

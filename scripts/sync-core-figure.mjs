@@ -1,39 +1,51 @@
 #!/usr/bin/env node
-/* Рисует ядро в деку — public/deckinvestors/index.html.
+/* Рисует «Вихрь» в деку — public/deckinvestors/index.html.
  *
- * Дека живёт статической страницей ВНЕ сборки: подключить Vue-компонент туда
+ * Дека живёт статической страницей ВНЕ сборки: подключить туда Vue-компонент
  * нельзя, а рисовать фигуру руками нельзя тем более. Поэтому разметку сюда
- * пишет этот скрипт, и берёт он её из того же файла, что и ядро в приложении, —
- * src/data/coreFigure.js.
+ * пишет этот скрипт и берёт её из тех же файлов, что и приложение:
+ *   src/data/coreFigure.js    — фигура и кольца;
+ *   src/styles/core-flicker.css — стоп-кадры мерцания;
+ *   src/data/coreCycle.js     — круг цветов;
+ *   src/styles/tokens.css     — сами цвета.
  *
- * ⚠️ СКРИПТ НИЧЕГО НЕ РИСУЕТ САМ. Здесь нет ни одной координаты: только
- * раскладка того, что вернул coreFigure(). Ровно самостоятельная отрисовка по
- * переписанным координатам когда-то и развела знак в игре с иконкой вкладки —
- * в проде месяцами висели два разных логотипа.
+ * ⚠️ СКРИПТ НИЧЕГО НЕ РИСУЕТ САМ. Здесь нет ни одной координаты и ни одной
+ * прозрачности: только раскладка того, что вернули общие файлы. Ровно
+ * самостоятельная отрисовка по переписанным координатам когда-то и развела
+ * знак в игре с иконкой вкладки — в проде месяцами висели два разных логотипа.
  *
  * Запуск:  node scripts/sync-core-figure.mjs
- * Правили фигуру или круг цветов — прогоните и проверьте деку глазами.
+ * Правили фигуру, кольца, мерцание или круг цветов — прогоните и проверьте
+ * деку глазами.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { coreFigure } from '../src/data/coreFigure.js';
+import { coreFigure, vortexRings, VORTEX } from '../src/data/coreFigure.js';
 import { CORE_CYCLE } from '../src/data/coreCycle.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DECK = join(ROOT, 'public/deckinvestors/index.html');
 
-const OPEN = '<!-- ЯДРО:НАЧАЛО -->';
-const CLOSE = '<!-- ЯДРО:КОНЕЦ -->';
-const COPEN = '<!-- ЦВЕТА:НАЧАЛО -->';
-const CCLOSE = '<!-- ЦВЕТА:КОНЕЦ -->';
+/* Дека идёт приглушённой во всех разделах, плюс весь слой вполсилы:
+   восемнадцать разделов плотного текста с цифрами. */
+const MODE = 'muted';
+/* Колец на деке семь — как на компьютере (эталон). */
+const RINGS = VORTEX.count.desktop;
+
+const BLOCKS = [
+  ['<!-- ВИХРЬ:НАЧАЛО -->', '<!-- ВИХРЬ:КОНЕЦ -->', 'кольца'],
+  ['<!-- ЯДРО:НАЧАЛО -->', '<!-- ЯДРО:КОНЕЦ -->', 'фигура'],
+  ['<!-- МЕРЦАНИЕ:НАЧАЛО -->', '<!-- МЕРЦАНИЕ:КОНЕЦ -->', 'мерцание'],
+  ['<!-- ЦВЕТА:НАЧАЛО -->', '<!-- ЦВЕТА:КОНЕЦ -->', 'цвета'],
+];
 
 /* ⚠️ Цвета НЕ объявляются здесь. Они читаются из src/styles/tokens.css —
-   единственного места, где они объявлены, — и переносятся на деку, которая
-   до файла токенов не дотягивается: она статическая страница вне сборки.
-   Разбор простой и нарочно строгий: не нашли значение — падаем, а не
-   подставляем запасное число (запасное число и есть второе объявление). */
+   единственного места, где они объявлены, — и переносятся на деку, которая до
+   файла токенов не дотягивается: она статическая страница вне сборки. Разбор
+   простой и нарочно строгий: не нашли значение — падаем, а не подставляем
+   запасное число (запасное число и есть второе объявление). */
 function tokens() {
   const css = readFileSync(join(ROOT, 'src/styles/tokens.css'), 'utf8');
   const one = (name) => {
@@ -54,98 +66,93 @@ function tokens() {
   };
 }
 
-/* Вариант оформления и состояние у витрины ровно одно: «сердце крупнее»,
-   фоновое, все грани горят. Промежуточных состояний на фоне не бывает. */
-const STYLE = 'heart';
-const fig = coreFigure({ styleId: STYLE, branches: { a: 5, b: 5, c: 5 } });
+/* ---- кольца ------------------------------------------------------------- */
 
-/* Ступени блика/тени тела — те же, что у фигуры в приложении. */
-const ZONE_OP = { high: 0.022, mid: 0.013, low: 0.006 };
-
-const lines = [];
-const put = (s) => lines.push(s);
-
-put(`<!-- Фигура ядра. НЕ ПРАВИТЬ РУКАМИ: написана`);
-put(`     node scripts/sync-core-figure.mjs из src/data/coreFigure.js —`);
-put(`     того же файла, что рисует ядро в игре. Вариант «${STYLE}», состояние`);
-put(`     фоновое, все грани горят. Оформление — блок «A2. Ядро» в стилях. -->`);
-put(`<svg class="dk-core" viewBox="0 0 ${fig.box} ${fig.box}" aria-hidden="true">`);
-put(`  <defs>`);
-put(`    <radialGradient id="dkCoreGlow" cx="50%" cy="50%" r="50%">`);
-put(`      <stop offset="0%" stop-color="currentColor" stop-opacity=".55"/>`);
-put(`      <stop offset="45%" stop-color="currentColor" stop-opacity=".18"/>`);
-put(`      <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>`);
-put(`    </radialGradient>`);
-put(`    <radialGradient id="dkCoreInner" gradientUnits="userSpaceOnUse" cx="${fig.c}" cy="${fig.c}" r="${fig.r}">`);
-put(`      <stop offset="0%" stop-color="currentColor" stop-opacity=".16"/>`);
-put(`      <stop offset="55%" stop-color="currentColor" stop-opacity=".05"/>`);
-put(`      <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>`);
-put(`    </radialGradient>`);
-for (const b of fig.branches) {
-  put(`    <linearGradient id="dkCoreFlow-${b.id}" gradientUnits="userSpaceOnUse" x1="${fig.c}" y1="${fig.c}" x2="${b.tipX}" y2="${b.tipY}">`);
-  put(`      <stop offset="0%" stop-color="currentColor" stop-opacity=".95"/>`);
-  put(`      <stop offset="70%" stop-color="currentColor" stop-opacity=".70"/>`);
-  put(`      <stop offset="100%" stop-color="currentColor" stop-opacity=".30"/>`);
-  put(`    </linearGradient>`);
+const half = VORTEX.span / 2;
+const ringLines = [];
+ringLines.push('<!-- Кольца «Вихря». НЕ ПРАВИТЬ РУКАМИ: написано');
+ringLines.push('     node scripts/sync-core-figure.mjs из src/data/coreFigure.js. -->');
+ringLines.push(`<svg class="dk-rings" viewBox="${-half} ${-half} ${VORTEX.span} ${VORTEX.span}" aria-hidden="true">`);
+ringLines.push('  <g fill="none" stroke="currentColor">');
+for (const r of vortexRings(RINGS, MODE)) {
+  ringLines.push(`    <polygon points="${r.points}" stroke-opacity="${r.opacity}" stroke-width="1" vector-effect="non-scaling-stroke"/>`);
 }
-for (const z of fig.zones) {
-  put(`    <radialGradient id="dkCoreZone-${z.id}" gradientUnits="userSpaceOnUse" cx="${z.cx}" cy="${z.cy}" r="${z.r}">`);
-  put(`      <stop offset="0%" stop-color="currentColor" stop-opacity=".9"/>`);
-  put(`      <stop offset="40%" stop-color="currentColor" stop-opacity=".38"/>`);
-  put(`      <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>`);
-  put(`    </radialGradient>`);
-}
-put(`  </defs>`);
+ringLines.push('  </g>');
+ringLines.push('</svg>');
 
-put(`  <g class="dk-core__body">`);
-for (const z of fig.zones) {
-  put(`    <polygon points="${z.points}" fill="#F6F4F6" fill-opacity="${ZONE_OP[z.shade]}"/>`);
-}
-put(`    <polygon points="${fig.rim}" fill="url(#dkCoreInner)"/>`);
-put(`  </g>`);
+/* ---- фигура ------------------------------------------------------------- */
 
-put(`  <g class="dk-core__fusion">`);
-for (const z of fig.zones) {
-  const op = (0.3 + (z.strength / 5) * 0.7).toFixed(3);
-  put(`    <polygon points="${z.points}" fill="url(#dkCoreZone-${z.id})" opacity="${op}"/>`);
-}
-put(`  </g>`);
+const f = coreFigure(MODE);
+const core = [];
+const put = (s) => core.push(s);
 
-put(`  <g class="dk-core__branches">`);
-for (const b of fig.branches) {
-  put(`    <polygon class="dk-core__shard" points="${b.shard}"/>`);
+put('<!-- Фигура ядра «Печать». НЕ ПРАВИТЬ РУКАМИ: написана');
+put('     node scripts/sync-core-figure.mjs из src/data/coreFigure.js — того же');
+put('     файла, что рисует ядро на лендинге. Режим яркости — ' + MODE + '. -->');
+put(`<svg class="dk-core" viewBox="0 0 ${f.box} ${f.box}" aria-hidden="true">`);
+put('  <defs>');
+put('    <radialGradient id="dkPlate">');
+put('      <stop offset="0" stop-color="#191420" stop-opacity=".95"/>');
+put('      <stop offset="1" stop-color="#0d0b11" stop-opacity=".55"/>');
+put('    </radialGradient>');
+put('    <radialGradient id="dkGlow">');
+put(`      <stop offset="0" stop-color="currentColor" stop-opacity="${f.m.glow}"/>`);
+put(`      <stop offset=".45" stop-color="currentColor" stop-opacity="${+(f.m.glow * 0.4).toFixed(4)}"/>`);
+put('      <stop offset="1" stop-color="currentColor" stop-opacity="0"/>');
+put('    </radialGradient>');
+if (f.m.zone > 0) {
+  put('    <radialGradient id="dkZone">');
+  put('      <stop offset="0" stop-color="currentColor" stop-opacity=".55"/>');
+  put('      <stop offset="1" stop-color="currentColor" stop-opacity=".04"/>');
+  put('    </radialGradient>');
 }
-for (const b of fig.branches) {
-  put(`    <polygon class="dk-core__vein" points="${b.vein}" fill="url(#dkCoreFlow-${b.id})"/>`);
-}
-put(`  </g>`);
+put('    <radialGradient id="dkGem" cx=".45" cy=".4">');
+put('      <stop offset="0" stop-color="currentColor" stop-opacity="1"/>');
+put('      <stop offset="1" stop-color="currentColor" stop-opacity=".55"/>');
+put('    </radialGradient>');
+put('    <radialGradient id="dkGemGlow">');
+put('      <stop offset="0" stop-color="currentColor" stop-opacity=".5"/>');
+put('      <stop offset="1" stop-color="currentColor" stop-opacity="0"/>');
+put('    </radialGradient>');
+put('  </defs>');
 
-put(`  <g class="dk-core__nodes">`);
-for (const b of fig.branches) {
-  for (const n of b.nodes) {
-    put(`    <polygon class="dk-core__gem" points="${n.points}"/>`);
-    put(`    <polygon class="dk-core__facet" points="${n.inner}"/>`);
+put(`  <circle cx="${f.c}" cy="${f.c}" r="${f.haloR}" fill="url(#dkGlow)"/>`);
+put(`  <polygon points="${f.plate}" fill="url(#dkPlate)"/>`);
+if (f.m.zone > 0) {
+  for (const z of f.zones) {
+    put(`  <polygon points="${z.points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
   }
 }
-put(`  </g>`);
-
-put(`  <g class="dk-core__heart">`);
-put(`    <circle class="dk-core__glow" cx="${fig.c}" cy="${fig.c}" r="${fig.heart.glowR}" fill="url(#dkCoreGlow)"/>`);
-put(`    <polygon class="dk-core__stone" points="${fig.heart.outer}"/>`);
-if (fig.heart.table) put(`    <polygon class="dk-core__table" points="${fig.heart.table}"/>`);
-for (const l of fig.heart.cuts) {
-  put(`    <line class="dk-core__cut" x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}"/>`);
+for (const b of f.branches) {
+  put(`  <polygon points="${b.points}" fill="#120f17" stroke="currentColor" stroke-opacity="${f.m.branch}" stroke-width="1.3" stroke-linejoin="round"/>`);
 }
-if (fig.heart.seed) put(`    <polygon class="dk-core__seed" points="${fig.heart.seed}"/>`);
-put(`  </g>`);
+for (const s of f.sides) {
+  put(`  <g data-core-flick="1" style="--core-flick-dur:${s.dur}s;--core-flick-del:${s.del}s">`);
+  put(`    <line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="currentColor" stroke-opacity="${+(f.m.contour * 0.18).toFixed(4)}" stroke-width="${f.gw}" stroke-linecap="round"/>`);
+  put(`    <line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="currentColor" stroke-opacity="${f.m.contour}" stroke-width="${f.cw}" stroke-linecap="square"/>`);
+  put('  </g>');
+}
+put(`  <polygon points="${f.inner}" fill="none" stroke="currentColor" stroke-opacity="${+(f.m.contour * 0.35).toFixed(4)}" stroke-width="1.2"/>`);
+put(`  <circle cx="${f.c}" cy="${f.c}" r="${f.heart.glowR}" fill="url(#dkGemGlow)"/>`);
+put(`  <polygon points="${f.heart.frame}" fill="#0b0910" stroke="currentColor" stroke-opacity="${f.m.heart}" stroke-width="${f.heart.frameW}" stroke-linejoin="round"/>`);
+put(`  <polygon points="${f.heart.ring}" fill="none" stroke="currentColor" stroke-opacity="${+(f.m.heart * 0.35).toFixed(4)}" stroke-width="1"/>`);
+put(`  <polygon points="${f.heart.gem}" fill="url(#dkGem)"/>`);
+put('</svg>');
 
-put(`  <polygon class="dk-core__rim" points="${fig.rim}"/>`);
-put(`</svg>`);
+/* ---- мерцание ----------------------------------------------------------- */
 
-const markup = lines.map((l) => '  ' + l).join('\n');
+const flickCss = readFileSync(join(ROOT, 'src/styles/core-flicker.css'), 'utf8').trim();
+const flick = [
+  '<style>',
+  '/* Мерцание контура. НЕ ПРАВИТЬ РУКАМИ: перенесено',
+  '   node scripts/sync-core-figure.mjs из src/styles/core-flicker.css —',
+  '   того же файла, что мерцает на лендинге. */',
+  flickCss,
+  '</style>',
+];
 
-/* Круг цветов: имена разделов берём из src/data/coreCycle.js, значения — из
-   файла токенов. Дека получает и то и другое готовым. */
+/* ---- цвета -------------------------------------------------------------- */
+
 const T = tokens();
 const names = CORE_CYCLE.map((id) => id || 'pink');
 const colors = [];
@@ -160,7 +167,12 @@ for (const n of names) {
 }
 colors.push('</style>');
 colors.push(`<script>window.DK_CORE_CYCLE=${JSON.stringify(names)};<\/script>`);
-const colorBlock = colors.map((l) => '  ' + l).join('\n');
+
+/* ---- запись ------------------------------------------------------------- */
+
+const bodies = [ringLines, core, flick, colors].map(
+  (l) => l.map((s) => '  ' + s).join('\n'),
+);
 
 function splice(src, open, close, body, what) {
   const a = src.indexOf(open);
@@ -174,12 +186,15 @@ function splice(src, open, close, body, what) {
 }
 
 const html = readFileSync(DECK, 'utf8');
-let next = splice(html, OPEN, CLOSE, markup, 'фигура');
-next = splice(next, COPEN, CCLOSE, colorBlock, 'цвета');
+let next = html;
+BLOCKS.forEach(([open, close, what], i) => {
+  next = splice(next, open, close, bodies[i], what);
+});
+
 if (next === html) {
   console.log('Дека уже в порядке — менять нечего.');
 } else {
   writeFileSync(DECK, next);
-  console.log(`Ядро записано в деку: ${lines.length} строк разметки, вариант «${STYLE}».`);
+  console.log(`Дека обновлена. Фигура «Печать», режим «${MODE}», колец ${RINGS}.`);
   console.log(`Круг цветов: ${names.join(' → ')} → по кругу.`);
 }

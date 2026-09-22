@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#08080a}
+a{color:#FF0069;text-decoration:none}
+a:hover{color:#ff4d92}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#08080a;color:#cdc6cf;font-family:'Space Grotesk',Helvetica,sans-serif;padding:28px 20px 80px;display:flex;flex-direction:column;gap:44px">
+
+  <header style="display:flex;flex-direction:column;gap:18px;max-width:1100px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6f6675">Hexlash · служебное превью ядра · v1</div>
+    <h1 style="margin:0;font-size:clamp(26px,4.5vw,42px);font-weight:700;letter-spacing:-.02em;color:#efe9f0;text-wrap:pretty">Три варианта знака ядра</h1>
+    <p style="margin:0;max-width:62ch;font-size:15px;line-height:1.55;color:#9a919f;text-wrap:pretty">Один источник рисунка: компонент ядра с параметрами «цвет / вариант / режим / мерцание». Мерцает только контур — шесть сторон независимо, анимируется одна прозрачность. Без SVG-фильтров: свечение собрано из двух обводок, чтобы браузер не пересчитывал размытие каждый кадр.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <sc-for list="{{ sections }}" as="s" hint-placeholder-count="5">
+        <button onClick="{{ s.pick }}" style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;border:1px solid {{ s.border }};background:{{ s.bg }};color:#efe9f0;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;cursor:pointer;min-height:38px" style-hover="border-color:#6f6675">
+          <span style="width:10px;height:10px;border-radius:2px;background:{{ s.color }};display:block"></span>{{ s.name }}
+        </button>
+      </sc-for>
+      <button onClick="{{ toggleFlicker }}" style="padding:9px 14px;border-radius:999px;border:1px solid #2a2530;background:#121016;color:#9a919f;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;cursor:pointer;min-height:38px">мерцание: {{ flickerLabel }}</button>
+    </div>
+  </header>
+
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;max-width:1240px">
+    <sc-for list="{{ variants }}" as="v" hint-placeholder-count="3">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px;border:1px solid {{ v.border }};border-radius:4px;background:#0b0a0d">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+          <div style="font-size:18px;font-weight:700;color:#efe9f0">{{ v.title }}</div>
+          <button onClick="{{ v.pick }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;padding:6px 10px;border-radius:2px;border:1px solid #2a2530;background:transparent;color:#8d8494;cursor:pointer">{{ v.action }}</button>
+        </div>
+        <dc-import name="Core" color="{{ color }}" variant="{{ v.id }}" mode="{{ mode }}" flicker="{{ flicker }}" hint-size="100%,260px"></dc-import>
+        <p style="margin:0;font-size:13px;line-height:1.5;color:#8d8494;text-wrap:pretty">{{ v.note }}</p>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px;max-width:1240px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;color:#efe9f0">Розовый раздел: «тихий» или «виден, но приглушённо»</h2>
+    <p style="margin:0;max-width:62ch;font-size:14px;line-height:1.55;color:#9a919f">Слева — нынешнее правило: горит только сердце, ветки и контур почти не видны. Справа — вся фигура читается, но на треть яркости цветных разделов. Выбор за владельцем.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px">
+      <div style="padding:18px;border:1px solid #1c1922;border-radius:4px;background:#0b0a0d;display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#6f6675">ТИХИЙ</div>
+        <dc-import name="Core" color="#FF0069" variant="{{ variant }}" mode="quiet" flicker="{{ flicker }}" hint-size="100%,260px"></dc-import>
+      </div>
+      <div style="padding:18px;border:1px solid #1c1922;border-radius:4px;background:#0b0a0d;display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#6f6675">ПРИГЛУШЁННЫЙ</div>
+        <dc-import name="Core" color="#FF0069" variant="{{ variant }}" mode="muted" flicker="{{ flicker }}" hint-size="100%,260px"></dc-import>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px;max-width:1240px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;color:#efe9f0">Раскладка «Вихрь» — фон лендинга</h2>
+    <p style="margin:0;max-width:62ch;font-size:14px;line-height:1.55;color:#9a919f">Кольца волны поворачиваются на 5° каждое, закручиваясь вокруг ядра. Телефон 390×844 и компьютер 1440×900, показаны в масштабе. Вариант и цвет — из переключателей выше.</p>
+    <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#6f6675">390 × 844</div>
+        <div style="width:234px;height:506px;overflow:hidden;border:1px solid #1c1922;border-radius:6px">
+          <div style="width:390px;height:844px;transform:scale(0.6);transform-origin:top left">
+            <dc-import name="Vortex" color="{{ color }}" variant="{{ variant }}" mode="{{ mode }}" flicker="{{ flicker }}" w="{{ 390 }}" h="{{ 844 }}" cx="{{ 195 }}" cy="{{ 338 }}" coreR="{{ 104 }}" rings="{{ 6 }}" hint-size="390px,844px"></dc-import>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;flex:1;min-width:280px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#6f6675">1440 × 900</div>
+        <div style="width:100%;max-width:720px;height:450px;overflow:hidden;border:1px solid #1c1922;border-radius:6px">
+          <div style="width:1440px;height:900px;transform:scale(0.5);transform-origin:top left">
+            <dc-import name="Vortex" color="{{ color }}" variant="{{ variant }}" mode="{{ mode }}" flicker="{{ flicker }}" w="{{ 1440 }}" h="{{ 900 }}" cx="{{ 720 }}" cy="{{ 430 }}" coreR="{{ 250 }}" rings="{{ 7 }}" hint-size="1440px,900px"></dc-import>
+          </div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#6f6675">ДЕКА — ПОЛОВИННАЯ ЯРКОСТЬ</div>
+        <div style="width:100%;max-width:720px;height:280px;overflow:hidden;border:1px solid #1c1922;border-radius:6px;position:relative">
+          <div style="width:1440px;height:900px;transform:scale(0.5);transform-origin:top left;opacity:.5">
+            <dc-import name="Vortex" color="{{ color }}" variant="{{ variant }}" mode="muted" flicker="{{ flicker }}" w="{{ 1440 }}" h="{{ 900 }}" cx="{{ 720 }}" cy="{{ 300 }}" coreR="{{ 220 }}" rings="{{ 7 }}" hint-size="1440px,900px"></dc-import>
+          </div>
+          <div style="position:absolute;inset:0;padding:28px 32px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:24px;font-weight:700;color:#efe9f0">Плотный раздел деки</div>
+            <p style="margin:0;max-width:60ch;font-size:14px;line-height:1.6;color:#b7aec0">Проверка читаемости: на деке фон идёт на половинной яркости, мерцание почти не заметно, контраст текста к фону сохраняется выше 4.5:1.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:78ch;display:flex;flex-direction:column;gap:10px;border-top:1px solid #1c1922;padding-top:24px">
+    <h2 style="margin:0;font-size:18px;font-weight:700;color:#efe9f0">Что изменено против эталона</h2>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.55;color:#9a919f">
+      <li>Размытие (feGaussianBlur) на сторонах контура заменено широкой полупрозрачной обводкой — то же свечение, но без пересчёта фильтра на каждом кадре мерцания.</li>
+      <li>Мерцает группа-обёртка стороны (одна прозрачность на элемент), остальная фигура статична; при «уменьшить движение» анимация выключается правилом медиазапроса.</li>
+      <li>Ветки перерисованы как цельные сужающиеся клинья без ромбиков внутри; сердце — плоский шестиугольник в рамке с тонким внутренним кольцом.</li>
+      <li>Белого в фигуре нет: светлые места — цвет раздела и тёмный серо-лиловый.</li>
+      <li>Горящие грани позже: каждую ветку можно разбить по длине на пять сегментов-полигонов и наливать светом снизу вверх, меняя только их прозрачность — форма и разметка уже это позволяют.</li>
+    </ul>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;],&quot;default&quot;:&quot;A&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;flicker&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { ci: 0, variant: 'A', flicker: true };
+
+  renderVals() {
+    const S = [
+      { name: 'PINK', color: '#FF0069' },
+      { name: 'ONSLAUGHT', color: '#FF3344' },
+      { name: 'RAIDER', color: '#FFA526' },
+      { name: 'BULWARK', color: '#2ED6B0' },
+      { name: 'AMBUSH', color: '#9461FF' }
+    ];
+    const ci = this.state.ci, cur = S[ci];
+    const variant = this.props.variant ?? this.state.variant;
+    const flicker = (this.props.flicker ?? true) && this.state.flicker;
+    const V = [
+      { id: 'A', title: 'A · Эталон+', note: 'Ближе всего к эталону: широкие ветки, кристалл и шип на каждой вершине, сердце в рамке. Узнаётся как знак, но остаётся плотным.' },
+      { id: 'B', title: 'B · Клинок', note: 'Ветки тоньше, шипы длиннее и выходят за контур — фигура агрессивнее и легче, сердце компактное. Лучше держится на маленьком экране.' },
+      { id: 'C', title: 'C · Печать', note: 'Максимально графичный: толстые клинья без шипов, двойной контур, крупное сердце. Читается как печать/знак даже при 40 px.' }
+    ];
+    return {
+      color: cur.color,
+      mode: ci === 0 ? 'quiet' : 'full',
+      variant, flicker,
+      flickerLabel: flicker ? 'вкл' : 'выкл',
+      toggleFlicker: () => this.setState(s => ({ flicker: !s.flicker })),
+      sections: S.map((s, i) => ({
+        name: s.name, color: s.color,
+        bg: i === ci ? '#1a1620' : '#121016',
+        border: i === ci ? s.color : '#2a2530',
+        pick: () => this.setState({ ci: i })
+      })),
+      variants: V.map(v => ({
+        ...v,
+        border: v.id === variant ? cur.color : '#1c1922',
+        action: v.id === variant ? 'выбран' : 'показать в раскладке',
+        pick: () => this.setState({ variant: v.id })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

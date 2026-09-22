@@ -1,215 +1,196 @@
-/* HEXLASH — ГЕОМЕТРИЯ ЯДРА. Чистая математика фигуры, без Vue и без стилей.
+/* HEXLASH — ЯДРО «ПЕЧАТЬ» И РАСКЛАДКА «ВИХРЬ» (22.09.2026).
 
-   ⚠️ ЭТО ЕДИНСТВЕННЫЙ ИСТОЧНИК КООРДИНАТ ЯДРА. Его читают ДВОЕ:
-     1. src/components/core/HexCore.vue — фигура в приложении (лендинг, вход,
-        служебная страница /dev/core);
-     2. scripts/sync-core-figure.mjs — рисует ту же фигуру в деку
-        (public/deckinvestors/index.html), которая живёт статической страницей
-        вне сборки и компонент подключить не может.
+   ⚠️ ЕДИНСТВЕННЫЙ ИСТОЧНИК РИСУНКА ЯДРА В ПРОЕКТЕ. Отсюда его берут:
+     • приложение — src/components/core/HexCore.vue (фон лендинга и входа);
+     • дека — scripts/sync-core-figure.mjs пишет разметку в статическую
+       страницу public/deckinvestors/index.html.
+   Второй отрисовки быть не должно. Самостоятельная отрисовка по переписанным
+   координатам когда-то развела знак в игре с иконкой вкладки — в проде
+   месяцами висели два разных логотипа.
 
-   Второй копии координат в проекте быть не должно. Именно копия координат
-   когда-то развела знак в игре и иконку вкладки: месяцами в проде висели два
-   разных логотипа, и никто их специально не правил. Если деку нужно обновить —
-   `node scripts/sync-core-figure.mjs`, а не правка разметки руками.
+   Эталон: docs/design-handoff/core_seal/references/design-source/
+     Core.dc.html   — фигура (вариант «C · Печать»);
+     Vortex.dc.html — кольца вокруг неё.
+   Числа ниже перенесены оттуда один в один. Расходится — прав эталон.
 
-   Каркас один на все варианты оформления: шестиугольник вершиной вверх, из
-   центра к трём вершинам (вверх, вправо-вниз, влево-вниз) три ветки, на каждой
-   пять граней. Всё, что варианты меняют, лежит в src/data/coreStyles.js. */
+   ⚠️ БЕЗ РАЗМЫТИЯ. Свечение контура собрано из двух обводок — широкой
+   полупрозрачной и чёткой. Фильтр размытия давал бы то же самое, но браузер
+   пересчитывал бы его на каждом кадре мерцания; на медленном телефоне это
+   уже стоило кадров (21.09 ловили 22.3 мс при норме 16.7).
 
-import { coreStyleCfg } from './coreStyles.js';
+   ⚠️ БЕЛОГО В ФИГУРЕ НЕТ. Светлое — это цвет раздела; тёмное — серо-лиловый.
 
-export const BOX = 200;   // бокс рисунка
-export const C = 100;     // центр
-export const R = 86;      // внешний радиус фигуры
+   Фигура: шестиугольник вершиной вверх, три ветки-клина к вершинам 0, 2, 4
+   (вверх, вправо-вниз, влево-вниз), крупное сердце в середине. */
 
-const RAY_DEG = { a: -90, b: 30, c: 150 };   // вверх · вправо-вниз · влево-вниз
-const HEX_DEG = [-90, -30, 30, 90, 150, 210];
-/* Знаки манеры нарисованы для бокса 200×200 с внешним гексом r=78. */
-export const SIGIL_SRC_R = 78;
+/** Сторона квадратного холста фигуры. */
+export const BOX = 600;
+/** Середина холста. */
+export const C = BOX / 2;
+/** Радиус контура: от середины до вершины шестиугольника. */
+export const R = 225;
 
-const rad = (d) => (d * Math.PI) / 180;
-const px = (v) => Math.round(v * 100) / 100;
-const pt = (deg, r, cx = C, cy = C) => [cx + Math.cos(rad(deg)) * r, cy + Math.sin(rad(deg)) * r];
-const poly = (pts) => pts.map((p) => `${px(p[0])},${px(p[1])}`).join(' ');
-const hex = (r, cx = C, cy = C) => poly(HEX_DEG.map((d) => pt(d, r, cx, cy)));
+/* Режимы яркости. Один набор прозрачностей на всю фигуру.
+     full  — цветные разделы (ONSLAUGHT, RAIDER, BULWARK, AMBUSH);
+     muted — дека, все разделы;
+     quiet — розовые разделы лендинга и экран входа. */
+export const MODES = {
+  full:  { contour: 0.95, branch: 0.55, zone: 0.30, glow: 0.26, heart: 0.95 },
+  muted: { contour: 0.55, branch: 0.26, zone: 0.12, glow: 0.14, heart: 0.80 },
+  quiet: { contour: 0.18, branch: 0.09, zone: 0,    glow: 0.08, heart: 1 },
+};
+export const MODE_IDS = ['full', 'muted', 'quiet'];
 
-/* Неровность огранки — стабильная, а не случайная: один и тот же кристалл
-   обязан выглядеть одинаково между перерисовками и одинаково в приложении и
-   на деке. */
-function wobble(seed) {
-  const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
-  return (x - Math.floor(x)) * 2 - 1;   // −1..1
+/* Вариант «C · Печать». Полуширина ветки у центра / в середине / на конце —
+   в долях R; сердце — тоже в долях R. cw и gw — толщина чёткой и широкой
+   линий контура. */
+const VAR = {
+  w0: 0.115, w1: 0.085, w2: 0.058,
+  t0: 0.04,  t1: 0.52,  t2: 0.875,
+  heart: 0.245,
+  cw: 4.0, gw: 13,
+  innerR: 0.93,
+};
+
+/* Мерцание контура. Мерцает ТОЛЬКО группа каждой из шести сторон (широкая и
+   чёткая линии вместе), анимируется одна прозрачность. Остальная фигура и
+   кольца неподвижны. */
+export const FLICK_NAME = 'hxCoreFlick';
+export const FLICK_DUR = [4.2, 5.1, 3.7, 6.3, 4.8, 5.6];
+export const FLICK_DEL = [0, 1.3, 2.1, 0.6, 3.4, 1.9];
+
+/* ⚠️ САМИ СТОП-КАДРЫ МЕРЦАНИЯ ЛЕЖАТ В src/styles/core-flicker.css — одним
+   файлом на приложение и деку. Приложение подключает его сборкой, деку
+   заполняет scripts/sync-core-figure.mjs, переписывая оттуда же. Второй копии
+   стоп-кадров в проекте нет. Имя анимации — FLICK_NAME выше. */
+
+/* ---- геометрия ---------------------------------------------------------- */
+
+const rad = (deg) => (deg * Math.PI) / 180;
+
+/** Вершина i шестиугольника радиуса r (0 — вверх), с поворотом rot градусов. */
+function corner(r, i, rot = 0) {
+  const a = rad(-90 + 60 * i + rot);
+  return [C + r * Math.cos(a), C + r * Math.sin(a)];
 }
 
-/* Кратчайшая разница углов, в градусах, в (−180, 180]. */
-function angDelta(a, b) {
-  return ((b - a + 540) % 360) - 180;
+/** Шесть вершин как строка points. */
+function hexPoints(r, rot = 0) {
+  return fmt([0, 1, 2, 3, 4, 5].map((i) => corner(r, i, rot)));
 }
 
-/* Зона = кит между двумя соседними лучами: центр → вершина → промежуточная
-   вершина шестиугольника → вершина. */
-const ZONE_DEF = [
-  { id: 'ab', from: 'a', to: 'b', mid: -30, shade: 'mid',  cdeg: -30 },  // верх-право
-  { id: 'bc', from: 'b', to: 'c', mid: 90,  shade: 'low',  cdeg: 90 },   // низ
-  { id: 'ca', from: 'c', to: 'a', mid: 210, shade: 'high', cdeg: 210 },  // верх-лево
-];
-
-export const BRANCH_IDS = ['a', 'b', 'c'];
-
-/* Ступени яркости центра по числу ЗАДЕЙСТВОВАННЫХ веток (0/1/2/3). */
-export const LUM = [0.1, 0.36, 0.64, 1];
-
-/** Сколько граней горит в ветке, с защитой от мусора. */
-function litOf(branches) {
-  const g = (k) => Math.max(0, Math.min(5, Number(branches?.[k]) || 0));
-  return { a: g('a'), b: g('b'), c: g('c') };
+function fmt(pts) {
+  return pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
 }
 
 /**
- * Вся геометрия фигуры одним вызовом.
- * @param {Object} o
- * @param {string} o.styleId   вариант оформления (src/data/coreStyles.js)
- * @param {Object} o.branches  { a, b, c } — сколько граней горит в каждой ветке
- * @param {boolean} o.simple   упрощённая отрисовка (бокс меньше 48 точек)
- * @returns {Object} готовые строки точек и числа — рисовать и всё
+ * Разложенная фигура ядра для отрисовки.
+ * @param {'full'|'muted'|'quiet'} mode режим яркости
  */
-export function coreFigure({ styleId = 'origin', branches = {}, simple = false } = {}) {
-  const k = coreStyleCfg(styleId);
-  const lit = litOf(branches);
-  const engaged = BRANCH_IDS.filter((b) => lit[b] > 0).length;
+export function coreFigure(mode = 'full') {
+  const m = MODES[mode] || MODES.full;
+  const verts = [0, 1, 2, 3, 4, 5].map((i) => corner(R, i));
 
-  const shapes = BRANCH_IDS.map((id, bi) => {
-    const deg = RAY_DEG[id];
-    const dx = Math.cos(rad(deg));
-    const dy = Math.sin(rad(deg));
-    const nx = -dy;   // перпендикуляр
-    const ny = dx;
-    const n = lit[id];
+  /* Зоны между ветками: середина плюс три соседние вершины. */
+  const zones = [[0, 1, 2], [2, 3, 4], [4, 5, 0]].map((t, k) => ({
+    id: ['a', 'b', 'c'][k],
+    points: fmt([[C, C], verts[t[0]], verts[t[1]], verts[t[2]]]),
+  }));
 
-    const tipR = R * k.tipFrac;
-    const at = (t, w) => [C + dx * t + nx * w, C + dy * t + ny * w];
-
-    /* Тело ветки: сужающийся кристалл (полуширина от chanW0 к chanW1). */
-    const shard = poly([
-      at(0, k.chanW0), at(tipR, k.chanW1), at(tipR, -k.chanW1), at(0, -k.chanW0),
-    ]);
-    /* Жила внутри кристалла — уже тела, той же формы. */
-    const vw0 = Math.min(k.chanW0, k.flowW * 0.5 + 1.5);
-    const vw1 = Math.min(k.chanW1, k.flowW * 0.28 + 0.6);
-    const vein = poly([
-      at(0, vw0), at(tipR, vw1), at(tipR, -vw1), at(0, -vw0),
-    ]);
-
-    const wallOff = k.chanW0;
-    const wall = (sign) => ({
-      x1: px(C + dx * 15 + nx * wallOff * sign),
-      y1: px(C + dy * 15 + ny * wallOff * sign),
-      x2: px(C + dx * R * 0.9 + nx * wallOff * sign),
-      y2: px(C + dy * R * 0.9 + ny * wallOff * sign),
-    });
-    /* Освещена та стенка, что смотрит вверх-влево: свет в зале один и сверху. */
-    const up = ny < 0 || (ny === 0 && nx < 0);
-
-    const nodes = k.nodeT.map((t, i) => {
-      const isTip = i === k.nodeT.length - 1;
-      const r = isTip && simple ? k.tipRsimple : k.nodeR[i];
-      const cx = C + dx * t * R;
-      const cy = C + dy * t * R;
-      const along = r * k.nodeLong;
-      const across = r * 0.88;
-      /* Четыре угла ромба; при nodeRough > 0 каждый угол чуть сбит — огранка
-         перестаёт быть правильной, кристалл выглядит выращенным. */
-      const w = (corner, amp) => 1 + wobble(bi * 17 + i * 5 + corner) * k.nodeRough * amp;
-      const gem = (kx) => poly([
-        [cx + dx * along * kx * w(0, 0.5), cy + dy * along * kx * w(0, 0.5)],
-        [cx + nx * across * kx * w(1, 0.8), cy + ny * across * kx * w(1, 0.8)],
-        [cx - dx * along * kx * w(2, 0.3), cy - dy * along * kx * w(2, 0.3)],
-        [cx - nx * across * kx * w(3, 0.8), cy - ny * across * kx * w(3, 0.8)],
-      ]);
-      return { i: i + 1, lit: i < n, points: gem(1), inner: gem(0.46) };
-    });
-
+  /* Три ветки-клина: сужаются от середины к вершине, без шипов и кристаллов. */
+  const branches = [0, 2, 4].map((vi, k) => {
+    const [tx, ty] = verts[vi];
+    const dx = (tx - C) / R;
+    const dy = (ty - C) / R;
+    const px = -dy;
+    const py = dx;
+    const at = (t, w) => [
+      [C + dx * R * t + px * R * w, C + dy * R * t + py * R * w],
+      [C + dx * R * t - px * R * w, C + dy * R * t - py * R * w],
+    ];
+    const a0 = at(VAR.t0, VAR.w0);
+    const a1 = at(VAR.t1, VAR.w1);
+    const a2 = at(VAR.t2, VAR.w2);
     return {
-      id,
-      lit: n,
-      /* Свет доходит до последней горящей грани и обнимает её. */
-      litR: n > 0 ? px(R * k.nodeT[n - 1] + k.nodeR[n - 1] * 0.9) : 0,
-      tipX: px(C + dx * tipR), tipY: px(C + dy * tipR),
-      shard, vein,
-      hi: wall(up ? 1 : -1),
-      lo: wall(up ? -1 : 1),
-      nodes,
+      id: ['a', 'b', 'c'][k],
+      points: fmt([a0[0], a1[0], a2[0], a2[1], a1[1], a0[1]]),
     };
   });
 
-  const zones = ZONE_DEF.map((z) => {
-    const [cxp, cyp] = pt(z.cdeg, R * 0.32);
-    const aFrom = RAY_DEG[z.from];
-    const aTo = RAY_DEG[z.to];
-    const corners = [[C, C], pt(aFrom, R), pt(z.mid, R), pt(aTo, R)];
-
-    /* Пластина (вариант «без рамки»). Внешний край ОСТАЁТСЯ на R — силуэт
-       складывают сами пластины. Щели открываются вдоль лучей и у ступицы. */
-    const inset = k.plateInset;
-    const da = inset > 0 ? (Math.atan2(inset, R) * 180) / Math.PI : 0;
-    const pFrom = pt(aFrom + Math.sign(angDelta(aFrom, z.mid)) * da, R);
-    const pTo = pt(aTo + Math.sign(angDelta(aTo, z.mid)) * da, R);
-    const plate = poly([pt(z.mid, inset * 1.9), pFrom, pt(z.mid, R), pTo]);
-
+  /* Контур — шесть сторон по отдельности: каждая мерцает своим ритмом. */
+  const sides = [0, 1, 2, 3, 4, 5].map((i) => {
+    const a = verts[i];
+    const b = verts[(i + 1) % 6];
     return {
-      id: z.id,
-      shade: z.shade,
-      strength: Math.min(lit[z.from], lit[z.to]),
-      points: poly(corners),
-      plate,
-      /* Наклон пластины: блик идёт поперёк, от одного луча к другому. */
-      tx1: px(pFrom[0]), ty1: px(pFrom[1]), tx2: px(pTo[0]), ty2: px(pTo[1]),
-      cx: px(cxp), cy: px(cyp), r: px(R * 0.82),
+      x1: a[0].toFixed(1), y1: a[1].toFixed(1),
+      x2: b[0].toFixed(1), y2: b[1].toFixed(1),
+      dur: FLICK_DUR[i], del: FLICK_DEL[i],
     };
   });
 
-  /* Огранка сердцевины. Мелкому камню хватает трёх рёбер к вершинам; крупному
-     нужна площадка — иначе три ребра продолжают ветки и камень читается
-     кубиком внутри внешнего шестиугольника. */
-  const hr = k.heartR;
-  const cuts = k.heartFacets === 'table'
-    ? HEX_DEG.map((d) => {
-      const [x1, y1] = pt(d, hr * 0.52);
-      const [x2, y2] = pt(d, hr);
-      return [px(x1), px(y1), px(x2), px(y2)];
-    })
-    : [-90, 30, 150].map((d) => {
-      const [x, y] = pt(d, hr);
-      return [px(x), px(y), C, C];
-    });
-
-  const sigilScale = px(hr / SIGIL_SRC_R);
+  const hr = R * VAR.heart;
 
   return {
-    box: BOX, c: C, r: R,
-    cfg: k,
-    lit, engaged,
-    lum: LUM[engaged],
-    branches: shapes,
+    box: BOX, c: C, r: R, mode, m,
+    /* Ореол вокруг всей фигуры. */
+    haloR: (R * 1.18).toFixed(1),
+    plate: fmt(verts),
     zones,
+    branches,
+    sides,
+    /* Внутренний контур. Не мерцает. */
+    inner: hexPoints(R * VAR.innerR),
     heart: {
-      outer: hex(hr),
-      seed: k.heartSeed > 0 ? hex(k.heartSeed) : null,
-      table: k.heartFacets === 'table' ? hex(hr * 0.52) : null,
-      cuts,
-      glowR: k.heartGlow,
+      glowR: (hr * 1.9).toFixed(1),
+      frame: hexPoints(hr),
+      ring: hexPoints(hr * 0.84),
+      gem: hexPoints(hr * 0.52),
+      frameW: (VAR.cw * 1.15).toFixed(2),
     },
-    rim: hex(R),
-    /* Знак манеры вписывается в сердце: рисунок задан для гекса r=78. */
-    sigilTransform: `translate(${px(C - C * sigilScale)} ${px(C - C * sigilScale)}) scale(${sigilScale})`,
+    cw: VAR.cw,
+    gw: VAR.gw,
   };
 }
 
-/* Ступени блика по пластинам: свет в зале один и сверху, поэтому верхняя
-   левая пластина ловит его сильнее, нижняя почти не ловит. Внутренний ramp
-   рисунка, палитру не расширяет. */
-export const TILT = {
-  high: [0.14, 0.07, 0.025],
-  mid: [0.03, 0.085, 0.05],
-  low: [0.02, 0.045, 0.012],
+/* ---- раскладка «Вихрь» -------------------------------------------------- */
+
+/* Кольца вокруг ядра. Каждое следующее больше в 1.34 раза, повёрнуто ещё на
+   5° и тусклее в 0.76 раза — кольца закручиваются вокруг фигуры.
+   ⚠️ Первое кольцо стоит на 1.5 coreR, то есть ВДВОЕ дальше контура ядра
+   (контур = 0.75 coreR). Прежнее правило «контур ядра = первое кольцо»
+   отменено 22.09.2026. */
+export const VORTEX = {
+  /* coreR — половина стороны квадрата, в который вписано ядро.
+     Радиус контура = CONTOUR × coreR. */
+  CONTOUR: 0.75,
+  first: 1.5,
+  scale: 1.34,
+  step: 5,
+  falloff: 0.76,
+  base: { full: 0.28, muted: 0.18, quiet: 0.12 },
+  /* Сторона коробки колец в долях coreR. Крайнее из семи колец —
+     1.5 × 1.34⁶ ≈ 8.7 coreR, помещается с запасом. */
+  span: 20,
+  count: { phone: 6, desktop: 7 },
 };
+
+/**
+ * Кольца «Вихря» в единицах coreR, середина в точке (0, 0).
+ * Рисуются от внешнего к внутреннему — как в эталоне.
+ * @param {number} count сколько колец
+ * @param {'full'|'muted'|'quiet'} mode режим яркости
+ */
+export function vortexRings(count = VORTEX.count.desktop, mode = 'full') {
+  const base = VORTEX.base[mode] ?? VORTEX.base.full;
+  const out = [];
+  for (let k = count - 1; k >= 0; k--) {
+    const r = VORTEX.first * Math.pow(VORTEX.scale, k);
+    const rot = VORTEX.step * (k + 1);
+    const points = [0, 1, 2, 3, 4, 5].map((i) => {
+      const a = rad(-90 + 60 * i + rot);
+      return `${(r * Math.cos(a)).toFixed(4)},${(r * Math.sin(a)).toFixed(4)}`;
+    }).join(' ');
+    out.push({ k, points, opacity: +(base * Math.pow(VORTEX.falloff, k)).toFixed(4) });
+  }
+  return out;
+}

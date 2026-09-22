@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@keyframes hxFlick{0%,38%{opacity:1}40%{opacity:.22}42%{opacity:1}60%{opacity:1}61%{opacity:.12}63%{opacity:.8}64%{opacity:.28}66%{opacity:1}100%{opacity:1}}
+@media (prefers-reduced-motion: reduce){[data-hx-flick]{animation:none !important;opacity:1 !important}}
+</style>
+</helmet>
+<div style="position:relative;width:100%;aspect-ratio:1;display:block">{{ svg }}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:420},&quot;color&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF0069&quot;,&quot;options&quot;:[&quot;#FF0069&quot;,&quot;#FF3344&quot;,&quot;#FFA526&quot;,&quot;#2ED6B0&quot;,&quot;#9461FF&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;],&quot;default&quot;:&quot;A&quot;,&quot;tsType&quot;:&quot;'A'|'B'|'C'&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;muted&quot;,&quot;quiet&quot;],&quot;default&quot;:&quot;full&quot;,&quot;tsType&quot;:&quot;'full'|'muted'|'quiet'&quot;},&quot;flicker&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  uid = 'hx' + Math.random().toString(36).slice(2, 8);
+
+  renderVals() {
+    const h = React.createElement, p = this.props, u = this.uid;
+    const color = p.color ?? '#FF0069';
+    const variant = p.variant ?? 'A';
+    const mode = p.mode ?? 'full';
+    const flicker = p.flicker ?? true;
+    const cx = 300, cy = 300, R = 225;
+    const V = i => { const a = (-90 + 60 * i) * Math.PI / 180; return [cx + R * Math.cos(a), cy + R * Math.sin(a)]; };
+    const verts = [0, 1, 2, 3, 4, 5].map(V);
+    const fmt = a => a.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ');
+
+    const M = ({
+      full:  { contour: .95, branch: .55, zone: .30, glow: .26, heart: .95 },
+      muted: { contour: .55, branch: .26, zone: .12, glow: .14, heart: .80 },
+      quiet: { contour: .18, branch: .09, zone: 0,   glow: .08, heart: 1 }
+    })[mode];
+    const VAR = ({
+      A: { w0: .085, w1: .055, w2: .030, crystal: 1,  spike: .085, heart: .20,  cw: 2.8, gw: 9,  inner: 0 },
+      B: { w0: .055, w1: .038, w2: .012, crystal: .7, spike: .16,  heart: .155, cw: 2.0, gw: 7,  inner: 0 },
+      C: { w0: .115, w1: .085, w2: .058, crystal: 0,  spike: 0,    heart: .245, cw: 4.0, gw: 13, inner: 1 }
+    })[variant];
+
+    const hex = (r, rot) => [0, 1, 2, 3, 4, 5].map(i => {
+      const a = (-90 + 60 * i + (rot || 0)) * Math.PI / 180;
+      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    });
+
+    const defs = h('defs', { key: 'd' },
+      h('radialGradient', { id: u + 'plate' },
+        h('stop', { offset: '0', stopColor: '#191420', stopOpacity: .95 }),
+        h('stop', { offset: '1', stopColor: '#0d0b11', stopOpacity: .55 })),
+      h('radialGradient', { id: u + 'glow' },
+        h('stop', { offset: '0', stopColor: color, stopOpacity: M.glow }),
+        h('stop', { offset: '.45', stopColor: color, stopOpacity: M.glow * .4 }),
+        h('stop', { offset: '1', stopColor: color, stopOpacity: 0 })),
+      h('radialGradient', { id: u + 'zone' },
+        h('stop', { offset: '0', stopColor: color, stopOpacity: .55 }),
+        h('stop', { offset: '1', stopColor: color, stopOpacity: .04 })),
+      h('radialGradient', { id: u + 'gem', cx: '.45', cy: '.4' },
+        h('stop', { offset: '0', stopColor: color, stopOpacity: 1 }),
+        h('stop', { offset: '1', stopColor: color, stopOpacity: .55 })),
+      h('radialGradient', { id: u + 'gemglow' },
+        h('stop', { offset: '0', stopColor: color, stopOpacity: .5 }),
+        h('stop', { offset: '1', stopColor: color, stopOpacity: 0 })));
+
+    const els = [defs];
+    els.push(h('circle', { key: 'halo', cx, cy, r: R * 1.18, fill: `url(#${u}glow)` }));
+    els.push(h('polygon', { key: 'plate', points: fmt(verts), fill: `url(#${u}plate)` }));
+
+    if (M.zone > 0) [[0, 1, 2], [2, 3, 4], [4, 5, 0]].forEach((t, k) =>
+      els.push(h('polygon', {
+        key: 'z' + k, opacity: M.zone,
+        points: fmt([[cx, cy], verts[t[0]], verts[t[1]], verts[t[2]]]),
+        fill: `url(#${u}zone)`
+      })));
+
+    [0, 2, 4].forEach((vi, k) => {
+      const [tx, ty] = verts[vi];
+      const dx = (tx - cx) / R, dy = (ty - cy) / R, px = -dy, py = dx;
+      const at = (t, w) => [
+        [cx + dx * R * t + px * R * w, cy + dy * R * t + py * R * w],
+        [cx + dx * R * t - px * R * w, cy + dy * R * t - py * R * w]];
+      const endT = VAR.spike ? .955 : .875;
+      const a0 = at(.04, VAR.w0), a1 = at(.52, VAR.w1), a2 = at(endT, VAR.w2);
+      els.push(h('polygon', {
+        key: 'b' + k, points: fmt([a0[0], a1[0], a2[0], a2[1], a1[1], a0[1]]),
+        fill: '#120f17', stroke: color, strokeOpacity: M.branch, strokeWidth: 1.3, strokeLinejoin: 'round'
+      }));
+      if (VAR.crystal) {
+        const t = .78, w = VAR.w1 * 1.45 * VAR.crystal, L = .095;
+        els.push(h('polygon', {
+          key: 'c' + k,
+          points: fmt([
+            [cx + dx * R * (t + L), cy + dy * R * (t + L)],
+            [cx + dx * R * t + px * R * w, cy + dy * R * t + py * R * w],
+            [cx + dx * R * (t - L), cy + dy * R * (t - L)],
+            [cx + dx * R * t - px * R * w, cy + dy * R * t - py * R * w]]),
+          fill: '#0f0d13', stroke: color, strokeOpacity: Math.min(.92, M.branch + .3), strokeWidth: 1.7
+        }));
+      }
+      if (VAR.spike) {
+        const s = VAR.spike, w = VAR.w2 * 1.15;
+        els.push(h('polygon', {
+          key: 's' + k,
+          points: fmt([
+            [cx + dx * R * (1 + s), cy + dy * R * (1 + s)],
+            [cx + dx * R * .965 + px * R * w, cy + dy * R * .965 + py * R * w],
+            [cx + dx * R * .965 - px * R * w, cy + dy * R * .965 - py * R * w]]),
+          fill: color, fillOpacity: M.branch * .75, stroke: color, strokeOpacity: M.contour * .85, strokeWidth: 1
+        }));
+      }
+    });
+
+    const dur = [4.2, 5.1, 3.7, 6.3, 4.8, 5.6], del = [0, 1.3, 2.1, .6, 3.4, 1.9];
+    for (let i = 0; i < 6; i++) {
+      const a = verts[i], b = verts[(i + 1) % 6];
+      const st = flicker ? { animation: `hxFlick ${dur[i]}s linear ${del[i]}s infinite` } : undefined;
+      els.push(h('g', { key: 'e' + i, style: st, 'data-hx-flick': '1' },
+        h('line', {
+          x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: color,
+          strokeOpacity: M.contour * .18, strokeWidth: VAR.gw, strokeLinecap: 'round'
+        }),
+        h('line', {
+          x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: color,
+          strokeOpacity: M.contour, strokeWidth: VAR.cw, strokeLinecap: 'square'
+        })));
+    }
+    if (VAR.inner) els.push(h('polygon', {
+      key: 'in', points: fmt(hex(R * .93)), fill: 'none',
+      stroke: color, strokeOpacity: M.contour * .35, strokeWidth: 1.2
+    }));
+
+    const hr = R * VAR.heart;
+    els.push(h('circle', { key: 'hg', cx, cy, r: hr * 1.9, fill: `url(#${u}gemglow)` }));
+    els.push(h('polygon', { key: 'h1', points: fmt(hex(hr)), fill: '#0b0910', stroke: color, strokeOpacity: M.heart, strokeWidth: VAR.cw * 1.15, strokeLinejoin: 'round' }));
+    els.push(h('polygon', { key: 'h2', points: fmt(hex(hr * .84)), fill: 'none', stroke: color, strokeOpacity: M.heart * .35, strokeWidth: 1 }));
+    els.push(h('polygon', { key: 'h3', points: fmt(hex(hr * .52)), fill: `url(#${u}gem)` }));
+
+    return {
+      svg: h('svg', {
+        viewBox: '0 0 600 600', width: '100%', height: '100%',
+        style: { display: 'block', overflow: 'visible' }
+      }, els)
+    };
+  }
+}
+</script>
+</body>
+</html>
