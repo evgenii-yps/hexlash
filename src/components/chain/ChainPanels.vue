@@ -29,7 +29,17 @@
         <dt>{{ t.chain.stake }}</dt>
         <dd>&times;{{ stake }}</dd>
       </div>
+      <!-- Заработок за только что пройденный раунд. Стоит строкой в том же
+           списке «что изменилось»: это такое же последствие раунда, как
+           потраченное здоровье. -->
+      <div v-if="lashLast > 0" class="cp-row">
+        <dt>{{ t.lash.unit }}</dt>
+        <dd>+{{ lashLast }}</dd>
+      </div>
     </dl>
+
+    <!-- Итог забега: сколько принёс ВЕСЬ забег, вместе с раундовыми. -->
+    <p v-else-if="lashGain > 0" class="cp-lash">+{{ lashGain }} {{ t.lash.unit }}</p>
 
     <template #actions>
       <button v-if="phase === 'between'" type="button" class="ap-go" @click="onNext">{{ t.chain.nextBtn }}</button>
@@ -65,6 +75,8 @@ const hpAfter = computed(() => chainState.hpAfter);
 // Соперник собран заранее — панель про него и рассказывает. Прочерк только если
 // имени почему-то нет: пустое место читалось бы как поломка.
 const nextName = computed(() => chainState.nextName || '—');
+const lashLast = computed(() => chainState.lashLast);
+const lashGain = computed(() => chainState.lashGain);
 
 const outcomeTitle = computed(() => (outcome.value === 'complete' ? t.value.chain.complete : t.value.chain.broken));
 const outcomeNote = computed(() => (outcome.value === 'complete'
@@ -98,6 +110,14 @@ function onLeave() {
   letter-spacing: var(--ls-meta); text-transform: uppercase;
 }
 .cp-row dt { color: var(--ink-off); }
+/* Заработок за весь забег — тем же спокойным моноширинным, что и на панели
+   итога обычного боя. Розового тут нет: розовая на панели одна кнопка. */
+.cp-lash {
+  margin: 0;
+  font-family: var(--font-mono); font-size: var(--t-sm);
+  letter-spacing: var(--ls-title); color: var(--ink-soft);
+}
+
 .cp-row dd { margin: 0; color: var(--ink-soft); }
 .cp-was { color: var(--ink-off); }
 .cp-arrow { color: var(--ink-off); padding: 0 var(--sp-1); }

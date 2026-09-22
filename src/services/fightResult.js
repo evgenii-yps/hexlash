@@ -20,8 +20,7 @@
 //
 // Экспортирует: fightResultState, showFightResult, hideFightResult, bindFightAgain.
 import { reactive } from 'vue';
-import { LASH } from '@/data/lashBalance.js';
-import { ensureStarterLash, addLash } from './lash.js';
+import { awardBoutLash } from './lash.js';
 
 /**
  * Что показывает панель итога.
@@ -77,14 +76,7 @@ export function showFightResult(won, kind = null, over = null) {
   //    Обновление страницы вторых монет тоже не даёт: счётчик живёт в памяти, и
   //    после перезагрузки панели итога на экране нет — арена собирает новый бой.
   //    Уход из боя на полпути не даёт вовсе ничего: сюда просто не приходят.
-  if (!fightResultState.visible) {
-    ensureStarterLash();
-    // Ничьей у боя сейчас нет: сторона либо выстояла, либо пала. Число под неё
-    // в data/lashBalance.js уже лежит — появится ничья, её подставят сюда.
-    const gain = won ? LASH.rewardWin : LASH.rewardLose;
-    addLash(gain);
-    fightResultState.lashGain = gain;
-  }
+  if (!fightResultState.visible) fightResultState.lashGain = awardBoutLash(won);
   fightResultState.outcome = won ? 'victory' : 'defeat';
   fightResultState.kind = kind || null;
   fightResultState.titleOver = (over && over.title) || null;

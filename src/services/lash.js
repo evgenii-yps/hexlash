@@ -16,7 +16,13 @@
 //    за внешний вид, LASH — за баффы, а баффы трогают бой. Причина — в шапке
 //    data/lashBalance.js.
 //
-// Экспортирует: ensureStarterLash, readLash, addLash, spendLash.
+// ЗАРАБОТОК СЧИТАЕТСЯ ЗДЕСЬ, А НЕ У ТОГО, КТО ЗОВЁТ. Мест, где бой кончается,
+// теперь три: обычный бой, раунд забега и волна турнира. Если бы каждое само
+// выбирало число, три записи одного правила разошлись бы молча — поэтому наружу
+// торчат не числа, а два действия: «раунд пройден» и «бой кончился так-то».
+//
+// Экспортирует: ensureStarterLash, readLash, addLash, spendLash,
+//               awardRoundLash, awardBoutLash.
 import { readSection, writeSection } from './playerProgress.js';
 import { LASH } from '@/data/lashBalance.js';
 
@@ -81,4 +87,30 @@ export function spendLash(amount) {
   if (cost === 0 || cur.balance < cost) return false;
   write({ balance: cur.balance - cost, granted: cur.granted });
   return true;
+}
+
+/**
+ * РАУНД ПРОЙДЕН. Забег и волны турнира платят за каждый пройденный раунд — это
+ * не итог, а шаг: игрок может пройти два раунда и всё равно сгореть на третьем,
+ * и заработанное за пройденное у него не отбирают.
+ * @returns {number} сколько начислено
+ */
+export function awardRoundLash() {
+  ensureStarterLash();
+  addLash(LASH.rewardRound);
+  return LASH.rewardRound;
+}
+
+/**
+ * БОЙ (или забег, или турнир) КОНЧИЛСЯ. Платится ОДИН раз, поверх раундовых.
+ *
+ * Ничьей сейчас нет: сторона либо выстояла, либо пала. Число под неё в
+ * data/lashBalance.js лежит и подставится сюда, когда ничья появится.
+ * @returns {number} сколько начислено
+ */
+export function awardBoutLash(won) {
+  ensureStarterLash();
+  const gain = won ? LASH.rewardWin : LASH.rewardLose;
+  addLash(gain);
+  return gain;
 }

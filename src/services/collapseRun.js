@@ -35,6 +35,11 @@ import { getLayout, wavesOf, placeAfterLoss, collapseSpawnPos } from '@/data/col
 import { composeFoe } from '@/data/foeCompose.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
 import { runInstantBout, runInstantBoutSliced } from '@/scene/instantBout.js';
+// ЗАРАБОТОК. Турнир платит за КАЖДУЮ пройденную волну и сверх того один раз за
+// итог. Числа — в data/lashBalance.js; здесь только «волна пройдена» и «турнир
+// кончился так-то». ⚠️ ЧУЖИЕ ПАРЫ НЕ ПЛАТЯТ: они считаются мгновенно и без
+// игрока, и платить за чужой бой значило бы выдавать монеты за просмотр.
+import { awardRoundLash, awardBoutLash } from '@/services/lash.js';
 
 const CO = COMBAT_BALANCE.collapse;
 const SECTION = 'collapse';
@@ -238,6 +243,8 @@ function simulateSidePairSliced(a, b, perSide) {
  *   beat      — кого сторона игрока уже прошла
  *   place     — место, когда турнир кончился: { from, to, of }
  *   shortBy   — скольких бойцов не хватает (при phase === 'short')
+ *   lashGain  — сколько монет турнир принёс к этой минуте (нарастающим итогом)
+ *   lashLast  — сколько начислено последним действием (для строки на панели)
  */
 export const collapseState = reactive({
   active: false,
@@ -253,6 +260,8 @@ export const collapseState = reactive({
   beat: [],
   place: null,
   shortBy: 0,
+  lashGain: 0,
+  lashLast: 0,
 });
 
 // Живой турнир и незавершённые расчёты чужих пар. Держим снаружи состояния:
@@ -342,6 +351,15 @@ function syncState() {
 }
 
 /**
+ * Запомнить начисление, чтобы панель могла о нём сказать. Монеты здесь второй
+ * раз не считаются: это эхо того, что уже начислено, а не источник.
+ */
+function noteLash(gain) {
+  collapseState.lashLast = gain;
+  collapseState.lashGain += gain;
+}
+
+/**
  * Начать турнир. Первая волна дерётся сразу — панели перед ней нет.
  * @param {string} layoutId
  * @param {object[]} playerRoster бойцы игрока: { coreId, behavior, name }
@@ -356,6 +374,8 @@ export function startCollapse(layoutId, playerRoster) {
   collapseState.place = null;
   collapseState.shortBy = 0;
   collapseState.wave = 1;
+  collapseState.lashGain = 0;
+  collapseState.lashLast = 0;
   syncState();
   // На старте сетка ещё на первой волне, и «следующая» совпала бы с текущей.
   // Панели между волнами перед первой волной нет, так что показывать это некому.
@@ -397,6 +417,8 @@ export function currentFoeRoster() {
  * @returns {Promise<boolean>} true — турнир продолжается, false — турнир взят
  */
 export async function winWave(hpLeft) {
+  // Сторож фазы — он же сторож заработка: волна платит один раз, потому что из
+  // 'fight' выходят однажды.
   if (!collapseState.active || collapseState.phase !== 'fight') return false;
   await (waveReady || Promise.resolve());
   if (!collapseState.active) return false;      // ушли, пока считалось
@@ -408,9 +430,12 @@ export async function winWave(hpLeft) {
   // которыми боец выйдет в следующую волну. Второго счёта нет.
   const rows = hpRowsOf(hpLeft);
 
+  noteLash(awardRoundLash()); // волна пройдена — платится всегда, и последняя тоже
+
   if (T.isFinal()) {
     collapseState.phase = 'done';
     collapseState.outcome = 'won';
+    noteLash(awardBoutLash(true)); // турнир взят
     collapseState.place = { from: 1, to: 1, of: getLayout(T.layoutId).sides };
     collapseState.hpRows = rows;
     collapseState.beat = [...T.player.beat];
@@ -433,6 +458,9 @@ export function loseWave() {
   waveReady = null;
   collapseState.phase = 'done';
   collapseState.outcome = 'out';
+  // Эта волна НЕ пройдена — за неё не платят. Платят только за итог, и
+  // заработанное за прошлые волны остаётся у игрока.
+  noteLash(awardBoutLash(false));
   collapseState.place = placeAfterLoss(T.layoutId, T.wave());
   collapseState.beat = T ? [...T.player.beat] : [];
   mark(false);

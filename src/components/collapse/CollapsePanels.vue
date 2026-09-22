@@ -46,6 +46,12 @@
         <dt>{{ t.collapse.beat }}</dt>
         <dd>{{ beatLine }}</dd>
       </div>
+      <!-- Заработок за только что пройденную волну — такое же последствие волны,
+           как потраченное здоровье строкой выше. -->
+      <div v-if="lashLast > 0" class="cl-row">
+        <dt>{{ t.lash.unit }}</dt>
+        <dd>+{{ lashLast }}</dd>
+      </div>
     </dl>
 
     <!-- Итог турнира: место стоит строкой под заголовком, здесь — только кого
@@ -57,6 +63,9 @@
         <dd>{{ beatLine }}</dd>
       </div>
     </dl>
+
+    <!-- Итог турнира: сколько принёс ВЕСЬ турнир, вместе с волновыми. -->
+    <p v-if="phase === 'done' && lashGain > 0" class="cl-lash">+{{ lashGain }} {{ t.lash.unit }}</p>
 
     <template #actions>
       <button v-if="phase === 'between'" type="button" class="ap-go" @click="onNext">{{ t.collapse.nextBtn }}</button>
@@ -82,6 +91,8 @@ const show = computed(() => collapseState.active && phase.value !== 'fight');
 
 const sidesLeft = computed(() => collapseState.sidesLeft);
 const hpRows = computed(() => collapseState.hpRows);
+const lashLast = computed(() => collapseState.lashLast);
+const lashGain = computed(() => collapseState.lashGain);
 const beat = computed(() => collapseState.beat);
 // Прочерк только если имени почему-то нет: пустое место читалось бы как поломка.
 const foeName = computed(() => collapseState.foeName || '—');
@@ -151,6 +162,14 @@ function onLeave() {
   letter-spacing: var(--ls-meta); text-transform: uppercase;
 }
 .cl-row dt { color: var(--ink-off); flex: 0 0 auto; }
+/* Заработок за весь турнир — тем же спокойным моноширинным, что и на панели
+   итога обычного боя. Розового тут нет: розовая на панели одна кнопка. */
+.cl-lash {
+  margin: 0;
+  font-family: var(--font-mono); font-size: var(--t-sm);
+  letter-spacing: var(--ls-title); color: var(--ink-soft);
+}
+
 .cl-row dd { margin: 0; color: var(--ink-soft); text-align: right; }
 .cl-was { color: var(--ink-off); }
 .cl-arrow { color: var(--ink-off); padding: 0 var(--sp-1); }
