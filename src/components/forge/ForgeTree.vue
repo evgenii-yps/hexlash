@@ -70,7 +70,7 @@
           :aria-label="`${cr.name} · ${litCount(cr)} of ${cr.limit} lit`"
           @click="openCrystal(cr.id)"
         >
-          <span class="shard" v-html="shardHtml(cr)"></span>
+          <span class="shard" :style="shardVars(cr)" v-html="shardHtml(cr)"></span>
           <span class="nm">{{ cr.name }}</span>
           <span class="ratio"><b>{{ litCount(cr) }}</b>/{{ cr.limit }}</span>
         </button>
@@ -86,7 +86,7 @@
           @keydown.enter.prevent="onFace(row.f)"
           @keydown.space.prevent="onFace(row.f)"
         >
-          <span class="fhex" v-html="faceHtml"></span>
+          <span class="fhex" v-html="row.hex"></span>
           <span class="fl-nm">{{ row.f.name }}</span>
           <template v-if="row.fx.length">
             <span class="fl-pct">{{ row.fx[0].sign }}{{ row.fx[0].pct }}%</span>
@@ -109,7 +109,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { getCore } from '@/data/upgradeData.js';
 import { facetEffects } from '@/data/facetReadout.js';
-import { coreSVG, shardSVG, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
+import { coreSVG, shardSVG, shardFillY, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
 import { t } from '@/locales/index.js';
 
 const props = defineProps({
@@ -124,7 +124,6 @@ const emit = defineEmits(['toggle']);
 const core = computed(() => getCore(props.coreId));
 const coreVars = computed(() => ({ '--core': core.value.hue, '--core-sup': core.value.sup }));
 const coreGlyph = computed(() => coreSVG(core.value.id, { seed: true }));
-const faceHtml = faceHex();
 const GHEX = hexPts(50, 50, 42);
 
 // --- drill-down ---------------------------------------------------------------
@@ -137,14 +136,21 @@ const level = ref('core');
 const levelIdx = computed(() => STEPS.findIndex((s) => s.id === level.value));
 const selCrystal = ref(null);
 const selCrystalObj = computed(() => props.tree.find((c) => c.id === selCrystal.value) || null);
+/* ⚠️ Рисунок гекса — СВОЙ на каждую грань, а не один на всех. Внутри него
+   лежит маска налива со своим id; общий id означал бы, что браузер подставит
+   первую попавшуюся маску и нальются чужие грани. Строка постоянная (зависит
+   только от id грани), поэтому повторная отрисовка её не подменяет и движение
+   не обрывается. */
 const viewFaces = computed(() => (selCrystalObj.value ? selCrystalObj.value.faces : [])
-  .map((f) => ({ f, fx: facetEffects(f) })));
+  .map((f) => ({ f, fx: facetEffects(f), hex: faceHex(`${props.coreId}-${selCrystal.value}-${f.id}`) })));
 
 // A different fighter means a different tree: start at the top, forget the pick.
 watch(() => props.coreId, () => { level.value = 'core'; selCrystal.value = null; });
 
 function litCount(cr) { return cr ? cr.faces.filter((f) => f.state === 'lit').length : 0; }
-function shardHtml(cr) { return shardSVG(litCount(cr) / cr.limit, props.coreId + '-' + cr.id); }
+/* Рисунок кристалла постоянный, доля приходит переменной — см. shardSVG. */
+function shardHtml(cr) { return shardSVG(props.coreId + '-' + cr.id); }
+function shardVars(cr) { return { '--shard-y': `${shardFillY(litCount(cr) / cr.limit)}px` }; }
 
 const footHint = computed(() =>
   level.value === 'core' ? t.value.forge.hintCore
@@ -162,6 +168,8 @@ function faceClass(f) {
     locked: f.state === 'locked',
     blocked: f.state === 'open' && (atLimit || noPts),
     shake: shakeFaceId.value === f.id,
+    pour: pourId.value === f.id,
+    quench: quenchId.value === f.id,
   };
 }
 function faceLabel(f) {
@@ -172,6 +180,55 @@ function faceLabel(f) {
   if (props.spent >= props.resource) return t.value.forge.stNoPts;
   return t.value.forge.stOpen;
 }
+
+// --- момент зажигания ---------------------------------------------------------
+/* Анимация принадлежит МОМЕНТУ, а не состоянию. Поэтому она заводится не по
+   нажатию, а по наблюдённой смене состояния грани: открыта → горит. Так она:
+     • не играет при открытии зала и при возврате в него — уже горящие грани
+       приходят готовыми, никакого перехода в них не было;
+     • не играет, когда владелец дерева откажет (правила проверяются дважды —
+       здесь и в хранилище), потому что состояние тогда не меняется;
+     • сыграет и тогда, когда грань зажжёт что-то другое, а не палец, — этого
+       в игре пока нет, но тренировка зала именно так и будет её зажигать.
+
+   Сравнение идёт ПО ОДНИМ И ТЕМ ЖЕ граням: сменился кристалл или боец — набор
+   ключей другой, совпадений нет, и ничего не наливается. Отдельного сторожа на
+   смену экрана не нужно. */
+const POUR_MS = 1500;      // налив 1.2 с + вспышка 0.3 с (ТЗ 22.09.2026 §2)
+const QUENCH_MS = 300;     // гашение (ТЗ §2)
+
+const pourId = ref(null);
+const quenchId = ref(null);
+let pourTimer = null;
+let quenchTimer = null;
+let prevStates = new Map();
+
+/** Подпись состояний видимых граней — по ней и ловится момент. */
+const faceSig = computed(() => viewFaces.value.map(({ f }) => `${f.id}:${f.state}`).join('|'));
+
+function startPour(id) {
+  quenchId.value = null;
+  pourId.value = id;
+  clearTimeout(pourTimer);
+  pourTimer = setTimeout(() => { if (pourId.value === id) pourId.value = null; }, POUR_MS);
+}
+function startQuench(id) {
+  if (pourId.value === id) pourId.value = null;
+  quenchId.value = id;
+  clearTimeout(quenchTimer);
+  quenchTimer = setTimeout(() => { if (quenchId.value === id) quenchId.value = null; }, QUENCH_MS);
+}
+
+watch(faceSig, () => {
+  const now = new Map(viewFaces.value.map(({ f }) => [f.id, f.state]));
+  for (const [id, st] of now) {
+    const was = prevStates.get(id);
+    if (was === undefined || was === st) continue;
+    if (st === 'lit') startPour(id);
+    else if (was === 'lit') startQuench(id);
+  }
+  prevStates = now;
+}, { immediate: true });
 
 // --- toggling — the panel asks, the owner of the tree decides ------------------
 const shakeFaceId = ref(null);
@@ -185,6 +242,11 @@ function deny(faceId) {
 function onFace(f) {
   const cr = selCrystalObj.value;
   if (!cr) return;
+  /* Пока грань наливается, она нажатия не слушает. Иначе второе нажатие подряд
+     гасит только что зажжённую грань на середине движения: игрок видит рывок,
+     а в дереве не остаётся ничего. Правила прокачки это не меняет — через
+     полторы секунды грань гасится как обычно. */
+  if (pourId.value === f.id) return;
   if (f.state === 'locked') { deny(f.id); return; }
   const wasLit = f.state === 'lit';
   const atLimit = litCount(cr) >= cr.limit;
@@ -241,7 +303,12 @@ function computeGeom() {
 let raf = 0;
 function onResize() { cancelAnimationFrame(raf); raf = requestAnimationFrame(computeGeom); }
 onMounted(() => { nextTick(computeGeom); window.addEventListener('resize', onResize); });
-onBeforeUnmount(() => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); });
+onBeforeUnmount(() => {
+  cancelAnimationFrame(raf);
+  window.removeEventListener('resize', onResize);
+  clearTimeout(pourTimer);
+  clearTimeout(quenchTimer);
+});
 watch(() => props.tree.length, () => nextTick(computeGeom));
 </script>
 
@@ -251,6 +318,17 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
    page furniture around them (background, headline, bottom action bar) is gone.
    Tokens are the hall's (forge.css) — nothing new is invented here. */
 .ftree {
+  /* ── НАСТРОЙКИ МОМЕНТА ЗАЖИГАНИЯ (ТЗ 22.09.2026, §2) ────────────────────
+     Три числа, и они объявлены здесь, а не в tokens.css: общая шкала
+     длительностей кончается на 800 мс (--d-enter), налива в полторы секунды в
+     ней нет. Это настройка одного момента в одном экране, а не значение
+     дизайн-системы; понадобится в другом месте — тогда и переедет в шкалу.
+     ⚠️ Те же числа продублированы в скрипте (POUR_MS / QUENCH_MS): скрипт
+     снимает класс, когда движение кончилось. Меняете здесь — меняйте там. */
+  --ft-pour: 1200ms;    /* свет втекает в грань */
+  --ft-flash: 300ms;    /* короткая вспышка в конце и спад */
+  --ft-quench: 300ms;   /* грань гаснет */
+
   --core-sup: color-mix(in srgb, var(--core) 55%, transparent);
   --core-ink: color-mix(in srgb, var(--core) 62%, var(--ink));
   display: flex; flex-direction: column; min-height: 0; height: 100%;
@@ -350,6 +428,14 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-crystal .shard :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .ft-crystal .shard :deep(.fill) { fill: var(--carbon); }
 .ft-crystal .shard :deep(.lit) { fill: color-mix(in srgb, var(--core) 55%, transparent); transition: fill .25s var(--e-weight); }
+/* Уровень кристалла — это «сердце» здешнего рисунка: он растёт по числу
+   зажжённых граней. Поднимается вместе с наливом грани и тем же временем.
+   Доля приходит переменной --shard-y (см. shardSVG), поэтому картинка не
+   перерисовывается и переход есть чему довести. */
+.ft-crystal .shard :deep(.mask) {
+  transform: translateY(var(--shard-y, 84px));
+  transition: transform var(--ft-pour) var(--e-settle);
+}
 .ft-crystal .shard :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 50%, var(--ink-off));
   fill: none; stroke-width: 1.6; transition: stroke .25s var(--e-weight); }
 .ft-crystal:hover .shard :deep(.hex-line) { stroke: var(--ink); }
@@ -378,9 +464,16 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-face .fhex :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .ft-face .fhex :deep(.ln) { stroke: currentColor; fill: none; stroke-width: 1.5; }
 .ft-face .fhex :deep(.fl) { fill: transparent; }
+/* Маска налива в покое стоит на месте: горящая грань залита целиком. Движется
+   она только в момент зажигания — см. .pour ниже. */
+.ft-face .fhex :deep(.mask) { transform: translateY(0); }
+/* Слой вспышки: в покое прозрачен, живёт только 0.3 с в конце налива. */
+.ft-face .fhex :deep(.fx) { fill: var(--core); opacity: 0; }
 .ft-face .fl-nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: var(--ls-title); text-transform: uppercase;
   color: var(--ink); text-align: center; }
 .ft-face .fl-pct { font-size: var(--t-sm); font-weight: 700; line-height: 1; color: var(--core-ink); }
+/* Подписи меняют цвет вместе с гексом, а не щёлкают на кадр раньше него. */
+.ft-face .fl-pct, .ft-face .fl-tag, .ft-face .fl-st { transition: color .25s var(--e-weight); }
 .ft-face .fl-tag { font-size: var(--t-micro); letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink-off);
   line-height: 1.15; text-align: center; }
 .ft-face .fl-st { font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off); }
@@ -394,6 +487,39 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-face.blocked { cursor: not-allowed; }
 @keyframes ftDeny { 0%,100% { transform: translateX(0);} 20% { transform: translateX(-5px);} 40% { transform: translateX(5px);} 60% { transform: translateX(-3px);} 80% { transform: translateX(3px);} }
 .ft-face.shake { animation: ftDeny .32s; }
+
+/* ── момент зажигания ──────────────────────────────────────────────────────
+   Свет втекает в гекс СНИЗУ: маска стоит под фигурой и поднимается. Отдельной
+   линии-границы нет — её роль играет край самой заливки.
+
+   Почему снизу, а не «от края, ближнего к сердцу», как просило ТЗ: в этом
+   рисунке сердца нет. Грань здесь — отдельный маленький гекс в сетке карточек,
+   и ближнего края у него не существует. Снизу вверх — движение, которое на
+   этом экране уже есть: так же наполняется кристалл над сеткой. Заменится
+   рисунок на «Печать» — направление станет от сердца, и менять придётся только
+   эти кадры.
+
+   Движется ТОЛЬКО прямоугольник маски (сдвиг) и прозрачность слоя вспышки.
+   Сама фигура каждый кадр не перерисовывается: зал рядом держит живую 3D-сцену,
+   и лишняя перерисовка над ней стоит кадров. */
+@keyframes ftPour {
+  from { transform: translateY(80px); }
+  to   { transform: translateY(0); }
+}
+@keyframes ftFlash {
+  0%   { opacity: 0; }
+  35%  { opacity: .5; }
+  100% { opacity: 0; }
+}
+@keyframes ftQuench {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.ft-face.pour .fhex :deep(.mask) { animation: ftPour var(--ft-pour) linear both; }
+.ft-face.pour .fhex :deep(.fx) { animation: ftFlash var(--ft-flash) var(--e-settle) var(--ft-pour) both; }
+/* Гашение: состояние уже «открыта», поэтому заливку на эти 0.3 с возвращаем
+   сюда и уводим прозрачностью — иначе цвет пропадал бы кадром. */
+.ft-face.quench .fhex :deep(.fl) { fill: var(--core); animation: ftQuench var(--ft-quench) linear both; }
 
 /* foot hint */
 .ft-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7;
@@ -409,6 +535,12 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 @media (prefers-reduced-motion: reduce) {
   .ft-core, .ft-crystal, .ft-spokes, .ft-ghosts { transition: none; }
   .ft-face.shake { animation: none; }
+  /* Грань зажигается и гаснет мгновенно: движения нет, показан результат. */
+  .ft-face.pour .fhex :deep(.mask),
+  .ft-face.pour .fhex :deep(.fx),
+  .ft-face.quench .fhex :deep(.fl) { animation: none; }
+  .ft-crystal .shard :deep(.mask) { transition: none; }
+  .ft-face .fl-pct, .ft-face .fl-tag, .ft-face .fl-st { transition: none; }
 }
 @media (max-width: 1023px) {
   .ft-core { width: 108px; height: 108px; }

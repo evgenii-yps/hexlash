@@ -64,27 +64,56 @@ export function coreSVG(kind, { seed = false } = {}) {
   </svg>`;
 }
 
+/* Высота гекса кристалла в его системе координат: r=42 @ (50,50) → y ∈ [8, 92].
+   Нужна снаружи: доля зажжённых граней превращается в сдвиг маски. */
+export const SHARD_SPAN = 84;
+
 /* малый гекс кристалла — заполнение снизу по доле зажжённых граней.
-   uid — уникальный ключ для <clipPath> (id кристалла, чтобы id были уникальны). */
-export function shardSVG(litRatio = 0, uid = '0') {
+   uid — уникальный ключ для <clipPath> (id кристалла, чтобы id были уникальны).
+
+   ⚠️ РИСУНОК НЕ ЗАВИСИТ ОТ ДОЛИ. Раньше доля вжигалась прямо в координаты
+   прямоугольника-маски, и каждое изменение перерисовывало всю картинку через
+   v-html: узлы заменялись новыми, любой переход обрывался, и уровень щёлкал.
+   Теперь строка постоянная, а доля приходит переменной --shard-y (сдвиг маски
+   вниз в единицах рисунка) — её ставит родитель, и CSS доводит её плавно. */
+export function shardSVG(uid = '0') {
   const pts = hexPts(50, 50, 42);
-  const span = 84; // гекс r=42 @50,50 → y∈[8,92]
-  const ratio = Math.max(0, Math.min(1, litRatio));
-  const y = (92 - span * ratio).toFixed(1);
-  const h = (span * ratio).toFixed(1);
   return `<svg viewBox="0 0 100 100" aria-hidden="true">
-    <defs><clipPath id="sh-${uid}"><rect x="0" y="${y}" width="100" height="${h}"/></clipPath></defs>
+    <defs><clipPath id="sh-${uid}"><rect class="mask" x="0" y="8" width="100" height="${SHARD_SPAN}"/></clipPath></defs>
     <polygon class="fill" points="${pts}"/>
     <polygon class="lit"  points="${pts}" clip-path="url(#sh-${uid})"/>
     <polygon class="hex-line" points="${pts}"/>
   </svg>`;
 }
 
-/* гекс грани (узел прокачки) */
-export function faceHex() {
+/** Сдвиг маски кристалла вниз для доли зажжённых граней: 0 — пусто, 1 — полно. */
+export function shardFillY(litRatio = 0) {
+  const r = Math.max(0, Math.min(1, litRatio));
+  return +((1 - r) * SHARD_SPAN).toFixed(2);
+}
+
+/* гекс грани (узел прокачки).
+
+   Три слоя вместо прежних двух:
+     .fl   — заливка, ОБРЕЗАННАЯ прямоугольником-маской: он стоит снизу и
+             уходит вверх, поэтому цвет втекает в гекс снизу, а не проявляется
+             целиком. Движение маски задаёт таблица стилей (ForgeTree.vue);
+     .fx   — слой вспышки: тот же гекс, лежит поверх заливки и в покое
+             прозрачен. Короткий всплеск в конце налива — это он;
+     .ln   — линия гекса, как была.
+
+   uid — уникальный ключ <clipPath>. ⚠️ Обязателен и обязан быть уникальным на
+   всю страницу: один и тот же id на нескольких гранях означает, что браузер
+   подставит первую попавшуюся маску и нальются чужие грани. Ровно так однажды
+   разъехались градиенты ядра. Номер грани для этого не годится — он идёт 1..5
+   внутри ветки и повторяется у всех веток; звать надо с ядром и кристаллом. */
+export function faceHex(uid = '0') {
+  const pts = hexPts(50, 50, 40);
   return `<svg viewBox="0 0 100 100" aria-hidden="true">
-    <polygon class="fl" points="${hexPts(50, 50, 40)}"/>
-    <polygon class="ln" points="${hexPts(50, 50, 40)}"/>
+    <defs><clipPath id="fh-${uid}"><rect class="mask" x="0" y="10" width="100" height="80"/></clipPath></defs>
+    <polygon class="fl" points="${pts}" clip-path="url(#fh-${uid})"/>
+    <polygon class="fx" points="${pts}"/>
+    <polygon class="ln" points="${pts}"/>
   </svg>`;
 }
 
