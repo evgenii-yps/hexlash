@@ -3,16 +3,15 @@
     <div class="app" :class="{ 'is-in': isIn }">
       <!-- fixed background (shared with the auth screen) -->
       <LandingBackground
-        :accent="accentRgb"
-        :intensity="config.intensity"
-        :shape="config.shape"
+        :accent="accent"
+        :core="activeCore"
         :scanlines="config.scanlines"
         :grain="config.grain"
       />
 
       <LandingNav />
 
-      <main class="page">
+      <main class="page" ref="pageRef">
         <LandingHero @play="onPlay" />
         <LandingCode />
         <LandingGameplay />
@@ -26,9 +25,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
+import { coreAt, accentRgb } from '@/data/coreCycle.js';
 import LandingBackground from '@/components/landing/LandingBackground.vue';
 import LandingNav from '@/components/landing/LandingNav.vue';
 import LandingHero from '@/components/landing/LandingHero.vue';
@@ -42,23 +42,30 @@ import '@/components/landing/landing.css';
 
 const router = useRouter();
 const rootRef = ref(null);
+const pageRef = ref(null);
 
 // Static config — ported from the reference TWEAK_DEFAULTS (app.jsx). The
 // design tool's live Tweaks panel is intentionally NOT ported (per the brief).
+// intensity + shape ушли вместе с холстом ромбов (20.09.2026): у волны нет
+// ни силы узора, ни выбора фигуры — она задана геометрией в LandingBackground.
+//
+// ⚠️ Отсюда уехал акцент. Тут лежал литерал '#ff0069' и свой hexToRgb — то
+// есть ВТОРОЕ объявление фирменного розового рядом с тем, что в файле
+// токенов. Теперь цвет раздела приходит из src/data/coreCycle.js, а тот
+// читает токены.
 const config = {
-  accent: '#ff0069',
-  intensity: 8,
-  shape: 'shard',
   grain: true,
   scanlines: true,
 };
 
-// hexToRgb('#ff0069') → [255, 0, 105] (reference icons.jsx helper).
-function hexToRgb(hex) {
-  const m = hex.replace('#', '');
-  return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
-}
-const accentRgb = hexToRgb(config.accent);
+/* Круг цветов по разделам: розовый → четыре ядра → снова розовый.
+   Разделов на странице семь, круг из пяти — значит он успевает замкнуться
+   и пойти по второму разу, это и задумано. */
+const activeIndex = ref(0);
+const activeCore = computed(() => coreAt(activeIndex.value));
+const accent = computed(() => accentRgb(activeCore.value));
+
+let coreObserver = null;
 
 const isIn = ref(false);
 
@@ -110,6 +117,24 @@ onMounted(() => {
   // hero load entrance (reference: setTimeout 90ms → .is-in)
   entranceTimer = setTimeout(() => { isIn.value = true; }, 90);
 
+  /* Цвет фона ведёт РАЗДЕЛ, а не таймер и не положение прокрутки в пикселях:
+     активен тот, что пересекает середину экрана. Обработчика на каждый кадр
+     нет — наблюдатель просыпается только на границах. */
+  const sections = pageRef.value ? Array.from(pageRef.value.children) : [];
+  if (sections.length && 'IntersectionObserver' in window) {
+    coreObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const i = sections.indexOf(entry.target);
+          if (i >= 0) activeIndex.value = i;
+        });
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+    );
+    sections.forEach((el) => coreObserver.observe(el));
+  }
+
   // in-page anchor smooth-scroll (delegated)
   rootRef.value.addEventListener('click', onAnchorClick);
 
@@ -142,6 +167,7 @@ onBeforeUnmount(() => {
   if (entranceTimer) clearTimeout(entranceTimer);
   if (revealSafety) clearTimeout(revealSafety);
   if (revealObserver) revealObserver.disconnect();
+  if (coreObserver) coreObserver.disconnect();
   if (rootRef.value) rootRef.value.removeEventListener('click', onAnchorClick);
 });
 </script>

@@ -7,7 +7,11 @@
   <div class="hx-stage">
     <!-- Same background as the landing (pattern + mouse-reaction + ambient glow).
          Accent = #FF0069 (255,0,105) to keep the auth screen internally consistent. -->
-    <LandingBackground :accent="[255, 0, 105]" />
+    <!-- Розовый приходит из файла токенов через LandingBackground: здесь
+         стоял литерал [255, 0, 105] — четвёртая копия фирменного цвета.
+         Ядро на экране входа стоит в нейтральном (розовом) состоянии: цвет
+         тут не меняется, прокрутки нет. -->
+    <LandingBackground />
 
     <!-- Global exit → landing. Always present, independent of the in-card
          step "‹ Back" (.hx-back) which only navigates stages within the card. -->

@@ -30,6 +30,7 @@
 import * as THREE from 'three';
 import { buildFighter } from './buildFighter.js';
 import { createBattleField } from './battleField.js';
+import { createCoverNav } from './coverNav.js';
 import { createBoutClocks, boutHooks, separateBodies, BODY_GAP } from './boutCore.js';
 import { PLATFORM } from './buildArena.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
@@ -94,6 +95,22 @@ function makeBout(specs, {
   attentionRadius = null,
   // Порог часов ДЛИНЫ боя. Не передан — общий, на котором стоит турнир.
   escalateStartSec = COMBAT_BALANCE.escalateStartSec,
+  // УКРЫТИЯ — правило ОДНОГО режима. Не переданы (всё, что было до открытого
+  // поля) — поле считается голым, ровно как считалось.
+  //
+  // ⚠️ ЕСЛИ БЫ ИХ ЗДЕСЬ НЕ БЫЛО, ЗАМЕР МЕРИЛ БЫ НЕ ТОТ БОЙ. Приёмка длины и
+  //    залипания идёт двадцатью матчами через мгновенный прогон; посчитай он поле
+  //    без блоков — числа описывали бы бой, которого игрок не видит. Ровно эта
+  //    ошибка уже разбиралась, когда обвязку боя выносили в boutCore.
+  covers = null,
+  // СУЖЕНИЕ ПОЛЯ — правило ОДНОГО режима (см. fieldShrink). Не передано (всё,
+  // что было до открытого поля) — граница не считается вовсе, и пять прежних
+  // режимов идут ровно как шли.
+  //
+  // ⚠️ ЕСЛИ БЫ ЕГО ЗДЕСЬ НЕ БЫЛО, ЗАМЕР МЕРИЛ БЫ НЕ ТОТ БОЙ. Вся приёмка длины
+  //    идёт двадцатью матчами через мгновенный прогон, а сужение затевается
+  //    именно ради длины. Та же причина, по которой сюда переданы укрытия.
+  shrink = null,
   // ОКОШКО ДЛЯ ЗАМЕРА: зовётся после каждого шага с текущим временем и живыми
   // телами. Не передан — не зовётся, и шаг остаётся ровно таким, каким был.
   //
@@ -104,9 +121,23 @@ function makeBout(specs, {
   // запись правил боя, а это ровно то, чего этот файл не допускает.
   onStep = null,
 } = {}) {
-  const field = createBattleField({ attentionRadius });
+  // ЛИДЕР — под тем же признаком, что и на сцене: его просит радиус внимания, то
+  // есть открытое поле. Без признака короны нет, и мгновенный бой пяти прежних
+  // режимов считается ровно как считался.
+  //
+  // ⚠️ БЕЗ ЭТОГО ЗАМЕР МЕРИЛ БЫ НЕ ТОТ БОЙ — та же причина, по которой сюда
+  //    передаются укрытия: приёмка лидера идёт мгновенными прогонами, и поле без
+  //    короны дало бы числа боя, которого игрок не видит.
+  const field = createBattleField({
+    attentionRadius,
+    leader: attentionRadius ? { now: () => clocks.elapsed() } : null,
+  });
   if (endRule) field.setEndRule(endRule);
   let now = 0;
+  // Обход укрытий — тот же, что на сцене, и время берёт у того же счётчика шагов.
+  const coverNav = covers && covers.length
+    ? createCoverNav({ covers, bounds, now: () => now })
+    : null;
   const clocks = createBoutClocks({
     now: () => now,
     // Порог часов длины. Общий у турнира; свой — у рейда и у открытого поля, и
@@ -124,11 +155,11 @@ function makeBout(specs, {
       behavior: spec.behavior,
       startHp: spec.startHp,
       bounds,
-      ...boutHooks({ field, unit, clocks }),
+      ...boutHooks({ field, unit, clocks, steer: coverNav ? coverNav.steer : null }),
       brain: 'spinal',       // см. шапку: модель сюда не ходит никогда
       portrait: [],
       requestModelIntention: null,
-      onEliminated: () => { field.kill(unit); },
+      onEliminated: () => { coverNav?.forget(unit); field.kill(unit); },
     });
     unit.f.group.position.set(spec.pos.x, 0, spec.pos.z);
     unit.f.setAI(true);
@@ -145,6 +176,17 @@ function makeBout(specs, {
       // Расталкивание — как на сцене, и с тем же условием: при двух телах не
       // зовётся вовсе, иначе бой один на один считался бы иначе.
       if (alive.length > 2) separateBodies(alive, bounds, gapOf);
+      // Вытолкнуть тела из укрытий — как на сцене и по той же причине.
+      coverNav?.pushOut(alive);
+      // ГРАНИЦА ПОЛЯ — ПОСЛЕДНЕЙ, как и на сцене. Позицию пишут трое (боец,
+      // расталкивание, укрытия), и правило «наружу не остаёмся» обязано стоять
+      // после всех: иначе любой из троих вытолкнул бы тело обратно за границу.
+      // Блоки за границей уходят в пол. Обход перестаёт их видеть НЕ СРАЗУ, а
+      // когда блок досел: пока он выше пола, он мешает, как мешал.
+      if (shrink) {
+        shrink.step(alive, now);
+        if (coverNav && shrink.takeNavDirty()) coverNav.setAlive(shrink.liveCovers());
+      }
       if (onStep) onStep(now, alive, field);
       if (field.isOver() || now >= MAX_SEC) return true;
     }

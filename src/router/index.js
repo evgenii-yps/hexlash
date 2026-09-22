@@ -252,6 +252,11 @@ const legacyV2Redirects = [
 // slow/frame-step). Public, no new auth (Этап 1).
 const devRoutes = [
     {path: '/dev/lab', name: 'DevFighterLab', component: () => import('@/views/DevFighterLabView.vue')},
+    // /dev/core — превью НОВОЙ формы ядра (ТЗ 21.09.2026). Ничего не встраивает:
+    // лист состояний, песочница и прототип фона живут только здесь, до выбора
+    // владельца. Страница закрывает себя от поисковиков тегом robots (не через
+    // robots.txt — строка запрета там публична и работает как указатель).
+    {path: '/dev/core', name: 'DevCorePreview', component: () => import('@/views/DevCorePreviewView.vue')},
 ];
 
 const routes = [

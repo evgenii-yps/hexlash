@@ -119,14 +119,35 @@ export function createBoutClocks({ now, startSec }) {
  * @param {object} o.field  поле боя (createBattleField)
  * @param {object} o.unit   запись бойца в поле
  * @param {object} o.clocks часы накала (createBoutClocks)
+ * @param {(unit, foe) => ({x,y,z}|null)} [o.steer] ОБХОД УКРЫТИЙ, см. ниже.
+ *                          Откуда смотрит сам боец, обход берёт из записи `unit`:
+ *                          передать это сюда нельзя — тело ещё не собрано, оно
+ *                          как раз и собирается этими ниточками
  * @returns {object} набор обработчиков для buildFighter
  */
-export function boutHooks({ field, unit, clocks }) {
+export function boutHooks({ field, unit, clocks, steer = null }) {
   // Цель прямо сейчас. Спрашивается на каждое обращение, поэтому смена цели
   // доходит до тела в тот же кадр.
   const foe = () => { const tu = field.targetFor(unit); return tu ? tu.f : null; };
   return {
-    getFoePos: () => { const x = foe(); return x ? x.group.position : null; },
+    // ГДЕ БОЕЦ ВИДИТ ЦЕЛЬ.
+    //
+    // ⚠️ ОБХОД УКРЫТИЙ ВМЕШИВАЕТСЯ ИМЕННО СЮДА, и это единственное место, где он
+    //    вообще касается боя. Пока между бойцом и целью стоит укрытие и идти
+    //    далеко, ему называют цель В СТОРОНЕ ОБХОДА — но НА ТОМ ЖЕ РАССТОЯНИИ.
+    //    Курс и разворот идут по обходу, а все пороги дальности («дотянулся»,
+    //    «шагнуть под удар», «отойти») видят настоящее число. Подробности и
+    //    причины — в scene/coverNav.js.
+    //
+    //    Без `steer` (все режимы, кроме открытого поля) здесь ровно то, что было:
+    //    одно обращение к позиции цели.
+    getFoePos: () => {
+      const x = foe();
+      if (!x) return null;
+      const p = x.group.position;
+      if (!steer) return p;
+      return steer(unit, p) || p;
+    },
     // attacker's strike damage × накал; foe softens by toughness / block.
     // Real HP dealt → clean exchange → накал resets.
     onImpact: (raw, pen, intr, pt, w) => {
