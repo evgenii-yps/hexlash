@@ -9,6 +9,8 @@ import './assets/main.css'
 // Сам файл — единственный источник этих значений и для деки тоже
 // (её заполняет scripts/sync-core-figure.mjs).
 import './styles/core-flicker.css'
+// Расписание медленного заполнения граней. Тот же файл переносится в деку.
+import './styles/core-facets.css'
 
 import {createApp, watch} from 'vue'
 import {createVuetify} from 'vuetify'

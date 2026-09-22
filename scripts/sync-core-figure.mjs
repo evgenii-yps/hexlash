@@ -22,7 +22,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { coreFigure, vortexRings, VORTEX } from '../src/data/coreFigure.js';
+import { coreFigure, vortexRings, VORTEX, CUT_COLOR, CUT_WIDTH, MODES } from '../src/data/coreFigure.js';
 import { CORE_CYCLE } from '../src/data/coreCycle.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,11 +33,17 @@ const DECK = join(ROOT, 'public/deckinvestors/index.html');
 const MODE = 'muted';
 /* Колец на деке семь — как на компьютере (эталон). */
 const RINGS = VORTEX.count.desktop;
+/* Сколько граней зажигает каждая ветка. Как в игре: не больше пяти всего.
+   ⚠️ Та же раскладка, что в HexCore.vue (LIT_DEFAULT) — меняются парой. */
+const LIT = [3, 2, 0];
+/* Насколько ярче сердце с каждой веткой; масштаб — от яркости режима. */
+const LIFT = [0.40, 0.75, 1.0].map((v) => +(v * MODES[MODE].facet / MODES.full.facet).toFixed(3));
 
 const BLOCKS = [
   ['<!-- ВИХРЬ:НАЧАЛО -->', '<!-- ВИХРЬ:КОНЕЦ -->', 'кольца'],
   ['<!-- ЯДРО:НАЧАЛО -->', '<!-- ЯДРО:КОНЕЦ -->', 'фигура'],
   ['<!-- МЕРЦАНИЕ:НАЧАЛО -->', '<!-- МЕРЦАНИЕ:КОНЕЦ -->', 'мерцание'],
+  ['<!-- ГРАНИ:НАЧАЛО -->', '<!-- ГРАНИ:КОНЕЦ -->', 'грани'],
   ['<!-- ЦВЕТА:НАЧАЛО -->', '<!-- ЦВЕТА:КОНЕЦ -->', 'цвета'],
 ];
 
@@ -89,7 +95,7 @@ const put = (s) => core.push(s);
 put('<!-- Фигура ядра «Печать». НЕ ПРАВИТЬ РУКАМИ: написана');
 put('     node scripts/sync-core-figure.mjs из src/data/coreFigure.js — того же');
 put('     файла, что рисует ядро на лендинге. Режим яркости — ' + MODE + '. -->');
-put(`<svg class="dk-core" viewBox="0 0 ${f.box} ${f.box}" aria-hidden="true">`);
+put(`<svg class="dk-core" viewBox="0 0 ${f.box} ${f.box}" style="--core-c:${f.c}px" aria-hidden="true">`);
 put('  <defs>');
 put('    <radialGradient id="dkPlate">');
 put('      <stop offset="0" stop-color="#191420" stop-opacity=".95"/>');
@@ -114,6 +120,13 @@ put('    <radialGradient id="dkGemGlow">');
 put('      <stop offset="0" stop-color="currentColor" stop-opacity=".5"/>');
 put('      <stop offset="1" stop-color="currentColor" stop-opacity="0"/>');
 put('    </radialGradient>');
+/* Круги-заполнители: стоят в середине ядра, растут наружу. */
+f.branches.forEach((b, i) => {
+  if (!LIT[i]) return;
+  put(`    <clipPath id="dkFlow-${b.id}">`);
+  put(`      <circle cx="0" cy="0" r="1" data-core-flow="${i + 1}" style="--facet-from:${b.flowStart};--facet-to:${b.flowEnd(LIT[i])}"/>`);
+  put('    </clipPath>');
+});
 put('  </defs>');
 
 put(`  <circle cx="${f.c}" cy="${f.c}" r="${f.haloR}" fill="url(#dkGlow)"/>`);
@@ -123,9 +136,36 @@ if (f.m.zone > 0) {
     put(`  <polygon points="${z.points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
   }
 }
+/* Зона сплава: проявляется, когда включается вторая ветка. */
+if (f.m.zone > 0) {
+  put('  <g class="hc-facets">');
+  put(`    <polygon data-core-zone="2" points="${f.zones[0].points}" opacity="${f.m.zone}" fill="url(#dkZone)"/>`);
+  put('  </g>');
+}
 for (const b of f.branches) {
   put(`  <polygon points="${b.points}" fill="#120f17" stroke="currentColor" stroke-opacity="${f.m.branch}" stroke-width="1.3" stroke-linejoin="round"/>`);
 }
+/* Разрезы между гранями — видны и когда грань погасла. */
+put(`  <g stroke="${CUT_COLOR}" stroke-width="${CUT_WIDTH}" stroke-linecap="butt">`);
+for (const b of f.branches) {
+  for (const c of b.cuts) {
+    put(`    <line x1="${c.x1}" y1="${c.y1}" x2="${c.x2}" y2="${c.y2}"/>`);
+  }
+}
+put('  </g>');
+/* Горящие грани. */
+put('  <g class="hc-facets">');
+f.branches.forEach((b, i) => {
+  if (!LIT[i]) return;
+  put(`    <g clip-path="url(#dkFlow-${b.id})">`);
+  put('      <g data-core-lit="1">');
+  for (const fa of b.facets) {
+    put(`        <polygon points="${fa.points}" fill="currentColor" fill-opacity="${f.m.facet}"/>`);
+  }
+  put('      </g>');
+  put('    </g>');
+});
+put('  </g>');
 for (const s of f.sides) {
   put(`  <g data-core-flick="1" style="--core-flick-dur:${s.dur}s;--core-flick-del:${s.del}s">`);
   put(`    <line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="currentColor" stroke-opacity="${+(f.m.contour * 0.18).toFixed(4)}" stroke-width="${f.gw}" stroke-linecap="round"/>`);
@@ -134,6 +174,10 @@ for (const s of f.sides) {
 }
 put(`  <polygon points="${f.inner}" fill="none" stroke="currentColor" stroke-opacity="${+(f.m.contour * 0.35).toFixed(4)}" stroke-width="1.2"/>`);
 put(`  <circle cx="${f.c}" cy="${f.c}" r="${f.heart.glowR}" fill="url(#dkGemGlow)"/>`);
+/* Сердце ярче с каждой задействованной веткой. */
+put('  <g class="hc-facets">');
+put(`    <circle data-core-heart="1" cx="${f.c}" cy="${f.c}" r="${f.heart.glowR}" fill="url(#dkGemGlow)" style="--lift1:${LIFT[0]};--lift2:${LIFT[1]};--lift3:${LIFT[2]};--lift-final:${LIFT[1]}"/>`);
+put('  </g>');
 put(`  <polygon points="${f.heart.frame}" fill="#0b0910" stroke="currentColor" stroke-opacity="${f.m.heart}" stroke-width="${f.heart.frameW}" stroke-linejoin="round"/>`);
 put(`  <polygon points="${f.heart.ring}" fill="none" stroke="currentColor" stroke-opacity="${+(f.m.heart * 0.35).toFixed(4)}" stroke-width="1"/>`);
 put(`  <polygon points="${f.heart.gem}" fill="url(#dkGem)"/>`);
@@ -148,6 +192,18 @@ const flick = [
   '   node scripts/sync-core-figure.mjs из src/styles/core-flicker.css —',
   '   того же файла, что мерцает на лендинге. */',
   flickCss,
+  '</style>',
+];
+
+/* ---- расписание заполнения --------------------------------------------- */
+
+const facetCss = readFileSync(join(ROOT, 'src/styles/core-facets.css'), 'utf8').trim();
+const facets = [
+  '<style>',
+  '/* Медленное заполнение граней. НЕ ПРАВИТЬ РУКАМИ: перенесено',
+  '   node scripts/sync-core-figure.mjs из src/styles/core-facets.css —',
+  '   того же файла, что ведёт цикл на лендинге. */',
+  facetCss,
   '</style>',
 ];
 
@@ -170,7 +226,7 @@ colors.push(`<script>window.DK_CORE_CYCLE=${JSON.stringify(names)};<\/script>`);
 
 /* ---- запись ------------------------------------------------------------- */
 
-const bodies = [ringLines, core, flick, colors].map(
+const bodies = [ringLines, core, flick, facets, colors].map(
   (l) => l.map((s) => '  ' + s).join('\n'),
 );
 

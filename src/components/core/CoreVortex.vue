@@ -30,7 +30,13 @@
     </svg>
 
     <div class="cv-core">
-      <HexCore :mode="mode" :flicker="flicker" />
+      <HexCore
+        :mode="mode"
+        :flicker="flicker"
+        :fill="fill"
+        :fill-all="fillAll"
+        :cycle-key="cycleKey"
+      />
     </div>
   </div>
 </template>
@@ -44,6 +50,10 @@ const props = defineProps({
   /* full — цветные разделы, muted — дека, quiet — розовые разделы и вход. */
   mode: { type: String, default: 'full' },
   flicker: { type: Boolean, default: true },
+  /* Медленное заполнение граней — см. HexCore. */
+  fill: { type: Boolean, default: true },
+  fillAll: { type: Boolean, default: false },
+  cycleKey: { type: [String, Number, null], default: null },
   /* ⚠️ Три числа ниже задаются ТОЛЬКО служебной страницей /dev/core, где
      «Вихрь» показан макетами в рамках заданного размера: там ширина рамки не
      равна ширине окна, и размер по окну был бы враньём. На лендинге и деке

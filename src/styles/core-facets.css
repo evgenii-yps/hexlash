@@ -1,0 +1,143 @@
+/* HEXLASH — МЕДЛЕННОЕ ЗАПОЛНЕНИЕ ГРАНЕЙ ЯДРА (22.09.2026).
+
+   ⚠️ ЕДИНСТВЕННОЕ МЕСТО, ГДЕ ЖИВЁТ РАСПИСАНИЕ ЦИКЛА. Отсюда его берут обе
+   поверхности: приложение подключает файл сборкой (src/main.js), деку
+   заполняет scripts/sync-core-figure.mjs, вставляя текст этого файла в
+   статическую страницу. Второй копии быть не должно.
+
+   ЧТО ПРОИСХОДИТ. На ветках ядра пять граней. Свет вытекает из сердца и
+   ползёт к вершине, зажигая грани одну за другой; когда включается вторая
+   ветка — проявляется зона сплава между ними и сердце становится ярче. Всё
+   держится, гаснет вместе, пауза, цикл сначала. Это показ того, как в игре
+   растёт боец.
+
+   ⚠️ ДЛИТЕЛЬНОСТЬ ЦИКЛА — ОДНО ЧИСЛО, --core-cycle НИЖЕ. Все доли внутри
+   заданы процентами от него, так что цикл растягивается и сжимается целиком.
+
+   ⚠️ ЧЕМ АНИМИРУЕМ. Только прозрачность и растяжение круга-заполнителя
+   внутри обрезки. Фильтров размытия нет, вся фигура каждый кадр не
+   перерисовывается — иначе телефон не держит 16.7 мс на кадр.
+
+   Координат здесь нет ни одной: середина фигуры и радиусы приходят
+   переменными из разметки (--core-c, --facet-from, --facet-to). */
+
+/* ⚠️ ОДНА НАСТРОЙКА НА ВЕСЬ ЦИКЛ. Владелец просил «раз в 10 секунд».
+   Объявлена на самой фигуре, а не на :root, чтобы не заводить глобальную
+   переменную ради одной анимации. Два селектора — потому что поверхности
+   две: .hc это ядро в приложении, .dk-core — оно же на деке. */
+.hc,
+.dk-core {
+  --core-cycle: 10s;
+}
+
+/* ── Обрезка: круг из середины ядра растёт наружу ──────────────────────────
+   Свет «втекает» в грань от края, ближнего к сердцу, — потому что видно
+   ровно то, что попало внутрь растущего круга. Фронт получается слегка
+   дугой, и это читается как свет, вытекающий из сердца. */
+
+/* Первая ветка: наливается сразу. */
+@keyframes hxFacetFlow1 {
+  0%        { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-from)); }
+  32%, 100% { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)); }
+}
+/* Вторая ветка: ждёт, пока дойдёт первая. */
+@keyframes hxFacetFlow2 {
+  0%, 30%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-from)); }
+  52%, 100% { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)); }
+}
+/* Третья ветка: только в запасном режиме «все 15». */
+@keyframes hxFacetFlow3 {
+  0%, 58%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-from)); }
+  80%, 100% { transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)); }
+}
+
+/* ── Общая жизнь горящего слоя: держится, гаснет вместе, пауза ──────────── */
+@keyframes hxFacetLit {
+  0%, 72%   { opacity: 1; }
+  87%, 100% { opacity: 0; }
+}
+/* В запасном режиме заполнение длится дольше — держим и гасим позже. */
+@keyframes hxFacetLitAll {
+  0%, 84%   { opacity: 1; }
+  94%, 100% { opacity: 0; }
+}
+
+/* ── Зона сплава: проявляется, когда включилась соседняя ветка ─────────── */
+@keyframes hxFacetZone2 {
+  0%, 30%   { opacity: 0; }
+  40%, 72%  { opacity: 1; }
+  87%, 100% { opacity: 0; }
+}
+@keyframes hxFacetZone3 {
+  0%, 58%   { opacity: 0; }
+  68%, 84%  { opacity: 1; }
+  94%, 100% { opacity: 0; }
+}
+
+/* ── Сердце ярче с каждой задействованной веткой ───────────────────────── */
+@keyframes hxFacetHeart {
+  0%        { opacity: 0; }
+  20%, 30%  { opacity: var(--lift1); }
+  45%, 72%  { opacity: var(--lift2); }
+  87%, 100% { opacity: 0; }
+}
+@keyframes hxFacetHeartAll {
+  0%        { opacity: 0; }
+  16%, 20%  { opacity: var(--lift1); }
+  36%, 40%  { opacity: var(--lift2); }
+  56%, 84%  { opacity: var(--lift3); }
+  94%, 100% { opacity: 0; }
+}
+
+/* ── Что к чему привязано ─────────────────────────────────────────────── */
+[data-core-flow="1"] { animation: hxFacetFlow1 var(--core-cycle) linear infinite; }
+[data-core-flow="2"] { animation: hxFacetFlow2 var(--core-cycle) linear infinite; }
+[data-core-flow="3"] { animation: hxFacetFlow3 var(--core-cycle) linear infinite; }
+
+[data-core-lit]      { animation: hxFacetLit var(--core-cycle) linear infinite; }
+[data-core-zone="2"] { animation: hxFacetZone2 var(--core-cycle) linear infinite; }
+[data-core-zone="3"] { animation: hxFacetZone3 var(--core-cycle) linear infinite; }
+[data-core-heart]    { animation: hxFacetHeart var(--core-cycle) linear infinite; }
+
+/* Запасной режим «все 15 граней»: то же самое, но расписание плотнее. */
+.hc-facets--all [data-core-lit]   { animation-name: hxFacetLitAll; }
+.hc-facets--all [data-core-heart] { animation-name: hxFacetHeartAll; }
+
+/* ── Смена раздела посреди цикла ───────────────────────────────────────── */
+/* Горящие грани гаснут вместе со сменой цвета, а не исчезают рывком. Снятие
+   класса перезапускает цикл с нуля — в новом цвете. */
+.hc-facets {
+  transition: opacity 420ms cubic-bezier(.2, .8, .2, 1);
+}
+.hc-facets.is-swap {
+  opacity: 0;
+}
+.hc-facets.is-swap [data-core-flow],
+.hc-facets.is-swap [data-core-lit],
+.hc-facets.is-swap [data-core-zone],
+.hc-facets.is-swap [data-core-heart] {
+  animation: none;
+}
+
+/* ── «Уменьшить движение» в настройках устройства ──────────────────────── */
+/* Анимации нет, стоит конечное состояние: грани горят, зона сплава видна,
+   сердце поднято. Игрок видит результат, просто без движения. */
+@media (prefers-reduced-motion: reduce) {
+  .hc-facets,
+  .hc-facets * {
+    transition: none !important;
+  }
+  [data-core-flow] {
+    animation: none !important;
+    transform: translate(var(--core-c), var(--core-c)) scale(var(--facet-to)) !important;
+  }
+  [data-core-lit],
+  [data-core-zone] {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  [data-core-heart] {
+    animation: none !important;
+    opacity: var(--lift-final) !important;
+  }
+}

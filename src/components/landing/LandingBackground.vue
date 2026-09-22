@@ -24,7 +24,9 @@
     <div class="lp-bg__base"></div>
 
     <div class="lp-bg__ink">
-      <CoreVortex :mode="mode" />
+      <!-- Грани наливаются только в цветных разделах: на розовых и на входе
+           по правилу горит одно сердце. Метка раздела перезапускает цикл. -->
+      <CoreVortex :mode="mode" :fill="mode !== PINK_MODE" :cycle-key="core" />
     </div>
 
     <div class="lp-bg__vignette"></div>

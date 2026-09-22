@@ -35,9 +35,9 @@ export const R = 225;
      muted — дека, все разделы;
      quiet — розовые разделы лендинга и экран входа. */
 export const MODES = {
-  full:  { contour: 0.95, branch: 0.55, zone: 0.30, glow: 0.26, heart: 0.95 },
-  muted: { contour: 0.55, branch: 0.26, zone: 0.12, glow: 0.14, heart: 0.80 },
-  quiet: { contour: 0.18, branch: 0.09, zone: 0,    glow: 0.08, heart: 1 },
+  full:  { contour: 0.95, branch: 0.55, zone: 0.30, glow: 0.26, heart: 0.95, facet: 0.90 },
+  muted: { contour: 0.55, branch: 0.26, zone: 0.12, glow: 0.14, heart: 0.80, facet: 0.50 },
+  quiet: { contour: 0.18, branch: 0.09, zone: 0,    glow: 0.08, heart: 1,    facet: 0 },
 };
 export const MODE_IDS = ['full', 'muted', 'quiet'];
 
@@ -51,6 +51,24 @@ const VAR = {
   cw: 4.0, gw: 13,
   innerR: 0.93,
 };
+
+/* ---- грани ---------------------------------------------------------------
+   Каждая ветка поделена по длине на пять граней — как в игре (3 ветки × 5).
+   Грань это часть самого клина, а не значок внутри: ромбиков и узоров внутри
+   веток нет. Считаются грани ОТ КРАЯ СЕРДЦА к вершине — то, что ближе к
+   середине, закрыто самим сердцем и гранью быть не может.
+
+   ⚠️ Разрез между гранями рисуется цветом #0d0b11 — это дальний край
+   градиента пластины, то есть «сквозь разрез видно пластину». Новый цвет ради
+   разреза не заводится. */
+export const FACETS = 5;
+/* Разрез между гранями, в долях радиуса контура. 0.012 → 2.7 единицы холста,
+   на телефоне 390 это ~0.9 точки.
+   ⚠️ Подобрано глазами: на 0.02 и линии 4.5 ветка рассыпалась на цепочку
+   отдельных плиток и переставала читаться цельным клином. */
+const FACET_GAP = 0.012;
+export const CUT_COLOR = '#0d0b11';
+export const CUT_WIDTH = 2.6;
 
 /* Мерцание контура. Мерцает ТОЛЬКО группа каждой из шести сторон (широкая и
    чёткая линии вместе), анимируется одна прозрачность. Остальная фигура и
@@ -111,9 +129,48 @@ export function coreFigure(mode = 'full') {
     const a0 = at(VAR.t0, VAR.w0);
     const a1 = at(VAR.t1, VAR.w1);
     const a2 = at(VAR.t2, VAR.w2);
+
+    /* Полуширина клина в точке t: ломаная через три опорные точки эталона. */
+    const halfAt = (t) => (t <= VAR.t1
+      ? VAR.w0 + (VAR.w1 - VAR.w0) * (t - VAR.t0) / (VAR.t1 - VAR.t0)
+      : VAR.w1 + (VAR.w2 - VAR.w1) * (t - VAR.t1) / (VAR.t2 - VAR.t1));
+
+    /* Пять граней от края сердца до вершины. */
+    const span = (VAR.t2 - VAR.heart) / FACETS;
+    const facets = [];
+    const cuts = [];
+    for (let i = 0; i < FACETS; i++) {
+      const ta = VAR.heart + span * i + FACET_GAP / 2;
+      const tb = VAR.heart + span * (i + 1) - FACET_GAP / 2;
+      const pa = at(ta, halfAt(ta));
+      const pb = at(tb, halfAt(tb));
+      facets.push({
+        i,
+        points: fmt([pa[0], pb[0], pb[1], pa[1]]),
+        /* Радиусы начала и конца грани — по ним растёт круг-заполнитель. */
+        r0: +(ta * R).toFixed(2),
+        r1: +(tb * R).toFixed(2),
+      });
+      /* Разрез рисуется после каждой грани, кроме последней. */
+      if (i < FACETS - 1) {
+        const tc = VAR.heart + span * (i + 1);
+        const pc = at(tc, halfAt(tc) * 1.04);
+        cuts.push({
+          x1: pc[0][0].toFixed(1), y1: pc[0][1].toFixed(1),
+          x2: pc[1][0].toFixed(1), y2: pc[1][1].toFixed(1),
+        });
+      }
+    }
+
     return {
       id: ['a', 'b', 'c'][k],
       points: fmt([a0[0], a1[0], a2[0], a2[1], a1[1], a0[1]]),
+      facets,
+      cuts,
+      /* Откуда стартует заполнение: край сердца. */
+      flowStart: +(VAR.heart * R).toFixed(2),
+      /* Докуда доходит, если загорится n граней. */
+      flowEnd: (n) => +((VAR.heart + span * n) * R).toFixed(2),
     };
   });
 
