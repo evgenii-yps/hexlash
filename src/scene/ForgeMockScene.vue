@@ -590,20 +590,6 @@ function applyHomePose(snap) {
     camera.position.copy(homePose.position);
     controls.update();
   }
-  // ВРЕМЕННЫЙ ЗОНД — снять перед сдачей.
-  try {
-    const c = camera.clone(); c.updateMatrixWorld(true); c.updateProjectionMatrix();
-    const v = new THREE.Vector3();
-    const proj = (x, y, z) => { v.set(x, y, z).project(c); return [ +(((v.x + 1) / 2).toFixed(3)), +((1 - (v.y + 1) / 2).toFixed(3)) ]; };
-    window.__fx = {
-      aspect: +camera.aspect.toFixed(3),
-      dist: +homePose.dist.toFixed(2),
-      camDist: +camera.position.distanceTo(controls.target).toFixed(2),
-      min: +controls.minDistance.toFixed(2), max: +controls.maxDistance.toFixed(2),
-      slabW: +compose.slab.width.toFixed(2),
-      props: propList.map(pr => ({ k: pr.key, x: +pr.obj.group.position.x.toFixed(2), s: proj(pr.obj.group.position.x, slab.refs.topY + 0.6, pr.obj.group.position.z) })),
-    };
-  } catch (e) { window.__fx = { err: String(e) }; }
 }
 const _retPos = new THREE.Vector3(), _retTgt = new THREE.Vector3();
 function idleReturn(dt) {
