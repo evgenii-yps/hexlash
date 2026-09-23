@@ -595,15 +595,7 @@ function frameFor(working) {
   // show and a second pose would only be a way of standing further back.
   // Одна композиция и один прямоугольник на каждую раскладку — панелей, ради
   // которых держались вторые, больше нет.
-  // ВРЕМЕННЫЙ ОПЫТ — снять. ?rect=narrow возвращает старую узкую полосу, чтобы
-  // померить, платим ли мы кадрами за САМУ КОМПОЗИЦИЮ (зал стал крупнее — больше
-  // заливки), а не за новую геометрию.
-  let r = portrait ? CAM.rect.portrait : CAM.rect.landscape;
-  try {
-    if (!portrait && new URLSearchParams(window.location.search).get('rect') === 'narrow') {
-      r = { x0: 0.06, x1: 0.52, y0: 0.08, y1: 0.68 };
-    }
-  } catch (e) { /* пусто */ }
+  const r = portrait ? CAM.rect.portrait : CAM.rect.landscape;
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
   _fitDir.normalize();
@@ -911,16 +903,8 @@ onMounted(() => {
   // Соседний остров с грушами + два предмета на главной плите. Шаг 1 встраивания:
   // ГЕОМЕТРИЯ ТОЛЬКО. Ни нажатий, ни перелёта, ни переноса занятия сюда — это
   // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
-  // ВРЕМЕННЫЙ ОПЫТ — снять. Ключи ?island=off и ?props=off выключают части новой
-  // геометрии, чтобы измерить долю каждой в просадке, а не гадать.
-  let expIsland = true, expProps = true;
-  try {
-    const q = new URLSearchParams(window.location.search);
-    expIsland = q.get('island') !== 'off';
-    expProps = q.get('props') !== 'off';
-  } catch (e) { /* пусто */ }
-  if (expIsland) buildNeighbourIsland(topY, members.length);
-  if (expProps) buildForgeProps(topY);
+  buildNeighbourIsland(topY, members.length);
+  buildForgeProps(topY);
 
   const spots = layoutRoster(members.length, compose.arcZ);
   director = createForgeWanderDirector();

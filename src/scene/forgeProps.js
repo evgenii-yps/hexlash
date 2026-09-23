@@ -158,6 +158,10 @@ function labelFont() {
  * холста, чтобы буквы никогда не растягивались.
  */
 function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
+  // ⚠️ 512×128 и анизотропия ниже — НЕ запас «на всякий случай», а измеренный
+  // минимум. Пробовали вчетверо дешевле (256×64, anisotropy 1): кадров это не
+  // вернуло НИ ОДНОГО (горизонталь 10.7–11.0 до и после), а слова на планшете и
+  // наковальне размазались в пунктир. Снимки — в отчёте. Не удешевлять снова.
   const PX = 512;
   const H = 128;
   const cv = document.createElement('canvas');
@@ -184,6 +188,8 @@ function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
 
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
+  // Подписи лежат плашмя, камера смотрит на них под скользящим углом — без
+  // анизотропии буквы слипаются. См. предупреждение выше.
   tex.anisotropy = 4;
   const geo = new THREE.PlaneGeometry(width, width * (H / PX));
   const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, fog: true });
