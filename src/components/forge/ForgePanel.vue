@@ -4,6 +4,9 @@
      Six blocks, top to bottom:
        head    — who is selected: name, his core in the core's own colour, его
                  СОСТОЯНИЕ (свободен / занят / готов) и fights
+       traits  — ОСИ БОЙЦА, именами и пустыми жёлобами (24.09.2026). Стоят только
+                 в блоке статов (section="stats"), который открывает нажатие по
+                 самому телу в зале
        train   — ЗАНЯТИЕ (18.09.2026): одна кнопка и одна строка причины. Стоит
                  НАД деревом — именно оно его открывает, — и в прокрутке, а не
                  в приколоченной шапке: стоя шапка и так тесная
@@ -35,8 +38,12 @@
 <template>
   <aside class="fp" :class="{ 'is-guest': isGuest }" :style="coreVars">
 
-    <!-- ── 1 · head — who is selected ───────────────────────────────────── -->
-    <header class="fp-head">
+    <!-- ── 1 · head — who is selected ─────────────────────────────────────
+         ШАПКА ГАСНЕТ, КОГДА РЯДОМ СТОИТ БЛОК СТАТОВ (24.09.2026). Лёжа нажатие
+         по бойцу открывает обе стороны сразу: статы слева, дерево справа. Имя и
+         ядро говорит левый блок, и второй раз их писать справа не нужно — стоя
+         же дерево открывается одно, и шапка ему обязательна. -->
+    <header v-if="showHead" class="fp-head">
       <p class="fp-kicker">{{ t.forge.selected }}</p>
 
       <!-- a fighter, and his data is here -->
@@ -51,7 +58,10 @@
           <span class="k">{{ t.forge.stateLabel }}</span>
           <span class="v">{{ stateWord(pickedState) }}</span>
         </p>
-        <p class="fp-fights">
+        <!-- Счёт боёв — не часть блока статов: там перечислено ровно то, по чему
+             принимают решение (кто, какое ядро, в каком состоянии, какие оси и что
+             можно сделать). Лишняя строка там стоит места, которого лёжа нет. -->
+        <p v-if="!showStats" class="fp-fights">
           <span class="k">{{ t.forge.fightsLabel }}</span>
           <span class="v">{{ fightsOf(picked) }}</span>
         </p>
@@ -67,6 +77,23 @@
     <!-- ── the scrolling middle: tree, style, roster ─────────────────────── -->
     <div class="fp-scroll">
 
+      <!-- ── 1b · traits — ОСИ БОЙЦА ───────────────────────────────────────
+           ⚠️ ЦИФР НЕТ, и это не заготовка на «потом дорисуем». Имена осей и
+              ПУСТЫЕ ЖЁЛОБА: числа прокачки — отдельный заход, а жёлоб оставлен
+              видимым, чтобы было понятно, где значение встанет.
+
+           Имена приходят из САМОГО НАБОРА ОСЕЙ (data/behavior.js), а не списком
+           руками: список, вписанный руками, уже однажды потерял одну ось. -->
+      <section v-if="showStats && picked" class="fp-traits">
+        <p class="fp-label">{{ t.forge.traitsLabel }}</p>
+        <ul class="fp-axes">
+          <li v-for="a in axisNames" :key="a" class="fp-axis">
+            <span class="nm">{{ a }}</span>
+            <span class="gt" aria-hidden="true"></span>
+          </li>
+        </ul>
+      </section>
+
       <!-- ── 2 · train — грань открывается занятием, а не нажатием ──────────
            ОДНА КНОПКА, и она меняет смысл: свободному — начать, занятому —
            отменить. Две кнопки рядом значили бы, что одна из них всегда мёртвая.
@@ -74,7 +101,10 @@
            НИ ПРОЦЕНТОВ, НИ ЦИФР, НИ ОСТАТКА ВРЕМЕНИ. Строка под кнопкой говорит
            словами, что происходит или почему нельзя; сам ход занятия показывает
            ТЕЛО В ЗАЛЕ, а не панель. -->
-      <section v-if="picked && showTree" class="fp-train">
+      <!-- Кнопку держит тот блок, который сейчас на экране один: статы, если
+           открыты они, иначе дерево (его открывает наковальня — и там кнопка
+           стояла и стоит). Двух одинаковых кнопок на одном кадре быть не должно. -->
+      <section v-if="picked && (showStats || (showTree && showHead))" class="fp-train">
         <button
           type="button" class="fp-train-btn"
           :class="{ 'is-cancel': pickedState === 'busy' }"
@@ -83,6 +113,15 @@
         >{{ pickedState === 'busy' ? t.forge.trainCancel : t.forge.trainStart }}</button>
         <p v-if="trainNote" class="fp-train-note">{{ trainNote }}</p>
       </section>
+
+      <!-- ВХОД В ГРАНИ — только стоя (24.09.2026). Лёжа дерево открывается
+           тем же нажатием, что и статы, и вести в него отдельной строкой некуда.
+           Стоя двух блоков рядом не поставить: ширины нет, поэтому шаг второй. -->
+      <button
+        v-if="showStats && picked && canOpenTree"
+        type="button" class="fp-to-tree"
+        @click="$emit('open-tree')"
+      >{{ t.forge.openCrystals }}</button>
 
       <!-- ── 3 · tree ───────────────────────────────────────────────────── -->
       <section v-if="showTree" class="fp-tree" :class="{ 'is-fresh': treeState === 'live' && !litNames.length }">
@@ -133,7 +172,9 @@
       </section>
 
       <!-- ── 4 · style — what he is built out of ────────────────────────── -->
-      <section class="fp-style">
+      <!-- В блоке статов строки характера нет: лёжа она стояла бы дважды —
+           и слева, и справа под деревом. Её место — там, где грани зажигают. -->
+      <section v-if="!showStats" class="fp-style">
         <p class="fp-label">{{ t.forge.styleLabel }}</p>
         <p class="fp-style-v">
           <span v-if="!litNames.length" class="ph">{{ t.forge.buildEmpty }}</span>
@@ -187,7 +228,9 @@
          стояла плита FIGHT и он был всегда; без неё у зарегистрированного
          игрока остался бы пустой отчёркнутый поясок под списком — дыра ровно
          на месте снятой кнопки. Пустого подвала нет: место забирает список. -->
-    <footer v-if="isGuest" class="fp-foot">
+    <!-- Строка гостя — один раз на экран: она стоит там, где происходит работа,
+         которая пропадёт (дерево и список), а не в блоке статов рядом с ними. -->
+    <footer v-if="isGuest && !showStats" class="fp-foot">
       <p class="fp-guest">{{ t.forge.guestLine }}</p>
     </footer>
   </aside>
@@ -197,6 +240,7 @@
 import { computed, ref } from 'vue';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
+import { AXIS_IDS } from '@/data/behavior.js';
 import ForgeTree from '@/components/forge/ForgeTree.vue';
 
 const props = defineProps({
@@ -204,7 +248,13 @@ const props = defineProps({
   // всегда — её начинку открывают предметы на плите. Планшет зовёт список
   // бойцов, наковальня — дерево граней. 'all' оставлено значением по умолчанию,
   // чтобы этот разбор ничего не менял там, где панель показывают целиком.
-  section: { type: String, default: 'all' },   // 'all' | 'roster' | 'tree'
+  //   'stats' — блок бойца: кто выбран, его оси, его действие (24.09.2026)
+  section: { type: String, default: 'all' },   // 'all' | 'roster' | 'tree' | 'stats'
+  // Шапка. Гасится у дерева, когда рядом уже стоит блок статов, — см. шаблон.
+  showHead: { type: Boolean, default: true },
+  // Показывать ли строку-вход в грани: она нужна только стоя, где два блока
+  // рядом не встают. Решает зал, а не панель: ориентацию знает он.
+  canOpenTree: { type: Boolean, default: false },
   fighters: { type: Array, default: () => [] },
   pickedId: { type: String, default: null },
   picked: { type: Object, default: null },
@@ -232,13 +282,17 @@ const props = defineProps({
   quenchWhy: { type: String, default: null },
 });
 
-const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train']);
+const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train', 'open-tree']);
 
 const treeRef = ref(null);
 
-// Что из шести блоков сейчас на экране. Голова видна всегда: без неё не понять,
-// о ком речь.
+// Что из блоков сейчас на экране. Голова видна почти всегда: без неё не понять,
+// о ком речь, — гаснет она ровно в одном случае, когда рядом уже стоит блок
+// статов и то же самое говорит он (showHead, см. шаблон).
 const showTree = computed(() => props.section === 'all' || props.section === 'tree');
+const showStats = computed(() => props.section === 'stats');
+// Имена осей — из набора осей, заглавными. Своего списка здесь нет намеренно.
+const axisNames = AXIS_IDS.map((a) => a.toUpperCase());
 const showRoster = computed(() => props.section === 'all' || props.section === 'roster');
 
 // The picked fighter's core. Colour is NOT declared here: getCore reads the one

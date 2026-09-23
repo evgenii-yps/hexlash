@@ -40,7 +40,7 @@
 //    в src/styles/home.css) — второй такой полосы здесь не заводится.
 //
 // Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade, buildPunchBag,
-//               buildStatsFloor, buildLegendAnchor, buildBuffShelf.
+//               buildLegendAnchor, buildBuffShelf.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -87,14 +87,10 @@ export const FORGE_PROPS = {
     swingMax: 0.52,     // предел отклонения, радиан
   },
 
-  // СТАТЫ — проступают НА ПОВЕРХНОСТИ ПЛИТЫ под остановленным бойцом и перед
-  // ним (правка v2, уточнение v3). Ничего не поднимается и не висит: поднятое
-  // табло отъедало высоту кадра, а высота в вертикальном телефоне — самое
-  // дефицитное. `lift` — приподнятость над плитой, чтобы надпись не мерцала.
-  // rows — ВОСЕМЬ, по числу осей бойца (src/data/behavior.js). На макете их было
-  // семь: список имён был вписан там руками и одну ось потерял. Здесь имена
-  // приходят из самого набора осей, поэтому строк столько же, сколько осей.
-  stats: { w: 1.62, d: 1.28, openDur: 0.4, rows: 8, lift: 0.014 },
+  // ⚠️ НАСТРОЕК СТАТОВ ЗДЕСЬ БОЛЬШЕ НЕТ (решение владельца 24.09.2026). Статы
+  //    были надписью на поверхности плиты перед остановленным бойцом; теперь они
+  //    в экранном слое (блок слева, ForgePanel section="stats"). На полу их
+  //    закрывало собственное тело бойца, а половину — открытая панель.
 
   // Полка баффов — только МЕСТО, задел (решение 22.09: предметы баффов позже).
   shelf: { w: 1.10, d: 0.30, niches: 3, label: 'BUFFS' },
@@ -374,85 +370,6 @@ export function buildUpgrade() {
 //
 // Форма — скобы по углам, а не сплошная рамка: сплошная на десяти местах
 // превращает пол в сетку, а сетка — это узор, которого в проекте быть не должно.
-// ═══════════════════ СТАТЫ — НА ПОВЕРХНОСТИ ПЛИТЫ ═══════════════════
-// Открываются нажатием по самому бойцу и проступают НА ПОЛУ перед ним — как
-// надпись на плите, а не предмет в воздухе (правка v2). Ничего не поднимается.
-//
-// Черта и заливка те же, что у разметки зоны: один приём на две задачи —
-// статы читаются как продолжение того же места, а не как второе устройство.
-//
-// ⚠️ ЦИФР НЕТ. Имена осей и ПУСТЫЕ ЖЁЛОБА под будущие значения. Жёлоб оставлен
-//    пустым нарочно, чтобы на макете было видно, где значения встанут.
-export function buildStatsFloor(axisNames = []) {
-  const S = FORGE_PROPS.stats;
-  const Z = { lift: FORGE_PROPS.stats.lift };
-  const group = new THREE.Group();
-  const disposers = [];
-  const fade = [];          // всё, что проявляется вместе
-
-  const push = (mesh, mat) => { group.add(mesh); fade.push(mat); };
-
-  const plateMat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(MATERIALS.decorDark.color),
-    transparent: true, opacity: 0, depthWrite: false,
-  });
-  const plateGeo = new THREE.PlaneGeometry(S.w, S.d);
-  const plate = new THREE.Mesh(plateGeo, plateMat);
-  plate.rotation.x = -Math.PI / 2;
-  plate.position.y = Z.lift;
-  push(plate, plateMat);
-  disposers.push(() => { plateGeo.dispose(); plateMat.dispose(); });
-
-  const rows = axisNames.slice(0, S.rows);
-  const top = S.d / 2 - 0.12;
-  const gap = rows.length > 1 ? (S.d - 0.24) / (rows.length - 1) : 0;
-  const troughMat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(MATERIALS.decorLine.color),
-    transparent: true, opacity: 0, depthWrite: false,
-  });
-  const troughGeo = new THREE.PlaneGeometry(S.w * 0.40, 0.022);
-  disposers.push(() => { troughGeo.dispose(); troughMat.dispose(); });
-
-  rows.forEach((name, i) => {
-    const z = -top + i * gap;          // −Z = дальше от камеры, читается сверху вниз
-    const l = buildLabel(name, S.w * 0.42, { align: 'left', dim: 0.9 });
-    l.mesh.rotation.x = -Math.PI / 2;
-    l.mesh.position.set(-S.w * 0.26, Z.lift * 1.3, z);
-    l.mesh.material.transparent = true;
-    l.mesh.material.opacity = 0;
-    group.add(l.mesh);
-    fade.push(l.mesh.material);
-    disposers.push(l.dispose);
-
-    // Пустой жёлоб — место под значение. Ничем не заполнен намеренно.
-    const t = new THREE.Mesh(troughGeo, troughMat);
-    t.rotation.x = -Math.PI / 2;
-    t.position.set(S.w * 0.24, Z.lift * 1.2, z);
-    group.add(t);
-  });
-  fade.push(troughMat);
-
-  let open = false;
-  let phase = 0;
-  group.visible = false;
-  return {
-    group,
-    setOpen(on) { open = !!on; },
-    tick(dt, reduced) {
-      const target = open ? 1 : 0;
-      if (reduced) phase = target;
-      else {
-        const step = dt / S.openDur;
-        phase += Math.sign(target - phase) * Math.min(step, Math.abs(target - phase));
-      }
-      group.visible = phase > 0.001;
-      // Проявляется на месте: ничего не едет и не поднимается.
-      for (const m of fade) m.opacity = (m === plateMat ? 0.34 : 0.92) * phase;
-    },
-    dispose() { disposers.forEach((d) => d()); },
-  };
-}
-
 // ═══════════════════ ГРУША ═══════════════════
 // Вторая — и последняя — вещь из реального мира в этом мире, после перчаток с
 // острова ARENA. Сделана ТЕМ ЖЕ ПРИЁМОМ, что и они (modePlates.js, «the gloves»):

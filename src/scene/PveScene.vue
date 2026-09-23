@@ -34,10 +34,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildStatsFloor } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
-import { resolveBehavior, AXIS_IDS } from '@/data/behavior.js';
+import { resolveBehavior } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
 import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
@@ -530,20 +530,10 @@ function frameFor() {
   return poseOver(0, 0, compose ? compose.slab.width : 6);
 }
 
-/**
- * Где лежит надпись со статами: на шаг ОТ бойца в сторону камеры. Считается в
- * одном месте, потому что её спрашивают двое — кадр (чтобы не срезать) и сам
- * кадр отрисовки (чтобы положить).
- */
-function statsCentre() {
-  const cur = roster.find((x) => x.id === currentId);
-  if (!cur?.fighter?.group.parent || !camera) return null;
-  const g = cur.fighter.group.position;
-  const dx = camera.position.x - g.x, dz = camera.position.z - g.z;
-  const L = Math.max(1e-3, Math.hypot(dx, dz));
-  return { x: g.x + (dx / L) * 1.0, z: g.z + (dz / L) * 1.0, rot: Math.atan2(dx, dz) };
-}
-
+// СТАТЫ БОЛЬШЕ НЕ ЛЕЖАТ НА ПЛИТЕ (решение владельца 24.09.2026). Здесь считалось
+// место надписи — на шаг от бойца в сторону камеры. Надпись снята целиком: статы
+// ушли в экранный слой (блок слева, см. ForgePanel section="stats"), потому что на
+// полу их закрывало собственное тело бойца и половину — открытая панель.
 /** Кадр соседнего острова — тем же домашним рецептом, от ЕГО ширины. */
 function trainingFrame() {
   return trainHalfW > 0 ? poseOver(trainCx, 0, trainHalfW * 2) : frameFor();
@@ -682,10 +672,6 @@ const hitPrev = new Map();
 let bagSpots = [];               // где груши СТОЯЛИ БЫ — считается сразу
 let bagTopY = 0;
 const propList = [];
-// Статы — надпись НА ПОЛУ перед остановленным бойцом. Цифр в ней нет: имена осей
-// и пустые жёлоба под будущие значения (решение: числа прокачки — отдельный заход).
-let statsFloor = null;
-let statsOpen = false;
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
 let portrait = false;
@@ -844,8 +830,6 @@ onMounted(() => {
 
   // Имена осей берутся из САМОГО набора осей бойца, а не переписываются списком:
   // второй список рано или поздно разошёлся бы с первым.
-  statsFloor = buildStatsFloor(AXIS_IDS.map((a) => a.toUpperCase()));
-  scene.add(statsFloor.group);
 
   const spots = layoutRoster(members.length, compose.arcZ);
   director = createForgeWanderDirector();
@@ -1059,18 +1043,17 @@ onMounted(() => {
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
     if (d.entry && d.entry.kind === 'prop') {
-      statsOpen = false;          // открылся предмет — надпись на полу уходит
       emit('press', d.entry.key);
     } else if (d.entry && d.entry.kind === 'fighter') {
-      // Статы открываются нажатием ПО САМОМУ ТЕЛУ — и только им. Строка в списке
-      // на планшете их не открывает: панель закрывает ту самую половину пола.
-      statsOpen = true;
       // Touch has no hover, so light the core for a beat BEFORE the framing
       // changes — the finger has to see what it hit.
       emitHover(d.entry.entry);
-      emit('pick', d.entry.entry.id);
+      // ВТОРОЙ ДОВОД — «нажали по телу», и он здесь не косметика. Статы бойца
+      // открывает ТОЛЬКО тело: строка в списке на планшете их не открывает,
+      // иначе список и статы дрались бы за один и тот же угол экрана. Решает
+      // это зал (PveView), поэтому отсюда уходит только сам факт.
+      emit('pick', d.entry.entry.id, true);
     } else {
-      statsOpen = false;
       // Нажатие по пустому месту. Раньше оно сообщалось только пока открыт боец —
       // больше нельзя: со встраиванием пустым местом ещё и закрывают то, что
       // открыл предмет, а предмет к этому моменту загорожен самой панелью.
@@ -1173,17 +1156,6 @@ onMounted(() => {
       applyFighterLight(r);
     }
 
-    // Статы лежат на плите ПЕРЕД выбранным бойцом и едут вместе с ним: он
-    // останавливается там, где его нажали, и надпись обязана быть там же.
-    if (statsFloor) {
-      const sp = statsCentre();
-      if (sp) {
-        statsFloor.group.position.set(sp.x, slab ? slab.refs.topY : 0, sp.z);
-        statsFloor.group.rotation.y = sp.rot;
-      }
-      statsFloor.setOpen(statsOpen && !!sp);
-      statsFloor.tick(dt, reduced);
-    }
 
     // Груши качаются только пока они есть — пустых в зале не висит.
     for (const [, bag] of bags) bag.tick(dt, reduced);
@@ -1727,8 +1699,6 @@ onBeforeUnmount(() => {
   // Соседний остров и груши на нём — убираются вместе с залом. Груш может не
   // быть вовсе (их строят по мере назначения занятия), поэтому просто обходим
   // то, что есть.
-  if (statsFloor) { scene.remove(statsFloor.group); statsFloor.dispose(); statsFloor = null; }
-  statsOpen = false;
   for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();

@@ -352,3 +352,117 @@
 
 /* Блок «уменьшить движение» стоял здесь ради петли свечения плиты FIGHT. Плита
    снята (работа D), петли в этом файле больше нет, и гасить нечего. */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   БЛОК СТАТОВ — тот же столбец, только с ДРУГОЙ стороны экрана.
+   Открывается нажатием по самому телу в зале (24.09.2026, решение владельца).
+
+   ДО ЭТОГО СТАТЫ БЫЛИ НАДПИСЬЮ НА ПЛИТЕ — проступали на полу перед
+   остановленным бойцом. Надпись снята целиком (не спрятана): на полу её
+   закрывало собственное тело бойца, а вторую половину — открытая панель.
+
+   ПОЧЕМУ НЕ НОВАЯ ФОРМА. Это .fp с модификатором: те же поля, тот же тон, тот
+   же шрифт. Второй вид панели на одном экране читался бы как второе устройство.
+   Отличий ровно три — сторона, черта (справа, а не слева) и высота: блок стоит
+   ПО ЦЕНТРУ ВЫСОТЫ и занимает столько, сколько в нём содержимого, а не всю
+   высоту кадра, — иначе он закрыл бы бойца, о котором рассказывает.
+
+   ШИРИНА — своя (--fs-w), а не --fp-w: та в вертикали обнулена (панель там
+   лежит полосой снизу), а блок статов стоит слева в любой раскладке.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root { --fs-w: 320px; }
+@media (orientation: landscape) and (max-width: 1023px) { :root { --fs-w: min(38vw, 250px); } }
+@media (orientation: portrait) { :root { --fs-w: min(64vw, 260px); } }
+
+.fp--stats {
+  left: 0; right: auto;
+  top: 50%; bottom: auto;
+  transform: translateY(-50%);
+  width: var(--fs-w);
+  /* ⚠️ ВЫСОТА ОБЯЗАНА КОНЧАТЬСЯ ДО ПОЛОСЫ СВЕРХУ. Блок стоит по центру высоты,
+     значит вырастает в обе стороны сразу, — и на низком лежащем телефоне (390
+     точек высоты) он дорос бы до полосы и накрыл кнопку BACK. Вычитаем полосу
+     дважды: сверху её обходим, снизу оставляем столько же, чтобы блок читался
+     по центру, а не прижатым. Полоса — 74 точки, 60 на узких (home.css). */
+  max-height: calc(100dvh - 180px);
+  border-left: 0; border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+/* ЛЁЖА НА НИЗКОМ ЭКРАНЕ ОСИ СТАНОВЯТСЯ В ДВА СТОЛБЦА. Восемь строк в один
+   столбец не помещаются в 390 точек высоты вместе с шапкой и кнопкой: замер —
+   блок дорастал до 340 при доступных 250, и кнопка занятия уходила под обрез.
+   Ширины на два столбца хватает, высоты — нет; поэтому меняется именно это. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .fp--stats .fp-head, .fp--stats .fp-scroll { padding: var(--sp-2) var(--sp-3); }
+  .fp--stats .fp-scroll { gap: var(--sp-3); }
+  .fp--stats .fp-name { font-size: var(--t-md); }
+  .fp--stats .fp-axes {
+    display: grid; grid-template-columns: 1fr 1fr;
+    column-gap: var(--sp-3); row-gap: 3px;
+  }
+  .fp--stats .fp-axis { gap: var(--sp-2); }
+  .fp--stats .fp-axis .nm { min-width: 0; flex: 1 1 auto; }
+  .fp--stats .fp-axis .gt { flex: 0 0 18px; }
+}
+
+/* Узкие раскладки: полоса сверху там 60 точек, а не 74 (home.css) — блоку можно
+   быть выше. Объявление стоит ПОСЛЕ базового, иначе оно бы им и перекрылось. */
+@media (orientation: landscape) and (max-width: 1023px) {
+  .fp--stats { max-height: calc(100dvh - 140px); }
+}
+
+/* Приезжает С СВОЕЙ стороны: общий переход панели везёт её справа (translateX
+   +18px), и блок слева выезжал бы навстречу самому себе. */
+.fp--stats.fp-fade-enter-from,
+.fp--stats.fp-fade-leave-to { transform: translateY(-50%) translateX(-18px); }
+
+/* ── оси: имя и пустой жёлоб под будущее значение ───────────────────────── */
+.fp-axes { list-style: none; margin: var(--sp-2) 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: var(--sp-1); }
+.fp-axis { display: flex; align-items: center; gap: var(--sp-3); }
+.fp-axis .nm {
+  flex: none; min-width: 6.5rem;
+  font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-off);
+}
+/* ЖЁЛОБ ПУСТ НАРОЧНО. Цифр в зале нет ни одной — ни здесь, ни где-либо ещё;
+   жёлоб оставлен видимым, чтобы было понятно, где значение однажды встанет. */
+.fp-axis .gt { flex: 1 1 auto; height: 2px; background: var(--fill-2); }
+
+/* ── стоя: вход в грани вторым шагом ────────────────────────────────────── */
+.fp-to-tree {
+  width: 100%; min-height: var(--h-btn-sm);
+  font: inherit; font-size: var(--t-xs); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink); text-align: left;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong); background: var(--fill-1);
+  border-radius: var(--r-none); cursor: pointer;
+  transition: background var(--d-fast), border-color var(--d-fast), transform var(--d-press);
+}
+.fp-to-tree:hover { background: var(--fill-2); border-color: var(--chrome-rim); }
+.fp-to-tree:active { transform: translateY(1px); transition-duration: var(--d-press); }
+.fp-to-tree:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }
+
+/* Стоя панель — полоса снизу; блок статов эту полосу не наследует: он и стоя
+   остаётся столбцом слева, просто узким. */
+@media (orientation: portrait) {
+  .fp--stats {
+    top: 50%; left: 0; right: auto; bottom: auto;
+    width: var(--fs-w); height: auto; max-height: calc(100dvh - 180px);
+    border-top: 1px solid var(--line); border-right: 1px solid var(--line);
+  }
+  .fp--stats .fp-head, .fp--stats .fp-scroll { padding: var(--sp-3); }
+  /* Шапку стоя раскладывает в строку общий перелом ниже — блоку статов это не
+     нужно: он узкий, и имя с ядром обязаны читаться друг под другом. */
+  .fp--stats .fp-head { display: block; }
+  .fp--stats .fp-name { max-width: none; font-size: var(--t-md); }
+  .fp--stats .fp-axis .nm { min-width: 5.5rem; }
+}
+
+/* Стоя общий перелом ставит занятие ЗА список (order: 2) — в блоке статов
+   списка нет, и порядок там свой: оси, потом действие, потом вход в грани. */
+@media (orientation: portrait), (orientation: landscape) and (max-width: 1023px) {
+  .fp--stats .fp-traits  { order: 1; }
+  .fp--stats .fp-train   { order: 2; }
+  .fp--stats .fp-to-tree { order: 3; }
+}

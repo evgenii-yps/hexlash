@@ -164,6 +164,9 @@ export default {
     treeErrorTitle: "TREE DID NOT LOAD",
     treeErrorBody: "SOMETHING WENT WRONG. THE FIGHTER IS FINE.",
     retry: "RETRY",
+    // ОСИ БОЙЦА в блоке статов. Имена самих осей приходят из набора осей
+    // (data/behavior.js) и не переводятся — они внутренние имена механики.
+    traitsLabel: "TRAITS",
     // строка характера
     styleLabel: "STYLE",
     // список ростера

@@ -34,10 +34,42 @@
          бойцов, наковальня — дерево граней. Сама панель не переписана: те же блоки,
          та же механика, просто показываются по требованию и по одному — за это
          отвечает `section`. -->
+    <!-- БЛОК СТАТОВ — левая половина того, что открывает нажатие по бойцу.
+         Кто выбран, его оси (именами, без цифр) и его действие. Лёжа стоит
+         одновременно с карточкой граней справа; стоя — один, и ведёт в грани
+         строкой (см. @open-tree). -->
+    <Transition name="fp-fade" appear>
+      <ForgePanel
+        v-if="statsOpen && picked"
+        class="fp--stats"
+        section="stats"
+        :can-open-tree="portrait"
+        :fighters="fighters"
+        :picked-id="pickedId"
+        :picked="picked"
+        :spent="spent"
+        :resource="resource"
+        :roster-max="rosterMax"
+        :is-guest="isGuest"
+        :status="status"
+        :tree-status="treeStatus"
+        :load-step="loadStep"
+        :retrying="retrying"
+        :states="states"
+        :assign-why="assignWhy"
+        :light-why="lightWhy"
+        :quench-why="quenchWhy"
+        @train="onTrain"
+        @cancel-train="onCancelTrain"
+        @open-tree="openTree"
+      />
+    </Transition>
+
     <Transition v-if="openSection" name="fp-fade" appear>
       <ForgePanel
         ref="panelRef"
         :section="openSection"
+        :show-head="!statsOpen"
         :fighters="fighters"
         :picked-id="pickedId"
         :picked="picked"
@@ -106,15 +138,44 @@ import ForgePanel from '@/components/forge/ForgePanel.vue';
 // Что сейчас открыто предметом: null — ничего, в экране только зал.
 // 'roster' — планшет, 'tree' — наковальня.
 const openSection = ref(null);
+// СТАТЫ ВЫБРАННОГО БОЙЦА — блок слева. Открывается нажатием ПО САМОМУ ТЕЛУ в
+// зале (и только им: строка в списке на планшете их не открывает, иначе список
+// и статы дрались бы за один и тот же угол). До 24.09.2026 это была надпись на
+// поверхности плиты перед бойцом — её закрывало его же тело и открытая панель.
+const statsOpen = ref(false);
+
+// СТОЯ ДВА БЛОКА РЯДОМ НЕ ВСТАЮТ: ширины на них нет. Поэтому стоя нажатие по
+// бойцу открывает только статы, а грани — вторым шагом, строкой в них.
+// Ориентация читается с ЭКРАНА, а не с устройства: телефон, положенный набок, —
+// это широкий экран, и больше знать ничего не нужно (то же правило в PveScene).
+const portrait = ref(false);
+let mq = null;
+function readOrientation(e) { portrait.value = e.matches; }
+onMounted(() => {
+  mq = window.matchMedia('(orientation: portrait)');
+  portrait.value = mq.matches;
+  mq.addEventListener('change', readOrientation);
+});
+onBeforeUnmount(() => mq?.removeEventListener('change', readOrientation));
+
+// ПРЕДМЕТ ГЛАВНЕЕ БОЙЦА: планшет и наковальня забирают экран себе, статы уходят.
 function onPress(key) {
   const want = key === 'roster' ? 'roster' : key === 'upgrade' ? 'tree' : null;
   if (!want) return;
+  statsOpen.value = false;
   openSection.value = openSection.value === want ? null : want;   // повторное нажатие закрывает
 }
-// Нажатие по пустому месту закрывает открытое предметом, и только потом выходит
-// из работы над бойцом: иначе панель нечем закрыть — предмет, который её открыл,
-// она сама и загораживает.
+// Стоя: из статов в грани. Карточка граней — ТА ЖЕ, что открывает наковальня,
+// второй её формы не заводится; статы под ней убираются, места на двоих нет.
+function openTree() {
+  openSection.value = 'tree';
+  statsOpen.value = false;
+}
+// Нажатие по пустому месту. Открыты статы — значит открыт боец: закрываем всё и
+// отпускаем его бродить. Открыто только предметом — закрываем это, и всё: иначе
+// панель нечем закрыть, ведь предмет, который её открыл, она сама загораживает.
 function onExit() {
+  if (statsOpen.value) { statsOpen.value = false; openSection.value = null; exitWork(); return; }
   if (openSection.value) { openSection.value = null; return; }
   exitWork();
 }
@@ -216,6 +277,9 @@ function onTrain(id) {
   }
   trainingTick.value += 1;
   armClock();
+  // УШЁЛ ЗАНИМАТЬСЯ — БЛОКИ ЗАКРЫВАЮТСЯ. Закрываем только то, что открывал сам
+  // боец: карточку, открытую наковальней, занятие не касается.
+  if (statsOpen.value && id === pickedId.value) { statsOpen.value = false; openSection.value = null; }
 }
 function onCancelTrain(id) {
   store.dispatch('roster/cancelLesson', id);
@@ -238,11 +302,20 @@ function onHover(payload) { tag.value = payload; }
 // ── picking ────────────────────────────────────────────────────────────────
 // Picking now comes from two places — a tap on a body in the hall, and a tap on
 // a row in the panel's list. Both land here, so the two never disagree.
-function onPick(id) {
+// `fromBody` — нажали по телу в зале, а не по строке в списке. Только тело
+// открывает статы: см. statsOpen выше.
+function onPick(id, fromBody = false) {
   store.dispatch('roster/pick', id);
   tag.value = null;
   buildTreeFor(id);
   sceneRef.value?.select(id);
+  if (!fromBody) return;
+  // ЗАНИМАЮЩЕГОСЯ НЕ РАЗБИРАЮТ. Нажатие по нему уводит камеру к грушам на
+  // соседний остров (это делает сама сцена) — и это всё, что происходит:
+  // статы по нему не открываются, работать с ним сейчас нельзя.
+  if (states.value[id] === 'busy') { statsOpen.value = false; openSection.value = null; return; }
+  statsOpen.value = true;
+  openSection.value = portrait.value ? null : 'tree';
 }
 
 // Building his tree is the one step that can fail, so it is the one step with a
@@ -268,6 +341,7 @@ function onRetry() {
   try { buildTreeFor(pickedId.value); } finally { retrying.value = false; }
 }
 function exitWork() {
+  statsOpen.value = false;
   store.dispatch('roster/pick', null);
   tag.value = null;
   sceneRef.value?.exitWork();
@@ -275,6 +349,9 @@ function exitWork() {
 function onToggle({ crystalId, faceId }) {
   if (!picked.value) return;
   store.dispatch('roster/toggleFacet', { id: picked.value.id, crystalId, faceId });
+  // Зажжённая грань ТРАТИТ право, и слово состояния в статах обязано сменить-
+  // ся тут же (READY → FREE). Карточка при этом остаётся открытой.
+  trainingTick.value += 1;
 }
 
 // ── what the panel is allowed to say ──────────────────────────────────────
@@ -307,7 +384,7 @@ function onNewFighter() {
 // the id is already null and comparing ids would never fire. What the store
 // cannot do is put the hall's 3D back into the overview — that is this job.
 watch(picked, (now, was) => {
-  if (was && !now) { tag.value = null; sceneRef.value?.exitWork(); }
+  if (was && !now) { tag.value = null; statsOpen.value = false; sceneRef.value?.exitWork(); }
 });
 
 // Esc walks back: first up the tree, then out of the work state.
