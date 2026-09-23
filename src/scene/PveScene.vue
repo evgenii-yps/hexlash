@@ -661,6 +661,9 @@ function applyCamera(frame, snap) {
     camPos.copy(camPosTo); camLook.copy(camLookTo);
     if (camera) { camera.position.copy(camPos); camera.lookAt(camLook); }
     if (controls) { controls.target.copy(camLookTo); controls.update(); }
+    camMoving = false;
+  } else {
+    camMoving = true;
   }
   idleSince = null; returning = false;
 }
@@ -777,6 +780,7 @@ let reduced = false;
 // Орбита и возврат в стартовую позу. homePose — та самая поза, которую считает
 // frameFor: она остаётся точкой отсчёта, свободная камера её не отменяет.
 let controls = null;
+let camMoving = false;   // ведёт ли камеру САМ ЗАЛ прямо сейчас (смена кадрирования)
 let homePose = null;
 let idleSince = null;
 let returning = false;
@@ -1093,14 +1097,21 @@ onMounted(() => {
     // КАМЕРА. Пока идёт смена кадрирования (выбрали бойца, повернули экран) её
     // ведёт зал — это его поставленное движение. Когда доехали, камера переходит
     // игроку: орбита, приближение, и возврат в стартовую позу после простоя.
-    const arrived = camPos.distanceToSquared(camPosTo) < 1e-4;
-    if (!arrived) {
+    // ⚠️ «Зал ведёт камеру» — это ОТДЕЛЬНЫЙ признак, а не сравнение позиции с
+    //    целью. Сравнение здесь и стояло, и оно ломало вращение: камеру двигает
+    //    игрок, позиция уезжает от цели, зал считает, что не доехал, и тянет её
+    //    обратно. Со стороны это выглядит как «камера не вращается вовсе».
+    if (camMoving) {
       const camK = reduced ? 1 : 1 - Math.exp(-(1 / (CAM.moveSec * 0.36)) * Math.min(0.05, dt));
       camPos.lerp(camPosTo, camK);
       camLook.lerp(camLookTo, camK);
       camera.position.copy(camPos);
       camera.lookAt(camLook);
       if (controls) controls.target.copy(camLook);
+      if (camPos.distanceToSquared(camPosTo) < 1e-4) {
+        camMoving = false;
+        if (controls) { controls.target.copy(camLookTo); controls.update(); }
+      }
     } else if (controls && !reduced) {
       idleReturn(dt);
       controls.update();
