@@ -168,7 +168,9 @@ const TRAIN = {
 const POSE_VARIANT = (() => {
   try {
     const v = new URLSearchParams(window.location.search).get('pose');
-    return v === 'near' || v === 'wide' ? v : 'wide';
+    // 'orig' — кадр ровно как был до встраивания: ни предметов, ни соседа.
+    // Нужен как эталон «до», иначе нельзя отличить «зал так выглядит» от «я сломал».
+    return v === 'near' || v === 'wide' || v === 'orig' ? v : 'wide';
   } catch { return 'wide'; }
 })();
 
@@ -523,7 +525,7 @@ function framePoints(working) {
     pts.push([m.x - 0.80, topY - 0.30, m.z], [m.x + 0.80, topY + BODY.height + 0.45, m.z]);
     // Предметы — планшет и наковальня. Они пришли на плиту вместе со встраиванием,
     // и вертикальный кадр обязан их держать: к ним игрок и тянется.
-    for (const pr of propList) {
+    for (const pr of (POSE_VARIANT === 'orig' ? [] : propList)) {
       const g = pr.obj.group.position;
       pts.push([g.x - 0.85, topY, g.z + 0.75], [g.x + 0.85, topY + 1.5, g.z - 0.75]);
     }
