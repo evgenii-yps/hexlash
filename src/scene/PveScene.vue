@@ -194,7 +194,9 @@ const CAM = {
     // трети зала (306 строк), а переход к грушам решено делать нажатием по
     // тренирующемуся бойцу, а не по полу соседнего острова.
     portrait:          { x0: 0.06, x1: 0.94, y0: 0.06, y1: 0.94 },
-    overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.14, y1: 0.90 },
+    // Горизонталь в покое — ВЕСЬ кадр, как и вертикаль: панель ушла, дожидаться
+    // её больше не нужно. Прежний overviewLandscape держал место под неё.
+    landscape:         { x0: 0.06, x1: 0.94, y0: 0.08, y1: 0.92 },
     // WORK has to dodge TWO panels, not one. The tree takes the right of a wide
     // screen (the bottom of a tall one), and the fighter's card sits in the bottom
     // corner on top of that — so the clear ground is the band ABOVE the card and
@@ -528,8 +530,17 @@ function framePoints(working) {
     pts.push([x - BODY.halfW - padX, topY, z + padZ], [x + BODY.halfW + padX, topY + BODY.height, z - padZ]);
   };
 
-  // Upright: the man on the mark IS the composition — see frameFor.
-  if (working || portrait) {
+  // ОДНА КОМПОЗИЦИЯ НА ОБЕ РАСКЛАДКИ (решение владельца 23.09.2026).
+  //
+  // Раньше их было две: вертикаль строилась вокруг бойца на метке, а горизонталь
+  // вписывала ВСЮ ДУГУ ростера — «обзор». Обзор делался ради того, чтобы разом
+  // увидеть весь состав; со встраиванием список состава переехал на планшет, и
+  // ради чего отъезжать, не осталось. Зато осталась цена: камера уходила так
+  // далеко, что соседний остров сам заходил в кадр справа, а композиция читалась
+  // низкой и косой — именно на это и пожаловался владелец.
+  //
+  // Кому нужен весь зал — отводит камеру: она теперь свободная.
+  {
     // Him on the mark, plus a margin of air — and all of it at HIS depth. A patch
     // of floor spanning several units of depth was tried and pulled the framing
     // right back: at this camera's shallow angle depth reads as a lot of screen
@@ -547,34 +558,6 @@ function framePoints(working) {
     return pts;
   }
 
-  // The whole arc — every spot with its zone around it — and the mark, which is
-  // part of the composition whether or not anybody is standing on it.
-  for (const r of roster) body(r.home.x, r.home.z, ZONE.halfX, ZONE.halfZ);
-  body(mark.x, mark.z, 0.2, 0.2);
-
-  // The plate itself is part of the composition now that it is the hall's only
-  // ground: its far corners and its near rim have to be on screen, or the floor
-  // runs off the bottom of the picture and the hall loses its edges.
-  if (compose) {
-    const hw = compose.slab.width / 2;
-    const hd = compose.slab.depth / 2;
-    for (const x of [-hw, hw]) for (const z of [-hd, hd]) pts.push([x, topY, z]);
-  }
-
-  // The trainer is the hall: he is in frame whether or not anyone else is, and his
-  // drift is included so the fit does not breathe with him.
-  const feet = topY + LEGEND.height;
-  pts.push(
-    [-LEGEND.driftRadius - 0.85, feet - 0.55, 0],
-    [LEGEND.driftRadius + 0.85, feet + 2.35, 0],
-  );
-
-  // Nobody on the floor: keep enough of the empty hall in frame that the room still
-  // reads as a place with nobody in it, not as a crop.
-  if (!roster.length) {
-    for (const x of [-2.6, 2.6]) for (const z of [compose ? compose.arcZ : 0, mark.z]) pts.push([x, topY, z]);
-  }
-  return pts;
 }
 
 // Build the pose for a framing. Returns { pos, look } in the shape applyCamera wants.
@@ -582,9 +565,8 @@ function frameFor(working) {
   // UPRIGHT there is one pose and no other. The overview existed to show the
   // whole arc; upright the arc is not in the room, so there is nothing for it to
   // show and a second pose would only be a way of standing further back.
-  const one = portrait || working;
   const r = portrait ? CAM.rect.portrait
-    : (one ? CAM.rect.workLandscape : CAM.rect.overviewLandscape);
+    : (working ? CAM.rect.workLandscape : CAM.rect.landscape);
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
   _fitDir.normalize();
