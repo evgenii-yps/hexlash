@@ -507,7 +507,7 @@ function trainingFraming() {
     pts.push([b.x - 0.5, topY, b.z + TRAIN.standAhead + 0.6], [b.x + 0.5, topY + BODY.height + 0.5, b.z - 0.6]);
   }
   const dist = fitStartDistance(target, dir, pts);
-  return { position: target.clone().addScaledVector(dir, dist), target };
+  return { position: target.clone().addScaledVector(dir, dist), target, dist };
 }
 
 function homeFraming() {
@@ -551,14 +551,21 @@ function homeFraming() {
     target.addScaledVector(_up, -(cy - wantY) * 2 * halfH);
   }
   const position = target.clone().addScaledVector(dir, dist);
-  return { position, target };
+  return { position, target, dist };
 }
 function applyHomePose(snap) {
   homePose = (props.focus === 'training' && trainSlab && bags.length) ? trainingFraming() : homeFraming();
   controls.target.copy(homePose.target);
-  const sc = scaleVsHome();
-  controls.minDistance = CAM.minDist * sc;
-  controls.maxDistance = CAM.maxDist * sc;
+  // Коридор приближения — ДОЛЯ от стартового удаления, а не число, растянутое по
+  // ширине плиты. Дома эти два способа совпадали: там стартовая поза и была
+  // CAM.base. Здесь поза подбирается под композицию, и в вертикальном кадре она
+  // уезжает дальше, чем CAM.maxDist * sc, — controls.update() тут же подтягивал
+  // камеру обратно к потолку коридора, и планшет вылетал за левый край. Берём
+  // домашние ПРОПОРЦИИ коридора (во сколько раз дома можно подъехать и отъехать
+  // от стартовой точки) и прикладываем их к своему старту.
+  const base = CAM.base.length();
+  controls.minDistance = homePose.dist * (CAM.minDist / base);
+  controls.maxDistance = homePose.dist * (CAM.maxDist / base);
   controls.minPolarAngle = CAM.polarMin;
   controls.maxPolarAngle = CAM.polarMax;
   controls.minAzimuthAngle = -Infinity;
