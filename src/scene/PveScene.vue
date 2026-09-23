@@ -34,10 +34,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildStatsFloor } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
-import { resolveBehavior } from '@/data/behavior.js';
+import { resolveBehavior, AXIS_IDS } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
 import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
@@ -542,6 +542,10 @@ function buildForgeProps(topY) {
   const spots = [
     { key: 'roster', make: buildRoster, x: -compose.slab.width * 0.05, z: z - 0.7 },
     { key: 'upgrade', make: buildUpgrade, x: compose.slab.width * 0.19, z: z - 1.6 },
+    // Полка баффов — ЗАДЕЛ. Пустые ниши, класть в них нечего (решение 22.09.2026:
+    // предметы баффов позже). Нажатие по ней ничего не открывает — и это
+    // намеренно: пустая панель хуже, чем предмет, который пока молчит.
+    { key: 'shelf', make: buildBuffShelf, x: -compose.slab.width * 0.28, z: z - 2.0 },
   ];
   for (const sp of spots) {
     const obj = sp.make();
@@ -583,6 +587,14 @@ function framePoints(working) {
       const g = pr.obj.group.position;
       pts.push([g.x - 0.85, topY, g.z + 0.75], [g.x + 0.85, topY + 1.5, g.z - 0.75]);
     }
+    // Статы лежат ПЕРЕД бойцом, то есть ближе к камере, чем он сам, — и без этой
+    // пары точек кадр их срезает нижней кромкой (замер 23.09.2026: в кадр
+    // попадала одна строка из восьми). Полоса просится в кадр только пока
+    // надпись открыта: в покое она ничего не двигает.
+    if (statsOpen) {
+      const sp = statsCentre();
+      if (sp) pts.push([sp.x - 0.85, topY, sp.z + 0.75], [sp.x + 0.85, topY + 0.05, sp.z - 0.75]);
+    }
     return pts;
   }
 
@@ -595,13 +607,21 @@ function frameFor(working) {
   // show and a second pose would only be a way of standing further back.
   // Одна композиция и один прямоугольник на каждую раскладку — панелей, ради
   // которых держались вторые, больше нет.
+  return fitFrame(framePoints(working), 0, 0);
+}
+
+/**
+ * Подогнать кадр под набор точек. ОДНА подгонка на весь зал: и главный остров, и
+ * тренировочный кадрируются ею же — иначе у перелёта была бы своя, вторая
+ * композиция, и она разошлась бы с первой при первом же изменении прямоугольника.
+ */
+function fitFrame(pts, lookX, lookZ) {
   const r = portrait ? CAM.rect.portrait : CAM.rect.landscape;
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
   _fitDir.normalize();
 
-  const pts = framePoints(working);
-  const look = new THREE.Vector3(0, (slab ? slab.refs.topY : 0) + 1.5, 0);
+  const look = new THREE.Vector3(lookX, (slab ? slab.refs.topY : 0) + 1.5, lookZ);
   const pose = () => ({
     look: [look.x, look.y, look.z],
     pos: [look.x + _fitDir.x * dist, look.y + _fitDir.y * dist, look.z + _fitDir.z * dist],
@@ -653,6 +673,40 @@ function frameFor(working) {
 // may not do. So a rotation moves nobody — only the camera re-fits. (There used to
 // be a relayout() here that re-packed the row for portrait; it is gone with the
 // two-row formation it served.)
+
+/**
+ * Где лежит надпись со статами: на шаг ОТ бойца в сторону камеры. Считается в
+ * одном месте, потому что её спрашивают двое — кадр (чтобы не срезать) и сам
+ * кадр отрисовки (чтобы положить).
+ */
+function statsCentre() {
+  const cur = roster.find((x) => x.id === currentId);
+  if (!cur?.fighter?.group.parent || !camera) return null;
+  const g = cur.fighter.group.position;
+  const dx = camera.position.x - g.x, dz = camera.position.z - g.z;
+  const L = Math.max(1e-3, Math.hypot(dx, dz));
+  return { x: g.x + (dx / L) * 1.0, z: g.z + (dz / L) * 1.0, rot: Math.atan2(dx, dz) };
+}
+
+/**
+ * Точки тренировочного острова: каждая груша вместе с местом, где перед ней
+ * стоит боец. По ним считается кадр перелёта.
+ */
+function trainingPoints() {
+  const topY = slab ? slab.refs.topY : 0;
+  const pts = [];
+  for (const b of bagSpots) {
+    pts.push([b.x - 0.7, topY, b.z + TRAIN.standAhead + 0.7],
+      [b.x + 0.7, topY + BODY.height + 0.6, b.z - 0.7]);
+  }
+  return pts;
+}
+
+/** Кадр соседнего острова — им отвечает зал на нажатие по занимающемуся. */
+function trainingFrame() {
+  const pts = trainingPoints();
+  return pts.length ? fitFrame(pts, trainCx, 0) : frameFor(true);
+}
 
 // Set (or ease toward) one of the two framings. `snap` places the camera at once
 // — used on build and whenever motion is reduced.
@@ -787,6 +841,10 @@ const hitPrev = new Map();
 let bagSpots = [];               // где груши СТОЯЛИ БЫ — считается сразу
 let bagTopY = 0;
 const propList = [];
+// Статы — надпись НА ПОЛУ перед остановленным бойцом. Цифр в ней нет: имена осей
+// и пустые жёлоба под будущие значения (решение: числа прокачки — отдельный заход).
+let statsFloor = null;
+let statsOpen = false;
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
 let portrait = false;
@@ -943,6 +1001,11 @@ onMounted(() => {
   buildNeighbourIsland(topY, members.length);
   buildForgeProps(topY);
 
+  // Имена осей берутся из САМОГО набора осей бойца, а не переписываются списком:
+  // второй список рано или поздно разошёлся бы с первым.
+  statsFloor = buildStatsFloor(AXIS_IDS.map((a) => a.toUpperCase()));
+  scene.add(statsFloor.group);
+
   const spots = layoutRoster(members.length, compose.arcZ);
   director = createForgeWanderDirector();
 
@@ -1026,7 +1089,10 @@ onMounted(() => {
         homing.add(i);
         hitPrev.delete(i);
         director.setMode(i, st === 'ready' ? 'still' : 'wander');
-        director.sendHome(i);
+        // Выбранный возвращается НА МЕТКУ, остальные — в свою зону: иначе боец,
+        // которого выбрали, пока он занимался, встал бы не там, где ему место.
+        if (roster[i].id === currentId) director.sendTo(i, mark.x, mark.z);
+        else director.sendHome(i);
         continue;
       }
       director.setMode(i, st === 'ready' ? 'still' : 'wander');
@@ -1101,19 +1167,26 @@ onMounted(() => {
     _ptr.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     _ptr.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     _ray.setFromCamera(_ptr, camera);
+    // ⚠️ ПОБЕЖДАЕТ БЛИЖАЙШИЙ, а не предмет. Раньше предметы проверялись первыми и
+    //    выигрывали нажатие независимо от расстояния — а выбранный боец стоит на
+    //    метке ровно перед планшетом, и по его телу было не попасть: луч задевал
+    //    планшет ЗА ним, и открывался список вместо бойца.
+    let best = null;
     for (const pr of propList) {
-      if (pr.obj.hit && pr.obj.hit.length && _ray.intersectObjects(pr.obj.hit, true).length) {
-        return { kind: 'prop', key: pr.key };
-      }
+      if (!pr.obj.hit || !pr.obj.hit.length) continue;
+      const h = _ray.intersectObjects(pr.obj.hit, true)[0];
+      if (h && (!best || h.distance < best.d)) best = { d: h.distance, res: { kind: 'prop', key: pr.key } };
     }
     // Only bodies that are actually in the room can be hit — upright that is one.
     const live = roster.filter((r) => r.fighter && r.fighter.group.parent);
     const hit = _ray.intersectObjects(live.map((r) => r.fighter.group), true)[0];
-    if (!hit) return null;
-    let o = hit.object;
-    while (o && !live.some((r) => r.fighter.group === o)) o = o.parent;
-    const entry = o ? live.find((r) => r.fighter.group === o) : null;
-    return entry ? { kind: 'fighter', entry } : null;
+    if (hit && (!best || hit.distance < best.d)) {
+      let o = hit.object;
+      while (o && !live.some((r) => r.fighter.group === o)) o = o.parent;
+      const entry = o ? live.find((r) => r.fighter.group === o) : null;
+      if (entry) best = { d: hit.distance, res: { kind: 'fighter', entry } };
+    }
+    return best ? best.res : null;
   }
 
   // Screen position of a body's head — where its callsign hangs.
@@ -1145,13 +1218,18 @@ onMounted(() => {
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
     if (d.entry && d.entry.kind === 'prop') {
+      statsOpen = false;          // открылся предмет — надпись на полу уходит
       emit('press', d.entry.key);
     } else if (d.entry && d.entry.kind === 'fighter') {
+      // Статы открываются нажатием ПО САМОМУ ТЕЛУ — и только им. Строка в списке
+      // на планшете их не открывает: панель закрывает ту самую половину пола.
+      statsOpen = true;
       // Touch has no hover, so light the core for a beat BEFORE the framing
       // changes — the finger has to see what it hit.
       emitHover(d.entry.entry);
       emit('pick', d.entry.entry.id);
     } else {
+      statsOpen = false;
       // Нажатие по пустому месту. Раньше оно сообщалось только пока открыт боец —
       // больше нельзя: со встраиванием пустым местом ещё и закрывают то, что
       // открыл предмет, а предмет к этому моменту загорожен самой панелью.
@@ -1254,6 +1332,18 @@ onMounted(() => {
       applyFighterLight(r);
     }
 
+    // Статы лежат на плите ПЕРЕД выбранным бойцом и едут вместе с ним: он
+    // останавливается там, где его нажали, и надпись обязана быть там же.
+    if (statsFloor) {
+      const sp = statsCentre();
+      if (sp) {
+        statsFloor.group.position.set(sp.x, slab ? slab.refs.topY : 0, sp.z);
+        statsFloor.group.rotation.y = sp.rot;
+      }
+      statsFloor.setOpen(statsOpen && !!sp);
+      statsFloor.tick(dt, reduced);
+    }
+
     // Груши качаются только пока они есть — пустых в зале не висит.
     for (const [, bag] of bags) bag.tick(dt, reduced);
 
@@ -1301,6 +1391,13 @@ onMounted(() => {
   // ⚠️ Признак служебного режима управляет ТОЛЬКО видимостью линейки. В игре
   // этой ветки нет вовсе.
   if (DEV_MODE) {
+    // Что лежит под долей кадра. Отвечает ровно то же, что ответит настоящее
+    // нажатие: проверка нажимаемости ведётся замером, а не «нажал и посмотрел».
+    window.__pickAt = (sx, sy) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const e = pickAt(rect.left + sx * rect.width, rect.top + sy * rect.height);
+      return e ? (e.kind === 'prop' ? 'предмет:' + e.key : 'боец:' + e.entry.id) : 'пусто';
+    };
     window.__forgeProbe = () => {
       if (!renderer || !scene) return null;
       const r = renderer.info;
@@ -1358,6 +1455,34 @@ onMounted(() => {
           bag: bags.has(i),
         } : null)).filter(Boolean),
         bagSpots: bagSpots.map((b) => ({ x: +b.x.toFixed(2), z: +b.z.toFixed(2) })),
+        cam: camera && controls ? {
+          pos: [camera.position.x, camera.position.y, camera.position.z].map((v) => +v.toFixed(2)),
+          look: [controls.target.x, controls.target.y, controls.target.z].map((v) => +v.toFixed(2)),
+          dist: +camera.position.distanceTo(controls.target).toFixed(2),
+        } : null,
+        // Куда НАЖИМАТЬ: доли кадра для каждого предмета и каждого тела. Нужны,
+        // чтобы проверку можно было вести замером, а не угадыванием координат по
+        // картинке — композиция в зале подвижная, и угадывание всё время врало.
+        taps: (() => {
+          const out = {};
+          const at = (pos, lift) => {
+            _v.copy(pos); _v.y += lift; _v.project(camera);
+            return { sx: +(_v.x * 0.5 + 0.5).toFixed(3), sy: +(-_v.y * 0.5 + 0.5).toFixed(3) };
+          };
+          // Точка берётся у САМОГО нажимаемого меша, а не у начала группы: полка
+          // низкая, наковальня высокая, и одна общая добавка по высоте мимо
+          // низкого предмета промахивалась.
+          const _c = new THREE.Vector3();
+          for (const pr of propList) {
+            const m = pr.obj.hit && pr.obj.hit[0];
+            if (!m) continue;
+            if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+            _c.copy(m.geometry.boundingSphere.center); m.localToWorld(_c);
+            out[pr.key] = at(_c, 0);
+          }
+          roster.forEach((x, i) => { if (x.fighter?.group.parent) out['f' + i] = at(x.fighter.group.position, 1.0); });
+          return out;
+        })(),
       };
     };
     // Экранная коробка тела — чтобы сравнить ЯРКОСТЬ фигуры в зале и в воротах
@@ -1648,8 +1773,11 @@ function makeCurrent(idx) {
     entry.fighter.group.position.set(mark.x, topY, mark.z);
     return;
   }
-  if (prevIdx >= 0) director?.sendHome(prevIdx);
-  director?.sendTo(idx, mark.x, mark.z);
+  // ⚠️ ЗАНЯТИЕ СИЛЬНЕЕ МЕТКИ. Кого выбрали — обычно выходит на метку, а кого
+  //    сменили — уходит в свою зону. Но тот, кто сейчас у груши, не делает ни
+  //    того, ни другого: выбор не должен снимать бойца с занятия.
+  if (prevIdx >= 0 && !atBags.has(prevIdx)) director?.sendHome(prevIdx);
+  if (!atBags.has(idx)) director?.sendTo(idx, mark.x, mark.z);
 }
 
 function select(id) {
@@ -1658,7 +1786,13 @@ function select(id) {
   makeCurrent(idx);
   workingId = id;
   hoveredId = null;
-  applyCamera(frameFor(true), reduced);
+  // ЗАНИМАЮЩИЙСЯ — на соседнем острове, и туда летит камера. Вход сюда один и
+  // тот же и у нажатия по телу, и у строки в списке на планшете, поэтому оба
+  // ведут себя одинаково и разойтись не могут.
+  //
+  // Обратный переход НЕ трогаем: камера возвращается в зал тем же, чем и всегда —
+  // нажатием по пустому месту (exitWork) или выбором того, кто в зале.
+  applyCamera(atBags.has(idx) ? trainingFrame() : frameFor(true), reduced);
 }
 
 function exitWork() {
@@ -1751,6 +1885,8 @@ onBeforeUnmount(() => {
   // Соседний остров и груши на нём — убираются вместе с залом. Груш может не
   // быть вовсе (их строят по мере назначения занятия), поэтому просто обходим
   // то, что есть.
+  if (statsFloor) { scene.remove(statsFloor.group); statsFloor.dispose(); statsFloor = null; }
+  statsOpen = false;
   for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();
