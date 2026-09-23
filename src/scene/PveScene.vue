@@ -33,6 +33,7 @@ import * as THREE from 'three';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
+import { buildRoster, buildUpgrade, buildPunchBag } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -149,6 +150,28 @@ const MARK = {
 
 // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
 // workplace, not a viewing platform (owner's call, 24.08). Two framings only.
+// ─────────── ВСТРАИВАНИЕ v1, шаг 1: соседний остров и предметы ───────────
+// Числа перенесены из принятого макета /dev/forge как есть — это его эталон.
+const TRAIN = {
+  gap: 0.35,          // зазор между островами: дорога, а не пропасть
+  rowMax: 5,          // груш в ряду; дальше второй ряд
+  bagStep: 1.25,
+  rowGap: 2.10,
+  standAhead: 0.86,
+  edge: 0.9,
+};
+// ДВА ВАРИАНТА СТАРТОВОЙ ПОЗЫ — приносятся владельцу на выбор (ТЗ §3.1 + вставка).
+// 'near'  — в кадр обязательно входит полоса пола соседнего острова, по ней можно
+//           попасть пальцем. Камера ради этого отъезжает.
+// 'wide'  — кадр считается как сейчас, предметы читаются крупно; сосед за кадром.
+// Переключается адресом ?pose=near|wide, чтобы снять оба на одной сборке.
+const POSE_VARIANT = (() => {
+  try {
+    const v = new URLSearchParams(window.location.search).get('pose');
+    return v === 'near' || v === 'wide' ? v : 'wide';
+  } catch { return 'wide'; }
+})();
+
 const CAM = {
   // Not fixed points: the DIRECTION the camera looks from, and a starting guess at
   // the distance. Where it ends up is measured against what is actually on the
@@ -432,6 +455,55 @@ const _fitDir = new THREE.Vector3();
 // zone, a walk out to the mark or back), and a framing measured off live positions
 // would breathe along with them. The zone half-extents are added on, so a body that
 // wanders to the edge of its patch is still inside the frame.
+// ── Соседний остров: плита того же рода + груши. Из макета /dev/forge. ──
+function bagLayout(n) {
+  const rows = Math.ceil(n / TRAIN.rowMax);
+  const per = Math.ceil(n / rows);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / per);
+    const inRow = Math.min(per, n - r * per);
+    const k = i - r * per;
+    out.push({ x: (k - (inRow - 1) / 2) * TRAIN.bagStep, z: (r - (rows - 1) / 2) * TRAIN.rowGap });
+  }
+  return {
+    spots: out,
+    width: (per - 1) * TRAIN.bagStep + 2 * (TRAIN.edge + 0.4),
+    depth: (rows - 1) * TRAIN.rowGap + 2 * (TRAIN.edge + TRAIN.standAhead + 0.4),
+  };
+}
+
+function buildNeighbourIsland(topY, count) {
+  const lay = bagLayout(Math.max(1, count));
+  trainSlab = buildForgeSlab({ width: lay.width, depth: lay.depth, height: SLAB.height });
+  // Гасить разлом не надо: forgeSlab его не строит вовсе (см. его шапку).
+  trainCx = compose.slab.width / 2 + TRAIN.gap + lay.width / 2;
+  trainSlab.group.position.x = trainCx;
+  scene.add(trainSlab.group);
+  trainHalfW = lay.width / 2;
+  trainHalfD = lay.depth / 2;
+  for (const sp of lay.spots) {
+    const bag = buildPunchBag();
+    bag.group.position.set(trainCx + sp.x, topY, sp.z);
+    scene.add(bag.group);
+    bags.push(bag);
+  }
+}
+
+function buildForgeProps(topY) {
+  const z = compose.slab.depth / 2 - 0.9;
+  const spots = [
+    { key: 'roster', make: buildRoster, x: -compose.slab.width * 0.05, z: z - 0.7 },
+    { key: 'upgrade', make: buildUpgrade, x: compose.slab.width * 0.19, z: z - 1.6 },
+  ];
+  for (const sp of spots) {
+    const obj = sp.make();
+    obj.group.position.set(sp.x, topY, sp.z);
+    scene.add(obj.group);
+    propList.push({ key: sp.key, obj });
+  }
+}
+
 function framePoints(working) {
   const pts = [];
   const topY = slab ? slab.refs.topY : 0;
@@ -449,6 +521,24 @@ function framePoints(working) {
     const m = mark;
     body(m.x, m.z, 0.30, 0);
     pts.push([m.x - 0.80, topY - 0.30, m.z], [m.x + 0.80, topY + BODY.height + 0.45, m.z]);
+    // Предметы — планшет и наковальня. Они пришли на плиту вместе со встраиванием,
+    // и вертикальный кадр обязан их держать: к ним игрок и тянется.
+    for (const pr of propList) {
+      const g = pr.obj.group.position;
+      pts.push([g.x - 0.85, topY, g.z + 0.75], [g.x + 0.85, topY + 1.5, g.z - 0.75]);
+    }
+    // ВАРИАНТ 'near' — в кадр обязательно входит БЛИЖНЯЯ ПОЛОСА ПОЛА соседнего
+    // острова, чтобы по ней можно было попасть пальцем. Берётся именно полоса, а
+    // не остров целиком: вписывать его весь значит отогнать камеру ещё дальше.
+    //
+    // ⚠️ Здесь и сидит цена, о которой говорит ТЗ. У этой камеры пологий угол, и
+    //    глубина читается как высота кадра — в коде зала это уже было измерено
+    //    однажды: «участок пола отогнал подгонку назад, и боец вышел мелким».
+    //    Поэтому вариант и выносится владельцу снимками, а не выбирается тут.
+    if (POSE_VARIANT === 'near' && trainSlab) {
+      const nearX = trainCx - trainHalfW;
+      pts.push([nearX, topY, m.z + 0.2], [nearX + 0.9, topY, m.z - 0.2]);
+    }
     return pts;
   }
 
@@ -611,6 +701,11 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer, scene, camera, slab, resizeObserver, clock;
+// Встраивание v1, шаг 1 — соседний остров, груши и два предмета на плите.
+let trainSlab = null;
+let trainCx = 0, trainHalfW = 0, trainHalfD = 0;
+const bags = [];
+const propList = [];
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
 let portrait = false;
@@ -754,6 +849,12 @@ onMounted(() => {
   //     The record carries only a core id; the hue comes from this scene's own
   //     palette. Read once at build time — the roster is edited in the shop, on
   //     another route, so arriving here always rebuilds the scene. ---
+  // Соседний остров с грушами + два предмета на главной плите. Шаг 1 встраивания:
+  // ГЕОМЕТРИЯ ТОЛЬКО. Ни нажатий, ни перелёта, ни переноса занятия сюда — это
+  // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
+  buildNeighbourIsland(topY, members.length);
+  buildForgeProps(topY);
+
   const spots = layoutRoster(members.length, compose.arcZ);
   director = createForgeWanderDirector();
 
