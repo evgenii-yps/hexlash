@@ -20,18 +20,19 @@
       <section id="s1" class="fx-sec">
         <h2 class="fx-h">1 · ЗАЛ ЦЕЛИКОМ, ПРЕДМЕТАМИ</h2>
         <p class="fx-note">
-          Панелей нет. Предметов на плите теперь три: ростер, объект прокачки и
-          полка баффов. SHOP, кабинет и BACK вернулись в плоские кнопки — те
-          самые, что на остальных экранах игры, тем же кодом и теми же стилями.
-          Нажмите по предмету в кадре — под ним загорится розовое; по бойцу —
-          на плите перед ним проступят статы. В покое всё матовое: розовое
-          принадлежит действию.
+          Панелей нет. Предметов на плите три: ростер, объект прокачки и полка
+          баффов. SHOP, кабинет и BACK — плоские кнопки, те самые, что на
+          остальных экранах игры. Нажмите по предмету — под ним загорится
+          розовое; по бойцу — он остановится, и на плите перед ним проступят
+          статы. В покое всё матовое: розовое принадлежит действию.
         </p>
         <p class="fx-note">
-          У каждого бойца теперь своё место, размеченное на полу. Мест ровно
-          столько, сколько держит ступень плиты, и пустое место видно пустым.
-          Пока боец в своём месте ЗАНИМАЕТСЯ, черта его зоны заметнее — это та
-          самая механика, которая уже на проде: занятие идёт внутри своей зоны.
+          <b>Камера свободная — домашняя.</b> Крутится пальцем, приближается
+          щипком, под плиту не заглядывает, после простоя сама возвращается в
+          стартовую позу. Бойцы <b>бродят</b> по плите сами. Кому назначено
+          занятие — уходит своими ногами на соседний остров, встаёт к своей
+          груше и бьёт её; кончил — возвращается. Разметки мест из прошлой
+          правки больше нет: бродящему бойцу закреплённое место противоречит.
         </p>
 
         <!-- ОДНА живая сцена за раз. Двух сразу на странице быть не должно:
@@ -43,13 +44,13 @@
           </div>
           <div class="fx-stage" :class="`is-${layout}`">
             <ForgeMockScene
-              :layout="layout"
               :seats="seats"
-              :count="count"
+              :training="training"
+              :ready="ready"
               :legend="legend"
               :stats-open="statsOpen"
               :pressed="pressed"
-              :train-state="trainState"
+              :focus="focus"
               :show-fps="showFps"
               @press="onPress"
               @pick-fighter="statsOpen = true"
@@ -90,18 +91,27 @@
             </div>
           </div>
           <div class="fx-ctl">
-            <div class="fx-ctl-name">ЗАНЯТО МЕСТ</div>
+            <div class="fx-ctl-name">ЗАНИМАЮТСЯ У ГРУШ</div>
             <div class="fx-row">
-              <button type="button" class="fx-btn" :class="{ 'is-on': full }" @click="full = true">все заняты</button>
-              <button type="button" class="fx-btn" :class="{ 'is-on': !full }" @click="full = false">часть пустая</button>
+              <button v-for="t in TRAINING" :key="t.id" type="button" class="fx-btn" :class="{ 'is-on': trainKind === t.id }" @click="trainKind = t.id">{{ t.name }}</button>
             </div>
-            <p class="fx-desc">Пустое место остаётся размеченным — так видно, что зона принадлежит месту, а не бойцу.</p>
+            <p class="fx-desc">Груш столько же, сколько мест на ступени. Свободные груши висят пустыми. Заниматься могут все сразу.</p>
           </div>
           <div class="fx-ctl">
-            <div class="fx-ctl-name">СОСТОЯНИЕ БОЙЦА</div>
+            <div class="fx-ctl-name">ВЫБРАННЫЙ БОЕЦ</div>
             <div class="fx-row">
-              <button v-for="s in TRAIN" :key="s.id" type="button" class="fx-btn" :class="{ 'is-on': trainState === s.id }" @click="trainState = s.id">{{ s.name }}</button>
+              <button type="button" class="fx-btn" :class="{ 'is-on': !ready }" @click="ready = false">FREE · бродит</button>
+              <button type="button" class="fx-btn" :class="{ 'is-on': ready }" @click="ready = true">READY · смирно</button>
             </div>
+            <p class="fx-desc">TRAINING — это уже не поза, а место: боец уходит к груше на соседний остров.</p>
+          </div>
+          <div class="fx-ctl">
+            <div class="fx-ctl-name">КАМЕРА СМОТРИТ</div>
+            <div class="fx-row">
+              <button type="button" class="fx-btn" :class="{ 'is-on': focus === 'hall' }" @click="focus = 'hall'">на зал</button>
+              <button type="button" class="fx-btn" :class="{ 'is-on': focus === 'training' }" @click="focus = 'training'">на груши</button>
+            </div>
+            <p class="fx-desc">Помощь страницы, а не кнопка игры: в игре камеру доворачивают пальцем. Здесь — чтобы разглядеть соседний остров с телефона.</p>
           </div>
           <div class="fx-ctl">
             <div class="fx-ctl-name">МЕСТО ЛЕГЕНДЫ</div>
@@ -188,10 +198,12 @@ const LAYOUTS = [
   { id: 'landscape', name: 'ГОРИЗОНТАЛЬНО · 844 × 390' },
 ];
 const SEATS = [4, 7, 10];
-const TRAIN = [
-  { id: 'free', name: 'FREE · стоит' },
-  { id: 'busy', name: 'TRAINING · занят' },
-  { id: 'ready', name: 'READY · смирно' },
+// Сколько бойцов у груш. Самый тяжёлый случай — «все», ради него и мерили.
+const TRAINING = [
+  { id: 'none', name: 'никто' },
+  { id: 'one', name: 'один' },
+  { id: 'half', name: 'половина' },
+  { id: 'all', name: 'все' },
 ];
 const PRESSABLE = [
   { id: 'roster', name: 'ростер' },
@@ -203,16 +215,17 @@ const SECTIONS = [
   { id: 's4', name: '3 · Чего нет' },
 ];
 
-const layout = ref('portrait');   // основная раскладка проекта — вертикальный телефон
-const seats = ref(4);             // мест на плите = ступень плиты
-const full = ref(true);           // все ли места заняты
-// Бойцов ставим на все места или чуть меньше — чтобы пустая размеченная зона
-// была видна рядом с занятой. Больше мест, чем есть, не бывает.
-const count = computed(() => (full.value ? seats.value : Math.ceil(seats.value / 2)));
+const layout = ref('portrait');   // коробка кадра на странице — не поза камеры
+const seats = ref(4);             // мест на плите = ступень плиты = число груш
+const trainKind = ref('none');
+const training = computed(() => ({
+  none: 0, one: 1, half: Math.ceil(seats.value / 2), all: seats.value,
+}[trainKind.value] ?? 0));
+const ready = ref(false);
+const focus = ref('hall');
 const legend = ref(false);
 const statsOpen = ref(false);
 const pressed = ref(null);
-const trainState = ref('free');
 const showFps = ref(false);
 
 function setSeats(n) { seats.value = n; }

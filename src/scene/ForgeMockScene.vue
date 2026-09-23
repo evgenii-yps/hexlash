@@ -1,28 +1,30 @@
 <!-- ForgeMockScene — ЗАЛ FORGE В НОВОМ ВИДЕ, макет. Часть скрытой страницы
-     /dev/forge (ТЗ 23.09.2026). НИЧЕГО НЕ ВСТРАИВАЕТ: настоящий зал — это
-     PveScene.vue + ForgePanel.vue, и они здесь не правятся и не читаются.
+     /dev/forge (ТЗ 23.09.2026, правка v3). НИЧЕГО НЕ ВСТРАИВАЕТ: настоящий зал —
+     это PveScene.vue + ForgePanel.vue, и они здесь не правятся и не читаются.
 
-     Своя сцена, своими копиями, по рецепту hexlash-3d: свой рендер, своя
-     камера, свой свет. Строительные кирпичи зала ВЫЗЫВАЮТСЯ, а не правятся:
-     плита (forgeSlab), лампы (hallLamps), купол (hallBackdrop), тела
-     (buildFighter), режиссёр прогулок и занятий (forgeWander), облако легенды
-     (legendPresence) — ровно те же, что несёт настоящий зал, поэтому макет
-     показывает зал, а не его похожий макет.
+     Своя сцена, своими копиями, по рецепту hexlash-3d. Строительные кирпичи
+     ВЫЗЫВАЮТСЯ, а не правятся: плита (forgeSlab), лампы (hallLamps), купол
+     (hallBackdrop), тела (buildFighter), режиссёр прогулок (homeWander), облако
+     легенды (legendPresence).
 
-     ЧТО ЗДЕСЬ НОВОГО. Панелей нет. Ростер, объект прокачки, SHOP и кабинет,
-     полка баффов и место легенды — ПРЕДМЕТЫ на плите (forgeProps.js). Статы
-     бойца — табло, поднимающееся перед ним по нажатию на само тело.
+     ЧТО ПРИНЕСЛА ПРАВКА v3:
+       · КАМЕРА СВОБОДНАЯ — домашняя. Тот же OrbitControls, тот же стартовый
+         угол, те же ограничители (под плиту не заглянуть, приближение в
+         коридоре), плюс возврат в стартовую позу после простоя.
+       · БОЙЦЫ БРОДЯТ. Разметка мест из v2 удалена: она вводилась, чтобы разнести
+         слипшихся, а слипание было ошибкой макета и уже исправлено.
+       · ВТОРОЙ ОСТРОВ — тренировочный. Боец, которому назначено занятие, уходит
+         туда СВОИМИ НОГАМИ, встаёт к своей груше и бьёт её; кончил — возвращается.
 
-     ТЕСНОТА ВЕРТИКАЛЬНОГО КАДРА (ответ на §4 ТЗ). В портрете зал держит одно
-     тело — так устроен и настоящий зал, и это не обходится: десять тел на
-     телефоне не тянет. Предметы поэтому встают НА ПЕРЕДНИЙ ПЛАН, к ближней
-     кромке плиты, низкой полосой под бойцом; боец стоит за ними и выше по
-     кадру. Ровно ту полосу экрана сегодня занимает панель — предметы её и
-     занимают, только в объёме. Камера в портрете кадрирует эту пару
-     (боец + полоса предметов) целиком, а не одного бойца.
+     ⚠️ ОДИН РЕЖИССЁР — ОДНО ТЕЛО. createHomeWanderDirector держит ровно одного
+        бойца (`attach(f, cam)`, одна переменная `fighter`, `foePos()` без номера).
+        Поэтому здесь заводится ПО ЭКЗЕМПЛЯРУ НА БОЙЦА — это переиспользование
+        домашнего режиссёра, а не второй режиссёр: ни строчки его правил тут не
+        переписано. Друг о друге они узнают через `setObstacles`, которому каждый
+        кадр отдаются живые места соседей.
 
      Дисциплина: тёмная комната; одно тёплое облако легенды; ядро выбранного
-     бойца; розовое — только в момент нажатия на предмет. Ни одной цифры.
+     бойца; розовое — только в момент нажатия. Груши не светятся. Ни одной цифры.
      Уважает prefers-reduced-motion и паузу вкладки. -->
 <template>
   <div ref="wrap" class="fm-wrap">
@@ -35,236 +37,152 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
-import { createForgeWanderDirector } from './forgeWander.js';
+import { createHomeWanderDirector } from './homeWander.js';
 import { createLegendPresence } from './legendPresence.js';
 import {
-  FORGE_PROPS, buildRoster, buildUpgrade, buildZoneMark,
+  buildRoster, buildUpgrade, buildPunchBag,
   buildStatsFloor, buildLegendAnchor, buildBuffShelf,
 } from './forgeProps.js';
 import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA, BACKDROP } from '@/data/sceneTokens.js';
 
 const props = defineProps({
-  /** Сколько МЕСТ на плите — 4 / 7 / 10 (три её ступени). Разметка зон рисуется
-   *  на все места, занятые они или нет. */
+  /** Сколько МЕСТ держит ступень плиты — 4 / 7 / 10. Столько же и груш. */
   seats: { type: Number, default: 4 },
-  /** Сколько мест реально занято бойцами (≤ seats) — чтобы было видно пустые. */
-  count: { type: Number, default: 4 },
-  /** Раскладка макета: 'portrait' | 'landscape'. Задаётся страницей, а не окном. */
-  layout: { type: String, default: 'portrait' },
-  /** Состояния показа. */
+  /** Сколько бойцов сейчас ЗАНИМАЮТСЯ (стоят у груш). Остальные бродят. */
+  training: { type: Number, default: 0 },
+  /** Выбранный боец стоит смирно лицом к игроку (состояние READY). */
+  ready: { type: Boolean, default: false },
   legend: { type: Boolean, default: false },
   statsOpen: { type: Boolean, default: false },
   pressed: { type: String, default: null },   // 'roster' | 'upgrade' | null
+  /** Куда смотрит камера в покое: 'hall' | 'training'. Это ПОМОЩЬ СТРАНИЦЫ, а
+   *  не кнопка игры: в игре игрок доворачивает камеру сам. Здесь она нужна,
+   *  чтобы владелец мог разглядеть соседний остров с телефона одним нажатием. */
+  focus: { type: String, default: 'hall' },
   showFps: { type: Boolean, default: false },
-  /** Состояние тренировки выбранного бойца: 'free' | 'busy' | 'ready'. */
-  trainState: { type: String, default: 'free' },
 });
 const emit = defineEmits(['press', 'pick-fighter']);
 
 // ───────────────────────────── НАСТРОЙКИ ─────────────────────────────
-// Всё, что подбирается глазами. Цветов здесь нет — только геометрия и время.
 const SLAB = { steps: [4, 7, 10], aspect: 1.5, edge: 0.8, height: 1.0 };
 const ARC = { step: 1.4, radius: 16 };
-// ЗОНА БОЙЦА — участок, по которому он ходит И который теперь размечен на полу
-// (правка v2). Поперёк дуги зона расширена с 0.15 до 0.28: щель 0.30 шириной
-// разметкой не читается. Предел здесь жёсткий и считается, а не подбирается:
-// соседние тела не должны налезать друг на друга, то есть
-// ARC.step − 2·halfX должно оставаться шире тела (0.80). При 0.28 остаётся
-// 0.84 — тело проходит, и запас нулевой. Шире 0.28 делать нельзя.
-const ZONE = { halfX: 0.28, halfZ: 0.70 };
 const BODY = { halfW: 0.40, height: 1.95 };
 const MARK = { ahead: 2.9 };
-// Досягаемость четырёх ламп — для САМОЙ МАЛЕНЬКОЙ плиты; на больших те же
-// четыре светят дальше (см. сборку ламп ниже).
-const LAMP = { intensity: 30, distance: 26, hangLift: 1.2 };
+const LAMP = { intensity: 30, distance: 26, hangLift: 1.2, trainLift: 1.7, trainPower: 0.85 };
 
-// ПОЛОСА ПРЕДМЕТОВ. Предметы стоят ОДНОЙ линией у ближней кромки плиты, перед
-// всем остальным. В ширину они раскладываются равномерно, в глубину — на одной
-// линии: полоса должна читаться полосой, а не россыпью.
-const RAIL = {
-  // Предметов осталось ТРИ (правка v2: SHOP и кабинет вернулись в плоские
-  // кнопки). Освободившееся место отдано бойцу и разметке зон, а не растянуто
-  // между оставшимися: растянуть их значило бы снова отогнать камеру.
-  inset: 0.85,
-  spanLandscape: 0.56,          // доля ширины плиты, на которую расходится полоса
-
-  // ПОРТРЕТ. Два предмета, к которым ходят, стоят перед бойцом; полка баффов —
-  // задел, к ней не ходят — уходит за него. Пролёт переднего ряда стал уже
-  // (было 3.2 на три предмета), поэтому камера подошла ближе и боец крупнее.
-  portraitSpan: 2.05,           // разнос переднего ряда, единиц мира
-  portraitAhead: 1.95,          // на сколько передний ряд стоит ПЕРЕД меткой бойца
-  portraitBackZ: 1.45,          // насколько полка ГЛУБЖЕ метки бойца
-  portraitBackOut: 1.5,         // и насколько она уведена вбок от центра
+// ТРЕНИРОВОЧНЫЙ ОСТРОВ. Стоит рядом с главным, своей плитой.
+//
+// ⚠️ ЗАЗОР МЕЖДУ ОСТРОВАМИ — 0.35, и это не случайное число. Боец уходит на
+//    занятие СВОИМИ НОГАМИ, а не переносится: ноги идут по плите, и над щелью
+//    тело неизбежно оказывается в воздухе. При 0.35 это один шаг за треть
+//    секунды — читается как перешагнул, а не как прошёл по пустоте. Развести
+//    острова дальше значит либо показать шагающего по воздуху, либо завести
+//    перенос, которого в этом мире нет.
+const TRAIN = {
+  gap: 0.35,
+  rowMax: 5,          // груш в одном ряду; дальше — второй ряд
+  bagStep: 1.25,      // расстояние между грушами вдоль ряда
+  rowGap: 2.10,       // между рядами груш
+  standAhead: 0.86,   // на сколько боец стоит ПЕРЕД грушей (в сторону камеры)
+  edge: 0.9,          // бортик плиты вокруг груш
+  hitEvery: [0.55, 1.15],   // пауза между ударами, секунд
 };
 
-// Камера. Фронтальная и фиксированная, как в настоящем зале: это мастерская.
+// Камера — ДОМАШНЯЯ. Числа взяты у HomeScene: те же, чтобы зал и дом
+// управлялись одинаково и игрок не переучивался.
 const CAM = {
-  dir: [0, 3.5, 9.0],
-  rect: {
-    // В портрете композиция — боец И полоса предметов под ним. Кадр отдан ей
-    // почти целиком: в комнате больше ничего нет.
-    // Вертикальный кадр НАМЕРЕННО смещён вниз. Композиция (боец + полоса
-    // предметов) шире, чем высока, а кадр телефона — наоборот, и подгонка по
-    // ширине оставляет вертикальный запас. Прижав композицию к низу, мы отдаём
-    // этот запас потолку зала: лампы, воздух и место легенды над плитой. Иначе
-    // столько же пустоты оставалось бы ПОД плитой, где нет ничего.
-    portrait: { x0: 0.07, x1: 0.93, y0: 0.34, y1: 0.98 },
-    landscape: { x0: 0.05, x1: 0.95, y0: 0.10, y1: 0.92 },
-  },
-  minDist: 4.5,
-  maxDist: 90,
+  // УГОЛ домашний — это направление взгляда, и оно берётся у дома как есть.
+  // ДЛИНА домашней не берётся: дома плита 6×4, здесь — вдвое больше и с соседним
+  // островом, и с домашних 9.7 единиц камера утыкается носом в пол. Поэтому от
+  // дома взято направление, а удаление подбирается под то, что реально стоит на
+  // главном острове (fitStartDistance) — ровно так же, как в зале до этой правки.
+  base: new THREE.Vector3(4.6, 5.2, 6.7),   // домашнее смещение: отсюда берём УГОЛ
+  homeSlabW: 6,                             // ширина домашней плиты — мера масштаба
+  minDist: 3.5, maxDist: 12,                // домашний коридор; масштабируется тем же числом
+  polarMin: 0.3, polarMax: 1.4,             // под плиту не заглянуть
+  damping: 0.08,
+  targetLift: 1.1,                          // точка вращения — на уровне груди
+  returnDelay: 4.0,                         // простой до возврата в стартовую позу
+  returnLerp: 1.6,
 };
 
 const LEGEND = { height: 4.7, driftSpeed: 0.5, driftRadius: 0.7, bobAmplitude: 0.18, hazeDensity: 90 };
 const CORE_LIGHT = { rest: 0.05, lerp: 7.0 };
-// Где проступают статы: НА ПОЛУ, перед бойцом, на продолжении его места.
-// Ни высоты, ни наклона здесь нет — это надпись на плите (правка v2).
-const STATS = { ahead: 1.02 };
 const CORE_PALETTE = [
   { id: 'natisk', hue: CORE_HUE.natisk },
   { id: 'nalet', hue: CORE_HUE.nalet },
   { id: 'skala', hue: CORE_HUE.skala },
   { id: 'zasada', hue: CORE_HUE.zasada },
 ];
-// Имена осей для табло статов — СЛОВА, не числа (ТЗ §3.4).
+// Имена осей для статов — СЛОВА, не числа.
 const AXIS_NAMES = ['DISTANCE', 'TEMPO', 'WEIGHT', 'SLIP', 'COUNTER', 'INITIATIVE', 'RESILIENCE'];
+// Репертуар у груши — существующие боевые движения, а не новая анимация.
+const BAG_MOVES = ['punch', 'double', 'hook', 'uppercut', 'bodyShot', 'combo', 'frontKick', 'teep', 'knee'];
 
 const wrap = ref(null);
 const canvasEl = ref(null);
 const fps = ref(null);
 
-let renderer, scene, camera, clock;
-let slab = null, backdrop = null, lamps = null;
-let director = null;
+let renderer, scene, camera, clock, controls;
+let slab = null, trainSlab = null, backdrop = null, lamps = null, trainLamps = null;
 let legendBody = null, legendPresence = null, legendAnchor = null;
 let statsFloor = null;
-let zoneList = [];          // разметка мест на плите
-let markZone = null;        // рабочее место перед строем
-let propList = [];            // { key, obj }
-let roster = [];              // { id, core, home, fighter, glow, parts, skin, lit }
+let propList = [];       // { key, obj }
+let bags = [];           // { group, hit, tick, dispose, hitY, x, z }
+let roster = [];         // боец: тело, режиссёр, состояние
 let compose = null, mark = { x: 0, z: 0 };
+let trainHalfW = 0, trainNearZ = 0;   // край соседнего острова — для стартовой позы
 let reduced = false, mm = null, onMM = null;
 let resizeObserver = null, onVisibility = null;
 let raycaster = null, pointerNdc = null, onPointerDown = null;
 let fpsAcc = 0, fpsFrames = 0;
 let currentIdx = 0;
 let elapsed = 0;
+let homePose = null;      // стартовая поза камеры
+let idleSince = null, returning = false;
 
-// ─────────────────── Геометрия зала (тот же вывод, что в настоящем) ───────────────────
+// ─────────────────── Геометрия главного острова ───────────────────
 const halfAngle = (n) => (n <= 1 ? 0 : (ARC.step * (n - 1)) / 2 / ARC.radius);
 const arcHalfWidth = (n) => ARC.radius * Math.sin(halfAngle(n));
 const arcBow = (n) => ARC.radius * (1 - Math.cos(halfAngle(n)));
 const stepFor = (n) => SLAB.steps.find((s) => n <= s) ?? SLAB.steps[SLAB.steps.length - 1];
 
+// Плита по-прежнему растёт тремя ступенями. Мест на ней больше не размечают, но
+// РАЗМЕР её считается всё так же: по тому, сколько бойцов она должна носить.
 function composeFor(count) {
   const max = stepFor(count);
-  const needW = 2 * (arcHalfWidth(max) + BODY.halfW + ZONE.halfX + SLAB.edge);
-  const depth = (ZONE.halfZ + arcBow(max)) + MARK.ahead + ZONE.halfZ + 2 * SLAB.edge + RAIL.inset;
+  const needW = 2 * (arcHalfWidth(max) + BODY.halfW + 0.15 + SLAB.edge);
+  const depth = (0.70 + arcBow(max)) + MARK.ahead + 0.70 + 2 * SLAB.edge + 0.72;
   const width = Math.max(needW, depth * SLAB.aspect);
   const slabDepth = width / SLAB.aspect;
-  // Композиция стоит так, чтобы за рядом и перед полосой оставалось поровну.
-  const arcZ = -slabDepth / 2 + SLAB.edge + ZONE.halfZ + arcBow(max);
-  const markZ = arcZ + MARK.ahead;
-  return { slab: { width, depth: slabDepth }, arcZ, markZ, max };
+  const arcZ = -slabDepth / 2 + SLAB.edge + 0.70 + arcBow(max);
+  return { slab: { width, depth: slabDepth }, arcZ, markZ: arcZ + MARK.ahead, max };
 }
 
-function spotFor(i, n, c) {
-  if (n <= 1) return { x: 0, z: c.arcZ };
-  const a = -halfAngle(n) + (ARC.step * i) / ARC.radius;
-  return { x: ARC.radius * Math.sin(a), z: c.arcZ - ARC.radius * (1 - Math.cos(a)) };
-}
-
-// ─────────────────── Камера: подогнать под то, что на полу ───────────────────
-const _fitDir = new THREE.Vector3();
-const _v = new THREE.Vector3();
-const _right = new THREE.Vector3();
-const _up = new THREE.Vector3();
-function fitCamera() {
-  if (!camera || !slab) return;
-  const portrait = props.layout === 'portrait';
-  const r = portrait ? CAM.rect.portrait : CAM.rect.landscape;
-  const topY = slab.refs.topY;
-
-  // Что обязано попасть в кадр. Меряем по СТОЯНКАМ и предметам, а не по тому,
-  // где тела оказались в этом кадре: все всё время куда-то едут, и кадр,
-  // измеренный по живым позициям, дышал бы вместе с ними.
-  const pts = [];
-  const body = (x, z, padX, padZ) => {
-    pts.push([x - BODY.halfW - padX, topY, z + padZ], [x + BODY.halfW + padX, topY + BODY.height, z - padZ]);
-  };
-  if (portrait) {
-    body(mark.x, mark.z, 0.32, 0.25);
-  } else {
-    // Все места ступени, занятые и пустые: разметка — часть композиции, и
-    // пустое место обязано попадать в кадр так же, как занятое.
-    for (let i = 0; i < props.seats; i++) {
-      const at = spotFor(i, props.seats, compose);
-      body(at.x, at.z, ZONE.halfX, ZONE.halfZ);
-    }
-    body(mark.x, mark.z, 0.25, 0.25);
-    if (props.legend) {
-      const feet = topY + LEGEND.height;
-      pts.push([-LEGEND.driftRadius - 0.9, feet - 0.6, 0], [LEGEND.driftRadius + 0.9, feet + 2.2, 0]);
-    }
+// Раскладка груш: рядами не длиннее rowMax, ряды уходят в глубину. Так остров
+// остаётся компактным и на десяти грушах — длинная шеренга увела бы камеру.
+function bagLayout(n) {
+  const rows = Math.ceil(n / TRAIN.rowMax);
+  const per = Math.ceil(n / rows);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / per);
+    const inRow = Math.min(per, n - r * per);
+    const k = i - r * per;
+    out.push({
+      x: (k - (inRow - 1) / 2) * TRAIN.bagStep,
+      z: (r - (rows - 1) / 2) * TRAIN.rowGap,
+    });
   }
-  // Полоса предметов — часть композиции в обеих раскладках.
-  // Предметы берутся с запасом: у наковальни рог уходит вбок за её же коробку,
-  // и без запаса она упиралась в кромку кадра.
-  for (const p of propList) {
-    const g = p.obj.group.position;
-    pts.push([g.x - 0.95, topY, g.z + 0.70], [g.x + 0.95, topY + 1.85, g.z - 0.70]);
-  }
-
-  _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]).normalize();
-  // Точка прицела — середина того, что надо показать. Начинаем с неё, дальше
-  // только уточняем: так подгонка сходится, а не блуждает.
-  const bb = new THREE.Box3();
-  for (const p of pts) bb.expandByPoint(_v.set(p[0], p[1], p[2]));
-  const look = bb.getCenter(new THREE.Vector3());
-  let dist = Math.max(CAM.minDist, bb.getSize(_v).length() * 0.9);
-
-  const place = () => {
-    camera.position.copy(look).addScaledVector(_fitDir, dist);
-    camera.lookAt(look);
-    camera.updateMatrixWorld(true);
-    camera.updateProjectionMatrix();
-  };
-  const measure = () => {
-    let l = Infinity, rr = -Infinity, b = Infinity, tp = -Infinity;
-    for (const p of pts) {
-      _v.set(p[0], p[1], p[2]).project(camera);
-      const sx = (_v.x + 1) / 2, sy = 1 - (_v.y + 1) / 2;
-      l = Math.min(l, sx); rr = Math.max(rr, sx);
-      b = Math.min(b, sy); tp = Math.max(tp, sy);
-    }
-    return { l, r: rr, b, t: tp };
-  };
-
-  // Два дела по очереди: масштаб (отъехать/подъехать) и центровка (сдвинуть
-  // точку прицела вбок и по высоте). Центровка считается через настоящие оси
-  // камеры, а не через угаданный коэффициент, — иначе она не сходится.
-  for (let pass = 0; pass < 20; pass++) {
-    place();
-    const m = measure();
-    const k = Math.max((m.r - m.l) / (r.x1 - r.x0), (m.t - m.b) / (r.y1 - r.y0));
-    dist = Math.min(CAM.maxDist, Math.max(CAM.minDist, dist * k));
-    place();
-    const m2 = measure();
-    const cx = (m2.l + m2.r) / 2, cy = (m2.b + m2.t) / 2;
-    const wantX = (r.x0 + r.x1) / 2, wantY = (r.y0 + r.y1) / 2;
-    const halfH = dist * Math.tan((camera.fov * Math.PI) / 360);
-    const halfW = halfH * camera.aspect;
-    camera.matrixWorld.extractBasis(_right, _up, _v);
-    look.addScaledVector(_right, (cx - wantX) * 2 * halfW);
-    look.addScaledVector(_up, -(cy - wantY) * 2 * halfH);
-    if (Math.abs(k - 1) < 0.004 && Math.abs(cx - wantX) < 0.004 && Math.abs(cy - wantY) < 0.004) break;
-  }
-  place();
+  const width = (per - 1) * TRAIN.bagStep + 2 * (TRAIN.edge + 0.4);
+  const depth = (rows - 1) * TRAIN.rowGap + 2 * (TRAIN.edge + TRAIN.standAhead + 0.4);
+  return { spots: out, width, depth };
 }
 
 // ─────────────────── Ядро бойца: яркость пишется СНАРУЖИ ───────────────────
@@ -275,11 +193,7 @@ function coreParts(f) {
     if (!gem && o.material.emissive !== undefined && o.material.emissiveIntensity > 0.8) gem = o;
     if (!halo && o.material.blending === THREE.AdditiveBlending && o.material.transparent) halo = o;
   });
-  return {
-    gem, halo,
-    gemBase: gem ? gem.material.color.clone() : null,
-    haloBase: halo ? halo.material.opacity : 0,
-  };
+  return { gem, halo, gemBase: gem ? gem.material.color.clone() : null, haloBase: halo ? halo.material.opacity : 0 };
 }
 function applyLight(r) {
   const k = CORE_LIGHT.rest + (1 - CORE_LIGHT.rest) * r.lit;
@@ -288,82 +202,141 @@ function applyLight(r) {
 }
 
 // ─────────────────── Сборка ───────────────────
-function buildRosterBodies() {
-  const portrait = props.layout === 'portrait';
+function buildIslands() {
+  compose = composeFor(props.seats);
+  mark = { x: 0, z: compose.markZ };
+
+  slab = buildForgeSlab({ width: compose.slab.width, depth: compose.slab.depth, height: SLAB.height });
+  suppressRift(slab);
+  scene.add(slab.group);
+
+  const lay = bagLayout(props.seats);
+  trainSlab = buildForgeSlab({ width: lay.width, depth: lay.depth, height: SLAB.height });
+  suppressRift(trainSlab);
+  // Остров стоит справа от главного — там, куда смотрит стартовая поза камеры,
+  // поэтому в покое он виден краем кадра, а не за спиной.
+  const cx = compose.slab.width / 2 + TRAIN.gap + lay.width / 2;
+  trainSlab.group.position.x = cx;
+  scene.add(trainSlab.group);
+
   const topY = slab.refs.topY;
-  // Места считаются по СТУПЕНИ, а тела ставятся только на занятые: так пустое
-  // место остаётся на своём месте в строю, а не схлопывается.
+  for (const sp of lay.spots) {
+    const bag = buildPunchBag();
+    bag.group.position.set(cx + sp.x, topY, sp.z);
+    scene.add(bag.group);
+    bags.push({ ...bag, x: cx + sp.x, z: sp.z });
+  }
+  trainHalfW = lay.width / 2;
+  trainNearZ = lay.depth / 2;
+  return { cx, lay };
+}
+
+/** Разлом плиты в зале подавлен СНАРУЖИ — тот же приём, что у дома: зал не бой. */
+function suppressRift(s) {
+  s.group.traverse((o) => {
+    if (o.isLine) o.visible = false;
+    if (o.isMesh && o.material && o.material.blending === THREE.AdditiveBlending) o.material.opacity = 0;
+  });
+}
+
+function buildRosterBodies(world) {
+  const topY = slab.refs.topY;
   const n = props.seats;
-  for (let i = 0; i < Math.min(props.count, n); i++) {
+  // ПОЛЕ ПРОГУЛКИ. Одно на всех оно быть не может: домашний режиссёр ведёт бойца
+  // от края к краю («уйти в противоположную половину»), и десять бойцов с общим
+  // полем вытаптывают один и тот же коридор — на снимке это ровно та куча, от
+  // которой уходили. Поэтому каждому достаётся СВОЯ ПОЛОСА: она занимает всю
+  // глубину плиты и больше половины её ширины, полосы сильно перекрываются, и
+  // соседи всё время заходят друг к другу. Это НЕ закреплённое место из прошлой
+  // правки: ничего не размечено, границы не видны, боец ходит по всему залу —
+  // просто держится своей стороны чаще, чем чужой.
+  const halfW = compose.slab.width / 2 - 1.2;
+  const halfD = compose.slab.depth / 2 - 1.0;
+  const lane = (i) => {
+    const n = Math.max(1, props.seats);
+    const centre = n === 1 ? 0 : (-1 + (2 * i) / (n - 1)) * halfW * 0.55;
+    const reach = halfW * 0.62;
+    return {
+      xMin: Math.max(-halfW, centre - reach), xMax: Math.min(halfW, centre + reach),
+      zMin: -halfD, zMax: halfD,
+    };
+  };
+  for (let i = 0; i < n; i++) {
     const core = CORE_PALETTE[i % CORE_PALETTE.length];
-    const home = spotFor(i, n, compose);
-    // В ПОРТРЕТЕ СТРОИТСЯ ОДНО ТЕЛО. Это не упрощение макета — так устроен и
-    // настоящий зал: десять тел на телефоне не тянет (см. шапку).
-    const wanted = !portrait || i === currentIdx;
-    let fighter = null, parts = null, skin = null, glow = null;
-    const r = { id: `f${i}`, seat: i, core, home, fighter: null, parts: null, skin: null, glow: null, agent: -1, mode: 'wander', lit: i === currentIdx ? 1 : 0 };
-    if (wanted) {
-      fighter = buildFighter(core.hue, {
-        side: 'player', coreId: core.id, behavior: resolveBehavior(core.id, []),
-        // ⚠️ bounds — это ПЛИТА, а не личная зона. Тело держат на плите, чтобы
-        // оно не ушло за кромку; по зоне его водит режиссёр. В v1 сюда были
-        // переданы размеры зоны — и все тела зажало в коробку у центра плиты.
-        // Ровно это владелец и увидел как «бойцы просто стоят в куче»: они не
-        // слипались перспективой, их физически сводило в одну точку.
-        bounds: { x: compose.slab.width / 2, z: compose.slab.depth / 2 },
-        // Приманка режиссёра. Ходит тело САМО, своими ногами: режиссёр двигает
-        // только точку, за которой оно идёт (тот же приём, что в настоящем зале
-        // — ни одной правки в защищённых файлах). Режиссёр собирается ПОЗЖЕ
-        // этих тел, поэтому читается он здесь лениво, каждый кадр.
-        getFoePos: () => (director && r.agent >= 0 ? director.foePos(r.agent) : null),
-      });
-      fighter.setReducedMotion(reduced);
-      fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });  // без плашки HP
-      const at = (portrait || i === currentIdx) ? mark : home;
-      fighter.group.position.set(at.x, topY, at.z);
-      scene.add(fighter.group);
-      parts = coreParts(fighter);
-      skin = fighter;
-    }
-    // agent — номер тела У РЕЖИССЁРА. В портрете тело всего одно, и его номер
-    // в ростере не совпадает с номером у режиссёра; без этой пары переключатель
-    // состояний двигал бы не того (в портрете — никого).
-    Object.assign(r, { fighter, parts, skin, glow });
+    // СВОЙ экземпляр домашнего режиссёра на каждое тело — см. шапку файла.
+    // obstacleR у режиссёра сравнивается с КВАДРАТОМ расстояния, поэтому 1.6 —
+    // это круг радиусом 1.26: шире тела, так что цель прогулки не назначается
+    // под ноги соседу.
+    const dir = createHomeWanderDirector({ zone: lane(i), obstacleR: 1.6 });
+    const r = {
+      id: `f${i}`, core, dir,
+      fighter: null, parts: null, lit: i === currentIdx ? 1 : 0,
+      mode: 'wander',        // 'wander' | 'toBag' | 'atBag' | 'home' | 'still'
+      bag: null, nextHit: 0, held: false, loco: null,
+      lure: new THREE.Vector3(), lureOn: false,
+    };
+    const fighter = buildFighter(core.hue, {
+      side: 'player', coreId: core.id, behavior: resolveBehavior(core.id, []),
+      // ⚠️ bounds — ХОЛСТ ОБОИХ ОСТРОВОВ, а не личная зона. Это жёсткий рельс
+      // движка «не уйти с плиты»; по самой плите тело водит режиссёр. В v1 сюда
+      // передавался размер зоны — и все тела зажимало в коробку у центра.
+      bounds: { x: world.cx + world.lay.width / 2, z: Math.max(compose.slab.depth, world.lay.depth) / 2 },
+      // Приманка: пока боец бродит — от его режиссёра; пока идёт на занятие или
+      // возвращается — наша собственная точка. Одно и то же тело, одни и те же ноги.
+      getFoePos: () => (r.lureOn ? r.lure : (r.held ? null : r.dir.foePos())),
+    });
+    fighter.setReducedMotion(reduced);
+    fighter.setAI?.(false);
+    fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });  // без плашки HP
+    // Стартовое место — вразнобой по плите, чтобы зал не начинался с шеренги.
+    const a = (i / Math.max(1, n)) * Math.PI * 2;
+    fighter.group.position.set(
+      Math.cos(a) * compose.slab.width * 0.22,
+      topY,
+      Math.sin(a) * compose.slab.depth * 0.22,
+    );
+    scene.add(fighter.group);
+    r.fighter = fighter;
+    r.parts = coreParts(fighter);
+    addPickProxy(r);
+    r.dir.attach(fighter, camera, { reduced });
     roster.push(r);
   }
 }
 
+/**
+ * ЦЕЛЬ ДЛЯ ПАЛЬЦА. Боец теперь движется, и попадать по силуэту на телефоне
+ * трудно. Поэтому к телу добавляется невидимая коробка шире силуэта — по ней и
+ * ловится нажатие. Она НИЧЕГО не рисует (colorWrite/depthWrite выключены), но
+ * остаётся видимой для луча: невидимые объекты луч пропускает.
+ */
+function addPickProxy(r) {
+  const geo = new THREE.BoxGeometry(1.15, BODY.height + 0.25, 1.15);
+  const mat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, transparent: true, opacity: 0 });
+  const box = new THREE.Mesh(geo, mat);
+  box.position.y = (BODY.height + 0.25) / 2;
+  box.renderOrder = -20;
+  r.fighter.group.add(box);
+  r.pick = box;
+  r.pickOwn = () => { geo.dispose(); mat.dispose(); };
+}
+
 function placeProps() {
-  const portrait = props.layout === 'portrait';
   const topY = slab.refs.topY;
-  const builders = {
-    roster: () => buildRoster(),
-    upgrade: () => buildUpgrade(),
-    shelf: () => buildBuffShelf(),
-  };
-
-  // Раскладка полосы — единственное, чем две ориентации отличаются.
-  let spots;
-  if (portrait) {
-    const S = RAIL.portraitSpan;
-    const zNear = Math.min(compose.slab.depth / 2 - 0.35, mark.z + RAIL.portraitAhead);
-    spots = [
-      { key: 'roster', x: -S / 2, z: zNear },
-      { key: 'upgrade', x: S / 2, z: zNear },
-      // Полка баффов — задел, к ней не ходят: уводится за бойца и вбок.
-      { key: 'shelf', x: -RAIL.portraitBackOut, z: mark.z - RAIL.portraitBackZ },
-    ];
-  } else {
-    const span = compose.slab.width * RAIL.spanLandscape;
-    const z = compose.slab.depth / 2 - RAIL.inset;
-    // Середина пролёта пустая — это окно на ряд бойцов.
-    spots = [
-      { key: 'roster', x: -span * 0.50, z },
-      { key: 'shelf', x: -span * 0.18, z },
-      { key: 'upgrade', x: span * 0.50, z },
-    ];
-  }
-
+  const builders = { roster: buildRoster, upgrade: buildUpgrade, shelf: buildBuffShelf };
+  // Предметы стоят у ближней кромки главного острова, слева и по центру: справа
+  // проход на тренировочный остров, и загораживать его нечем.
+  const z = compose.slab.depth / 2 - 0.9;
+  // Домашний угол смотрит с передне-правой четверти, поэтому предметы стоят в
+  // середине ближней кромки, а не у левого края: у края они уходят из кадра.
+  // Предметы стоят НА ПОЛУ ЗАЛА, а не по кромке. У кромки домашний угол
+  // укладывает их в самый низ кадра, боком и мелко; сдвинутые внутрь, они
+  // попадают в ту же часть картинки, что и бойцы, и читаются вместе с ними.
+  const spots = [
+    { key: 'roster', x: -compose.slab.width * 0.05, z: z - 0.7 },
+    { key: 'upgrade', x: compose.slab.width * 0.19, z: z - 1.6 },
+    { key: 'shelf', x: -compose.slab.width * 0.28, z: z - 2.0 },
+  ];
   for (const sp of spots) {
     const obj = builders[sp.key]();
     obj.group.position.set(sp.x, topY, sp.z);
@@ -372,34 +345,9 @@ function placeProps() {
   }
 }
 
-/**
- * РАЗМЕТКА МЕСТ. Рисуется на ВСЕ места ступени, а не только на занятые: пустое
- * место обязано читаться местом, иначе разметка превращается в подсветку тех,
- * кто и так виден. Плюс отдельная ячейка на метке — рабочее место того, кого
- * сейчас открыли; на неё же ложатся статы.
- */
-function placeZones() {
-  const topY = slab.refs.topY;
-  const n = props.seats;
-  for (let i = 0; i < n; i++) {
-    const at = spotFor(i, n, compose);
-    const z = buildZoneMark(ZONE.halfX, ZONE.halfZ);
-    z.group.position.set(at.x, topY, at.z);
-    scene.add(z.group);
-    zoneList.push({ seat: i, mark: z });
-  }
-  // Рабочее место перед строем. Чуть шире зоны в строю — на нём работают, а не
-  // ждут, и статы разворачиваются именно отсюда.
-  markZone = buildZoneMark(ZONE.halfX * 1.5, ZONE.halfZ * 0.8);
-  markZone.group.position.set(mark.x, topY, mark.z);
-  scene.add(markZone.group);
-}
-
 function buildLegend() {
   const topY = slab.refs.topY;
   legendAnchor = buildLegendAnchor();
-  // Якорь стоит РОВНО там, где висела бы легенда, — это её место, а не метка
-  // над ним. Когда она есть, якорь не показывается вовсе (setPresent).
   legendAnchor.group.position.set(0, topY + LEGEND.height, 0);
   scene.add(legendAnchor.group);
 
@@ -414,136 +362,329 @@ function buildLegend() {
     baseX: 0, baseZ: 0, floorY: topY,
     driftSpeed: LEGEND.driftSpeed, driftRadius: LEGEND.driftRadius,
     bobAmplitude: LEGEND.bobAmplitude, hazeDensity: LEGEND.hazeDensity,
-    ORBIT: { highAboveTop: LEGEND.height },
-    reduced,
+    ORBIT: { highAboveTop: LEGEND.height }, reduced,
   });
   legendBody.group.position.copy(legendPresence.position);
   scene.add(legendPresence.group);
-  scene.add(legendPresence.trail);   // след снижения — мировые частицы, отдельной группой
+  scene.add(legendPresence.trail);
 }
 
 function buildAll() {
-  compose = composeFor(props.seats);
-  mark = { x: 0, z: compose.markZ };
-
-  slab = buildForgeSlab({ width: compose.slab.width, depth: compose.slab.depth, height: SLAB.height });
-  // Разлом плиты в зале ПОДАВЛЕН снаружи — тот же приём, что у дома: зал не бой.
-  slab.group.traverse((o) => {
-    if (o.isLine) o.visible = false;
-    if (o.isMesh && o.material && o.material.blending === THREE.AdditiveBlending) o.material.opacity = 0;
-  });
-  scene.add(slab.group);
-
+  const world = buildIslands();
   const topY = slab.refs.topY;
-  // Четыре лампы — не больше (правило зала). Плита растёт ступенями, поэтому
-  // те же четыре РАЗНОСЯТСЯ к концам дуги и к метке и светят дальше: сила по
-  // квадрату роста плиты, радиус — по самому росту, что ровно и стоит удержать
-  // одну яркость пола при затухании 1/r². Числа и приём — из настоящего зала.
+
+  // Четыре лампы — не больше (правило зала). Плита растёт ступенями, поэтому те
+  // же четыре разносятся шире и светят дальше: сила по квадрату роста плиты,
+  // радиус — по самому росту. Две из них сдвинуты к тренировочному острову,
+  // иначе груши стоят в темноте.
   const base = composeFor(SLAB.steps[0]).slab.width;
   const k = Math.max(1, compose.slab.width / base);
-  // Две лампы строя стоят над КОНЦАМИ дуги, а не в 0.8 от них. Разница видна
-  // только на десяти местах — и там она решает: при 0.8 крайние бойцы стоят
-  // ЗА последней лампой, и на снимке от них остаётся силуэт темнее пола.
-  // Ламп по-прежнему четыре: их разносят, а не добавляют.
-  const endX = arcHalfWidth(compose.max);
+  // ⚠️ ЛАМП ШЕСТЬ, А НЕ ЧЕТЫРЕ — названное отступление. Правило зала «четыре
+  //    лампы, новых источников не заводить» писалось на ОДИН остров. Островов
+  //    стало два, и четырьмя их не накрыть: разнесённые на оба, они оставляют
+  //    тёмным и зал, и груши (проверено на кадрах). Поэтому главный остров
+  //    получает свои четыре — ровно те, что у зала, — а тренировочный ещё две.
+  //    Теней по-прежнему нет ни одной, так что телефон платит только за две
+  //    точки света.
   lamps = buildLamps({
     ...HALL_LAMPS, hangLift: LAMP.hangLift,
     light: { ...HALL_LAMPS.light, intensity: LAMP.intensity * k * k, distance: LAMP.distance * k },
     positions: [
-      { x: -endX, z: compose.arcZ - 0.4, drop: 0.0 },
-      { x: endX, z: compose.arcZ - 0.4, drop: 0.7 },
-      { x: -ARC.step * 1.2, z: mark.z, drop: 0.3 },
-      { x: ARC.step * 1.35, z: mark.z, drop: 1.0 },
+      { x: -compose.slab.width * 0.26, z: compose.slab.depth * -0.16, drop: 0.0 },
+      { x: compose.slab.width * 0.24, z: compose.slab.depth * -0.14, drop: 0.7 },
+      { x: -compose.slab.width * 0.10, z: compose.slab.depth * 0.20, drop: 0.3 },
+      { x: compose.slab.width * 0.16, z: compose.slab.depth * 0.22, drop: 1.0 },
     ],
   }, reduced);
   scene.add(lamps.group);
 
+  // Тренировочный остров ниже и теснее главного, и груша висит высоко — на
+  // равной высоте подвеса лампа целовала бы её сверху, груша выбеливалась в
+  // пятно и читалась раньше бойца рядом. Поэтому здесь лампы подняты выше
+  // (hangLift + LAMP.trainLift): свет ложится на остров ровно, груша остаётся
+  // матовой, а первым по-прежнему читается тело.
+  const kt = Math.max(1, world.lay.width / base);
+  trainLamps = buildLamps({
+    ...HALL_LAMPS, hangLift: LAMP.hangLift + LAMP.trainLift,
+    light: { ...HALL_LAMPS.light, intensity: LAMP.intensity * kt * kt * LAMP.trainPower, distance: LAMP.distance * kt },
+    positions: [
+      { x: world.cx - world.lay.width * 0.20, z: -world.lay.depth * 0.12, drop: 0.2 },
+      { x: world.cx + world.lay.width * 0.20, z: world.lay.depth * 0.14, drop: 0.8 },
+    ],
+  }, reduced);
+  scene.add(trainLamps.group);
+
   backdrop = buildBackdrop({ radius: BACKDROP.radius.forge, centerY: BACKDROP.centerY });
   scene.add(backdrop.mesh);
 
-  buildRosterBodies();
-  placeZones();
+  buildRosterBodies(world);
   placeProps();
   buildLegend();
 
   statsFloor = buildStatsFloor(AXIS_NAMES);
   scene.add(statsFloor.group);
-  positionStats();
 
-  // Режиссёр есть В ОБЕИХ раскладках. Он и есть то, чем видно состояние бойца:
-  // свободен — строллит, занят — гоняет движения на месте, готов — стоит смирно.
-  // Раньше его не было в портрете, и переключатель состояний на телефоне не
-  // делал ничего — а принимают макет именно на телефоне.
-  director = createForgeWanderDirector();
-  const bodies = [];
-  for (const r of roster) {
-    if (!r.fighter) continue;
-    r.agent = bodies.length;
-    // В портрете тело стоит на метке, и его зона — вокруг метки: гулять по
-    // чужому месту в пустой комнате оно не должно.
-    const c = props.layout === 'portrait' ? mark : r.home;
-    bodies.push({
-      fighter: r.fighter,
-      zone: { xMin: c.x - ZONE.halfX, xMax: c.x + ZONE.halfX, zMin: c.z - ZONE.halfZ, zMax: c.z + ZONE.halfZ },
-    });
+  applyAssignments();
+  applyHomePose(true);
+}
+
+// ─────────────────── Камера ───────────────────
+// Ровно домашний рецепт: орбита с демпфированием, коридор приближения, пол по
+// углу (под плиту не заглянуть), полная свобода по кругу — и возврат в стартовую
+// позу после простоя, как это уже сделано на сцене режимов.
+// Насколько этот зал крупнее дома. Одним числом тянутся и удаление, и коридор:
+// иначе игрок, привыкший к домашнему щипку, здесь либо не приблизится, либо
+// улетит.
+function scaleVsHome() { return Math.max(1, compose.slab.width / CAM.homeSlabW); }
+
+/**
+ * Стартовое удаление. Направление — домашнее; длина подбирается так, чтобы на
+ * ТЕКУЩЕМ кадре читалось то, ради чего сюда приходят: боец на главном острове,
+ * планшет и наковальня. Тренировочный остров в подгонку НЕ входит — он и должен
+ * оставаться краем кадра (решение ТЗ: свобода камеры важнее, чем «всё в кадре»).
+ */
+/**
+ * Что обязано читаться в СТАРТОВОЙ позе: боец, планшет и наковальня (требование
+ * ТЗ). Плита в подгонку НЕ входит намеренно — вписать её целиком значит отогнать
+ * камеру, и тогда мелкими станут ровно те трое, ради которых поза и подбиралась.
+ * Камера свободная: кому нужен весь остров — довернёт и отъедет сам.
+ */
+function framePts() {
+  const topY = slab.refs.topY;
+  const pts = [];
+  // Боец — коробкой в середине рабочей части зала (тела бродят, привязываться к
+  // живому месту нельзя: поза начала бы дышать вместе с ними).
+  const bx = -compose.slab.width * 0.02, bz = -compose.slab.depth * 0.06;
+  pts.push([bx - 0.9, topY, bz + 0.9], [bx + 0.9, topY + BODY.height + 0.45, bz - 0.9]);
+  for (const pr of propList) {
+    if (pr.key === 'shelf') continue;        // задел, в стартовую позу не просится
+    const g = pr.obj.group.position;
+    pts.push([g.x - 0.85, topY, g.z + 0.75], [g.x + 0.85, topY + 1.5, g.z - 0.75]);
   }
-  director.attach(bodies, { reduced });
-  applyTraining();
-  // Выбранный выходит на метку — ногами, как в настоящем зале.
-  const cur = roster[currentIdx];
-  if (!reduced && props.layout !== 'portrait' && cur && cur.agent >= 0) director.sendTo(cur.agent, mark.x, mark.z);
-  fitCamera();
+  // Ближний угол тренировочного острова — ОДНОЙ точкой. Не чтобы вписать его, а
+  // чтобы он гарантированно задевал край кадра: игрок должен видеть, что рядом
+  // есть ещё один остров и там кто-то занимается. Вписывать его целиком нельзя —
+  // камера отъедет, и всё измельчает (это и записано в ТЗ как принятая цена).
+  return pts;
+}
+/** Та же композиция плюс ближний угол соседнего острова. */
+function framePtsWithNeighbour() {
+  const pts = framePts();
+  if (trainSlab) pts.push([trainSlab.group.position.x - trainHalfW, slab.refs.topY, trainNearZ]);
+  return pts;
 }
 
-function positionStats() {
-  if (!statsFloor || !slab) return;
-  // На полу, перед бойцом, на продолжении его рабочего места. Ни высоты, ни
-  // наклона: это надпись на плите. Поднятое табло отъедало высоту кадра —
-  // самое дефицитное, что есть в вертикальном телефоне.
-  statsFloor.group.position.set(mark.x, slab.refs.topY, mark.z + STATS.ahead);
+function fitStartDistance(target, dir, pts) {
+  const rect = { x0: 0.05, x1: 0.95, y0: 0.08, y1: 0.95 };
+  const cam = camera.clone();
+  let dist = CAM.base.length() * scaleVsHome();
+  const _p = new THREE.Vector3();
+  for (let pass = 0; pass < 18; pass++) {
+    cam.position.copy(target).addScaledVector(dir, dist);
+    cam.lookAt(target);
+    cam.updateMatrixWorld(true);
+    cam.updateProjectionMatrix();
+    let l = Infinity, r = -Infinity, b = Infinity, t = -Infinity;
+    for (const q of pts) {
+      _p.set(q[0], q[1], q[2]).project(cam);
+      const sx = (_p.x + 1) / 2, sy = 1 - (_p.y + 1) / 2;
+      l = Math.min(l, sx); r = Math.max(r, sx); b = Math.min(b, sy); t = Math.max(t, sy);
+    }
+    const k = Math.max((r - l) / (rect.x1 - rect.x0), (t - b) / (rect.y1 - rect.y0));
+    if (Math.abs(k - 1) < 0.005) break;
+    dist *= k;
+  }
+  return dist;
 }
 
-function applyTraining() {
-  if (!director) return;
-  roster.forEach((r, i) => {
-    if (!r.fighter || r.agent < 0) return;
-    // Показываем три состояния сразу: выбранный несёт то, что выставлено
-    // переключателем, соседи живут своей жизнью — так их видно рядом.
-    const mode = i === currentIdx
-      ? (props.trainState === 'busy' ? 'drill' : props.trainState === 'ready' ? 'still' : 'wander')
-      : (i % 3 === 1 ? 'drill' : i % 3 === 2 ? 'still' : 'wander');
-    r.mode = mode;                 // разметка зоны смотрит сюда же
-    director.setMode(r.agent, mode);
-  });
+/** Поза, в которой тренировочный остров и его груши видно целиком. */
+function trainingFraming() {
+  const topY = slab.refs.topY;
+  const target = new THREE.Vector3(trainSlab.group.position.x, topY + CAM.targetLift, 0);
+  const dir = CAM.base.clone().normalize();
+  const pts = [];
+  for (const b of bags) {
+    pts.push([b.x - 0.5, topY, b.z + TRAIN.standAhead + 0.6], [b.x + 0.5, topY + BODY.height + 0.5, b.z - 0.6]);
+  }
+  const dist = fitStartDistance(target, dir, pts);
+  return { position: target.clone().addScaledVector(dir, dist), target };
 }
 
-function teardown() {
-  director?.dispose?.();
-  director = null;
-  roster.forEach((r) => { r.fighter?.dispose(); if (r.fighter) scene.remove(r.fighter.group); });
-  roster = [];
-  propList.forEach((p) => { scene.remove(p.obj.group); p.obj.dispose(); });
-  propList = [];
-  if (statsFloor) { scene.remove(statsFloor.group); statsFloor.dispose(); statsFloor = null; }
-  zoneList.forEach((z) => { scene.remove(z.mark.group); z.mark.dispose(); });
-  zoneList = [];
-  if (markZone) { scene.remove(markZone.group); markZone.dispose(); markZone = null; }
-  if (legendAnchor) { scene.remove(legendAnchor.group); legendAnchor.dispose(); legendAnchor = null; }
-  if (legendBody) { scene.remove(legendBody.group); legendBody.dispose(); legendBody = null; }
-  if (legendPresence) { scene.remove(legendPresence.group); scene.remove(legendPresence.trail); legendPresence.dispose(); legendPresence = null; }
-  if (lamps) { scene.remove(lamps.group); lamps.dispose(); lamps = null; }
-  if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
-  if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); backdrop = null; }
+function homeFraming() {
+  const topY = slab ? slab.refs.topY : 0;
+  // Точка взгляда смещена к правому краю главного острова: так в стартовой позе
+  // боец, планшет и наковальня читаются вместе, а тренировочный остров входит в
+  // кадр краем — ровно как просит ТЗ.
+  const target = new THREE.Vector3(compose.slab.width * 0.16, topY + CAM.targetLift, 0);
+  const dir = CAM.base.clone().normalize();
+  // Два замера: по самой композиции и по ней же вместе с краем соседнего
+  // острова. Берём второй, но не дальше чем в NEIGHBOUR_CAP раза от первого —
+  // иначе на десяти грушах сосед утаскивает камеру так далеко, что мелким
+  // становится всё сразу (снято и проверено). Дальше сосед просто обрезается
+  // краем кадра, а он и должен быть краем.
+  const NEIGHBOUR_CAP = 1.15;
+  const dBase = fitStartDistance(target, dir, framePts());
+  let dist = Math.min(fitStartDistance(target, dir, framePtsWithNeighbour()), dBase * NEIGHBOUR_CAP);
+  // Довести по высоте. Остров шире, чем высок, а вертикальный кадр — наоборот:
+  // подгонка упирается в ширину и оставляет запас по высоте. Без доводки этот
+  // запас целиком уходит в чёрный верх; с ней композиция садится в нижние две
+  // трети, а верх достаётся залу — лампам и месту легенды.
+  const cam = camera.clone();
+  const _p = new THREE.Vector3(), _up = new THREE.Vector3(), _x = new THREE.Vector3(), _z = new THREE.Vector3();
+  const pts = framePts();
+  const wantY = camera.aspect < 1 ? 0.62 : 0.52;
+  for (let pass = 0; pass < 12; pass++) {
+    cam.position.copy(target).addScaledVector(dir, dist);
+    cam.lookAt(target);
+    cam.updateMatrixWorld(true);
+    cam.updateProjectionMatrix();
+    let b = Infinity, t = -Infinity;
+    for (const q of pts) {
+      _p.set(q[0], q[1], q[2]).project(cam);
+      const sy = 1 - (_p.y + 1) / 2;
+      b = Math.min(b, sy); t = Math.max(t, sy);
+    }
+    const cy = (b + t) / 2;
+    if (Math.abs(cy - wantY) < 0.004) break;
+    const halfH = dist * Math.tan((cam.fov * Math.PI) / 360);
+    cam.matrixWorld.extractBasis(_x, _up, _z);
+    target.addScaledVector(_up, -(cy - wantY) * 2 * halfH);
+  }
+  const position = target.clone().addScaledVector(dir, dist);
+  return { position, target };
+}
+function applyHomePose(snap) {
+  homePose = (props.focus === 'training' && trainSlab && bags.length) ? trainingFraming() : homeFraming();
+  controls.target.copy(homePose.target);
+  const sc = scaleVsHome();
+  controls.minDistance = CAM.minDist * sc;
+  controls.maxDistance = CAM.maxDist * sc;
+  controls.minPolarAngle = CAM.polarMin;
+  controls.maxPolarAngle = CAM.polarMax;
+  controls.minAzimuthAngle = -Infinity;
+  controls.maxAzimuthAngle = Infinity;
+  if (snap) {
+    camera.position.copy(homePose.position);
+    controls.update();
+  }
+}
+const _retPos = new THREE.Vector3(), _retTgt = new THREE.Vector3();
+function idleReturn(dt) {
+  if (!homePose || idleSince === null) return;
+  if (!returning && (elapsed - idleSince) >= CAM.returnDelay) returning = true;
+  if (!returning) return;
+  const k = 1 - Math.exp(-CAM.returnLerp * dt);
+  _retPos.copy(camera.position).lerp(homePose.position, k);
+  _retTgt.copy(controls.target).lerp(homePose.target, k);
+  camera.position.copy(_retPos);
+  controls.target.copy(_retTgt);
+  if (_retPos.distanceTo(homePose.position) < 0.02) { returning = false; idleSince = null; }
 }
 
-function rebuild() {
-  if (!scene) return;
-  currentIdx = Math.min(currentIdx, Math.max(0, props.count - 1));
-  teardown();
-  buildAll();
+// ─────────────────── Кто бродит, кто у груши ───────────────────
+function applyAssignments() {
+  const n = roster.length;
+  const want = Math.max(0, Math.min(props.training, n));
+  for (let i = 0; i < n; i++) {
+    const r = roster[i];
+    const shouldTrain = i < want;
+    if (shouldTrain && r.mode !== 'toBag' && r.mode !== 'atBag') sendToBag(r, i);
+    if (!shouldTrain && (r.mode === 'toBag' || r.mode === 'atBag')) sendHome(r);
+    // READY — выбранный стоит смирно лицом к игроку. Это не занятие: он просто
+    // не ходит. Тело то же, режиссёр тот же, у него лишь снята приманка.
+    if (!shouldTrain) r.mode = (props.ready && i === currentIdx) ? 'still' : (r.mode === 'home' ? 'home' : 'wander');
+  }
+}
+/**
+ * Походка на время перехода. Дорога между островами длинная — прогулочным шагом
+ * боец идёт до груши полтора десятка секунд, и половину показа зал стоит пустым.
+ * Поэтому на переход включается СУЩЕСТВУЮЩАЯ быстрая походка движка, а на месте
+ * гасится. Переключатель у движка — триггер, поэтому состояние ведём сами:
+ * дважды включить «быстро» значит выключить его.
+ */
+function setLoco(r, want) {
+  if (r.loco === want) return;
+  if (r.loco === 'fast') r.fighter.fast?.();
+  if (want === 'fast') r.fighter.fast?.();
+  r.loco = want;
+}
+function sendToBag(r, i) {
+  const bag = bags[i % Math.max(1, bags.length)];
+  if (!bag) return;
+  r.bag = bag;
+  r.mode = 'toBag';
+  r.lureOn = true;
+  r.lure.set(bag.x, slab.refs.topY, bag.z + TRAIN.standAhead);
+  r.nextHit = elapsed + 0.6;
+  setLoco(r, 'fast');
+}
+function sendHome(r) {
+  r.mode = 'home';
+  r.bag = null;
+  r.lureOn = true;
+  // Домой — в середину главного острова; дойдя, тело снова отдаётся режиссёру.
+  r.lure.set(0, slab.refs.topY, 0);
+  setLoco(r, 'fast');
 }
 
-// ─────────────────── Нажатия по предметам и по бойцу ───────────────────
+// Один кадр жизни бойца: дойти, бить, вернуться, бродить.
+function tickFighter(r, i, dt) {
+  const g = r.fighter.group;
+  if (r.mode === 'toBag' && r.bag) {
+    const d = Math.hypot(g.position.x - r.lure.x, g.position.z - r.lure.z);
+    if (d < 0.45) { r.mode = 'atBag'; r.lureOn = false; setLoco(r, null); }
+  } else if (r.mode === 'atBag' && r.bag) {
+    faceTo(g, r.bag.x, r.bag.z, dt);
+    if (elapsed >= r.nextHit) {
+      const mv = BAG_MOVES[(Math.random() * BAG_MOVES.length) | 0];
+      r.fighter[mv]?.();
+      // Груша получает толчок от бойца — наружу, по направлению удара.
+      r.bag.hit(r.bag.x - g.position.x, r.bag.z - g.position.z, reduced);
+      const [lo, hi] = TRAIN.hitEvery;
+      r.nextHit = elapsed + lo + Math.random() * (hi - lo);
+    }
+  } else if (r.mode === 'home') {
+    const d = Math.hypot(g.position.x - r.lure.x, g.position.z - r.lure.z);
+    if (d < 1.2) { r.mode = 'wander'; r.lureOn = false; setLoco(r, null); }
+  } else if (r.mode === 'still' || r.held) {
+    faceTo(g, camera.position.x, camera.position.z, dt);
+  }
+  // Бродит — работает его собственный режиссёр (он же и доворачивает к камере).
+  if (r.mode === 'wander' && !r.held) r.dir.update(elapsed, dt);
+}
+
+const _v2 = new THREE.Vector3();
+function faceTo(g, x, z, dt) {
+  const want = Math.atan2(x - g.position.x, z - g.position.z) + Math.PI;
+  let d = ((want - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  g.rotation.y += d * (reduced ? 1 : 1 - Math.exp(-3.0 * dt));
+}
+
+/**
+ * ЧТОБЫ НЕ ХОДИЛИ СКВОЗЬ ДРУГ ДРУГА. Режиссёры знают о соседях по `setObstacles`
+ * — но это влияет только на ВЫБОР цели, а не на дорогу к ней. Поэтому здесь
+ * короткий внешний расталкиватель: два тела ближе положенного — обоих чуть
+ * разводит в стороны. Движок не правится, толкаем снаружи, как и всё прочее.
+ */
+const SEP = { dist: 1.05, push: 3.2 };
+function separateBodies(dt) {
+  for (let i = 0; i < roster.length; i++) {
+    const a = roster[i].fighter; if (!a) continue;
+    for (let j = i + 1; j < roster.length; j++) {
+      const b = roster[j].fighter; if (!b) continue;
+      const dx = b.group.position.x - a.group.position.x;
+      const dz = b.group.position.z - a.group.position.z;
+      const d = Math.hypot(dx, dz);
+      if (d >= SEP.dist || d < 1e-4) continue;
+      const push = (SEP.dist - d) * SEP.push * dt * 0.5;
+      const nx = dx / d, nz = dz / d;
+      a.group.position.x -= nx * push; a.group.position.z -= nz * push;
+      b.group.position.x += nx * push; b.group.position.z += nz * push;
+    }
+  }
+}
+
+// ─────────────────── Нажатия ───────────────────
 function pickAt(ev) {
   const el = wrap.value;
   const rect = el.getBoundingClientRect();
@@ -552,10 +693,10 @@ function pickAt(ev) {
   for (const p of propList) {
     if (p.obj.hit.length && raycaster.intersectObjects(p.obj.hit, true).length) return { kind: 'prop', key: p.key };
   }
-  for (let i = 0; i < roster.length; i++) {
-    const f = roster[i].fighter;
-    if (f && raycaster.intersectObject(f.group, true).length) return { kind: 'fighter', index: i };
-  }
+  // Сперва по широкой коробке — по ней палец попадает по движущемуся телу.
+  const boxes = roster.filter((r) => r.pick).map((r) => r.pick);
+  const hit = raycaster.intersectObjects(boxes, false)[0];
+  if (hit) return { kind: 'fighter', index: roster.findIndex((r) => r.pick === hit.object) };
   return null;
 }
 
@@ -577,23 +718,41 @@ onMounted(() => {
 
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.forge.density);
-
   camera = new THREE.PerspectiveCamera(FOV.forge, w / h, CAMERA.near, CAMERA.far.forge);
 
-  scene.add(new THREE.DirectionalLight(LIGHTING.key.color, LIGHTING.key.intensity)
-    .translateX(LIGHTING.key.position[0]).translateY(LIGHTING.key.position[1]).translateZ(LIGHTING.key.position[2]));
+  const key = new THREE.DirectionalLight(LIGHTING.key.color, LIGHTING.key.intensity);
+  key.position.set(...LIGHTING.key.position);
+  scene.add(key);
   scene.add(new THREE.AmbientLight(LIGHTING.amb.color, LIGHTING.amb.intensity));
   scene.add(new THREE.HemisphereLight(LIGHTING.hemi.sky, LIGHTING.hemi.ground, LIGHTING.hemi.intensity));
 
+  controls = new OrbitControls(camera, canvasEl.value);
+  controls.enableDamping = true;
+  controls.dampingFactor = CAM.damping;
+  controls.enablePan = false;
+  controls.addEventListener('start', () => { idleSince = null; returning = false; });
+  controls.addEventListener('end', () => { idleSince = elapsed; });
+
   raycaster = new THREE.Raycaster();
   pointerNdc = new THREE.Vector2();
+  let downAt = null;
+  const onDown = (ev) => { downAt = { x: ev.clientX, y: ev.clientY }; };
   onPointerDown = (ev) => {
+    // Тап, а не вращение: палец сдвинулся меньше, чем на 6 точек.
+    if (!downAt || Math.hypot(ev.clientX - downAt.x, ev.clientY - downAt.y) > 6) { downAt = null; return; }
+    downAt = null;
     const got = pickAt(ev);
     if (!got) return;
     if (got.kind === 'prop') emit('press', got.key);
-    else { currentIdx = got.index; emit('pick-fighter', got.index); applyTraining(); }
+    else if (got.index >= 0) {
+      currentIdx = got.index;
+      // Нажали по бойцу — он ОСТАНАВЛИВАЕТСЯ. Пока открыты статы, он стоит.
+      roster.forEach((r, i) => { r.held = (i === got.index); });
+      emit('pick-fighter', got.index);
+    }
   };
-  canvasEl.value.addEventListener('pointerdown', onPointerDown);
+  canvasEl.value.addEventListener('pointerdown', onDown);
+  canvasEl.value.addEventListener('pointerup', onPointerDown);
 
   buildAll();
 
@@ -602,26 +761,34 @@ onMounted(() => {
     const dt = Math.min(0.05, clock.getDelta());
     elapsed += dt;
 
-    if (!reduced) director?.update(elapsed, dt);   // двигает приманки; ходят тела сами
+    idleReturn(dt);
+    controls.update();
     lamps?.tick?.(elapsed);
+    trainLamps?.tick?.(elapsed);
+
+    // Соседи как препятствия — чтобы цели прогулок не назначались друг на друга.
+    for (let i = 0; i < roster.length; i++) {
+      const obs = [];
+      for (let j = 0; j < roster.length; j++) {
+        if (j === i || !roster[j].fighter) continue;
+        const p = roster[j].fighter.group.position;
+        obs.push({ x: p.x, z: p.z });
+      }
+      roster[i].dir.setObstacles(obs);
+    }
 
     const glowK = reduced ? 1 : 1 - Math.exp(-CORE_LIGHT.lerp * dt);
     for (let i = 0; i < roster.length; i++) {
       const r = roster[i];
       if (!r.fighter) continue;
+      tickFighter(r, i, dt);
       r.fighter.update(elapsed, camera);
-      // Стоящее тело развёрнуто к игроку — зал фронтальный.
-      if (!director || r.agent < 0 || director.isStill(r.agent)) {
-        const g = r.fighter.group;
-        const want = Math.atan2(camera.position.x - g.position.x, camera.position.z - g.position.z) + Math.PI;
-        let d = ((want - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-        g.rotation.y += d * (reduced ? 1 : 1 - Math.exp(-2.2 * dt));
-      }
       r.lit += ((i === currentIdx ? 1 : 0) - r.lit) * glowK;
       applyLight(r);
     }
+    if (!reduced) separateBodies(dt);
+    for (const b of bags) b.tick(dt, reduced);
 
-    // Легенда — тело едет на дрейфе облака; когда её нет, и тела нет.
     if (legendBody) {
       legendBody.group.visible = props.legend;
       if (props.legend) {
@@ -638,22 +805,20 @@ onMounted(() => {
     legendAnchor?.tick(dt, elapsed);
 
     for (const p of propList) { p.obj.setPressed(props.pressed === p.key); p.obj.tick(dt); }
-    statsFloor?.setOpen(props.statsOpen);
-    statsFloor?.tick(dt, reduced);
 
-    // Черта зоны заметнее, пока в ней ЗАНИМАЮТСЯ — ровно то, что происходит в
-    // игре: занятие идёт внутри своей зоны. Свечения тут нет и быть не может.
-    for (const z of zoneList) {
-      const r = roster.find((x) => x.seat === z.seat);
-      // Место в строю: черта заметнее, пока в нём занимаются. Выбранный боец
-      // стоит не в строю, а на рабочем месте впереди — его зона ниже.
-      z.mark.setBusy(!!r && !!r.fighter && z.seat !== currentIdx && r.mode === 'drill');
-      z.mark.tick(dt);
-    }
-    if (markZone) {
+    // Статы лежат на плите ПОД остановленным бойцом и перед ним — поэтому едут
+    // вместе с ним: он останавливается там, где его нажали.
+    if (statsFloor) {
       const cur = roster[currentIdx];
-      markZone.setBusy(!!cur && cur.mode === 'drill');
-      markZone.tick(dt);
+      if (cur?.fighter) {
+        const g = cur.fighter.group.position;
+        const dx = camera.position.x - g.x, dz = camera.position.z - g.z;
+        const L = Math.max(1e-3, Math.hypot(dx, dz));
+        statsFloor.group.position.set(g.x + (dx / L) * 1.0, slab.refs.topY, g.z + (dz / L) * 1.0);
+        statsFloor.group.rotation.y = Math.atan2(dx, dz);
+      }
+      statsFloor.setOpen(props.statsOpen);
+      statsFloor.tick(dt, reduced);
     }
 
     renderer.render(scene, camera);
@@ -676,30 +841,66 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
-    fitCamera();
+    // Кадр сменил форму — поза пересчитывается. Угол обзора вертикальный: одна и
+    // та же высота мира ложится то в 844 точки, то в 390, и без пересчёта после
+    // поворота телефона зал становится вдвое мельче на ровном месте.
+    if (slab) { applyHomePose(false); idleSince = elapsed - CAM.returnDelay; returning = true; }
   });
   resizeObserver.observe(el);
+
+  onBeforeUnmount(() => {
+    canvasEl.value?.removeEventListener('pointerdown', onDown);
+  });
 });
 
-watch(() => [props.seats, props.count, props.layout].join('|'), () => rebuild());
-watch(() => props.trainState, () => applyTraining());
-watch(() => props.statsOpen, () => positionStats());
+function teardown() {
+  roster.forEach((r) => {
+    r.dir?.dispose?.();
+    r.pickOwn?.();
+    if (r.fighter) { scene.remove(r.fighter.group); r.fighter.dispose(); }
+  });
+  roster = [];
+  bags.forEach((b) => { scene.remove(b.group); b.dispose(); });
+  bags = [];
+  propList.forEach((p) => { scene.remove(p.obj.group); p.obj.dispose(); });
+  propList = [];
+  if (statsFloor) { scene.remove(statsFloor.group); statsFloor.dispose(); statsFloor = null; }
+  if (legendAnchor) { scene.remove(legendAnchor.group); legendAnchor.dispose(); legendAnchor = null; }
+  if (legendBody) { scene.remove(legendBody.group); legendBody.dispose(); legendBody = null; }
+  if (legendPresence) { scene.remove(legendPresence.group); scene.remove(legendPresence.trail); legendPresence.dispose(); legendPresence = null; }
+  if (lamps) { scene.remove(lamps.group); lamps.dispose(); lamps = null; }
+  if (trainLamps) { scene.remove(trainLamps.group); trainLamps.dispose(); trainLamps = null; }
+  if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
+  if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
+  if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); backdrop = null; }
+}
+
+watch(() => props.seats, () => { if (!scene) return; currentIdx = 0; teardown(); buildAll(); });
+// Смена точки интереса — не рывок: камера едет туда тем же возвратом, каким
+// возвращается после простоя.
+watch(() => props.focus, () => { if (!scene || !slab) return; applyHomePose(false); idleSince = elapsed - CAM.returnDelay; returning = true; });
+watch(() => [props.training, props.ready].join('|'), () => applyAssignments());
+// Пока статы открыты — боец СТОИТ, закрыли — идёт дальше. Правило одно и то же
+// и для нажатия по телу, и для переключателя страницы: иначе подпись ехала бы
+// за уходящим бойцом.
+watch(() => props.statsOpen, (on) => {
+  roster.forEach((r, i) => { r.held = on && i === currentIdx; });
+});
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
-  if (onPointerDown && canvasEl.value) canvasEl.value.removeEventListener('pointerdown', onPointerDown);
+  if (onPointerDown && canvasEl.value) canvasEl.value.removeEventListener('pointerup', onPointerDown);
   if (mm && onMM) (mm.removeEventListener ? mm.removeEventListener('change', onMM) : mm.removeListener(onMM));
   renderer?.setAnimationLoop(null);
+  controls?.dispose();
   teardown();
   renderer?.dispose();
 });
-
-defineExpose({ pickFighter: (i) => { currentIdx = i; applyTraining(); } });
 </script>
 
 <style scoped>
-.fm-wrap { position: relative; width: 100%; height: 100%; background: var(--void); overflow: hidden; }
+.fm-wrap { position: relative; width: 100%; height: 100%; background: var(--void); overflow: hidden; touch-action: none; }
 .fm-canvas { display: block; width: 100%; height: 100%; }
 .fm-vignette { position: absolute; inset: 0; pointer-events: none; background: var(--scene-vignette); }
 .fm-fps {

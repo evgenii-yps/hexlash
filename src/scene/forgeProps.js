@@ -39,8 +39,8 @@
 //    Полосу кнопок собирает страница из уже существующих стилей зала (.hs-strip
 //    в src/styles/home.css) — второй такой полосы здесь не заводится.
 //
-// Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade,
-//               buildZoneMark, buildStatsFloor, buildLegendAnchor, buildBuffShelf.
+// Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade, buildPunchBag,
+//               buildStatsFloor, buildLegendAnchor, buildBuffShelf.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -61,22 +61,37 @@ export const FORGE_PROPS = {
   roster:  { w: 0.72, d: 0.52, label: 'ROSTER' },
   upgrade: { w: 0.86, d: 0.72, label: 'FORGE' },
 
-  // РАЗМЕТКА ЗОНЫ — участок пола, закреплённый за бойцом. Видна в покое и
-  // видна пустой. Приглушённая и матовая: это часть плиты, а не наклейка
-  // поверх неё, и светиться ей нечем.
-  zone: {
-    lift: 0.014,        // насколько разметка приподнята над плитой (чтобы не мерцала)
-    line: 0.035,        // толщина черты
-    corner: 0.26,       // доля стороны, которую занимает угловая скоба
-    fill: 0.10,         // насколько заметна заливка внутри пустой зоны
-    lineOpacity: 0.42,  // насколько заметна сама черта
-    busyLine: 0.85,     // …и насколько — когда боец в ней ЗАНЯТ (работает)
+  // ⚠️ РАЗМЕТКИ ЗОН БОЛЬШЕ НЕТ (правка v3). Она вводилась в v2, чтобы разнести
+  //    слипшихся бойцов; слипание оказалось ошибкой макета и исправлено. Бродящему
+  //    бойцу закреплённое место противоречит — теперь он ходит по всей плите.
+
+  // ГРУША. Делается В ТОЧНОСТИ в манере перчаток с острова ARENA (modePlates.js):
+  // гранёная, низкополигональная, матовая. Ни кожи, ни шнуровки, ни швов, ни
+  // надписей. Не светится.
+  //
+  // ЗАЧЕМ ТАК. Перчатки — единственная вещь из реального мира в этом мире, и
+  // тогда это было записано как исключение. Груша стала бы вторым исключением,
+  // поэтому решение владельца: не плодить исключения, а завести СЕМЬЮ. Один
+  // приём на обе вещи — низкая огранка, матовый тон плиты, никакого блеска.
+  bag: {
+    r: 0.26,            // радиус тела груши
+    h: 0.86,            // высота цилиндрической части (без полусфер)
+    sides: 8,           // столько же граней, сколько у кулака перчатки
+    hang: 2.25,         // высота подвеса над плитой
+    chain: 5,           // звеньев в цепи
+    linkR: 0.035,
+    strapH: 0.055,      // пояски на теле груши
+    swingSpring: 7.0,   // насколько резво груша возвращается в отвес
+    swingDamp: 0.90,    // затухание качания
+    swingKick: 0.42,    // толчок от одного удара, радиан/с
+    swingMax: 0.52,     // предел отклонения, радиан
   },
 
-  // СТАТЫ — проступают НА ПОВЕРХНОСТИ ПЛИТЫ перед бойцом (правка v2). Ничего
-  // не поднимается и не висит: поднятое табло отъедало высоту кадра, а высота
-  // в вертикальном телефоне — самое дефицитное.
-  stats: { w: 1.62, d: 1.28, openDur: 0.4, rows: 7 },
+  // СТАТЫ — проступают НА ПОВЕРХНОСТИ ПЛИТЫ под остановленным бойцом и перед
+  // ним (правка v2, уточнение v3). Ничего не поднимается и не висит: поднятое
+  // табло отъедало высоту кадра, а высота в вертикальном телефоне — самое
+  // дефицитное. `lift` — приподнятость над плитой, чтобы надпись не мерцала.
+  stats: { w: 1.62, d: 1.28, openDur: 0.4, rows: 7, lift: 0.014 },
 
   // Полка баффов — только МЕСТО, задел (решение 22.09: предметы баффов позже).
   shelf: { w: 1.10, d: 0.30, niches: 3, label: 'BUFFS' },
@@ -88,10 +103,15 @@ export const FORGE_PROPS = {
 // ───────────────────────────── Материалы ─────────────────────────────
 /** Матовое тело предмета — тон декора из токенов, без своего цвета. */
 function bodyMat(kind = 'decor') {
-  const src = kind === 'dark' ? MATERIALS.decorDark
+  const src = kind === 'dark' || kind === 'decorDark2' ? MATERIALS.decorDark
     : kind === 'pedestal' ? MATERIALS.pedestal
       : MATERIALS.decor;
-  return new THREE.MeshStandardMaterial({ ...src });
+  // decorDark2 — тот же тон, но заметно глуше: им идут детали, которые не должны
+  // спорить с телом предмета (цепь, пояски). Второго ЦВЕТА здесь не заводится —
+  // меняется только то, сколько света вещь возвращает.
+  const m = new THREE.MeshStandardMaterial({ ...src });
+  if (kind === 'decorDark2') m.roughness = 1;
+  return m;
 }
 
 /** Аддитивная розовая лужица нажатия — ровно тот же состав, что у баффов. */
@@ -345,99 +365,6 @@ export function buildUpgrade() {
 //
 // Форма — скобы по углам, а не сплошная рамка: сплошная на десяти местах
 // превращает пол в сетку, а сетка — это узор, которого в проекте быть не должно.
-// Рисунок ячейки — ОДНА картинка на все одинаковые зоны. Скобы и заливка
-// запечены в неё вместе, поэтому на плите каждая зона стоит одной плоскостью,
-// а не девятью кусками. Это не украшательство: на десяти местах девять кусков
-// превращались в сотню лишних вызовов отрисовки, и горизонтальный кадр терял
-// на них кадры (замер v2: 11.1 → 12.9 в ландшафте после склейки).
-const _zoneTex = new Map();
-function zoneTexture(halfX, halfZ) {
-  const key = `${halfX.toFixed(3)}x${halfZ.toFixed(3)}`;
-  if (_zoneTex.has(key)) return _zoneTex.get(key);
-  const Z = FORGE_PROPS.zone;
-  // Холст в пропорциях самой ячейки — иначе скобы растянутся вместе с ним.
-  const PX = 256;
-  const w = PX, h = Math.max(32, Math.round(PX * (halfZ / halfX)));
-  const cv = document.createElement('canvas');
-  cv.width = w; cv.height = h;
-  const c = cv.getContext('2d');
-
-  const line = '#' + new THREE.Color(MATERIALS.decorLine.color).getHexString();
-  const dark = '#' + new THREE.Color(MATERIALS.decorDark.color).getHexString();
-
-  // Заливка — еле различимая, только чтобы пустое место читалось местом.
-  c.globalAlpha = Z.fill;
-  c.fillStyle = dark;
-  c.fillRect(0, 0, w, h);
-
-  // Скобы по углам, а не сплошная рамка: сплошная на десяти местах превращает
-  // пол в сетку, а сетка — это узор, которого в проекте быть не должно.
-  c.globalAlpha = 1;
-  c.fillStyle = line;
-  const t = Math.max(2, Math.round((Z.line / (halfX * 2)) * w));
-  const lx = Math.round(w * Z.corner);
-  const lz = Math.round(h * Z.corner);
-  for (const [x0, sx] of [[0, 1], [w, -1]]) for (const [y0, sy] of [[0, 1], [h, -1]]) {
-    const x = sx > 0 ? x0 : x0 - lx;
-    const y = sy > 0 ? y0 : y0 - t;
-    c.fillRect(x, y, lx, t);
-    c.fillRect(sx > 0 ? x0 : x0 - t, sy > 0 ? y0 : y0 - lz, t, lz);
-  }
-
-  const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  // Без мип-уровней. Черта здесь тонкая, а ячейка на десяти местах занимает на
-  // экране десятки точек: мип-уровни её просто размывали в ничто — на первом
-  // снимке склеенной разметки зоны почти пропали. Гладкой фильтрации хватает,
-  // потому что рисунок — прямые полосы, а не мелкий шум.
-  tex.generateMipmaps = false;
-  tex.minFilter = THREE.LinearFilter;
-  _zoneTex.set(key, tex);
-  return tex;
-}
-
-// ═══════════════════ РАЗМЕТКА ЗОНЫ НА ПЛИТЕ ═══════════════════
-// Участок пола, закреплённый за бойцом. Появился в правке v2, потому что на
-// дуге настоящего зала бойцы слипаются в кучу, и чем их больше, тем хуже.
-// Разметка не расталкивает их — она объясняет, что каждый стоит на СВОЁМ месте.
-//
-// Это ещё и то, что уже происходит в игре: боец в состоянии TRAINING работает
-// именно в своей зоне (см. forgeWander, «ЗАНЯТИЕ РАБОТАЕТ В СВОЕЙ ЗОНЕ»).
-// Разметка делает видимым то, что раньше происходило молча — поэтому у зоны
-// есть второе состояние: пока в ней работают, её черта заметнее.
-//
-// ⚠️ Второе состояние — ЯРКОСТЬ ЧЕРТЫ, а не свечение. Материал не аддитивный и
-//    ничего не излучает: правило «одно геройское свечение» зона не трогает.
-export function buildZoneMark(halfX, halfZ) {
-  const Z = FORGE_PROPS.zone;
-  const geo = new THREE.PlaneGeometry(halfX * 2, halfZ * 2);
-  const mat = new THREE.MeshBasicMaterial({
-    map: zoneTexture(halfX, halfZ),
-    transparent: true, opacity: Z.lineOpacity, depthWrite: false,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.y = Z.lift;
-  const group = new THREE.Group();
-  group.add(mesh);
-
-  let busy = false;
-  return {
-    group,
-    /** Идёт ли в зоне занятие. Черта становится заметнее — но не светится. */
-    setBusy(on) { busy = !!on; },
-    tick(dt) {
-      const Zc = FORGE_PROPS.zone;
-      const target = busy ? Zc.busyLine : Zc.lineOpacity;
-      const k = 1 - Math.exp(-5 * Math.min(0.05, dt));
-      mat.opacity += (target - mat.opacity) * k;
-    },
-    // Картинка общая на все одинаковые зоны — здесь её не освобождаем.
-    dispose() { geo.dispose(); mat.dispose(); },
-  };
-}
-
 // ═══════════════════ СТАТЫ — НА ПОВЕРХНОСТИ ПЛИТЫ ═══════════════════
 // Открываются нажатием по самому бойцу и проступают НА ПОЛУ перед ним — как
 // надпись на плите, а не предмет в воздухе (правка v2). Ничего не поднимается.
@@ -449,7 +376,7 @@ export function buildZoneMark(halfX, halfZ) {
 //    пустым нарочно, чтобы на макете было видно, где значения встанут.
 export function buildStatsFloor(axisNames = []) {
   const S = FORGE_PROPS.stats;
-  const Z = FORGE_PROPS.zone;
+  const Z = { lift: FORGE_PROPS.stats.lift };
   const group = new THREE.Group();
   const disposers = [];
   const fade = [];          // всё, что проявляется вместе
@@ -512,6 +439,105 @@ export function buildStatsFloor(axisNames = []) {
       group.visible = phase > 0.001;
       // Проявляется на месте: ничего не едет и не поднимается.
       for (const m of fade) m.opacity = (m === plateMat ? 0.34 : 0.92) * phase;
+    },
+    dispose() { disposers.forEach((d) => d()); },
+  };
+}
+
+// ═══════════════════ ГРУША ═══════════════════
+// Вторая — и последняя — вещь из реального мира в этом мире, после перчаток с
+// острова ARENA. Сделана ТЕМ ЖЕ ПРИЁМОМ, что и они (modePlates.js, «the gloves»):
+// низкосегментная сфера и цилиндр с плоской огранкой, матовый тон плиты,
+// roughness под 0.85, никакого блеска. Ни кожи, ни шнуровки, ни швов, ни
+// надписей — их нет и у перчаток.
+//
+// ⚠️ ГРУША НЕ СВЕТИТСЯ. У перчаток розовое на исподе — это ЗАПЕЧЁННЫЙ цвет
+//    вершин: свет разлома, отражённый плитой снизу. Под грушами разлома нет, и
+//    подкрашивать их снизу не от чего, поэтому здесь чистый матовый тон и
+//    ничего больше.
+//
+// Качание — снаружи и по одной оси: удар толкает грушу от бойца, пружина
+// возвращает её в отвес. Тело бойца груша не трогает совсем.
+export function buildPunchBag() {
+  const B = FORGE_PROPS.bag;
+  const group = new THREE.Group();   // стоит на полу; вся груша висит внутри
+  const disposers = [];
+
+  // Тело груши — ТЁМНЫЙ тон декора, а не светлый, и вдобавок совсем глухой
+  // (decorDark2 = тот же тон, шероховатость до упора). На светлом и на блике она
+  // под лампой выбеливалась в белую бочку и читалась раньше бойца рядом, а
+  // первым должно читаться тело. Нового цвета при этом не заведено: тон взят
+  // из набора, гасится только блик.
+  const mat = bodyMat('decorDark2');
+  const dark = bodyMat('dark');
+  disposers.push(() => { mat.dispose(); dark.dispose(); });
+
+  // Точка подвеса — вокруг неё всё и качается.
+  const pivot = new THREE.Group();
+  pivot.position.y = B.hang;
+  group.add(pivot);
+
+  // Цепь: несколько коротких гранёных звеньев вниз от потолка к телу груши.
+  const linkGeo = new THREE.CylinderGeometry(B.linkR, B.linkR, 0.10, 5);
+  disposers.push(() => linkGeo.dispose());
+  for (let i = 0; i < B.chain; i++) {
+    const l = new THREE.Mesh(linkGeo, dark);
+    l.position.y = -0.07 * i - 0.05;
+    l.rotation.y = (i % 2) * Math.PI / 4;   // звенья через одно повёрнуты — цепь, а не труба
+    pivot.add(l);
+  }
+  const chainDrop = 0.07 * B.chain;
+
+  // Тело — цилиндр с гранями, сверху и снизу по полусфере того же счёта граней.
+  // Ровно та же логика, что у кулака перчатки: мало сегментов + плоская огранка.
+  const bodyY = -chainDrop - B.h / 2 - B.r * 0.6;
+  const tubeGeo = new THREE.CylinderGeometry(B.r, B.r * 0.94, B.h, B.sides);
+  const capGeo = new THREE.SphereGeometry(B.r, B.sides, 4);
+  disposers.push(() => { tubeGeo.dispose(); capGeo.dispose(); });
+  const tube = new THREE.Mesh(tubeGeo, mat);
+  tube.position.y = bodyY;
+  pivot.add(tube);
+  const capTop = new THREE.Mesh(capGeo, mat);
+  capTop.position.y = bodyY + B.h / 2;
+  capTop.scale.set(1, 0.82, 1);
+  pivot.add(capTop);
+  const capBot = new THREE.Mesh(capGeo, mat);
+  capBot.position.y = bodyY - B.h / 2;
+  capBot.scale.set(0.94, 0.90, 0.94);
+  pivot.add(capBot);
+
+  // Два пояска — то же, что манжета у перчатки: деталь, которая держит форму.
+  const strapGeo = new THREE.CylinderGeometry(B.r * 1.04, B.r * 1.04, B.strapH, B.sides);
+  disposers.push(() => strapGeo.dispose());
+  for (const k of [0.30, -0.30]) {
+    const st = new THREE.Mesh(strapGeo, dark);
+    st.position.y = bodyY + B.h * k;
+    pivot.add(st);
+  }
+
+  // Качание: угол и скорость по одной оси. Удар задаёт скорость, пружина тянет
+  // обратно в отвес, затухание гасит. Ни физики, ни столкновений здесь нет —
+  // это движение предмета, а не тело в мире.
+  let ang = 0, vel = 0, axis = 0;   // axis — направление толчка в плоскости XZ
+  return {
+    group,
+    /** Высота, на которой тело груши — туда целится боец. */
+    hitY: B.hang + bodyY,
+    /** Удар. `dirX/dirZ` — куда толкнуть (от бойца к груше). */
+    hit(dirX, dirZ, reduced) {
+      if (reduced) return;
+      axis = Math.atan2(dirX, dirZ);
+      vel += B.swingKick;
+    },
+    tick(dt, reduced) {
+      if (reduced) { pivot.rotation.set(0, 0, 0); return; }
+      vel += -B.swingSpring * ang * dt;
+      vel *= Math.pow(B.swingDamp, dt * 60);
+      ang += vel * dt;
+      if (ang > B.swingMax) { ang = B.swingMax; vel = 0; }
+      if (ang < -B.swingMax) { ang = -B.swingMax; vel = 0; }
+      // Наклон в сторону толчка: раскладываем один угол на две оси.
+      pivot.rotation.set(Math.cos(axis) * ang, 0, -Math.sin(axis) * ang);
     },
     dispose() { disposers.forEach((d) => d()); },
   };
