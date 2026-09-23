@@ -30,6 +30,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
@@ -205,6 +206,23 @@ const CAM = {
   maxDist: 90,           // ten on one arc is wide — the fit must be allowed to back off
 };
 // How the rest of the hall sinks while one fighter's card and tree are open.
+// СВОБОДНАЯ КАМЕРА (встраивание v1, ТЗ §1). Зал был фронтальным и закреплённым;
+// теперь им крутят и приближают, как домашним островом.
+//
+// Числа коридора — ДОЛИ от подобранного стартового удаления, а не абсолютные.
+// Урок с макета: там коридор строился от ширины плиты, подобранная поза уходила
+// за его потолок, и controls.update() тут же дёргал камеру обратно — композиция
+// разъезжалась. Доля этого не может по построению: старт всегда внутри коридора.
+const ORBIT = {
+  inFactor: 0.45,      // насколько близко пускаем относительно старта
+  outFactor: 1.35,     // и насколько далеко
+  polarMin: 0.30,      // под плиту не заглянуть
+  polarMax: 1.40,
+  damping: 0.08,
+  returnDelay: 4.0,    // сколько стоять без рук, прежде чем вернуться в стартовую позу
+  returnLerp: 1.6,
+};
+
 const WORK = {
   dimSkin: 0.72,         // how far the others' bodies fade toward the room (0..1)
   dimGlow: 0.25,         // …and their floor pools
@@ -630,10 +648,33 @@ function frameFor(working) {
 function applyCamera(frame, snap) {
   camPosTo.set(frame.pos[0], frame.pos[1], frame.pos[2]);
   camLookTo.set(frame.look[0], frame.look[1], frame.look[2]);
+  // Стартовая поза — точка отсчёта и для свободной камеры: к ней она возвращается
+  // после того, как игрок её отпустил, и от её удаления считается коридор.
+  homePose = { pos: camPosTo.clone(), look: camLookTo.clone() };
+  if (controls) {
+    const d = camPosTo.distanceTo(camLookTo);
+    controls.minDistance = d * ORBIT.inFactor;
+    controls.maxDistance = d * ORBIT.outFactor;
+    controls.target.copy(camLookTo);
+  }
   if (snap) {
     camPos.copy(camPosTo); camLook.copy(camLookTo);
     if (camera) { camera.position.copy(camPos); camera.lookAt(camLook); }
+    if (controls) { controls.target.copy(camLookTo); controls.update(); }
   }
+  idleSince = null; returning = false;
+}
+
+// Возврат в стартовую позу после простоя — как на домашнем острове. Пока игрок
+// держит камеру, не вмешиваемся вовсе.
+function idleReturn(dt) {
+  if (!homePose || !controls || idleSince === null) return;
+  if (!returning && (clock.getElapsedTime() - idleSince) < ORBIT.returnDelay) return;
+  returning = true;
+  const k = 1 - Math.exp(-ORBIT.returnLerp * Math.min(0.05, dt));
+  camera.position.lerp(homePose.pos, k);
+  controls.target.lerp(homePose.look, k);
+  if (camera.position.distanceTo(homePose.pos) < 0.02) { returning = false; idleSince = null; }
 }
 
 // Rest → lit for one body's core, and normal → sunk into the dark for its skin.
@@ -733,6 +774,12 @@ const camPosTo = new THREE.Vector3();    // where it is going
 const camLookTo = new THREE.Vector3();
 let prevT = 0;
 let reduced = false;
+// Орбита и возврат в стартовую позу. homePose — та самая поза, которую считает
+// frameFor: она остаётся точкой отсчёта, свободная камера её не отменяет.
+let controls = null;
+let homePose = null;
+let idleSince = null;
+let returning = false;
 let lamps = null, backdrop = null;
 let legend = null, legendPresence = null, legendParts = null;
 // Счётчик кадров и время сборки тел — только для служебной линейки (__forgeProbe).
@@ -931,6 +978,22 @@ onMounted(() => {
   // --- Camera: FIXED and frontal. No orbit, no auto-rotate (owner's call): the
   //     hall is a workplace. Two framings — the whole row, and closer-in with the
   //     picked fighter on the left — eased toward, never cut to. ---
+  // Свободная камера. Заводится ДО первой позы, чтобы applyCamera сразу выставил
+  // ей коридор и точку взгляда. Вращение по кругу не ограничено — ограничен только
+  // наклон, чтобы нельзя было заглянуть под плиту.
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = ORBIT.damping;
+  controls.enablePan = false;
+  controls.minPolarAngle = ORBIT.polarMin;
+  controls.maxPolarAngle = ORBIT.polarMax;
+  // Руки игрока отменяют возврат; отпустил — пошёл отсчёт простоя.
+  controls.addEventListener('start', () => { idleSince = null; returning = false; });
+  controls.addEventListener('end', () => { idleSince = clock.getElapsedTime(); });
+  // При «меньше движения» камера остаётся закреплённой: поездка ради поездки там
+  // не нужна, а зал и без неё читается.
+  controls.enabled = !reduced;
+
   applyCamera(frameFor(false), true);
 
   // --- Pointer: hover lights ONE core and names it; a tap picks that fighter.
@@ -1027,12 +1090,23 @@ onMounted(() => {
     const dt = t - prevT;
     prevT = t;
 
-    // Camera eases toward the current framing (snap when motion is reduced).
-    const camK = reduced ? 1 : 1 - Math.exp(-(1 / (CAM.moveSec * 0.36)) * Math.min(0.05, dt));
-    camPos.lerp(camPosTo, camK);
-    camLook.lerp(camLookTo, camK);
-    camera.position.copy(camPos);
-    camera.lookAt(camLook);
+    // КАМЕРА. Пока идёт смена кадрирования (выбрали бойца, повернули экран) её
+    // ведёт зал — это его поставленное движение. Когда доехали, камера переходит
+    // игроку: орбита, приближение, и возврат в стартовую позу после простоя.
+    const arrived = camPos.distanceToSquared(camPosTo) < 1e-4;
+    if (!arrived) {
+      const camK = reduced ? 1 : 1 - Math.exp(-(1 / (CAM.moveSec * 0.36)) * Math.min(0.05, dt));
+      camPos.lerp(camPosTo, camK);
+      camLook.lerp(camLookTo, camK);
+      camera.position.copy(camPos);
+      camera.lookAt(camLook);
+      if (controls) controls.target.copy(camLook);
+    } else if (controls && !reduced) {
+      idleReturn(dt);
+      controls.update();
+      camPos.copy(camera.position);
+      camLook.copy(controls.target);
+    }
 
     const dimK = reduced ? 1 : 1 - Math.exp(-4.0 * Math.min(0.05, dt));
     const glowK = reduced ? 1 : 1 - Math.exp(-CORE_LIGHT.lerp * Math.min(0.05, dt));
@@ -1515,6 +1589,7 @@ onBeforeUnmount(() => {
   if (stopTrainingWatch) { stopTrainingWatch(); stopTrainingWatch = null; }
   applyTraining = null;
   if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; }
+  if (controls) { controls.dispose(); controls = null; }
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
