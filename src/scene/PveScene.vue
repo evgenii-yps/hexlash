@@ -682,7 +682,7 @@ function turnTowards(group, x, z, k) {
 // hover  — a body is under the pointer (or was just tapped): { id, callsign, x, y }, or null
 // pick   — this fighter was chosen
 // exit   — a tap landed on empty space while a fighter was picked
-const emit = defineEmits(['hover', 'pick', 'exit']);
+const emit = defineEmits(['hover', 'pick', 'exit', 'press']);
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -940,18 +940,27 @@ onMounted(() => {
   const _ptr = new THREE.Vector2();
   let downAt = null;
 
+  // ПОРЯДОК РАЗБОРА НАЖАТИЯ (ТЗ встраивания §2): предметы → боец → пол.
+  // Предметы стоят первыми потому, что они маленькие и неподвижные: боец,
+  // подошедший к наковальне, иначе перехватывал бы нажатие по ней собой.
   function pickAt(clientX, clientY) {
     const rect = renderer.domElement.getBoundingClientRect();
     _ptr.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     _ptr.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     _ray.setFromCamera(_ptr, camera);
+    for (const pr of propList) {
+      if (pr.obj.hit && pr.obj.hit.length && _ray.intersectObjects(pr.obj.hit, true).length) {
+        return { kind: 'prop', key: pr.key };
+      }
+    }
     // Only bodies that are actually in the room can be hit — upright that is one.
     const live = roster.filter((r) => r.fighter && r.fighter.group.parent);
     const hit = _ray.intersectObjects(live.map((r) => r.fighter.group), true)[0];
     if (!hit) return null;
     let o = hit.object;
     while (o && !live.some((r) => r.fighter.group === o)) o = o.parent;
-    return o ? live.find((r) => r.fighter.group === o) : null;
+    const entry = o ? live.find((r) => r.fighter.group === o) : null;
+    return entry ? { kind: 'fighter', entry } : null;
   }
 
   // Screen position of a body's head — where its callsign hangs.
@@ -974,20 +983,26 @@ onMounted(() => {
 
   onPointerMove = (e) => {
     if (workingId || e.pointerType === 'touch') return;   // no hover while working / on touch
-    emitHover(pickAt(e.clientX, e.clientY));
+    const g = pickAt(e.clientX, e.clientY);
+    emitHover(g && g.kind === 'fighter' ? g.entry : null);
   };
   onPointerDown = (e) => { downAt = { x: e.clientX, y: e.clientY, entry: pickAt(e.clientX, e.clientY) }; };
   onPointerUp = (e) => {
     const d = downAt; downAt = null;
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
-    if (d.entry) {
+    if (d.entry && d.entry.kind === 'prop') {
+      emit('press', d.entry.key);
+    } else if (d.entry && d.entry.kind === 'fighter') {
       // Touch has no hover, so light the core for a beat BEFORE the framing
       // changes — the finger has to see what it hit.
-      emitHover(d.entry);
-      emit('pick', d.entry.id);
-    } else if (workingId) {
-      emit('exit');                                                  // tap on empty space
+      emitHover(d.entry.entry);
+      emit('pick', d.entry.entry.id);
+    } else {
+      // Нажатие по пустому месту. Раньше оно сообщалось только пока открыт боец —
+      // больше нельзя: со встраиванием пустым местом ещё и закрывают то, что
+      // открыл предмет, а предмет к этому моменту загорожен самой панелью.
+      emit('exit');
     }
   };
   const canvas = renderer.domElement;

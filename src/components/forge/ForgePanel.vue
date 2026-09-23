@@ -74,7 +74,7 @@
            НИ ПРОЦЕНТОВ, НИ ЦИФР, НИ ОСТАТКА ВРЕМЕНИ. Строка под кнопкой говорит
            словами, что происходит или почему нельзя; сам ход занятия показывает
            ТЕЛО В ЗАЛЕ, а не панель. -->
-      <section v-if="picked" class="fp-train">
+      <section v-if="picked && showTree" class="fp-train">
         <button
           type="button" class="fp-train-btn"
           :class="{ 'is-cancel': pickedState === 'busy' }"
@@ -85,7 +85,7 @@
       </section>
 
       <!-- ── 3 · tree ───────────────────────────────────────────────────── -->
-      <section class="fp-tree" :class="{ 'is-fresh': treeState === 'live' && !litNames.length }">
+      <section v-if="showTree" class="fp-tree" :class="{ 'is-fresh': treeState === 'live' && !litNames.length }">
         <!-- the mechanic, untouched -->
         <ForgeTree
           v-if="treeState === 'live'"
@@ -150,7 +150,7 @@
            «Свободен» — состояние по умолчанию, и тишина читается как оно; помечены два
            состояния, которые на выбор влияют. В шапке стоят все три слова — там
            это одна строка про одного бойца. -->
-      <section class="fp-roster">
+      <section v-if="showRoster" class="fp-roster">
         <p class="fp-label">
           {{ t.forge.rosterLabel }}
           <span v-if="fighters.length" class="c">{{ fighters.length }} / {{ rosterMax }}</span>
@@ -200,6 +200,11 @@ import { getCore } from '@/data/upgradeData.js';
 import ForgeTree from '@/components/forge/ForgeTree.vue';
 
 const props = defineProps({
+  // КАКИЕ БЛОКИ ПОКАЗЫВАТЬ. Встраивание v1: панель больше не стоит в экране
+  // всегда — её начинку открывают предметы на плите. Планшет зовёт список
+  // бойцов, наковальня — дерево граней. 'all' оставлено значением по умолчанию,
+  // чтобы этот разбор ничего не менял там, где панель показывают целиком.
+  section: { type: String, default: 'all' },   // 'all' | 'roster' | 'tree'
   fighters: { type: Array, default: () => [] },
   pickedId: { type: String, default: null },
   picked: { type: Object, default: null },
@@ -230,6 +235,11 @@ const props = defineProps({
 const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train']);
 
 const treeRef = ref(null);
+
+// Что из шести блоков сейчас на экране. Голова видна всегда: без неё не понять,
+// о ком речь.
+const showTree = computed(() => props.section === 'all' || props.section === 'tree');
+const showRoster = computed(() => props.section === 'all' || props.section === 'roster');
 
 // The picked fighter's core. Colour is NOT declared here: getCore reads the one
 // declaration in tokens.css (via coreHue). With nobody picked there is no colour

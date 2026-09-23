@@ -21,7 +21,7 @@
      portable here without editing home.css. -->
 <template>
   <div class="pve-root forge-root" :style="coreVars">
-    <PveScene ref="sceneRef" @hover="onHover" @pick="onPick" @exit="exitWork" />
+    <PveScene ref="sceneRef" @hover="onHover" @pick="onPick" @exit="onExit" @press="onPress" />
 
     <!-- hovered fighter's callsign — matte, no glow, follows the body -->
     <div class="fg-tag" :class="{ 'is-on': !!tag }" :style="tagStyle">{{ tag?.callsign }}</div>
@@ -29,15 +29,15 @@
     <!-- THE PANEL — always there, in every layout. It used to be two things
          floating over the hall (a card in one corner, the tree pinned to the
          other edge) and it had no way out of the room at all. -->
-    <!-- ⚠️ ПАНЕЛЬ РОСТЕРА УБРАНА (встраивание v1, решение владельца 23.09.2026).
-         Её место занимают планшет и наковальня — предметы на плите. Разметка
-         оставлена закрытой, а не удалена, ровно до того шага, на котором к
-         предметам подключены нажатия: пока их нет, в зале нечем выбрать бойца и
-         открыть дерево граней. Как только предметы заработают — этот блок и
-         импорт ForgePanel удаляются совсем. -->
-    <Transition v-if="false" name="fp-fade" appear>
+    <!-- ПАНЕЛЬ БОЛЬШЕ НЕ СТОИТ В ЭКРАНЕ ВСЕГДА (встраивание v1, решение владельца
+         23.09.2026). Её начинку открывают ПРЕДМЕТЫ на плите: планшет зовёт список
+         бойцов, наковальня — дерево граней. Сама панель не переписана: те же блоки,
+         та же механика, просто показываются по требованию и по одному — за это
+         отвечает `section`. -->
+    <Transition v-if="openSection" name="fp-fade" appear>
       <ForgePanel
         ref="panelRef"
+        :section="openSection"
         :fighters="fighters"
         :picked-id="pickedId"
         :picked="picked"
@@ -102,6 +102,22 @@ import { stateOf, facetGate, anyLesson, startClock, stopClock } from '@/services
 import PveScene from '@/scene/PveScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import ForgePanel from '@/components/forge/ForgePanel.vue';
+
+// Что сейчас открыто предметом: null — ничего, в экране только зал.
+// 'roster' — планшет, 'tree' — наковальня.
+const openSection = ref(null);
+function onPress(key) {
+  const want = key === 'roster' ? 'roster' : key === 'upgrade' ? 'tree' : null;
+  if (!want) return;
+  openSection.value = openSection.value === want ? null : want;   // повторное нажатие закрывает
+}
+// Нажатие по пустому месту закрывает открытое предметом, и только потом выходит
+// из работы над бойцом: иначе панель нечем закрыть — предмет, который её открыл,
+// она сама и загораживает.
+function onExit() {
+  if (openSection.value) { openSection.value = null; return; }
+  exitWork();
+}
 
 import '@/styles/home.css';     // the shared .hs-strip chrome
 import '@/styles/cabinet.css';  // the PlayerCabinet drawer
