@@ -288,12 +288,18 @@ function buildRosterBodies(world) {
     fighter.setReducedMotion(reduced);
     fighter.setAI?.(false);
     fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });  // без плашки HP
-    // Стартовое место — вразнобой по плите, чтобы зал не начинался с шеренги.
-    const a = (i / Math.max(1, n)) * Math.PI * 2;
+    // Стартовое место — в СВОЕЙ полосе, а не по общему кольцу. Кольцо радиусом
+    // в пятую часть плиты — это кучка в середине: на четверых она ещё читалась
+    // как разброс, на десяти зал открывался комом, и первые секунды уходили на
+    // расползание (шагом, по широкой плите — заметно дольше, чем на неё смотрят).
+    // Теперь каждый стоит у середины своей полосы, а по глубине они разведены
+    // зигзагом, чтобы не выстроиться в шеренгу.
+    const ln = lane(i);
+    const zig = ((i % 3) - 1) * 0.66 + (i % 2 ? 0.18 : -0.18);
     fighter.group.position.set(
-      Math.cos(a) * compose.slab.width * 0.22,
+      (ln.xMin + ln.xMax) / 2,
       topY,
-      Math.sin(a) * compose.slab.depth * 0.22,
+      zig * halfD,
     );
     scene.add(fighter.group);
     r.fighter = fighter;
