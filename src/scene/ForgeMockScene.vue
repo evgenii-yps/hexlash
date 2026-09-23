@@ -832,6 +832,9 @@ onMounted(() => {
     // В пути нажатия не слушаются: новое нажатие не перебивает начатый перелёт.
     if (dive?.active) return;
     const got = pickAt(ev);
+    // ВРЕМЕННЫЙ ЗОНД — снять перед сдачей. Нужен, чтобы съёмка могла сказать, куда
+    // пришлось нажатие, а не гадать по картинке.
+    window.__pick = got ? (got.kind + (got.which ? ':' + got.which : got.index >= 0 ? ':' + got.index : '')) : 'мимо';
     if (!got) return;
     if (got.kind === 'bag') return;                       // груша — ничего
     if (got.kind === 'island') { flyTo(got.which === 'training' ? 'training' : 'hall'); return; }
