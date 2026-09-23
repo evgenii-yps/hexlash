@@ -506,11 +506,34 @@ function buildNeighbourIsland(topY, count) {
   scene.add(trainSlab.group);
   trainHalfW = lay.width / 2;
   trainHalfD = lay.depth / 2;
-  for (const sp of lay.spots) {
+  // МЕСТА груш считаются сразу, САМИ ГРУШИ — нет. Плита пустая, пока никто не
+  // занимается: десяток подвешенных тел с цепями висел в зале всегда, хотя
+  // занятие — состояние редкое. Замер 23.09.2026: с пустыми грушами горизонталь
+  // просела на 3.7 кадра против нынешнего зала, то есть за порог из ТЗ §5.
+  bagTopY = topY;
+  bagSpots = lay.spots.map((sp) => ({ x: trainCx + sp.x, z: sp.z }));
+}
+
+/**
+ * Груши по числу ЗАНИМАЮЩИХСЯ, а не по числу мест.
+ *
+ * Вызывается оттуда же, откуда зал узнаёт о смене занятия (applyTraining), то
+ * есть дважды за занятие, а не каждый кадр. Груша появляется, когда бойца на неё
+ * отправили, и убирается, когда он закончил, — пустых висящих груш не бывает.
+ */
+function syncBags(busy) {
+  for (const i of busy) {
+    if (bags.has(i) || !bagSpots[i]) continue;
     const bag = buildPunchBag();
-    bag.group.position.set(trainCx + sp.x, topY, sp.z);
+    bag.group.position.set(bagSpots[i].x, bagTopY, bagSpots[i].z);
     scene.add(bag.group);
-    bags.push(bag);
+    bags.set(i, bag);
+  }
+  for (const [i, bag] of bags) {
+    if (busy.has(i)) continue;
+    scene.remove(bag.group);
+    bag.dispose?.();
+    bags.delete(i);
   }
 }
 
@@ -723,7 +746,9 @@ let renderer, scene, camera, slab, resizeObserver, clock;
 // Встраивание v1, шаг 1 — соседний остров, груши и два предмета на плите.
 let trainSlab = null;
 let trainCx = 0, trainHalfW = 0, trainHalfD = 0;
-const bags = [];
+const bags = new Map();          // номер места → груша; пустых не держим
+let bagSpots = [];               // где груши СТОЯЛИ БЫ — считается сразу
+let bagTopY = 0;
 const propList = [];
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
@@ -930,10 +955,13 @@ onMounted(() => {
   applyTraining = () => {
     if (!director) return;
     const byId = new Map((store.getters['roster/fighters'] || []).map((f) => [f.id, f]));
+    const busy = new Set();
     for (let i = 0; i < roster.length; i++) {
       const st = trainingStateOf(byId.get(roster[i].id) || null);
       director.setMode(i, st === 'busy' ? 'drill' : st === 'ready' ? 'still' : 'wander');
+      if (st === 'busy') busy.add(i);
     }
+    syncBags(busy);
   };
   stopTrainingWatch = watch(trainingSig, () => applyTraining?.());
   applyTraining();
@@ -1609,6 +1637,12 @@ onBeforeUnmount(() => {
   if (legend) legend.dispose();
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
+  // Соседний остров и груши на нём — убираются вместе с залом. Груш может не
+  // быть вовсе (их строят по мере назначения занятия), поэтому просто обходим
+  // то, что есть.
+  for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
+  bags.clear(); bagSpots = [];
+  if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
   if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
   if (renderer) renderer.dispose();
 });
