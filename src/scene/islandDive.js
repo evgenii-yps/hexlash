@@ -123,6 +123,19 @@ export function createIslandDive({ camera, controls }) {
    * и на экране получается ровный чёрный кадр. Проверено на ARENA — так и было.
    */
   function poseFor(aim) {
+    // ГОТОВАЯ ПОЗА вместо прицела. Прицел отвечает на вопрос «как вписать предмет
+    // в кадр», и для подлёта к острову это верный вопрос. Но есть поездки, где
+    // конечная поза УЖЕ посчитана снаружи по своим правилам — например переход
+    // между островами в зале FORGE, где у каждого острова своя подобранная поза,
+    // и пересчитывать её здесь значило бы завести второй набор правил кадрирования.
+    // Тогда прицел приносит позу с собой, и она сильнее всего остального: ни
+    // вписывание, ни забор по наклону к ней не применяются — её уже подобрали.
+    // Поведение прицелов без `pose` не меняется ни на йоту.
+    if (aim.pose) {
+      endPos.copy(aim.pose.position);
+      endLook.copy(aim.pose.target);
+      return;
+    }
     const tanV = Math.max(1e-4, Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
     const fill = Math.max(1e-3, aim.fill);
     const byH = (aim.halfH / fill) / tanV;
@@ -145,12 +158,13 @@ export function createIslandDive({ camera, controls }) {
 
   /**
    * Поехали.
-   * @param {object} aim   результат modePlates.aimFor(id)
+   * @param {object} aim   результат modePlates.aimFor(id) — ЛИБО { pose: { position, target } },
+   *                         если конечная поза посчитана снаружи (см. poseFor)
    * @param {object} [opts] { onArrive }
    * @returns {boolean} false — прицела нет, поездка не началась
    */
   function play(aim, opts = {}) {
-    if (!aim || !aim.point) return false;
+    if (!aim || (!aim.point && !aim.pose)) return false;
     startPos.copy(camera.position);
     startLook.copy(controls ? controls.target : _look.set(0, 0, 0));
     poseFor(aim);

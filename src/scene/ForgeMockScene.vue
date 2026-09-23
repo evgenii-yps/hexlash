@@ -41,6 +41,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
+import { createIslandDive } from './islandDive.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createHomeWanderDirector } from './homeWander.js';
@@ -131,6 +132,15 @@ const fps = ref(null);
 
 let renderer, scene, camera, clock, controls;
 let slab = null, trainSlab = null, backdrop = null, lamps = null, trainLamps = null;
+// Режиссёр перехода между островами. ПЕРЕИСПОЛЬЗОВАН, а не написан заново: это тот
+// же пролёт, которым камера въезжает в остров на экране режимов и в воротах арены.
+// Ему добавлена одна возможность — принять ГОТОВУЮ позу (islandDive.poseFor), потому
+// что позы островов зал считает сам и второго набора правил кадрирования тут не нужно.
+let dive = null;
+// Текущий остров. Не «куда заглянули», а ГДЕ МЫ: свободная камера после отпускания
+// возвращается именно сюда, иначе она через пару секунд уползала бы обратно в зал и
+// читалась бы как непослушная.
+let focusIsland = 'hall';
 let legendBody = null, legendPresence = null, legendAnchor = null;
 let statsFloor = null;
 let propList = [];       // { key, obj }
@@ -578,7 +588,7 @@ function homeFraming() {
   return { position, target, dist };
 }
 function applyHomePose(snap) {
-  homePose = (props.focus === 'training' && trainSlab && bags.length) ? trainingFraming() : homeFraming();
+  homePose = (focusIsland === 'training' && trainSlab && bags.length) ? trainingFraming() : homeFraming();
   controls.target.copy(homePose.target);
   // Коридор приближения — ДОЛЯ от стартового удаления, а не число, растянутое по
   // ширине плиты. Дома эти два способа совпадали: там стартовая поза и была
@@ -715,6 +725,46 @@ function separateBodies(dt) {
   }
 }
 
+// ─────────────────── Переход между островами ───────────────────
+/**
+ * Перелететь на остров и СДЕЛАТЬ ЕГО ТЕКУЩИМ.
+ *
+ * Это не «заглянуть»: после прилёта механизм возврата свободной камеры целится
+ * сюда же. Игрок крутит и приближает как раньше, отпустил — вернулся к этому
+ * острову, а не к главному.
+ *
+ * При включённом «меньше движения» перелёта нет — камера просто оказывается на
+ * месте: поездка ради поездки там не нужна.
+ */
+function flyTo(which) {
+  if (!scene || !slab) return;
+  const want = (which === 'training' && trainSlab && bags.length) ? 'training' : 'hall';
+  if (want === focusIsland && !dive?.active) return;   // уже здесь — ехать некуда
+  focusIsland = want;
+  const pose = want === 'training' ? trainingFraming() : homeFraming();
+  if (reduced || !dive) { applyHomePose(true); idleSince = null; returning = false; return; }
+  idleSince = null; returning = false;
+  dive.play({ pose }, {
+    onArrive: () => {
+      // Орбиту включает тот, кто её отдал: islandDive гасит controls на время
+      // поездки и НЕ возвращает — он не знает, кому камера принадлежит дальше.
+      controls.enabled = true;
+      applyHomePose(false);          // стартовой позой становится поза этого острова
+      idleSince = elapsed;
+    },
+  });
+}
+
+/** По какому острову пришлось нажатие. Ближний к камере, если луч задел оба. */
+function pickIsland() {
+  const a = slab ? raycaster.intersectObject(slab.group, true)[0] : null;
+  const b = trainSlab ? raycaster.intersectObject(trainSlab.group, true)[0] : null;
+  if (a && b) return a.distance <= b.distance ? 'hall' : 'training';
+  if (a) return 'hall';
+  if (b) return 'training';
+  return null;
+}
+
 // ─────────────────── Нажатия ───────────────────
 function pickAt(ev) {
   const el = wrap.value;
@@ -728,7 +778,12 @@ function pickAt(ev) {
   const boxes = roster.filter((r) => r.pick).map((r) => r.pick);
   const hit = raycaster.intersectObjects(boxes, false)[0];
   if (hit) return { kind: 'fighter', index: roster.findIndex((r) => r.pick === hit.object) };
-  return null;
+  // Груша — НИЧЕГО. Перехватывается до пола намеренно: она висит над полом
+  // тренировочного острова, и без этой ветки удар пальцем по груше уводил бы
+  // камеру, хотя игрок метил в грушу.
+  for (const bg of bags) if (raycaster.intersectObject(bg.group, true).length) return { kind: 'bag' };
+  const isl = pickIsland();
+  return isl ? { kind: 'island', which: isl } : null;
 }
 
 // ─────────────────── Жизненный цикл ───────────────────
@@ -764,6 +819,8 @@ onMounted(() => {
   controls.addEventListener('start', () => { idleSince = null; returning = false; });
   controls.addEventListener('end', () => { idleSince = elapsed; });
 
+  dive = createIslandDive({ camera, controls });
+
   raycaster = new THREE.Raycaster();
   pointerNdc = new THREE.Vector2();
   let downAt = null;
@@ -772,8 +829,12 @@ onMounted(() => {
     // Тап, а не вращение: палец сдвинулся меньше, чем на 6 точек.
     if (!downAt || Math.hypot(ev.clientX - downAt.x, ev.clientY - downAt.y) > 6) { downAt = null; return; }
     downAt = null;
+    // В пути нажатия не слушаются: новое нажатие не перебивает начатый перелёт.
+    if (dive?.active) return;
     const got = pickAt(ev);
     if (!got) return;
+    if (got.kind === 'bag') return;                       // груша — ничего
+    if (got.kind === 'island') { flyTo(got.which === 'training' ? 'training' : 'hall'); return; }
     if (got.kind === 'prop') emit('press', got.key);
     else if (got.index >= 0) {
       currentIdx = got.index;
@@ -792,8 +853,13 @@ onMounted(() => {
     const dt = Math.min(0.05, clock.getDelta());
     elapsed += dt;
 
-    idleReturn(dt);
-    controls.update();
+    // Пока едет перелёт — камера его, орбита и возврат в покой стоят.
+    if (dive?.update(dt)) {
+      // ничего больше камере не делаем
+    } else {
+      idleReturn(dt);
+      controls.update();
+    }
     lamps?.tick?.(elapsed);
     trainLamps?.tick?.(elapsed);
 
@@ -881,6 +947,11 @@ onMounted(() => {
 
   onBeforeUnmount(() => {
     canvasEl.value?.removeEventListener('pointerdown', onDown);
+    // Поездку гасим руками: она держит орбиту выключенной, и брошенная на полпути
+    // оставила бы её такой же на следующем монтировании.
+    dive?.cancel?.();
+    dive = null;
+    if (controls) controls.enabled = true;
   });
 });
 
@@ -909,7 +980,7 @@ function teardown() {
 watch(() => props.seats, () => { if (!scene) return; currentIdx = 0; teardown(); buildAll(); });
 // Смена точки интереса — не рывок: камера едет туда тем же возвратом, каким
 // возвращается после простоя.
-watch(() => props.focus, () => { if (!scene || !slab) return; applyHomePose(false); idleSince = elapsed - CAM.returnDelay; returning = true; });
+watch(() => props.focus, () => flyTo(props.focus === 'training' ? 'training' : 'hall'));
 watch(() => [props.training, props.ready].join('|'), () => applyAssignments());
 // Пока статы открыты — боец СТОИТ, закрыли — идёт дальше. Правило одно и то же
 // и для нажатия по телу, и для переключателя страницы: иначе подпись ехала бы
