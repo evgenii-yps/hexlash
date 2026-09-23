@@ -1,21 +1,27 @@
 <template>
-  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ ГРАНЕЙ (ТЗ 24.09.2026).
+  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ ГРАНЕЙ (ТЗ 24.09.2026, правка вторая).
        Адрес /dev/facets, ниоткуда не линкуется, закрыта от поисковиков тегом
        robots (не через robots.txt — строка запрета там публична и работает как
        указатель). Ничего не встраивает в игру: зал FORGE не трогается, ростер
-       не заменяется. Задача — посмотреть интерфейс граней глазами.
+       не заменяется.
 
        ⚠️ ФИГУРА НЕ РИСУЕТСЯ ЗДЕСЬ. Ядро приходит компонентом HexCore — тем же,
-       что стоит на лендинге, в деке и на экране входа. Грани выведены из того
-       же coreFigure() через src/data/coreFacetSlices.js. Второй отрисовки в
-       проекте быть не должно.
+       что стоит на лендинге, в деке и на экране входа. Грани и налив выведены
+       из того же coreFigure() через src/data/coreFacetSlices.js. Второй
+       отрисовки ядра в проекте быть не должно.
 
        СЛОВАРЬ: ветка — клин, грань — пятая часть клина, кристалл — то, что
-       грань даёт бойцу. -->
+       грань даёт бойцу. Кристаллы на ядре НЕ показываются: они живут только в
+       списке под вынесенной гранью. -->
   <div class="fx" :data-state="state">
     <header class="fx-bar">
       <span class="fx-bar__title">ГРАНИ И КРИСТАЛЛЫ · МАКЕТ</span>
       <span class="fx-bar__step">{{ stepLabel }}</span>
+      <!-- Служебный орган макета: в игру не пойдёт, нужен чтобы посмотреть
+           клин пустым, наполовину и полным. -->
+      <button type="button" class="fx-chip" @click="cycleFill">
+        налив: {{ fillLabel }}
+      </button>
       <button
         v-if="state !== 'rest'"
         type="button" class="fx-chip" @click="toRest"
@@ -36,73 +42,117 @@
           @click.self="onBackdrop"
         >
           <defs>
-            <!-- Свет грани. Пятно вытянуто ПОПЕРЁК клина и сходит в ноль
-                 вдоль него — до среза соседней грани. Клин остаётся цельным:
-                 шаги показывает свет, а не линии. -->
+            <!-- Налив. ОДНА обрезка на все три ветки: печать симметрична,
+                 свет расходится из сердца кругом. Радиус приходит разметкой,
+                 шаги — переходом со ступенчатой кривой (см. стили). -->
+            <clipPath :id="id('flow')">
+              <circle class="fx-flow-clip" cx="0" cy="0" r="1" :style="flowStyle" />
+            </clipPath>
+
+            <!-- Отклик на палец: мягкое пятно под пальцем. Это НЕ отметка
+                 грани — в покое его нет, оно живёт только пока палец на месте. -->
             <radialGradient
               v-for="f in facets" :key="`g${f.key}`"
-              :id="`fxp-${uid}-${f.key}`"
+              :id="id('pool-' + f.key)"
               gradientUnits="userSpaceOnUse"
               cx="0" cy="0" r="1"
               :gradientTransform="`translate(${f.cx} ${f.cy}) rotate(${f.deg + 90}) scale(${POOL_ACROSS} ${POOL_ALONG})`"
             >
               <stop offset="0" stop-color="currentColor" stop-opacity="1" />
-              <stop offset=".5" stop-color="currentColor" stop-opacity=".45" />
-              <!-- ⚠️ НЕ НОЛЬ. Ровный слабый подсвет по всей грани держит клин
-                   цельным: пятна становятся яркими МЕСТАМИ на сплошной ветке,
-                   а не отдельными полосками с чёрными промежутками между ними.
-                   На нуле ветка распадалась на лесенку — то же, что
-                   перегородки, только светом. -->
-              <stop offset="1" stop-color="currentColor" stop-opacity=".16" />
+              <stop offset=".55" stop-color="currentColor" stop-opacity=".4" />
+              <stop offset="1" stop-color="currentColor" stop-opacity="0" />
             </radialGradient>
+
+            <!-- Свет внутри вынесенной грани. Идёт ТЕМ ЖЕ ПУТЁМ, что налив на
+                 ядре: от сердца к концу ветки. Никаких отдельных отметок. -->
+            <linearGradient
+              v-if="selFacet"
+              :id="id('shard')"
+              gradientUnits="userSpaceOnUse"
+              :x1="selFacet.near[0]" :y1="selFacet.near[1]"
+              :x2="selFacet.far[0]" :y2="selFacet.far[1]"
+            >
+              <stop offset="0" stop-color="currentColor" stop-opacity=".85" />
+              <stop offset="1" stop-color="currentColor" stop-opacity=".12" />
+            </linearGradient>
           </defs>
 
-          <!-- Пустое место: нажатие по нему возвращает в покой. -->
+          <!-- Пустое место: нажатие по нему возвращает назад. -->
           <rect class="fx-void" x="0" y="0" :width="box" :height="box" @click="onBackdrop" />
 
-          <!-- Ядро целиком. В покое — на своём месте; когда грань вынесена
-               вперёд, уходит назад глубиной, а не исчезает. -->
-          <g class="fx-core" :style="backStyle" @click="onCoreTap">
-            <!-- ⚠️ :fill выключается на выборе СОЗНАТЕЛЬНО. Своё бегущее
-                 заполнение ядра — тот же цвет и ярче: поверх него пятна граней
-                 не видны вовсе (проверено рендером). Пока игрок выбирает,
-                 свет несут грани, а ветка стоит тихой. Компонент при этом не
-                 правится — выключателем, который у него уже есть. -->
-            <HexCore mode="full" :hue="hue" :flicker="true" :fill="state === 'rest'" />
+          <!-- ФИГУРА: ядро, налив и пустое гнездо. Двигается одним куском. -->
+          <g class="fx-figure" :style="figureStyle" @click="onCoreTap">
+            <!-- ⚠️ :fill ВЫКЛЮЧЕН НАВСЕГДА. Своё бегущее заполнение ядра —
+                 бесконечная петля, а на макете наливом управляет переключатель.
+                 Компонент при этом не правится: у него для этого есть своё
+                 свойство. -->
+            <HexCore mode="full" :hue="hue" :flicker="true" :fill="false" />
+
+            <!-- Налив клиньев. Одна сплошная полоса на ветку, обрезанная
+                 растущим кругом. ⚠️ ДЕЛЕНИЙ ВНУТРИ ВЕТКИ НЕТ: ни линий, ни
+                 точек, ни отметок кристаллов. Шаги показывает движение, а не
+                 рисунок (решение 22.09.2026, подтверждено 24.09.2026). -->
+            <g class="fx-flow" :clip-path="`url(#${id('flow')})`">
+              <polygon v-for="b in branches" :key="`fl${b.id}`" :points="b.strip" />
+            </g>
+
+            <!-- Пустое гнездо. Пока грань вынесена вперёд, на ядре её НЕТ:
+                 видно, откуда её вынули. Гнездо не подсвечивается. -->
+            <polygon
+              v-if="state === 'open' && selFacet"
+              class="fx-socket"
+              :points="selFacet.points"
+            />
           </g>
 
           <!-- Отклик на нажатие. ⚠️ ОТДЕЛЬНЫМ СЛОЕМ, а не на самой грани:
                грань в этот момент уже летит вперёд, и розовое улетало вместе
                с ней — к краю экрана, где читалось случайной плашкой. Здесь
-               вспышка остаётся ТАМ, ГДЕ НАЖАЛИ, и уходит назад вместе с ядром.
-               Единственное розовое на странице и живёт четверть секунды. -->
-          <g v-if="flashFacet" class="fx-flash" :style="backStyle" aria-hidden="true">
+               вспышка остаётся ТАМ, ГДЕ НАЖАЛИ. Единственное розовое на
+               странице, живёт четверть секунды. -->
+          <g v-if="flashFacet" class="fx-flash" :style="figureStyle" aria-hidden="true">
             <polygon :points="flashFacet.points" />
           </g>
 
-          <!-- Пятнадцать граней. Каждая — своя фигура, но рисунка у неё нет:
-               в покое она невидима и служит только зоной нажатия. -->
+          <!-- Пятнадцать граней. В покое у грани нет НИКАКОГО рисунка: она
+               только зона нажатия. Рисунок появляется у той одной, что
+               вынесена вперёд. -->
           <g
             v-for="f in facets" :key="f.key"
             class="fx-facet"
             :class="{ 'is-sel': sel === f.key }"
-            :style="sel === f.key ? frontStyle(f) : backStyle"
+            :style="sel === f.key ? frontStyle(f) : figureStyle"
           >
             <polygon
-              class="fx-facet__lit"
+              class="fx-facet__pool"
               :points="f.points"
-              :fill="`url(#fxp-${uid}-${f.key})`"
+              :fill="`url(#${id('pool-' + f.key)})`"
             />
-            <!-- Край. Появляется ТОЛЬКО у вынесенной вперёд грани: отдельно
-                 стоящий осколок обязан иметь край, иначе он читается пятном
-                 света, а не куском ядра. Внутри фигуры края нет — там это
-                 была бы перегородка. Толщина не растёт вместе с гранью:
-                 vector-effect держит её в точках экрана. -->
-            <polygon
-              class="fx-facet__edge"
-              :points="f.points"
-              vector-effect="non-scaling-stroke"
-            />
+
+            <!-- ОСКОЛОК. Матовая огранка: тёмное ребро по краю, чуть светлее
+                 плоскость, свет внутри по правилу налива. Рамки нет — ровно
+                 как нет рамки вокруг самого ядра. -->
+            <template v-if="sel === f.key">
+              <!-- Тело осколка. -->
+              <polygon class="fx-shard__body" :points="f.points" />
+              <!-- Четыре плоскости фаски. Ближняя к сердцу ловит больше света,
+                   дальняя — меньше: ребро читается сменой тона, а не линией.
+                   Тон нейтральный: сам предмет матово-серый, цвет ядра живёт
+                   светом ВНУТРИ него, а не краской по нему. -->
+              <polygon
+                v-for="(bv, bi) in f.bevels" :key="`bv${bi}`"
+                class="fx-shard__bevel" :class="BEVEL_FACE[bi]" :points="bv"
+              />
+              <!-- Плоскость грани и свет на ней. -->
+              <polygon class="fx-shard__face" :points="f.inner" />
+              <polygon
+                v-if="isLit(f)"
+                class="fx-shard__lit"
+                :points="f.inner"
+                :fill="`url(#${id('shard')})`"
+              />
+            </template>
+
             <polygon
               class="fx-facet__hit"
               :points="f.points"
@@ -157,27 +207,49 @@ import { crystalsOf } from '@/locales/facetCrystals.mockup.en.js';
    src/locales/facetCrystals.mockup.en.js. */
 const CORE_ID = 'natisk';
 
-/* Световое пятно грани в единицах холста. Поперёк клина — с запасом на его
-   полуширину (она идёт от 23 у сердца до 15 на конце), вдоль — короче половины
-   грани (она ровно 28.35), чтобы у среза свет уже сошёл в ноль и шаг читался.
-   Больше вдоль — пятна сливаются в сплошную полосу и грани пропадают. */
+/* Пятно отклика на палец. Поперёк клина — с запасом на его полуширину,
+   вдоль — короче половины грани, чтобы свет не перетекал в соседнюю. */
 const POOL_ACROSS = 19;
 const POOL_ALONG = 11;
 
+/* Насколько фигура вырастает на выборе, чтобы по грани можно было попасть
+   пальцем. Ядро при этом НЕ ДВИГАЕТСЯ: рост идёт вокруг его середины.
+   Числа разные, потому что кадр разный: в вертикали фигуру ограничивает
+   ширина экрана, в горизонтали — высота. Выше этих значений фигура выходит
+   за край кадра. */
+const PICK_SCALE_PORTRAIT = 1.5;
+const PICK_SCALE_LANDSCAPE = 1.33;
+
 /* Куда уезжает ядро и куда выходит грань — в единицах холста (0…600).
-   Одна пара чисел на обе раскладки: холст квадратный, а поворот экрана
-   раскладывает уже сам холст и список рядом с ним. */
-const BACK_SCALE = 0.38;
-const BACK_LIFT = -132;   // ядро уходит вверх, освобождая место грани
+   Грань вынесена — она главное на экране, поэтому крупная; ядро уходит мельче
+   и выше, чтобы они не наезжали друг на друга. */
+const BACK_SCALE = 0.34;
+const BACK_LIFT = -150;
 const FRONT_X = 300;
-const FRONT_Y = 340;
-const FRONT_SCALE = 3.4;
+const FRONT_Y = 395;
+const FRONT_SCALE = 6.6;
+
+/* Плоскости фаски по порядку из coreFacetSlices: бок, дальний срез, бок,
+   ближний к сердцу срез. Свет падает со стороны сердца. */
+const BEVEL_FACE = ['is-side', 'is-far', 'is-side', 'is-near'];
+
+/* Степени налива: пусто, частично, полностью. Числом это на экран не выходит
+   ни разу — только словом. */
+const FILL_STEPS = [
+  { lit: 0, name: 'пусто' },
+  { lit: 3, name: 'частично' },
+  { lit: 5, name: 'полностью' },
+];
 
 const uid = useId();
+const id = (name) => `fx-${name}-${uid}`;
 
 const slices = coreFacetSlices('full');
 const box = slices.box;
-const facets = slices.branches.flatMap((b) => b.facets);
+const branches = slices.branches;
+const facets = branches.flatMap((b) => b.facets);
+/* Все три ветки размечены одинаково — остановки берём у первой. */
+const stops = branches[0].stops;
 
 const hue = computed(() => `rgb(${accentRgb(CORE_ID).join(' ')})`);
 
@@ -187,8 +259,20 @@ const sel = ref(null);
 const flash = ref(null);   // розовое — только на миг нажатия
 let flashTimer = null;
 
-const branches = CRYSTALS[CORE_ID];
-const byId = (id) => branches.find((b) => b.id === id);
+/* Налив: по умолчанию полный, как ядро выглядит на лендинге в конце цикла. */
+const fillStep = ref(FILL_STEPS.length - 1);
+const fillLit = computed(() => FILL_STEPS[fillStep.value].lit);
+const fillLabel = computed(() => FILL_STEPS[fillStep.value].name);
+const cycleFill = () => { fillStep.value = (fillStep.value + 1) % FILL_STEPS.length; };
+const isLit = (f) => f.id <= fillLit.value;
+
+/* Радиус обрезки налива. Ступени даёт кривая перехода в стилях. */
+const flowStyle = computed(() => ({
+  transform: `translate(${box / 2}px, ${box / 2}px) scale(${stops[fillLit.value]})`,
+}));
+
+const gameBranches = CRYSTALS[CORE_ID];
+const byId = (bid) => gameBranches.find((b) => b.id === bid);
 
 const labelOf = (f) => {
   const b = byId(f.branchId);
@@ -197,6 +281,7 @@ const labelOf = (f) => {
 
 const selFacet = computed(() => facets.find((f) => f.key === sel.value) || null);
 const flashFacet = computed(() => facets.find((f) => f.key === flash.value) || null);
+
 const branchName = computed(() => {
   const f = selFacet.value;
   const b = f && byId(f.branchId);
@@ -218,6 +303,16 @@ const hint = computed(() => (
     : 'Выберите грань. Она выйдет вперёд, ядро уйдёт назад.'
 ));
 
+/* Раскладка кадра. Читается один раз и обновляется на поворот: от неё
+   зависит, насколько фигура может вырасти, не выйдя за край. */
+const portrait = ref(true);
+let mq = null;
+const syncOrientation = () => { portrait.value = window.innerHeight >= window.innerWidth; };
+
+const pickScale = computed(() => (
+  portrait.value ? PICK_SCALE_PORTRAIT : PICK_SCALE_LANDSCAPE
+));
+
 /* ⚠️ ОБА КОНЦА ПЕРЕХОДА ЗАПИСАНЫ ОДИНАКОВО: translate · scale · translate.
    Покой — это НЕ 'none'. Браузер переходит между двумя записями по частям, и
    если в покое стоит 'none', каждая часть едет от своей единицы по отдельности:
@@ -227,18 +322,17 @@ const hint = computed(() => (
 const hold = (x, y, k, ox, oy) =>
   `translate(${x}px, ${y}px) scale(${k}) translate(${-ox}px, ${-oy}px)`;
 
-/* Ядро и невыбранные грани: уходят назад одним движением вокруг середины. */
-const backStyle = computed(() => {
+/* Фигура целиком: в покое как есть, на выборе крупнее (вокруг СВОЕЙ середины —
+   с места не двигается), при вынесенной грани уходит назад. */
+const figureStyle = computed(() => {
   const c = box / 2;
-  return state.value === 'open'
-    ? { transform: hold(c, c + BACK_LIFT, BACK_SCALE, c, c) }
-    : { transform: hold(c, c, 1, c, c) };
+  if (state.value === 'open') return { transform: hold(c, c + BACK_LIFT, BACK_SCALE, c, c) };
+  if (state.value === 'pick') return { transform: hold(c, c, pickScale.value, c, c) };
+  return { transform: hold(c, c, 1, c, c) };
 });
 
 /* Выбранная грань: выходит вперёд из СВОЕГО места — видно, откуда взялась. */
-const frontStyle = (f) => ({
-  transform: hold(FRONT_X, FRONT_Y, FRONT_SCALE, f.cx, f.cy),
-});
+const frontStyle = (f) => ({ transform: hold(FRONT_X, FRONT_Y, FRONT_SCALE, f.cx, f.cy) });
 
 function pulse(key) {
   flash.value = key;
@@ -252,6 +346,7 @@ function onCoreTap() {
 }
 function onFacetTap(f) {
   if (state.value === 'rest') { state.value = 'pick'; pulse(f.key); return; }
+  if (state.value === 'open' && sel.value === f.key) { toPick(); return; }
   pulse(f.key);
   sel.value = f.key;
   state.value = 'open';
@@ -283,17 +378,24 @@ onMounted(() => {
   robotsTag.setAttribute('content', 'noindex, nofollow, noarchive');
   document.head.appendChild(robotsTag);
   window.addEventListener('keydown', onKey);
+  syncOrientation();
+  mq = window.matchMedia('(orientation: portrait)');
+  mq.addEventListener('change', syncOrientation);
+  window.addEventListener('resize', syncOrientation);
 });
 onBeforeUnmount(() => {
   if (prevTitle !== null) document.title = prevTitle;
   if (robotsTag) robotsTag.remove();
   if (flashTimer) clearTimeout(flashTimer);
   window.removeEventListener('keydown', onKey);
+  if (mq) mq.removeEventListener('change', syncOrientation);
+  window.removeEventListener('resize', syncOrientation);
 });
 </script>
 
 <style scoped>
 /* Все значения — из src/styles/tokens.css. Своих чисел цвета здесь нет. */
+
 /* ⚠️ Высота ЖЁСТКАЯ, а не минимальная. Макет — один экран: ядро, грань и
    кристаллы должны помещаться целиком, прокручивается только список.
    На min-height высота была неопределённой, доли (1fr, 100%) вниз по дереву
@@ -370,6 +472,7 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   overflow: hidden;
+  container-type: size;
 }
 
 /* Затемнение вокруг ядра. Радиальное, во весь холст — краёв не видно. */
@@ -407,43 +510,47 @@ onBeforeUnmount(() => {
   aspect-ratio: 1;
   overflow: visible;
 }
-.fx-stage { container-type: size; }
 
 .fx-void { fill: transparent; }
 
-/* Ядро и грани уходят назад / выходят вперёд одним свойством. Единицы px
-   внутри transform равны единицам холста — это даёт transform-box. */
-.fx-core,
-.fx-facet {
+/* Фигура и грани ездят одним свойством. Единицы px внутри transform равны
+   единицам холста — это даёт transform-box. */
+.fx-figure,
+.fx-facet,
+.fx-flash {
   transform-box: view-box;
   transform-origin: 0 0;
   transition: transform var(--d-panel) var(--e-weight),
               opacity var(--d-panel) var(--e-settle);
 }
-.fx-core { cursor: pointer; }
-.fx[data-state='open'] .fx-core { opacity: .3; }
+.fx-figure { cursor: pointer; }
+.fx[data-state='open'] .fx-figure { opacity: .3; }
 
-/* Свет грани. В покое не горит вовсе: фигура остаётся собой. */
-.fx-facet__lit {
+/* ── налив клина ──────────────────────────────────────────────────── */
+.fx-flow polygon { fill: currentColor; fill-opacity: .9; }
+
+/* ⚠️ Ступени даёт КРИВАЯ ПЕРЕХОДА, а не рисунок. Свет доходит до границы
+   очередной пятой части, коротко встаёт и идёт дальше — как полоса загрузки,
+   которая движется рывками. Делений на самой ветке нет и быть не должно
+   (решение 22.09.2026, подтверждено 24.09.2026). */
+.fx-flow-clip {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  transition: transform 1.3s steps(5, end);
+}
+
+/* Пустое гнездо: там, где грань вынута. Не подсвечивается, внимания не тянет. */
+.fx-socket { fill: var(--void); pointer-events: none; }
+
+/* ── грань ────────────────────────────────────────────────────────── */
+/* Отклик на палец. В покое ноль: внутри клина нет никаких отметок. */
+.fx-facet__pool {
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--d-panel) var(--e-settle);
+  transition: opacity var(--d-hover) var(--e-settle);
 }
-.fx[data-state='pick'] .fx-facet__lit { opacity: .5; }
-.fx[data-state='open'] .fx-facet__lit { opacity: .16; }
-.fx[data-state='open'] .fx-facet.is-sel .fx-facet__lit { opacity: .95; }
-
-/* Край вынесенной грани. Внутри фигуры не появляется никогда. */
-.fx-facet__edge {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--d-panel) var(--e-settle);
-}
-.fx[data-state='open'] .fx-facet.is-sel .fx-facet__edge { opacity: .9; }
+.fx[data-state='pick'] .fx-facet:hover .fx-facet__pool,
+.fx[data-state='pick'] .fx-facet:focus-within .fx-facet__pool { opacity: .75; }
 
 /* Зона нажатия. Своего рисунка нет — ни заливки, ни линии. */
 .fx-facet__hit {
@@ -452,20 +559,28 @@ onBeforeUnmount(() => {
   cursor: pointer;
   outline: none;
 }
-.fx[data-state='pick'] .fx-facet:hover .fx-facet__lit { opacity: .9; }
-.fx-facet__hit:focus-visible + * { outline: none; }
-.fx-facet:focus-within .fx-facet__lit { opacity: .9; }
+
+/* Осколок. Матовая огранка: тёмное ребро по краю, чуть светлее плоскость.
+   ⚠️ РАМКИ НЕТ — ровно как нет рамки вокруг самого ядра. Свечения и размытия
+   тоже нет: фаска даётся двумя плоскостями, как у прочих предметов игры. */
+.fx-shard__body { fill: var(--void); pointer-events: none; }
+.fx-shard__face { fill: var(--panel); pointer-events: none; }
+.fx-shard__lit { pointer-events: none; }
+.fx-shard__bevel { pointer-events: none; }
+/* Тона фаски — одним цветом разной силы, как свет на огранке. */
+.fx-shard__bevel.is-near { fill: color-mix(in srgb, var(--ink) 13%, var(--panel)); }
+.fx-shard__bevel.is-side { fill: color-mix(in srgb, var(--ink) 6%, var(--panel)); }
+.fx-shard__bevel.is-far  { fill: color-mix(in srgb, var(--void) 55%, var(--panel)); }
+
+.fx[data-state='open'] .fx-facet.is-sel { opacity: 1; }
+.fx[data-state='open'] .fx-facet:not(.is-sel) { opacity: .3; }
 
 /* Розовое — только на миг нажатия, дальше гаснет. */
-.fx-flash { transform-box: view-box; transform-origin: 0 0; }
 .fx-flash polygon {
   fill: var(--pink);
   opacity: .75;
   pointer-events: none;
 }
-
-.fx[data-state='open'] .fx-facet.is-sel { opacity: 1; }
-.fx[data-state='open'] .fx-facet:not(.is-sel) { opacity: .3; }
 
 /* ── подсказка и кристаллы ────────────────────────────────────────── */
 .fx-side {
@@ -576,9 +691,11 @@ onBeforeUnmount(() => {
    Отклик на нажатие остаётся — он не украшение. */
 @media (prefers-reduced-motion: reduce) {
   .fx-dim,
-  .fx-core,
+  .fx-figure,
   .fx-facet,
-  .fx-facet__lit,
+  .fx-flash,
+  .fx-flow-clip,
+  .fx-facet__pool,
   .fx-chip,
   .fx-back { transition: none !important; }
 }
