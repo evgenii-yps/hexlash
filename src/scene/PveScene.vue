@@ -197,12 +197,17 @@ const CAM = {
     // Горизонталь в покое — ВЕСЬ кадр, как и вертикаль: панель ушла, дожидаться
     // её больше не нужно. Прежний overviewLandscape держал место под неё.
     landscape:         { x0: 0.06, x1: 0.94, y0: 0.08, y1: 0.92 },
-    // WORK has to dodge TWO panels, not one. The tree takes the right of a wide
-    // screen (the bottom of a tall one), and the fighter's card sits in the bottom
-    // corner on top of that — so the clear ground is the band ABOVE the card and
-    // BESIDE the tree. Framing into the whole left half put his legs behind the
-    // card; these rectangles are that band.
-    workLandscape:     { x0: 0.06, x1: 0.52, y0: 0.08, y1: 0.68 },
+    // ЗДЕСЬ СТОЯЛ workLandscape — узкая полоса в левой части широкого экрана
+    // (x 0.06…0.52, y 0.08…0.68). Она берегла место под ДВЕ панели: дерево граней
+    // у правого края и карточку бойца в нижнем углу. Обе ушли — их начинку теперь
+    // открывают предметы, и то по требованию.
+    //
+    // Полоса пережила их и оказалась настоящей причиной кривого ракурса в
+    // горизонтали: composition вжималась в четверть экрана, камера ради этого
+    // отъезжала далеко, и в кадр сам собой заходил соседний остров. Замер
+    // 23.09.2026 зондом: в горизонтали working=true ВСЕГДА (боец в зале выбран
+    // всегда), поэтому ветка обзора, на которую я грешил раньше, не выполнялась
+    // ни разу — работала только эта полоса.
   },
   minDist: 4.5,
   maxDist: 90,           // ten on one arc is wide — the fit must be allowed to back off
@@ -565,8 +570,9 @@ function frameFor(working) {
   // UPRIGHT there is one pose and no other. The overview existed to show the
   // whole arc; upright the arc is not in the room, so there is nothing for it to
   // show and a second pose would only be a way of standing further back.
-  const r = portrait ? CAM.rect.portrait
-    : (working ? CAM.rect.workLandscape : CAM.rect.landscape);
+  // Одна композиция и один прямоугольник на каждую раскладку — панелей, ради
+  // которых держались вторые, больше нет.
+  const r = portrait ? CAM.rect.portrait : CAM.rect.landscape;
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
   _fitDir.normalize();
