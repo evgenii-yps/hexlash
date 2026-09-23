@@ -261,6 +261,11 @@ const devRoutes = [
     // плоские иконки, панель боя и слоты выбора — до того, как баффы попадут в
     // бой. Ничего не встраивает, тот же принцип, что и у /dev/core.
     {path: '/dev/buffs', name: 'DevBuffsPreview', component: () => import('@/views/DevBuffsPreviewView.vue')},
+    // /dev/facets — макет граней и кристаллов на ядре «Печать» (ТЗ 24.09.2026).
+    // Три состояния: покой → выбор грани → грань вынесена вперёд со списком
+    // кристаллов. Ничего не встраивает: зал FORGE и ростер не трогаются, тот
+    // же принцип, что и у /dev/core и /dev/buffs.
+    {path: '/dev/facets', name: 'DevFacetsMockup', component: () => import('@/views/DevFacetsView.vue')},
 ];
 
 const routes = [
