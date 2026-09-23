@@ -29,11 +29,13 @@
     <!-- THE PANEL — always there, in every layout. It used to be two things
          floating over the hall (a card in one corner, the tree pinned to the
          other edge) and it had no way out of the room at all. -->
-    <!-- ВСТРАИВАНИЕ v1, шаг 1: панель ростера УБИРАЕТСЯ, её место занимают планшет
-         и наковальня на плите. Пока это переключатель адресом (?panel=off), чтобы
-         снять замеры кадра без панели и с ней на одной сборке. Когда встраивание
-         закроется, панель уходит совсем, а переключатель снимается. -->
-    <Transition v-if="showPanel" name="fp-fade" appear>
+    <!-- ⚠️ ПАНЕЛЬ РОСТЕРА УБРАНА (встраивание v1, решение владельца 23.09.2026).
+         Её место занимают планшет и наковальня — предметы на плите. Разметка
+         оставлена закрытой, а не удалена, ровно до того шага, на котором к
+         предметам подключены нажатия: пока их нет, в зале нечем выбрать бойца и
+         открыть дерево граней. Как только предметы заработают — этот блок и
+         импорт ForgePanel удаляются совсем. -->
+    <Transition v-if="false" name="fp-fade" appear>
       <ForgePanel
         ref="panelRef"
         :fighters="fighters"
@@ -101,11 +103,6 @@ import PveScene from '@/scene/PveScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import ForgePanel from '@/components/forge/ForgePanel.vue';
 
-// Панель показывается всегда, кроме замеров встраивания (?panel=off) — см. шаблон.
-const showPanel = (() => {
-  try { return new URLSearchParams(window.location.search).get('panel') !== 'off'; }
-  catch { return true; }
-})();
 import '@/styles/home.css';     // the shared .hs-strip chrome
 import '@/styles/cabinet.css';  // the PlayerCabinet drawer
 import '@/styles/forge.css';    // the hall's own layer

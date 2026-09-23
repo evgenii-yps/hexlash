@@ -160,28 +160,6 @@ const TRAIN = {
   standAhead: 0.86,
   edge: 0.9,
 };
-// ДВА ВАРИАНТА СТАРТОВОЙ ПОЗЫ — приносятся владельцу на выбор (ТЗ §3.1 + вставка).
-// 'near'  — в кадр обязательно входит полоса пола соседнего острова, по ней можно
-//           попасть пальцем. Камера ради этого отъезжает.
-// 'wide'  — кадр считается как сейчас, предметы читаются крупно; сосед за кадром.
-// Переключается адресом ?pose=near|wide, чтобы снять оба на одной сборке.
-const POSE_VARIANT = (() => {
-  try {
-    const v = new URLSearchParams(window.location.search).get('pose');
-    // 'orig' — кадр ровно как был до встраивания: ни предметов, ни соседа.
-    // Нужен как эталон «до», иначе нельзя отличить «зал так выглядит» от «я сломал».
-    return v === 'near' || v === 'wide' || v === 'orig' ? v : 'wide';
-  } catch { return 'wide'; }
-})();
-
-// Убрана ли панель ростера (?panel=off). Со встраиванием она уходит насовсем, и
-// тогда этот ключ снимается вместе с ней; пока он нужен, чтобы мерить кадр в обоих
-// состояниях на одной сборке.
-const PANEL_OFF = (() => {
-  try { return new URLSearchParams(window.location.search).get('panel') === 'off'; }
-  catch { return false; }
-})();
-
 const CAM = {
   // Not fixed points: the DIRECTION the camera looks from, and a starting guess at
   // the distance. Where it ends up is measured against what is actually on the
@@ -203,12 +181,18 @@ const CAM = {
     // UPRIGHT there is ONE rectangle, because there is one pose: the panel owns
     // the bottom of the screen (--fg-band), so the man gets the band above it,
     // and he gets nearly all of it — he is the only thing in the room.
-    // Полоса под композицию в вертикальном кадре. y1 = 0.52 — это НЕ вкус: нижнюю
-    // половину экрана занимает панель ростера. Со встраиванием панель уходит (её
-    // заменяют планшет и наковальня на плите), и тогда залу достаётся весь кадр —
-    // см. portraitFull ниже и ключ ?panel=off, которым снимаются замеры.
-    portrait:          { x0: 0.08, x1: 0.92, y0: 0.05, y1: 0.52 },
-    portraitFull:      { x0: 0.06, x1: 0.94, y0: 0.06, y1: 0.94 },
+    // Полоса под композицию в вертикальном кадре — ВЕСЬ кадр.
+    //
+    // Раньше здесь стояло y1 = 0.52, и это было не решение о кадре, а следствие:
+    // нижнюю половину экрана занимала панель ростера. Со встраиванием панель ушла
+    // (её заменили планшет и наковальня на плите), и зал забрал экран целиком.
+    //
+    // Измерено 23.09.2026 на 390 × 844: под панелью предметы в кадре съедали три
+    // четверти зала, без панели — почти ничего (478 строк против 554 без них).
+    // Поэтому вариант «сосед в стартовом кадре» и не понадобился: он стоил ещё
+    // трети зала (306 строк), а переход к грушам решено делать нажатием по
+    // тренирующемуся бойцу, а не по полу соседнего острова.
+    portrait:          { x0: 0.06, x1: 0.94, y0: 0.06, y1: 0.94 },
     overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.14, y1: 0.90 },
     // WORK has to dodge TWO panels, not one. The tree takes the right of a wide
     // screen (the bottom of a tall one), and the fighter's card sits in the bottom
@@ -538,21 +522,9 @@ function framePoints(working) {
     pts.push([m.x - 0.80, topY - 0.30, m.z], [m.x + 0.80, topY + BODY.height + 0.45, m.z]);
     // Предметы — планшет и наковальня. Они пришли на плиту вместе со встраиванием,
     // и вертикальный кадр обязан их держать: к ним игрок и тянется.
-    for (const pr of (POSE_VARIANT === 'orig' ? [] : propList)) {
+    for (const pr of propList) {
       const g = pr.obj.group.position;
       pts.push([g.x - 0.85, topY, g.z + 0.75], [g.x + 0.85, topY + 1.5, g.z - 0.75]);
-    }
-    // ВАРИАНТ 'near' — в кадр обязательно входит БЛИЖНЯЯ ПОЛОСА ПОЛА соседнего
-    // острова, чтобы по ней можно было попасть пальцем. Берётся именно полоса, а
-    // не остров целиком: вписывать его весь значит отогнать камеру ещё дальше.
-    //
-    // ⚠️ Здесь и сидит цена, о которой говорит ТЗ. У этой камеры пологий угол, и
-    //    глубина читается как высота кадра — в коде зала это уже было измерено
-    //    однажды: «участок пола отогнал подгонку назад, и боец вышел мелким».
-    //    Поэтому вариант и выносится владельцу снимками, а не выбирается тут.
-    if (POSE_VARIANT === 'near' && trainSlab) {
-      const nearX = trainCx - trainHalfW;
-      pts.push([nearX, topY, m.z + 0.2], [nearX + 0.9, topY, m.z - 0.2]);
     }
     return pts;
   }
@@ -593,7 +565,7 @@ function frameFor(working) {
   // whole arc; upright the arc is not in the room, so there is nothing for it to
   // show and a second pose would only be a way of standing further back.
   const one = portrait || working;
-  const r = portrait ? (PANEL_OFF ? CAM.rect.portraitFull : CAM.rect.portrait)
+  const r = portrait ? CAM.rect.portrait
     : (one ? CAM.rect.workLandscape : CAM.rect.overviewLandscape);
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
