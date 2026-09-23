@@ -739,7 +739,12 @@ function separateBodies(dt) {
 function flyTo(which) {
   if (!scene || !slab) return;
   const want = (which === 'training' && trainSlab && bags.length) ? 'training' : 'hall';
-  if (want === focusIsland && !dive?.active) return;   // уже здесь — ехать некуда
+  // Начатую поездку не перебивает НИЧТО — ни палец, ни кнопка страницы. Палец
+  // отсекается раньше, в обработчике нажатия; здесь тот же запрет для всех
+  // остальных вызовов, иначе кнопка «камера смотрит» перезапускала бы полёт
+  // на полпути, а ТЗ просит обратного.
+  if (dive?.active) return;
+  if (want === focusIsland) return;                    // уже здесь — ехать некуда
   focusIsland = want;
   const pose = want === 'training' ? trainingFraming() : homeFraming();
   if (reduced || !dive) { applyHomePose(true); idleSince = null; returning = false; return; }
@@ -832,9 +837,6 @@ onMounted(() => {
     // В пути нажатия не слушаются: новое нажатие не перебивает начатый перелёт.
     if (dive?.active) return;
     const got = pickAt(ev);
-    // ВРЕМЕННЫЙ ЗОНД — снять перед сдачей. Нужен, чтобы съёмка могла сказать, куда
-    // пришлось нажатие, а не гадать по картинке.
-    window.__pick = got ? (got.kind + (got.which ? ':' + got.which : got.index >= 0 ? ':' + got.index : '')) : 'мимо';
     if (!got) return;
     if (got.kind === 'bag') return;                       // груша — ничего
     if (got.kind === 'island') { flyTo(got.which === 'training' ? 'training' : 'hall'); return; }
