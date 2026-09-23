@@ -733,6 +733,32 @@ function turnTowards(group, x, z, k) {
   group.rotation.y += d * k;
 }
 
+/**
+ * Качнуть грушу В МОМЕНТ УДАРА. Момент берётся из самого клипа бойца (`impacts` —
+ * кадры касания, те же, по которым в бою проходит урон), а не по таймеру сцены:
+ * иначе груша дёргалась бы отдельно от руки.
+ *
+ * ⚠️ Боя это не касается. Здесь только читается, где клип, — ни одного правила
+ *    боя отсюда не вызывается и не меняется.
+ */
+function pushBag(i, fighter, spot) {
+  const bag = bags.get(i);
+  if (!bag) return;
+  const info = fighter.getClipInfo?.();
+  // Ничего не играет — или играет обманка, которая по мешку не проходит.
+  if (!info || info.feint) { hitPrev.set(i, -1); return; }
+  let prev = hitPrev.get(i);
+  if (prev === undefined || info.elapsed < prev) prev = -1;   // начался новый клип
+  for (const im of info.impacts) {
+    if (prev < im && info.elapsed >= im) {
+      const p = fighter.group.position;
+      bag.hit(spot.x - p.x, spot.z - p.z, reduced);
+      break;
+    }
+  }
+  hitPrev.set(i, info.elapsed);
+}
+
 // ─────────────────────────────────── scene plumbing ───────────────────────────────────
 // hover  — a body is under the pointer (or was just tapped): { id, callsign, x, y }, or null
 // pick   — this fighter was chosen
@@ -747,6 +773,17 @@ let renderer, scene, camera, slab, resizeObserver, clock;
 let trainSlab = null;
 let trainCx = 0, trainHalfW = 0, trainHalfD = 0;
 const bags = new Map();          // номер места → груша; пустых не держим
+// КТО СЕЙЧАС НА ТРЕНИРОВОЧНОМ ОСТРОВЕ. Два набора, а не один, потому что груша
+// нужна дольше, чем идёт занятие: боец ещё возвращается с острова, и убрать её
+// у него из-под рук значило бы погасить предмет на глазах.
+//   atBags — занятие идёт: дошёл или идёт к груше
+//   homing — занятие кончилось, тело идёт обратно на главный остров
+const atBags = new Set();
+const homing = new Set();
+// Где клип бойца был в прошлом кадре — по этому числу ловится МОМЕНТ УДАРА
+// (буквально кадр касания из самого клипа), чтобы груша качнулась от удара, а не
+// от того, что боец просто что-то делает.
+const hitPrev = new Map();
 let bagSpots = [];               // где груши СТОЯЛИ БЫ — считается сразу
 let bagTopY = 0;
 const propList = [];
@@ -955,13 +992,46 @@ onMounted(() => {
   applyTraining = () => {
     if (!director) return;
     const byId = new Map((store.getters['roster/fighters'] || []).map((f) => [f.id, f]));
-    const busy = new Set();
+    // ⚠️ НА СОСЕДНИЙ ОСТРОВ ТЕЛО ИДЁТ НЕ ВСЕГДА. Ходьбой владеет режиссёр, а он
+    //    водит только тех, у кого ЕСТЬ тело. Стоя (портрет) тело в зале ровно
+    //    одно, режиссёр не заведён вовсе; при системной «уменьшить движение» он
+    //    заведён, но выключен. В обоих случаях боец остаётся на месте — и груша
+    //    ему не ставится: иначе на пустом острове висел бы предмет, к которому
+    //    никто не идёт, а убрать его было бы некому (замер 23.09.2026 —
+    //    именно так и было).
+    const canBag = !portrait && !reduced;
     for (let i = 0; i < roster.length; i++) {
       const st = trainingStateOf(byId.get(roster[i].id) || null);
-      director.setMode(i, st === 'busy' ? 'drill' : st === 'ready' ? 'still' : 'wander');
-      if (st === 'busy') busy.add(i);
+      const spot = canBag ? bagSpots[i] : null;
+
+      if (st === 'busy' && spot) {
+        // НАЧАЛО ЗАНЯТИЯ. Груша ставится ПЕРВОЙ, потом тело идёт к ней: иначе
+        // предмет появлялся бы под уже стоящим бойцом.
+        if (!atBags.has(i)) {
+          atBags.add(i);
+          homing.delete(i);
+          syncBags(new Set([...atBags, ...homing]));
+          // Ходьба своя же, режиссёрская: дойти до точки перед грушей и встать.
+          // `drill` поверх пути ничего не обрывает — путь всегда доходится.
+          director.sendTo(i, spot.x, spot.z + TRAIN.standAhead);
+          director.setMode(i, 'drill');
+        }
+        continue;
+      }
+
+      // КОНЕЦ ЗАНЯТИЯ (или его отмена). Тело возвращается на главный остров
+      // своим ходом; груша держится, пока он не дошёл.
+      if (atBags.has(i)) {
+        atBags.delete(i);
+        homing.add(i);
+        hitPrev.delete(i);
+        director.setMode(i, st === 'ready' ? 'still' : 'wander');
+        director.sendHome(i);
+        continue;
+      }
+      director.setMode(i, st === 'ready' ? 'still' : 'wander');
     }
-    syncBags(busy);
+    syncBags(new Set([...atBags, ...homing]));
   };
   stopTrainingWatch = watch(trainingSig, () => applyTraining?.());
   applyTraining();
@@ -1158,8 +1228,20 @@ onMounted(() => {
 
       // A body that is walking steers itself; one that is standing is turned to
       // face the player — on the mark, and between strolls in his own zone.
-      if (portrait || !director || director.isStill(i)) {
+      // ЗАНИМАЮЩИЙСЯ — исключение: он смотрит на грушу, а не на игрока. Пока он
+      // ИДЁТ к ней, его не разворачивает никто: поворотом владеет его ходьба.
+      const spot = atBags.has(i) ? bagSpots[i] : null;
+      if (spot && director && !director.isWalking(i)) {
+        turnTowards(r.fighter.group, spot.x, spot.z, turnK);
+        pushBag(i, r.fighter, spot);
+      } else if (portrait || !director || director.isStill(i)) {
         turnTowards(r.fighter.group, camPos.x, camPos.z, turnK);
+      }
+
+      // Вернулся с острова — груша больше не нужна.
+      if (homing.has(i) && director && director.isStill(i)) {
+        homing.delete(i);
+        syncBags(new Set([...atBags, ...homing]));
       }
 
       // …and only NOW the brightnesses, because update() rewrites the halo.
@@ -1171,6 +1253,9 @@ onMounted(() => {
       r.dim += (dimTarget - r.dim) * dimK;
       applyFighterLight(r);
     }
+
+    // Груши качаются только пока они есть — пустых в зале не висит.
+    for (const [, bag] of bags) bag.tick(dt, reduced);
 
     // Legend: idle body, ride the drift, and slowly face the camera (presiding).
     legend?.update(t, camera);
@@ -1263,6 +1348,16 @@ onMounted(() => {
         textures: r.memory.textures,
         fighters: roster.filter((x) => x.fighter).length,
         fps: fpsNow,
+        // ЗАНЯТИЕ: где чьё тело и где стоят груши. Видно ли бойца у груши —
+        // вопрос ракурса, а это числа, от ракурса не зависящие.
+        train: roster.map((x, i) => (x.fighter ? {
+          i,
+          x: +x.fighter.group.position.x.toFixed(2),
+          z: +x.fighter.group.position.z.toFixed(2),
+          where: atBags.has(i) ? 'у груши' : homing.has(i) ? 'идёт домой' : 'в зале',
+          bag: bags.has(i),
+        } : null)).filter(Boolean),
+        bagSpots: bagSpots.map((b) => ({ x: +b.x.toFixed(2), z: +b.z.toFixed(2) })),
       };
     };
     // Экранная коробка тела — чтобы сравнить ЯРКОСТЬ фигуры в зале и в воротах
@@ -1369,8 +1464,21 @@ function ensureBody(i) {
     side: 'player',
     coreId: r.core.id,
     behavior: resolveBehavior(r.core.id, []),
-    // The plate is the world here — a body may not be walked off its edge.
-    bounds: { x: compose.slab.width / 2, z: compose.slab.depth / 2 },
+    // РАМКА МИРА ДЛЯ ЭТОГО ТЕЛА. Раньше ею был край главной плиты. Теперь мир —
+    // ДВА острова: боец уходит заниматься на соседний, и по старой рамке он
+    // вставал ровно на краю главной плиты и до груши не доходил (замер 23.09.2026:
+    // тело замирало на x = 4.6 при груше на x = 6.25).
+    //
+    // ⚠️ РАСХОЖДЕНИЕ, названное намеренно. Рамка у тела СИММЕТРИЧНА — задаётся
+    //    одной полушириной вокруг нуля, — поэтому, раздвинув её вправо до острова,
+    //    мы настолько же раздвинули её и влево, где ничего нет. Сделать её
+    //    несимметричной можно только внутри `buildFighter`, а он защищён. Слева
+    //    тело удерживает не рамка, а режиссёр: его личная зона и поводок. Если
+    //    боец когда-нибудь окажется левее плиты — причина здесь.
+    bounds: {
+      x: Math.max(compose.slab.width / 2, trainCx + trainHalfW),
+      z: Math.max(compose.slab.depth / 2, trainHalfD),
+    },
     neutralColor: false,
     getFoePos: () => (director ? director.foePos(i) : null),
   });
@@ -1432,6 +1540,9 @@ function applyPresence(place) {
     if (cur >= 0) director.halt(cur);
     // attach собирает агентов с нуля — занятые и готовые обязаны
     // получить своё заново, иначе поворот экрана тихо обрывает занятие в сцене.
+    // Память о том, кто где, тоже сбрасывается: агенты новые, а тела мог
+    // переставить `place`, и старая запись отправила бы бойца к груше заново.
+    atBags.clear(); homing.clear(); hitPrev.clear();
     applyTraining?.();
   }
 }
@@ -1642,6 +1753,7 @@ onBeforeUnmount(() => {
   // то, что есть.
   for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
   bags.clear(); bagSpots = [];
+  atBags.clear(); homing.clear(); hitPrev.clear();
   if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
   if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
   if (renderer) renderer.dispose();
