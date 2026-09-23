@@ -162,55 +162,26 @@ const TRAIN = {
   edge: 0.9,
 };
 const CAM = {
-  // Not fixed points: the DIRECTION the camera looks from, and a starting guess at
-  // the distance. Where it ends up is measured against what is actually on the
-  // floor — see frameFor().
-  // The angle is load-bearing, not taste. Seen from almost level (the old 1.65 : 9.6,
-  // about ten degrees down) the hall has no depth to spend: the fighter out on the
-  // mark and the fighter standing two units behind him land on the same band of
-  // screen, and one covers the other. Looking further down turns depth into screen
-  // height, which is what separates the mark from the row — and what lets the row
-  // itself read as an arc rather than a line.
-  dir: [0, 3.5, 9.0],    // camera offset from its look point (its length = the guess)
-  moveSec: 0.55,         // how long the framing change takes (ТЗ: about half a second)
-
-  // The slice of the screen the composition has to land in, as fractions of the
-  // canvas. OVERVIEW owns nearly the whole frame. WORK keeps clear of the panels:
-  // upright they take the bottom of the screen, sideways the right of it, and the
-  // fighter being worked on must not end up behind them.
-  rect: {
-    // UPRIGHT there is ONE rectangle, because there is one pose: the panel owns
-    // the bottom of the screen (--fg-band), so the man gets the band above it,
-    // and he gets nearly all of it — he is the only thing in the room.
-    // Полоса под композицию в вертикальном кадре — ВЕСЬ кадр.
-    //
-    // Раньше здесь стояло y1 = 0.52, и это было не решение о кадре, а следствие:
-    // нижнюю половину экрана занимала панель ростера. Со встраиванием панель ушла
-    // (её заменили планшет и наковальня на плите), и зал забрал экран целиком.
-    //
-    // Измерено 23.09.2026 на 390 × 844: под панелью предметы в кадре съедали три
-    // четверти зала, без панели — почти ничего (478 строк против 554 без них).
-    // Поэтому вариант «сосед в стартовом кадре» и не понадобился: он стоил ещё
-    // трети зала (306 строк), а переход к грушам решено делать нажатием по
-    // тренирующемуся бойцу, а не по полу соседнего острова.
-    portrait:          { x0: 0.06, x1: 0.94, y0: 0.06, y1: 0.94 },
-    // Горизонталь в покое — ВЕСЬ кадр, как и вертикаль: панель ушла, дожидаться
-    // её больше не нужно. Прежний overviewLandscape держал место под неё.
-    landscape:         { x0: 0.06, x1: 0.94, y0: 0.08, y1: 0.92 },
-    // ЗДЕСЬ СТОЯЛ workLandscape — узкая полоса в левой части широкого экрана
-    // (x 0.06…0.52, y 0.08…0.68). Она берегла место под ДВЕ панели: дерево граней
-    // у правого края и карточку бойца в нижнем углу. Обе ушли — их начинку теперь
-    // открывают предметы, и то по требованию.
-    //
-    // Полоса пережила их и оказалась настоящей причиной кривого ракурса в
-    // горизонтали: composition вжималась в четверть экрана, камера ради этого
-    // отъезжала далеко, и в кадр сам собой заходил соседний остров. Замер
-    // 23.09.2026 зондом: в горизонтали working=true ВСЕГДА (боец в зале выбран
-    // всегда), поэтому ветка обзора, на которую я грешил раньше, не выполнялась
-    // ни разу — работала только эта полоса.
-  },
-  minDist: 4.5,
-  maxDist: 90,           // ten on one arc is wide — the fit must be allowed to back off
+  // ⚠️ РАКУРС ВЗЯТ С ДОМАШНЕГО ОСТРОВА (решение владельца 23.09.2026) и НЕ
+  //    подбирается под композицию. Раньше здесь был свой угол и своя подгонка
+  //    удаления под то, что лежит на полу; из-за подгонки зал стоял в лоб и
+  //    слишком близко, а удаление ещё и разъезжалось между раскладками
+  //    (замер: 0.61 ширины плиты в горизонтали против 2.15 в вертикали).
+  //
+  //    Откуда числа. Дома камера стоит в CAM_BASE (4.6, 5.2, 6.7) и смотрит на
+  //    бойца в (0, topY + 1.1, 1.0), где topY = 0.5 (PLATFORM.height / 2).
+  //    Смещение от цели — (4.6, 3.6, 5.7), длина 8.1615.
+  //      подъём над горизонтом  atan2(3.6, 7.325) = 26.2°
+  //      поворот от «в лоб»     atan2(4.6, 5.7)   = 38.9°
+  //      удаление / ширина острова  8.1615 / 6 = 1.360
+  //
+  //    Сюда переносится НАПРАВЛЕНИЕ как есть (это чистые числа, угол один в
+  //    один) и ПРОПОРЦИЯ удаления. Абсолютное домашнее число поставило бы
+  //    камеру внутрь плиты: зал шире дома вдвое с лишним.
+  dir: [4.6, 3.6, 5.7],     // то же смещение, что дома; сюда важно только направление
+  distPerWidth: 8.1615 / 6, // удаление = столько ширин острова, сколько дома
+  lookLift: 1.1,            // на сколько выше плиты смотрит камера — тоже домашнее
+  moveSec: 0.55,            // how long the framing change takes (ТЗ: about half a second)
 };
 // How the rest of the hall sinks while one fighter's card and tree are open.
 // СВОБОДНАЯ КАМЕРА (встраивание v1, ТЗ §1). Зал был фронтальным и закреплённым;
@@ -461,24 +432,6 @@ function skinOf(fighter) {
   return mat ? { mat, base: mat.color.clone() } : null;
 }
 
-// ── Framing: measured, not guessed ─────────────────────────────────────────
-// The hall has to sit in a given slice of the screen (CAM.rect) whatever shape
-// the screen is and whoever is standing on the plate. Rather than model that —
-// the camera looks down a few degrees, the bodies stand at different depths and
-// scales, and the row's width depends on how many there are — build a pose, look
-// at where it actually puts things, and correct. Three or four passes settle it.
-// This runs on build, on resize and when the framing changes; never per frame.
-const _fitCam = new THREE.PerspectiveCamera();
-const _fitV = new THREE.Vector3();
-const _fitDir = new THREE.Vector3();
-
-// The corners the framing has to keep on screen, in world space.
-//
-// Measured against the STANDING SPOTS and the MARK, never against where the bodies
-// happen to be this frame: everyone is always easing somewhere (a stroll inside a
-// zone, a walk out to the mark or back), and a framing measured off live positions
-// would breathe along with them. The zone half-extents are added on, so a body that
-// wanders to the edge of its patch is still inside the frame.
 // ── Соседний остров: плита того же рода + груши. Из макета /dev/forge. ──
 function bagLayout(n) {
   const rows = Math.ceil(n / TRAIN.rowMax);
@@ -555,124 +508,27 @@ function buildForgeProps(topY) {
   }
 }
 
-function framePoints(working) {
-  const pts = [];
-  const topY = slab ? slab.refs.topY : 0;
-  const body = (x, z, padX, padZ) => {
-    pts.push([x - BODY.halfW - padX, topY, z + padZ], [x + BODY.halfW + padX, topY + BODY.height, z - padZ]);
+// ── ПОЗА КАМЕРЫ. Одна на зал, одна на соседний остров, обе по домашнему
+//    правилу: домашнее направление плюс удаление, пропорциональное ширине
+//    острова (см. CAM). Подбора под то, что лежит на полу, больше НЕТ — он и
+//    был причиной чужого ракурса.
+const _dirU = new THREE.Vector3();
+
+/** Поза по домашнему рецепту: смотреть в (lookX, плита + lookLift, lookZ). */
+function poseOver(lookX, lookZ, islandWidth) {
+  _dirU.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]).normalize();
+  const dist = CAM.distPerWidth * islandWidth;
+  const ly = (slab ? slab.refs.topY : 0) + CAM.lookLift;
+  return {
+    look: [lookX, ly, lookZ],
+    pos: [lookX + _dirU.x * dist, ly + _dirU.y * dist, lookZ + _dirU.z * dist],
   };
-
-  // ОДНА КОМПОЗИЦИЯ НА ОБЕ РАСКЛАДКИ (решение владельца 23.09.2026).
-  //
-  // Раньше их было две: вертикаль строилась вокруг бойца на метке, а горизонталь
-  // вписывала ВСЮ ДУГУ ростера — «обзор». Обзор делался ради того, чтобы разом
-  // увидеть весь состав; со встраиванием список состава переехал на планшет, и
-  // ради чего отъезжать, не осталось. Зато осталась цена: камера уходила так
-  // далеко, что соседний остров сам заходил в кадр справа, а композиция читалась
-  // низкой и косой — именно на это и пожаловался владелец.
-  //
-  // Кому нужен весь зал — отводит камеру: она теперь свободная.
-  {
-    // Him on the mark, plus a margin of air — and all of it at HIS depth. A patch
-    // of floor spanning several units of depth was tried and pulled the framing
-    // right back: at this camera's shallow angle depth reads as a lot of screen
-    // height, so the floor drove the fit and the fighter it was meant to frame came
-    // out small.
-    const m = mark;
-    body(m.x, m.z, 0.30, 0);
-    pts.push([m.x - 0.80, topY - 0.30, m.z], [m.x + 0.80, topY + BODY.height + 0.45, m.z]);
-    // Предметы — планшет и наковальня. Они пришли на плиту вместе со встраиванием,
-    // и вертикальный кадр обязан их держать: к ним игрок и тянется.
-    for (const pr of propList) {
-      const g = pr.obj.group.position;
-      pts.push([g.x - 0.85, topY, g.z + 0.75], [g.x + 0.85, topY + 1.5, g.z - 0.75]);
-    }
-    // Статы лежат ПЕРЕД бойцом, то есть ближе к камере, чем он сам, — и без этой
-    // пары точек кадр их срезает нижней кромкой (замер 23.09.2026: в кадр
-    // попадала одна строка из восьми). Полоса просится в кадр только пока
-    // надпись открыта: в покое она ничего не двигает.
-    if (statsOpen) {
-      const sp = statsCentre();
-      if (sp) pts.push([sp.x - 0.85, topY, sp.z + 0.75], [sp.x + 0.85, topY + 0.05, sp.z - 0.75]);
-    }
-    return pts;
-  }
-
 }
 
-// Build the pose for a framing. Returns { pos, look } in the shape applyCamera wants.
-function frameFor(working) {
-  // UPRIGHT there is one pose and no other. The overview existed to show the
-  // whole arc; upright the arc is not in the room, so there is nothing for it to
-  // show and a second pose would only be a way of standing further back.
-  // Одна композиция и один прямоугольник на каждую раскладку — панелей, ради
-  // которых держались вторые, больше нет.
-  return fitFrame(framePoints(working), 0, 0);
+/** Кадр зала. Аргумента больше нет: композиция одна и от выбора не зависит. */
+function frameFor() {
+  return poseOver(0, 0, compose ? compose.slab.width : 6);
 }
-
-/**
- * Подогнать кадр под набор точек. ОДНА подгонка на весь зал: и главный остров, и
- * тренировочный кадрируются ею же — иначе у перелёта была бы своя, вторая
- * композиция, и она разошлась бы с первой при первом же изменении прямоугольника.
- */
-function fitFrame(pts, lookX, lookZ) {
-  const r = portrait ? CAM.rect.portrait : CAM.rect.landscape;
-  _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
-  let dist = _fitDir.length();
-  _fitDir.normalize();
-
-  const look = new THREE.Vector3(lookX, (slab ? slab.refs.topY : 0) + 1.5, lookZ);
-  const pose = () => ({
-    look: [look.x, look.y, look.z],
-    pos: [look.x + _fitDir.x * dist, look.y + _fitDir.y * dist, look.z + _fitDir.z * dist],
-  });
-  if (!pts.length || !viewW || !viewH || !camera) return pose();
-
-  const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const tx = (r.x0 + r.x1) / 2 * viewW; const ty = (r.y0 + r.y1) / 2 * viewH;
-  const tw = (r.x1 - r.x0) * viewW; const th = (r.y1 - r.y0) * viewH;
-
-  for (let pass = 0; pass < 5; pass++) {
-    const p = pose();
-    _fitCam.fov = camera.fov; _fitCam.aspect = camera.aspect;
-    _fitCam.near = camera.near; _fitCam.far = camera.far;
-    _fitCam.position.set(p.pos[0], p.pos[1], p.pos[2]);
-    _fitCam.up.copy(camera.up);
-    _fitCam.lookAt(look);
-    _fitCam.updateProjectionMatrix();
-    _fitCam.updateMatrixWorld(true);
-
-    let left = Infinity; let right = -Infinity; let top = Infinity; let bottom = -Infinity;
-    for (const [x, y, z] of pts) {
-      _fitV.set(x, y, z).project(_fitCam);
-      const px = (_fitV.x * 0.5 + 0.5) * viewW;
-      const py = (-_fitV.y * 0.5 + 0.5) * viewH;
-      if (px < left) left = px; if (px > right) right = px;
-      if (py < top) top = py; if (py > bottom) bottom = py;
-    }
-    if (!Number.isFinite(left) || !Number.isFinite(top)) break;
-
-    // Fit — grows AND shrinks, so a tall narrow screen stops cropping the row and
-    // a wide one stops leaving half the frame empty.
-    if (pass < 4) {
-      dist = THREE.MathUtils.clamp(dist * Math.max((right - left) / tw, (bottom - top) / th),
-        CAM.minDist, CAM.maxDist);
-    }
-    // Centre on the target rect. Moving the look point translates the camera with
-    // it (the offset is fixed), so this is a straight pan — no tilt is introduced
-    // and the hall stays frontal.
-    const perPx = (2 * dist * tanV) / viewH;
-    look.x += ((left + right) / 2 - tx) * perPx;
-    look.y -= ((top + bottom) / 2 - ty) * perPx;
-  }
-  return pose();
-}
-
-// The arc does not depend on the screen's shape: bowing it harder to save width
-// would put fighters behind one another, which is the one thing the composition
-// may not do. So a rotation moves nobody — only the camera re-fits. (There used to
-// be a relayout() here that re-packed the row for portrait; it is gone with the
-// two-row formation it served.)
 
 /**
  * Где лежит надпись со статами: на шаг ОТ бойца в сторону камеры. Считается в
@@ -688,24 +544,9 @@ function statsCentre() {
   return { x: g.x + (dx / L) * 1.0, z: g.z + (dz / L) * 1.0, rot: Math.atan2(dx, dz) };
 }
 
-/**
- * Точки тренировочного острова: каждая груша вместе с местом, где перед ней
- * стоит боец. По ним считается кадр перелёта.
- */
-function trainingPoints() {
-  const topY = slab ? slab.refs.topY : 0;
-  const pts = [];
-  for (const b of bagSpots) {
-    pts.push([b.x - 0.7, topY, b.z + TRAIN.standAhead + 0.7],
-      [b.x + 0.7, topY + BODY.height + 0.6, b.z - 0.7]);
-  }
-  return pts;
-}
-
-/** Кадр соседнего острова — им отвечает зал на нажатие по занимающемуся. */
+/** Кадр соседнего острова — тем же домашним рецептом, от ЕГО ширины. */
 function trainingFrame() {
-  const pts = trainingPoints();
-  return pts.length ? fitFrame(pts, trainCx, 0) : frameFor(true);
+  return trainHalfW > 0 ? poseOver(trainCx, 0, trainHalfW * 2) : frameFor();
 }
 
 // Set (or ease toward) one of the two framings. `snap` places the camera at once
@@ -1150,7 +991,7 @@ onMounted(() => {
   // не нужна, а зал и без неё читается.
   controls.enabled = !reduced;
 
-  applyCamera(frameFor(false), true);
+  applyCamera(frameFor(), true);
 
   // --- Pointer: hover lights ONE core and names it; a tap picks that fighter.
   //     Same shape as the mode islands (one hovered at a time, eased `lit`), but
@@ -1455,6 +1296,7 @@ onMounted(() => {
           bag: bags.has(i),
         } : null)).filter(Boolean),
         bagSpots: bagSpots.map((b) => ({ x: +b.x.toFixed(2), z: +b.z.toFixed(2) })),
+        slab: compose ? { width: compose.slab.width, depth: compose.slab.depth, topY: slab ? +slab.refs.topY.toFixed(2) : null } : null,
         cam: camera && controls ? {
           pos: [camera.position.x, camera.position.y, camera.position.z].map((v) => +v.toFixed(2)),
           look: [controls.target.x, controls.target.y, controls.target.z].map((v) => +v.toFixed(2)),
@@ -1543,7 +1385,7 @@ onMounted(() => {
     // The arc itself does not change with the screen's shape (see above), so a
     // rotation moves nobody — only the framing is rebuilt. Snap rather than ease:
     // this is a new screen, not a move.
-    applyCamera(frameFor(!!workingId), true);
+    applyCamera(frameFor(), true);
     // A new composition under ourselves — start the settled-frame count again.
     load?.unsettle();
   };
@@ -1792,12 +1634,12 @@ function select(id) {
   //
   // Обратный переход НЕ трогаем: камера возвращается в зал тем же, чем и всегда —
   // нажатием по пустому месту (exitWork) или выбором того, кто в зале.
-  applyCamera(atBags.has(idx) ? trainingFrame() : frameFor(true), reduced);
+  applyCamera(atBags.has(idx) ? trainingFrame() : frameFor(), reduced);
 }
 
 function exitWork() {
   workingId = null;
-  applyCamera(frameFor(false), reduced);
+  applyCamera(frameFor(), reduced);
 }
 
 // growTo(count) — take the hall up to the plate a bigger roster needs, WITHOUT
@@ -1850,7 +1692,7 @@ function growTo(count) {
   }
 
   buildHallLamps();                        // the lamps go with the plate
-  applyCamera(frameFor(!!workingId), reduced);   // …and the camera moves, never cuts
+  applyCamera(frameFor(), reduced);   // …and the camera moves, never cuts
   return true;
 }
 
