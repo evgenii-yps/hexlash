@@ -20,11 +20,18 @@
       <section id="s1" class="fx-sec">
         <h2 class="fx-h">1 · ЗАЛ ЦЕЛИКОМ, ПРЕДМЕТАМИ</h2>
         <p class="fx-note">
-          Панелей нет. Ростер, объект прокачки, SHOP, кабинет и полка баффов стоят
-          на плите предметами, одной полосой у ближней кромки. Плита — та же, что
-          в настоящем зале, и растёт теми же тремя ступенями. Нажмите по предмету
-          в кадре — под ним загорится розовое; по бойцу — поднимется табло статов.
-          В покое всё матовое: розовое принадлежит действию.
+          Панелей нет. Предметов на плите теперь три: ростер, объект прокачки и
+          полка баффов. SHOP, кабинет и BACK вернулись в плоские кнопки — те
+          самые, что на остальных экранах игры, тем же кодом и теми же стилями.
+          Нажмите по предмету в кадре — под ним загорится розовое; по бойцу —
+          на плите перед ним проступят статы. В покое всё матовое: розовое
+          принадлежит действию.
+        </p>
+        <p class="fx-note">
+          У каждого бойца теперь своё место, размеченное на полу. Мест ровно
+          столько, сколько держит ступень плиты, и пустое место видно пустым.
+          Пока боец в своём месте ЗАНИМАЕТСЯ, черта его зоны заметнее — это та
+          самая механика, которая уже на проде: занятие идёт внутри своей зоны.
         </p>
 
         <!-- ОДНА живая сцена за раз. Двух сразу на странице быть не должно:
@@ -37,10 +44,8 @@
           <div class="fx-stage" :class="`is-${layout}`">
             <ForgeMockScene
               :layout="layout"
+              :seats="seats"
               :count="count"
-              :v-roster="vRoster"
-              :v-upgrade="vUpgrade"
-              :v-shop="vShop"
               :legend="legend"
               :stats-open="statsOpen"
               :pressed="pressed"
@@ -49,15 +54,48 @@
               @press="onPress"
               @pick-fighter="statsOpen = true"
             />
+
+            <!-- ПЛОСКИЕ КНОПКИ — те же, что в зале. Разметка и классы взяты у
+                 общей полосы (.hs-strip из src/styles/home.css), своей второй
+                 полосы здесь не заводится: иначе она разъехалась бы с настоящей
+                 ровно так же, как когда-то разъехались два логотипа. -->
+            <div class="hs-strip">
+              <button type="button" class="hs-chrome" aria-label="Назад">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+                <span class="n">BACK</span>
+              </button>
+              <div class="hs-cluster">
+                <button type="button" class="hs-chrome hs-seg-shop" aria-label="Магазин">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+                  <span class="n">SHOP</span>
+                </button>
+                <button type="button" class="hs-chrome hs-seg-cab" aria-label="Кабинет">
+                  <span class="av" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
           </div>
+          <p class="fx-desc">
+            ⚠️ В макете эти три кнопки никуда не ведут — они показаны такими,
+            какие есть в зале, чтобы было видно, как плоское соседствует с
+            объёмным. В игре они работают как работали.
+          </p>
         </div>
 
         <div class="fx-controls">
           <div class="fx-ctl">
-            <div class="fx-ctl-name">СТУПЕНЬ ПЛИТЫ · РОСТЕР</div>
+            <div class="fx-ctl-name">СТУПЕНЬ ПЛИТЫ · МЕСТ</div>
             <div class="fx-row">
-              <button v-for="n in COUNTS" :key="n" type="button" class="fx-btn" :class="{ 'is-on': count === n }" @click="count = n">до {{ n }}</button>
+              <button v-for="n in SEATS" :key="n" type="button" class="fx-btn" :class="{ 'is-on': seats === n }" @click="setSeats(n)">мест {{ n }}</button>
             </div>
+          </div>
+          <div class="fx-ctl">
+            <div class="fx-ctl-name">ЗАНЯТО МЕСТ</div>
+            <div class="fx-row">
+              <button type="button" class="fx-btn" :class="{ 'is-on': full }" @click="full = true">все заняты</button>
+              <button type="button" class="fx-btn" :class="{ 'is-on': !full }" @click="full = false">часть пустая</button>
+            </div>
+            <p class="fx-desc">Пустое место остаётся размеченным — так видно, что зона принадлежит месту, а не бойцу.</p>
           </div>
           <div class="fx-ctl">
             <div class="fx-ctl-name">СОСТОЯНИЕ БОЙЦА</div>
@@ -73,7 +111,7 @@
             </div>
           </div>
           <div class="fx-ctl">
-            <div class="fx-ctl-name">ТАБЛО СТАТОВ</div>
+            <div class="fx-ctl-name">СТАТЫ НА ПЛИТЕ</div>
             <div class="fx-row">
               <button type="button" class="fx-btn" :class="{ 'is-on': !statsOpen }" @click="statsOpen = false">покой</button>
               <button type="button" class="fx-btn" :class="{ 'is-on': statsOpen }" @click="statsOpen = true">открыто</button>
@@ -89,43 +127,9 @@
         </div>
       </section>
 
-      <!-- ═══════════════ 2 · ВАРИАНТЫ ФОРМ ═══════════════ -->
-      <section id="s2" class="fx-sec">
-        <h2 class="fx-h">2 · ПО ТРИ ФОРМЫ НА КАЖДЫЙ ПРЕДМЕТ</h2>
-        <p class="fx-note">
-          По ростеру, объекту прокачки и паре SHOP + кабинет — три формы каждая.
-          Переключатель меняет форму прямо в кадре выше: сравнивать надо в зале,
-          а не в вакууме. Один предложенный вариант означает круг правок — на
-          превью ядра вариантный показ уже сработал с первого раза.
-        </p>
-        <div class="fx-controls">
-          <div class="fx-ctl">
-            <div class="fx-ctl-name">РОСТЕР · блокнот с карандашом</div>
-            <div class="fx-row">
-              <button v-for="v in ROSTER_V" :key="v.id" type="button" class="fx-btn fx-btn--wide" :class="{ 'is-on': vRoster === v.id }" @click="vRoster = v.id">{{ v.id }} · {{ v.name }}</button>
-            </div>
-            <p class="fx-desc">{{ ROSTER_V.find(v => v.id === vRoster).desc }}</p>
-          </div>
-          <div class="fx-ctl">
-            <div class="fx-ctl-name">ОБЪЕКТ ПРОКАЧКИ</div>
-            <div class="fx-row">
-              <button v-for="v in UPGRADE_V" :key="v.id" type="button" class="fx-btn fx-btn--wide" :class="{ 'is-on': vUpgrade === v.id }" @click="vUpgrade = v.id">{{ v.id }} · {{ v.name }}</button>
-            </div>
-            <p class="fx-desc">{{ UPGRADE_V.find(v => v.id === vUpgrade).desc }}</p>
-          </div>
-          <div class="fx-ctl">
-            <div class="fx-ctl-name">SHOP + КАБИНЕТ</div>
-            <div class="fx-row">
-              <button v-for="v in SHOP_V" :key="v.id" type="button" class="fx-btn fx-btn--wide" :class="{ 'is-on': vShop === v.id }" @click="vShop = v.id">{{ v.id }} · {{ v.name }}</button>
-            </div>
-            <p class="fx-desc">{{ SHOP_V.find(v => v.id === vShop).desc }}</p>
-          </div>
-        </div>
-      </section>
-
       <!-- ═══════════════ 3 · ТЕСНОТА ВЕРТИКАЛЬНОГО КАДРА ═══════════════ -->
       <section id="s3" class="fx-sec">
-        <h2 class="fx-h">3 · КУДА ВСТАЮТ ПРЕДМЕТЫ НА ТЕЛЕФОНЕ</h2>
+        <h2 class="fx-h">2 · КУДА ВСТАЮТ ПРЕДМЕТЫ НА ТЕЛЕФОНЕ</h2>
         <p class="fx-note">
           Прямой ответ на §4 ТЗ. В портрете зал держит ОДНО тело — так устроен и
           настоящий зал, и это не обходится: десять тел телефон не тянет. Выбрано
@@ -154,7 +158,7 @@
 
       <!-- ═══════════════ 4 · ЧЕГО ЗДЕСЬ НЕТ ═══════════════ -->
       <section id="s4" class="fx-sec">
-        <h2 class="fx-h">4 · ЧЕГО ЗДЕСЬ НЕТ НАРОЧНО</h2>
+        <h2 class="fx-h">3 · ЧЕГО ЗДЕСЬ НЕТ НАРОЧНО</h2>
         <ul class="fx-list">
           <li><b>Ни одной цифры.</b> Счётчиков, очков, опыта, валюты, уровней, порогов и полос заполнения нет — ресурсы вводятся отдельным заходом. На табло статов стоят имена осей и пустые жёлобы: место под значения видно, значений нет.</li>
           <li><b>Полка баффов пустая.</b> Решение 22.09: предметы баффов — позже. Здесь только место, три ниши, помечено заделом.</li>
@@ -167,14 +171,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import ForgeMockScene from '@/scene/ForgeMockScene.vue';
+// Стили общей полосы кнопок зала. Берём готовые, а не пишем свои: вторая копия
+// той же полосы разъехалась бы с настоящей — на этом проект уже обжигался.
+import '@/styles/home.css';
 
 const LAYOUTS = [
   { id: 'portrait', name: 'ВЕРТИКАЛЬНО · 390 × 844' },
   { id: 'landscape', name: 'ГОРИЗОНТАЛЬНО · 844 × 390' },
 ];
-const COUNTS = [4, 7, 10];
+const SEATS = [4, 7, 10];
 const TRAIN = [
   { id: 'free', name: 'FREE · стоит' },
   { id: 'busy', name: 'TRAINING · занят' },
@@ -183,41 +190,26 @@ const TRAIN = [
 const PRESSABLE = [
   { id: 'roster', name: 'ростер' },
   { id: 'upgrade', name: 'прокачка' },
-  { id: 'shop', name: 'SHOP' },
-  { id: 'cabinet', name: 'кабинет' },
-];
-const ROSTER_V = [
-  { id: 'A', name: 'планшет', desc: 'Лист на низкой подставке под наклоном, карандаш поперёк. Самый низкий — не спорит с бойцом за кадр.' },
-  { id: 'B', name: 'пюпитр', desc: 'Наклонная стойка в рост, блокнот на ней, карандаш в держателе сбоку. Самый заметный, читается издалека.' },
-  { id: 'C', name: 'стопка на тумбе', desc: 'Блокнот плашмя на приземистой тумбе, карандаш рядом. Подпись ROSTER выгравирована на передней грани — не на полу.' },
-];
-const UPGRADE_V = [
-  { id: 'A', name: 'наковальня', desc: 'Приземистый огранённый блок, сверху шестиугольная площадка. Прямее всех говорит «сюда приходят работать».' },
-  { id: 'B', name: 'верстак', desc: 'Стол, над ним рама с тремя пустыми гнёздами под грани. Место под грани видно заранее.' },
-  { id: 'C', name: 'столб', desc: 'Колонна с врезанными гранями по бокам. Самый высокий — держит центр зала, но забирает больше высоты кадра.' },
-];
-const SHOP_V = [
-  { id: 'A', name: 'шкаф + зеркало', desc: 'Витрина-локер для магазина, узкая стойка-зеркало для кабинета. Оба — мебель зала.' },
-  { id: 'B', name: 'две двери', desc: 'Створки в торце: магазин шире, кабинет уже. Говорят «отсюда выходят», а не «здесь стоит предмет».' },
-  { id: 'C', name: 'тумба + жетон', desc: 'Сумка на тумбе для магазина, жетон-грань на ножке для кабинета. Самая низкая пара — меньше всего спорит за кадр.' },
 ];
 const SECTIONS = [
   { id: 's1', name: '1 · Зал' },
-  { id: 's2', name: '2 · Варианты' },
-  { id: 's3', name: '3 · Телефон' },
-  { id: 's4', name: '4 · Чего нет' },
+  { id: 's3', name: '2 · Телефон' },
+  { id: 's4', name: '3 · Чего нет' },
 ];
 
 const layout = ref('portrait');   // основная раскладка проекта — вертикальный телефон
-const count = ref(4);
-const vRoster = ref('A');
-const vUpgrade = ref('A');
-const vShop = ref('A');
+const seats = ref(4);             // мест на плите = ступень плиты
+const full = ref(true);           // все ли места заняты
+// Бойцов ставим на все места или чуть меньше — чтобы пустая размеченная зона
+// была видна рядом с занятой. Больше мест, чем есть, не бывает.
+const count = computed(() => (full.value ? seats.value : Math.ceil(seats.value / 2)));
 const legend = ref(false);
 const statsOpen = ref(false);
 const pressed = ref(null);
 const trainState = ref('free');
 const showFps = ref(false);
+
+function setSeats(n) { seats.value = n; }
 
 let pressTimer = null;
 function onPress(key) {
@@ -294,7 +286,9 @@ onBeforeUnmount(() => {
 .fx-stagecell { display: flex; flex-direction: column; gap: var(--sp-2); }
 .fx-stagelabel { display: flex; flex-wrap: wrap; gap: var(--sp-2); font-size: var(--t-xs); letter-spacing: var(--ls-meta); color: var(--ink-dim); }
 .fx-chip.is-on { border-color: color-mix(in srgb, var(--pink) 55%, var(--line-strong)); color: var(--ink); }
-.fx-stage { border: 1px solid var(--line); background: var(--carbon); }
+/* position: relative — якорь для полосы кнопок: .hs-strip позиционируется
+   абсолютно и обязана лечь поверх кадра, а не поверх всей страницы. */
+.fx-stage { position: relative; border: 1px solid var(--line); background: var(--carbon); }
 .fx-stage.is-portrait { width: 390px; height: 844px; }
 .fx-stage.is-landscape { width: 844px; height: 390px; }
 @media (max-width: 900px) {

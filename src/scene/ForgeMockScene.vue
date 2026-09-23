@@ -43,24 +43,23 @@ import { resolveBehavior } from '@/data/behavior.js';
 import { createForgeWanderDirector } from './forgeWander.js';
 import { createLegendPresence } from './legendPresence.js';
 import {
-  FORGE_PROPS, buildRoster, buildUpgrade, buildShop, buildCabinet,
-  buildStatsBoard, buildLegendAnchor, buildBuffShelf,
+  FORGE_PROPS, buildRoster, buildUpgrade, buildZoneMark,
+  buildStatsFloor, buildLegendAnchor, buildBuffShelf,
 } from './forgeProps.js';
 import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA, BACKDROP } from '@/data/sceneTokens.js';
 
 const props = defineProps({
-  /** Сколько бойцов в ростере — 4 / 7 / 10 (три ступени плиты). */
+  /** Сколько МЕСТ на плите — 4 / 7 / 10 (три её ступени). Разметка зон рисуется
+   *  на все места, занятые они или нет. */
+  seats: { type: Number, default: 4 },
+  /** Сколько мест реально занято бойцами (≤ seats) — чтобы было видно пустые. */
   count: { type: Number, default: 4 },
   /** Раскладка макета: 'portrait' | 'landscape'. Задаётся страницей, а не окном. */
   layout: { type: String, default: 'portrait' },
-  /** Формы предметов — по букве варианта на каждый. */
-  vRoster: { type: String, default: 'A' },
-  vUpgrade: { type: String, default: 'A' },
-  vShop: { type: String, default: 'A' },
   /** Состояния показа. */
   legend: { type: Boolean, default: false },
   statsOpen: { type: Boolean, default: false },
-  pressed: { type: String, default: null },   // 'roster' | 'upgrade' | 'shop' | 'cabinet' | null
+  pressed: { type: String, default: null },   // 'roster' | 'upgrade' | null
   showFps: { type: Boolean, default: false },
   /** Состояние тренировки выбранного бойца: 'free' | 'busy' | 'ready'. */
   trainState: { type: String, default: 'free' },
@@ -71,7 +70,13 @@ const emit = defineEmits(['press', 'pick-fighter']);
 // Всё, что подбирается глазами. Цветов здесь нет — только геометрия и время.
 const SLAB = { steps: [4, 7, 10], aspect: 1.5, edge: 0.8, height: 1.0 };
 const ARC = { step: 1.4, radius: 16 };
-const ZONE = { halfX: 0.15, halfZ: 0.70 };
+// ЗОНА БОЙЦА — участок, по которому он ходит И который теперь размечен на полу
+// (правка v2). Поперёк дуги зона расширена с 0.15 до 0.28: щель 0.30 шириной
+// разметкой не читается. Предел здесь жёсткий и считается, а не подбирается:
+// соседние тела не должны налезать друг на друга, то есть
+// ARC.step − 2·halfX должно оставаться шире тела (0.80). При 0.28 остаётся
+// 0.84 — тело проходит, и запас нулевой. Шире 0.28 делать нельзя.
+const ZONE = { halfX: 0.28, halfZ: 0.70 };
 const BODY = { halfW: 0.40, height: 1.95 };
 const MARK = { ahead: 2.9 };
 // Досягаемость четырёх ламп — для САМОЙ МАЛЕНЬКОЙ плиты; на больших те же
@@ -82,29 +87,19 @@ const LAMP = { intensity: 30, distance: 26, hangLift: 1.2 };
 // всем остальным. В ширину они раскладываются равномерно, в глубину — на одной
 // линии: полоса должна читаться полосой, а не россыпью.
 const RAIL = {
-  // ГОРИЗОНТАЛЬ — одна линия у ближней кромки плиты, с ПУСТОЙ СЕРЕДИНОЙ: через
-  // неё смотрят на ряд бойцов. Высокие предметы уходят на концы, иначе они
-  // закрывают собой тех, ради кого зал существует (проверено на первом кадре:
-  // шкаф SHOP стоял по центру и прятал весь ростер).
+  // Предметов осталось ТРИ (правка v2: SHOP и кабинет вернулись в плоские
+  // кнопки). Освободившееся место отдано бойцу и разметке зон, а не растянуто
+  // между оставшимися: растянуть их значило бы снова отогнать камеру.
   inset: 0.85,
-  spanLandscape: 0.74,          // доля ширины плиты, на которую расходится полоса
+  spanLandscape: 0.56,          // доля ширины плиты, на которую расходится полоса
 
-  // ПОРТРЕТ — ответ на тесноту (§4 ТЗ). Полоса НЕ растягивается на всю плиту:
-  // растянутая, она заставляет камеру отъехать, и тогда мелкими становятся и
-  // предметы, и боец сразу (проверено — первый вертикальный кадр вышел чёрным
-  // пятном). Вместо этого полоса встаёт компактно и БЛИЖЕ К КАМЕРЕ, чем ближняя
-  // кромка: два ряда в шахматку прямо перед бойцом. Предметы от этого крупные,
-  // боец за ними — целиком, и оба помещаются в один кадр телефона.
-  portraitSpan: 3.2,            // ширина ПЕРЕДНЕГО ряда, единиц мира
-  portraitAhead: 1.95,          // на сколько полоса стоит ПЕРЕД меткой бойца
-  // Второй ряд стоит ЗА бойцом, а не перед ним. Поставленный перед, он обязан
-  // разъехаться вширь (иначе слипается с передним перспективой) — а вширь на
-  // 390 точках идти некуда: камера отъезжает, и мелкими становятся все сразу.
-  // За бойцом он и меньше по перспективе, и не спорит за ширину кадра, и
-  // складывается осмысленно: ближе — то, к чему ходят, дальше — то, на что
-  // смотрят.
-  portraitBackZ: 1.45,          // насколько задний ряд ГЛУБЖЕ метки бойца
-  portraitBackOut: 1.55,        // разнос заднего ряда от центра
+  // ПОРТРЕТ. Два предмета, к которым ходят, стоят перед бойцом; полка баффов —
+  // задел, к ней не ходят — уходит за него. Пролёт переднего ряда стал уже
+  // (было 3.2 на три предмета), поэтому камера подошла ближе и боец крупнее.
+  portraitSpan: 2.05,           // разнос переднего ряда, единиц мира
+  portraitAhead: 1.95,          // на сколько передний ряд стоит ПЕРЕД меткой бойца
+  portraitBackZ: 1.45,          // насколько полка ГЛУБЖЕ метки бойца
+  portraitBackOut: 1.5,         // и насколько она уведена вбок от центра
 };
 
 // Камера. Фронтальная и фиксированная, как в настоящем зале: это мастерская.
@@ -118,7 +113,7 @@ const CAM = {
     // ширине оставляет вертикальный запас. Прижав композицию к низу, мы отдаём
     // этот запас потолку зала: лампы, воздух и место легенды над плитой. Иначе
     // столько же пустоты оставалось бы ПОД плитой, где нет ничего.
-    portrait: { x0: 0.05, x1: 0.95, y0: 0.36, y1: 0.99 },
+    portrait: { x0: 0.07, x1: 0.93, y0: 0.34, y1: 0.98 },
     landscape: { x0: 0.05, x1: 0.95, y0: 0.10, y1: 0.92 },
   },
   minDist: 4.5,
@@ -127,8 +122,9 @@ const CAM = {
 
 const LEGEND = { height: 4.7, driftSpeed: 0.5, driftRadius: 0.7, bobAmplitude: 0.18, hazeDensity: 90 };
 const CORE_LIGHT = { rest: 0.05, lerp: 7.0 };
-// Где стоит табло статов относительно бойца на метке.
-const STATS = { sideX: -1.05, ahead: 0.85, lift: 0.80, turn: 0.30 };
+// Где проступают статы: НА ПОЛУ, перед бойцом, на продолжении его места.
+// Ни высоты, ни наклона здесь нет — это надпись на плите (правка v2).
+const STATS = { ahead: 1.02 };
 const CORE_PALETTE = [
   { id: 'natisk', hue: CORE_HUE.natisk },
   { id: 'nalet', hue: CORE_HUE.nalet },
@@ -146,7 +142,9 @@ let renderer, scene, camera, clock;
 let slab = null, backdrop = null, lamps = null;
 let director = null;
 let legendBody = null, legendPresence = null, legendAnchor = null;
-let statsBoard = null;
+let statsFloor = null;
+let zoneList = [];          // разметка мест на плите
+let markZone = null;        // рабочее место перед строем
 let propList = [];            // { key, obj }
 let roster = [];              // { id, core, home, fighter, glow, parts, skin, lit }
 let compose = null, mark = { x: 0, z: 0 };
@@ -202,7 +200,12 @@ function fitCamera() {
   if (portrait) {
     body(mark.x, mark.z, 0.32, 0.25);
   } else {
-    for (const r2 of roster) body(r2.home.x, r2.home.z, ZONE.halfX, ZONE.halfZ);
+    // Все места ступени, занятые и пустые: разметка — часть композиции, и
+    // пустое место обязано попадать в кадр так же, как занятое.
+    for (let i = 0; i < props.seats; i++) {
+      const at = spotFor(i, props.seats, compose);
+      body(at.x, at.z, ZONE.halfX, ZONE.halfZ);
+    }
     body(mark.x, mark.z, 0.25, 0.25);
     if (props.legend) {
       const feet = topY + LEGEND.height;
@@ -210,9 +213,11 @@ function fitCamera() {
     }
   }
   // Полоса предметов — часть композиции в обеих раскладках.
+  // Предметы берутся с запасом: у наковальни рог уходит вбок за её же коробку,
+  // и без запаса она упиралась в кромку кадра.
   for (const p of propList) {
     const g = p.obj.group.position;
-    pts.push([g.x - 0.70, topY, g.z + 0.55], [g.x + 0.70, topY + 1.85, g.z - 0.55]);
+    pts.push([g.x - 0.95, topY, g.z + 0.70], [g.x + 0.95, topY + 1.85, g.z - 0.70]);
   }
 
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]).normalize();
@@ -286,19 +291,26 @@ function applyLight(r) {
 function buildRosterBodies() {
   const portrait = props.layout === 'portrait';
   const topY = slab.refs.topY;
-  const n = props.count;
-  for (let i = 0; i < n; i++) {
+  // Места считаются по СТУПЕНИ, а тела ставятся только на занятые: так пустое
+  // место остаётся на своём месте в строю, а не схлопывается.
+  const n = props.seats;
+  for (let i = 0; i < Math.min(props.count, n); i++) {
     const core = CORE_PALETTE[i % CORE_PALETTE.length];
     const home = spotFor(i, n, compose);
     // В ПОРТРЕТЕ СТРОИТСЯ ОДНО ТЕЛО. Это не упрощение макета — так устроен и
     // настоящий зал: десять тел на телефоне не тянет (см. шапку).
     const wanted = !portrait || i === currentIdx;
     let fighter = null, parts = null, skin = null, glow = null;
-    const r = { id: `f${i}`, core, home, fighter: null, parts: null, skin: null, glow: null, agent: -1, lit: i === currentIdx ? 1 : 0 };
+    const r = { id: `f${i}`, seat: i, core, home, fighter: null, parts: null, skin: null, glow: null, agent: -1, mode: 'wander', lit: i === currentIdx ? 1 : 0 };
     if (wanted) {
       fighter = buildFighter(core.hue, {
         side: 'player', coreId: core.id, behavior: resolveBehavior(core.id, []),
-        bounds: { x: ZONE.halfX * 2, z: ZONE.halfZ * 2 },
+        // ⚠️ bounds — это ПЛИТА, а не личная зона. Тело держат на плите, чтобы
+        // оно не ушло за кромку; по зоне его водит режиссёр. В v1 сюда были
+        // переданы размеры зоны — и все тела зажало в коробку у центра плиты.
+        // Ровно это владелец и увидел как «бойцы просто стоят в куче»: они не
+        // слипались перспективой, их физически сводило в одну точку.
+        bounds: { x: compose.slab.width / 2, z: compose.slab.depth / 2 },
         // Приманка режиссёра. Ходит тело САМО, своими ногами: режиссёр двигает
         // только точку, за которой оно идёт (тот же приём, что в настоящем зале
         // — ни одной правки в защищённых файлах). Режиссёр собирается ПОЗЖЕ
@@ -325,51 +337,62 @@ function placeProps() {
   const portrait = props.layout === 'portrait';
   const topY = slab.refs.topY;
   const builders = {
-    roster: () => buildRoster(props.vRoster),
-    upgrade: () => buildUpgrade(props.vUpgrade),
-    shop: () => buildShop(props.vShop),
-    cabinet: () => buildCabinet(props.vShop),
+    roster: () => buildRoster(),
+    upgrade: () => buildUpgrade(),
     shelf: () => buildBuffShelf(),
   };
 
-  // Раскладка полосы — единственное, чем две ориентации отличаются. Формы
-  // предметов одни и те же: сравнивать их иначе было бы не с чем.
+  // Раскладка полосы — единственное, чем две ориентации отличаются.
   let spots;
   if (portrait) {
-    // Два ряда в шахматку перед бойцом. Ближний ряд — то, к чему ходят чаще.
     const S = RAIL.portraitSpan;
     const zNear = Math.min(compose.slab.depth / 2 - 0.35, mark.z + RAIL.portraitAhead);
-    const zFar = mark.z - RAIL.portraitBackZ;
-    const out = RAIL.portraitBackOut;
     spots = [
       { key: 'roster', x: -S / 2, z: zNear },
-      { key: 'upgrade', x: 0, z: zNear },
-      { key: 'shop', x: S / 2, z: zNear },
-      { key: 'shelf', x: -out, z: zFar },
-      { key: 'cabinet', x: out, z: zFar },
+      { key: 'upgrade', x: S / 2, z: zNear },
+      // Полка баффов — задел, к ней не ходят: уводится за бойца и вбок.
+      { key: 'shelf', x: -RAIL.portraitBackOut, z: mark.z - RAIL.portraitBackZ },
     ];
   } else {
     const span = compose.slab.width * RAIL.spanLandscape;
     const z = compose.slab.depth / 2 - RAIL.inset;
-    // Высокие — наружу, низкие — внутрь: середина пролёта остаётся пустой.
-    // Доли пролёта, а не абсолютные числа: полоса растягивается вместе с
-    // плитой. Середина (−0.14 … +0.22) пустая — это окно на ряд бойцов.
+    // Середина пролёта пустая — это окно на ряд бойцов.
     spots = [
-      { key: 'shop', x: -span * 0.50, z },
-      { key: 'roster', x: -span * 0.31, z },
-      { key: 'shelf', x: -span * 0.13, z },
-      { key: 'upgrade', x: span * 0.24, z },
-      { key: 'cabinet', x: span * 0.47, z },
+      { key: 'roster', x: -span * 0.50, z },
+      { key: 'shelf', x: -span * 0.18, z },
+      { key: 'upgrade', x: span * 0.50, z },
     ];
   }
 
   for (const sp of spots) {
     const obj = builders[sp.key]();
     obj.group.position.set(sp.x, topY, sp.z);
-    // Предметы развёрнуты к игроку — как и всё в этом зале.
     scene.add(obj.group);
     propList.push({ key: sp.key, obj });
   }
+}
+
+/**
+ * РАЗМЕТКА МЕСТ. Рисуется на ВСЕ места ступени, а не только на занятые: пустое
+ * место обязано читаться местом, иначе разметка превращается в подсветку тех,
+ * кто и так виден. Плюс отдельная ячейка на метке — рабочее место того, кого
+ * сейчас открыли; на неё же ложатся статы.
+ */
+function placeZones() {
+  const topY = slab.refs.topY;
+  const n = props.seats;
+  for (let i = 0; i < n; i++) {
+    const at = spotFor(i, n, compose);
+    const z = buildZoneMark(ZONE.halfX, ZONE.halfZ);
+    z.group.position.set(at.x, topY, at.z);
+    scene.add(z.group);
+    zoneList.push({ seat: i, mark: z });
+  }
+  // Рабочее место перед строем. Чуть шире зоны в строю — на нём работают, а не
+  // ждут, и статы разворачиваются именно отсюда.
+  markZone = buildZoneMark(ZONE.halfX * 1.5, ZONE.halfZ * 0.8);
+  markZone.group.position.set(mark.x, topY, mark.z);
+  scene.add(markZone.group);
 }
 
 function buildLegend() {
@@ -400,7 +423,7 @@ function buildLegend() {
 }
 
 function buildAll() {
-  compose = composeFor(props.count);
+  compose = composeFor(props.seats);
   mark = { x: 0, z: compose.markZ };
 
   slab = buildForgeSlab({ width: compose.slab.width, depth: compose.slab.depth, height: SLAB.height });
@@ -418,7 +441,11 @@ function buildAll() {
   // одну яркость пола при затухании 1/r². Числа и приём — из настоящего зала.
   const base = composeFor(SLAB.steps[0]).slab.width;
   const k = Math.max(1, compose.slab.width / base);
-  const endX = arcHalfWidth(compose.max) * 0.80;
+  // Две лампы строя стоят над КОНЦАМИ дуги, а не в 0.8 от них. Разница видна
+  // только на десяти местах — и там она решает: при 0.8 крайние бойцы стоят
+  // ЗА последней лампой, и на снимке от них остаётся силуэт темнее пола.
+  // Ламп по-прежнему четыре: их разносят, а не добавляют.
+  const endX = arcHalfWidth(compose.max);
   lamps = buildLamps({
     ...HALL_LAMPS, hangLift: LAMP.hangLift,
     light: { ...HALL_LAMPS.light, intensity: LAMP.intensity * k * k, distance: LAMP.distance * k },
@@ -435,11 +462,12 @@ function buildAll() {
   scene.add(backdrop.mesh);
 
   buildRosterBodies();
+  placeZones();
   placeProps();
   buildLegend();
 
-  statsBoard = buildStatsBoard(AXIS_NAMES);
-  scene.add(statsBoard.group);
+  statsFloor = buildStatsFloor(AXIS_NAMES);
+  scene.add(statsFloor.group);
   positionStats();
 
   // Режиссёр есть В ОБЕИХ раскладках. Он и есть то, чем видно состояние бойца:
@@ -468,13 +496,11 @@ function buildAll() {
 }
 
 function positionStats() {
-  if (!statsBoard || !slab) return;
-  // Табло встаёт СБОКУ от бойца и на высоте груди — не перед ним и не на полу.
-  // Перед ним оно закрывает того, кого объясняет; на полу — теряется среди
-  // предметов полосы (проверено на кадрах: на полу оно слипалось с наковальней).
-  const topY = slab.refs.topY;
-  statsBoard.group.position.set(mark.x + STATS.sideX, topY + STATS.lift, mark.z + STATS.ahead);
-  statsBoard.group.rotation.y = STATS.turn;
+  if (!statsFloor || !slab) return;
+  // На полу, перед бойцом, на продолжении его рабочего места. Ни высоты, ни
+  // наклона: это надпись на плите. Поднятое табло отъедало высоту кадра —
+  // самое дефицитное, что есть в вертикальном телефоне.
+  statsFloor.group.position.set(mark.x, slab.refs.topY, mark.z + STATS.ahead);
 }
 
 function applyTraining() {
@@ -486,6 +512,7 @@ function applyTraining() {
     const mode = i === currentIdx
       ? (props.trainState === 'busy' ? 'drill' : props.trainState === 'ready' ? 'still' : 'wander')
       : (i % 3 === 1 ? 'drill' : i % 3 === 2 ? 'still' : 'wander');
+    r.mode = mode;                 // разметка зоны смотрит сюда же
     director.setMode(r.agent, mode);
   });
 }
@@ -497,7 +524,10 @@ function teardown() {
   roster = [];
   propList.forEach((p) => { scene.remove(p.obj.group); p.obj.dispose(); });
   propList = [];
-  if (statsBoard) { scene.remove(statsBoard.group); statsBoard.dispose(); statsBoard = null; }
+  if (statsFloor) { scene.remove(statsFloor.group); statsFloor.dispose(); statsFloor = null; }
+  zoneList.forEach((z) => { scene.remove(z.mark.group); z.mark.dispose(); });
+  zoneList = [];
+  if (markZone) { scene.remove(markZone.group); markZone.dispose(); markZone = null; }
   if (legendAnchor) { scene.remove(legendAnchor.group); legendAnchor.dispose(); legendAnchor = null; }
   if (legendBody) { scene.remove(legendBody.group); legendBody.dispose(); legendBody = null; }
   if (legendPresence) { scene.remove(legendPresence.group); scene.remove(legendPresence.trail); legendPresence.dispose(); legendPresence = null; }
@@ -608,8 +638,23 @@ onMounted(() => {
     legendAnchor?.tick(dt, elapsed);
 
     for (const p of propList) { p.obj.setPressed(props.pressed === p.key); p.obj.tick(dt); }
-    statsBoard?.setOpen(props.statsOpen);
-    statsBoard?.tick(dt, reduced);
+    statsFloor?.setOpen(props.statsOpen);
+    statsFloor?.tick(dt, reduced);
+
+    // Черта зоны заметнее, пока в ней ЗАНИМАЮТСЯ — ровно то, что происходит в
+    // игре: занятие идёт внутри своей зоны. Свечения тут нет и быть не может.
+    for (const z of zoneList) {
+      const r = roster.find((x) => x.seat === z.seat);
+      // Место в строю: черта заметнее, пока в нём занимаются. Выбранный боец
+      // стоит не в строю, а на рабочем месте впереди — его зона ниже.
+      z.mark.setBusy(!!r && !!r.fighter && z.seat !== currentIdx && r.mode === 'drill');
+      z.mark.tick(dt);
+    }
+    if (markZone) {
+      const cur = roster[currentIdx];
+      markZone.setBusy(!!cur && cur.mode === 'drill');
+      markZone.tick(dt);
+    }
 
     renderer.render(scene, camera);
     if (props.showFps) {
@@ -636,7 +681,7 @@ onMounted(() => {
   resizeObserver.observe(el);
 });
 
-watch(() => [props.count, props.layout, props.vRoster, props.vUpgrade, props.vShop].join('|'), () => rebuild());
+watch(() => [props.seats, props.count, props.layout].join('|'), () => rebuild());
 watch(() => props.trainState, () => applyTraining());
 watch(() => props.statsOpen, () => positionStats());
 

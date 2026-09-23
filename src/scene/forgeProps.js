@@ -32,8 +32,15 @@
 // стилей через уже существующий мост (labelFont/labelInk ниже), своего
 // объявления не заводят.
 //
-// Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade, buildShop,
-//               buildCabinet, buildStatsBoard, buildLegendAnchor, buildBuffShelf.
+// ⚠️ SHOP и КАБИНЕТ ПРЕДМЕТАМИ НЕ ДЕЛАЮТСЯ (решение владельца 23.09.2026, правка
+//    v2). Они остаются плоскими кнопками, такими же, как на остальных экранах,
+//    вместе с кнопкой BACK. Причина: кнопка читается как «выйти отсюда», предмет
+//    — как «работать здесь». Смешение плоского и объёмного здесь намеренное.
+//    Полосу кнопок собирает страница из уже существующих стилей зала (.hs-strip
+//    в src/styles/home.css) — второй такой полосы здесь не заводится.
+//
+// Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade,
+//               buildZoneMark, buildStatsFloor, buildLegendAnchor, buildBuffShelf.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -53,11 +60,23 @@ export const FORGE_PROPS = {
 
   roster:  { w: 0.72, d: 0.52, label: 'ROSTER' },
   upgrade: { w: 0.86, d: 0.72, label: 'FORGE' },
-  shop:    { w: 0.62, d: 0.48, label: 'SHOP' },
-  cabinet: { w: 0.46, d: 0.40, label: 'CABINET' },
 
-  // Табло статов — поднимается перед бойцом по нажатию на него.
-  stats: { w: 1.30, h: 0.94, riseFrom: -0.55, riseDur: 0.45 },
+  // РАЗМЕТКА ЗОНЫ — участок пола, закреплённый за бойцом. Видна в покое и
+  // видна пустой. Приглушённая и матовая: это часть плиты, а не наклейка
+  // поверх неё, и светиться ей нечем.
+  zone: {
+    lift: 0.014,        // насколько разметка приподнята над плитой (чтобы не мерцала)
+    line: 0.035,        // толщина черты
+    corner: 0.26,       // доля стороны, которую занимает угловая скоба
+    fill: 0.10,         // насколько заметна заливка внутри пустой зоны
+    lineOpacity: 0.42,  // насколько заметна сама черта
+    busyLine: 0.85,     // …и насколько — когда боец в ней ЗАНЯТ (работает)
+  },
+
+  // СТАТЫ — проступают НА ПОВЕРХНОСТИ ПЛИТЫ перед бойцом (правка v2). Ничего
+  // не поднимается и не висит: поднятое табло отъедало высоту кадра, а высота
+  // в вертикальном телефоне — самое дефицитное.
+  stats: { w: 1.62, d: 1.28, openDur: 0.4, rows: 7 },
 
   // Полка баффов — только МЕСТО, задел (решение 22.09: предметы баффов позже).
   shelf: { w: 1.10, d: 0.30, niches: 3, label: 'BUFFS' },
@@ -228,78 +247,32 @@ function ownBox(api, mesh) {
 //   B · ПЮПИТР — наклонная стойка, блокнот на ней, карандаш в держателе сбоку.
 //   C · СТОПКА — блокнот плашмя на приземистой тумбе, карандаш рядом, подпись
 //       выгравирована на передней грани тумбы.
-export function buildRoster(variant = 'A') {
+export function buildRoster() {
   const R = FORGE_PROPS.roster;
   const api = propShell(R.label, R.w * 1.25, 0.02, R.d * 0.72 + 0.20);
   // Подпись лежит на полу перед предметом — читается с фронтальной камеры зала.
   if (api.label) api.label.rotation.x = -Math.PI / 2;
 
   const D = FORGE_PROPS.deskY;
-
-  if (variant === 'A') {
-    const foot = ownBox(api, slabBox(R.w * 0.52, D * 0.55, R.d * 0.46, 'pedestal'));
-    foot.position.y = D * 0.275;
-    api.add(foot);
-    const arm = ownBox(api, slabBox(R.w * 0.14, D * 0.5, R.d * 0.14, 'dark'));
-    arm.position.set(0, D * 0.72, -0.02);
-    api.add(arm);
-    const board = ownBox(api, slabBox(R.w, 0.045, R.d, 'decor'));
-    board.position.set(0, D * 0.96, 0.04);
-    board.rotation.x = -0.62;
-    api.add(board);
-    const clip = ownBox(api, slabBox(R.w * 0.42, 0.05, 0.07, 'dark'));
-    clip.position.set(0, D * 0.96 + 0.16, -0.10);
-    clip.rotation.x = -0.62;
-    api.add(clip, { pickable: false });
-    const pencil = buildPencil();
-    pencil.group.position.set(0.02, D * 0.96 - 0.02, 0.12);
-    pencil.group.rotation.set(-0.62, 0.22, 0);
-    api.group.add(pencil.group);
-    api.own(pencil.dispose);
-  } else if (variant === 'B') {
-    const post = ownBox(api, slabBox(R.w * 0.20, D, R.d * 0.20, 'pedestal'));
-    post.position.y = D / 2;
-    api.add(post);
-    const base = ownBox(api, slabBox(R.w * 0.66, 0.08, R.d * 0.56, 'dark'));
-    base.position.y = 0.04;
-    api.add(base, { pickable: false });
-    const desk = ownBox(api, slabBox(R.w, 0.06, R.d * 0.92, 'decor'));
-    desk.position.set(0, D + 0.06, 0.03);
-    desk.rotation.x = -0.9;
-    api.add(desk);
-    const lip = ownBox(api, slabBox(R.w, 0.06, 0.08, 'dark'));
-    lip.position.set(0, D - 0.05, R.d * 0.34);
-    api.add(lip, { pickable: false });
-    const holder = ownBox(api, slabBox(0.07, 0.16, 0.07, 'dark'));
-    holder.position.set(R.w * 0.56, D + 0.02, 0.02);
-    api.add(holder, { pickable: false });
-    const pencil = buildPencil();
-    pencil.group.position.set(R.w * 0.56, D + 0.16, 0.02);
-    pencil.group.rotation.set(0, 0, 0.16);
-    api.group.add(pencil.group);
-    api.own(pencil.dispose);
-  } else {
-    const box = ownBox(api, slabBox(R.w * 1.06, D * 0.78, R.d * 0.92, 'pedestal'));
-    box.position.y = D * 0.39;
-    api.add(box);
-    const pad = ownBox(api, slabBox(R.w * 0.78, 0.09, R.d * 0.62, 'decor'));
-    pad.position.set(-0.05, D * 0.78 + 0.045, 0.02);
-    api.add(pad);
-    const leaf = ownBox(api, slabBox(R.w * 0.78, 0.02, R.d * 0.62, 'dark'));
-    leaf.position.set(-0.05, D * 0.78 + 0.10, 0.02);
-    leaf.rotation.z = 0.05;
-    api.add(leaf, { pickable: false });
-    const pencil = buildPencil();
-    pencil.group.position.set(R.w * 0.40, D * 0.78 + 0.03, 0.10);
-    pencil.group.rotation.set(0, 0.5, 0);
-    api.group.add(pencil.group);
-    api.own(pencil.dispose);
-    // У варианта C подпись выгравирована на передней грани тумбы, а не на полу.
-    if (api.label) {
-      api.label.rotation.set(0, 0, 0);
-      api.label.position.set(0, D * 0.34, R.d * 0.46 + 0.005);
-    }
-  }
+  const foot = ownBox(api, slabBox(R.w * 0.52, D * 0.55, R.d * 0.46, 'pedestal'));
+  foot.position.y = D * 0.275;
+  api.add(foot);
+  const arm = ownBox(api, slabBox(R.w * 0.14, D * 0.5, R.d * 0.14, 'dark'));
+  arm.position.set(0, D * 0.72, -0.02);
+  api.add(arm);
+  const board = ownBox(api, slabBox(R.w, 0.045, R.d, 'decor'));
+  board.position.set(0, D * 0.96, 0.04);
+  board.rotation.x = -0.62;
+  api.add(board);
+  const clip = ownBox(api, slabBox(R.w * 0.42, 0.05, 0.07, 'dark'));
+  clip.position.set(0, D * 0.96 + 0.16, -0.10);
+  clip.rotation.x = -0.62;
+  api.add(clip, { pickable: false });
+  const pencil = buildPencil();
+  pencil.group.position.set(0.02, D * 0.96 - 0.02, 0.12);
+  pencil.group.rotation.set(-0.62, 0.22, 0);
+  api.group.add(pencil.group);
+  api.own(pencil.dispose);
   return api;
 }
 
@@ -327,7 +300,7 @@ function buildPencil() {
 //
 // ⚠️ Гнёзда ПУСТЫЕ и ничем не заполнены: заполнение — это и есть числа
 //    прокачки, а их в этой работе нет (ТЗ §3.4).
-export function buildUpgrade(variant = 'A') {
+export function buildUpgrade() {
   const U = FORGE_PROPS.upgrade;
   const api = propShell(U.label, U.w * 1.05, 0.02, U.d * 0.7 + 0.22);
   if (api.label) api.label.rotation.x = -Math.PI / 2;
@@ -341,228 +314,204 @@ export function buildUpgrade(variant = 'A') {
     return m;
   };
 
-  if (variant === 'A') {
-    const base = ownBox(api, slabBox(U.w * 0.62, 0.14, U.d * 0.62, 'dark'));
-    base.position.y = 0.07;
-    api.add(base, { pickable: false });
-    const waist = ownBox(api, slabBox(U.w * 0.34, D * 0.62, U.d * 0.34, 'pedestal'));
-    waist.position.y = 0.14 + D * 0.31;
-    api.add(waist);
-    const top = ownBox(api, slabBox(U.w, 0.17, U.d * 0.52, 'decor'));
-    top.position.y = D * 0.76;
-    api.add(top);
-    const horn = hexPlate(U.d * 0.20, 0.13, 'decor');
-    horn.position.set(U.w * 0.52, D * 0.76, 0);
-    horn.rotation.z = Math.PI / 2;
-    api.add(horn, { pickable: false });
-    const anvilHex = hexPlate(U.d * 0.21, 0.035, 'dark');
-    anvilHex.position.y = D * 0.76 + 0.10;
-    api.add(anvilHex, { pickable: false });
-  } else if (variant === 'B') {
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const leg = ownBox(api, slabBox(0.08, D, 0.08, 'dark'));
-      leg.position.set(sx * U.w * 0.40, D / 2, sz * U.d * 0.30);
-      api.add(leg, { pickable: false });
-    }
-    const top = ownBox(api, slabBox(U.w * 1.02, 0.08, U.d * 0.74, 'decor'));
-    top.position.y = D + 0.04;
-    api.add(top);
-    const frameL = ownBox(api, slabBox(0.06, 0.52, 0.06, 'pedestal'));
-    frameL.position.set(-U.w * 0.34, D + 0.30, -U.d * 0.20);
-    api.add(frameL, { pickable: false });
-    const frameR = ownBox(api, slabBox(0.06, 0.52, 0.06, 'pedestal'));
-    frameR.position.set(U.w * 0.34, D + 0.30, -U.d * 0.20);
-    api.add(frameR, { pickable: false });
-    const beam = ownBox(api, slabBox(U.w * 0.76, 0.06, 0.06, 'pedestal'));
-    beam.position.set(0, D + 0.56, -U.d * 0.20);
-    api.add(beam, { pickable: false });
-    for (let i = -1; i <= 1; i++) {
-      const socket = hexPlate(0.10, 0.03, 'dark');
-      socket.rotation.x = Math.PI / 2;
-      socket.position.set(i * 0.26, D + 0.34, -U.d * 0.20 + 0.04);
-      api.add(socket, { pickable: false });
-    }
-  } else {
-    const foot = hexPlate(U.w * 0.46, 0.10, 'dark');
-    foot.position.y = 0.05;
-    api.add(foot, { pickable: false });
-    const shaft = hexPlate(U.w * 0.27, D * 1.35, 'pedestal');
-    shaft.position.y = 0.10 + D * 0.675;
-    api.add(shaft);
-    const cap = hexPlate(U.w * 0.33, 0.09, 'decor');
-    cap.position.y = 0.10 + D * 1.35 + 0.045;
-    api.add(cap, { pickable: false });
-    // Три пустые врезки на гранях столба — места под грани бойца.
-    for (let i = 0; i < 3; i++) {
-      const a = (i / 3) * Math.PI * 2 + Math.PI / 6;
-      const notch = hexPlate(0.085, 0.02, 'dark');
-      notch.rotation.set(Math.PI / 2, 0, -a);
-      notch.position.set(
-        Math.sin(a) * U.w * 0.255,
-        0.10 + D * 0.42 + i * 0.26,
-        Math.cos(a) * U.w * 0.255,
-      );
-      api.add(notch, { pickable: false });
-    }
-  }
+  const base = ownBox(api, slabBox(U.w * 0.62, 0.14, U.d * 0.62, 'dark'));
+  base.position.y = 0.07;
+  api.add(base, { pickable: false });
+  const waist = ownBox(api, slabBox(U.w * 0.34, D * 0.62, U.d * 0.34, 'pedestal'));
+  waist.position.y = 0.14 + D * 0.31;
+  api.add(waist);
+  const top = ownBox(api, slabBox(U.w, 0.17, U.d * 0.52, 'decor'));
+  top.position.y = D * 0.76;
+  api.add(top);
+  const horn = hexPlate(U.d * 0.20, 0.13, 'decor');
+  horn.position.set(U.w * 0.52, D * 0.76, 0);
+  horn.rotation.z = Math.PI / 2;
+  api.add(horn, { pickable: false });
+  const anvilHex = hexPlate(U.d * 0.21, 0.035, 'dark');
+  anvilHex.position.y = D * 0.76 + 0.10;
+  api.add(anvilHex, { pickable: false });
   return api;
 }
 
-// ═══════════════════ SHOP и КАБИНЕТ — предметами, а не кнопками ═══════════════════
-// Сейчас это две плоские кнопки на всех игровых экранах (полоса .hs-strip).
-//   A · ШКАФ + ЗЕРКАЛО — витрина-локер для магазина, узкая стойка-зеркало для кабинета.
-//   B · ДВЕРИ — две плиты-створки в торце зала; кабинет уже магазина.
-//   C · ТУМБА С СУМКОЙ + ЖЕТОН — низкая тумба, на ней сумка; кабинет — жетон на ножке.
-export function buildShop(variant = 'A') {
-  const S = FORGE_PROPS.shop;
-  const api = propShell(S.label, S.w * 1.35, 0.02, S.d * 0.7 + 0.20);
-  if (api.label) api.label.rotation.x = -Math.PI / 2;
-  const D = FORGE_PROPS.deskY;
+// ═══════════════════ РАЗМЕТКА ЗОНЫ НА ПЛИТЕ ═══════════════════
+// Участок пола, закреплённый за бойцом. Появился в правке v2, потому что на
+// дуге настоящего зала бойцы слипаются в кучу, и чем их больше, тем хуже.
+// Разметка не расталкивает их — она объясняет, что каждый стоит на СВОЁМ месте.
+//
+// Это ещё и то, что уже происходит в игре: боец в состоянии TRAINING работает
+// именно в своей зоне (см. forgeWander, «ЗАНЯТИЕ РАБОТАЕТ В СВОЕЙ ЗОНЕ»).
+// Разметка делает видимым то, что раньше происходило молча — поэтому у зоны
+// есть второе состояние: пока в ней работают, её черта заметнее.
+//
+// Форма — скобы по углам, а не сплошная рамка: сплошная на десяти местах
+// превращает пол в сетку, а сетка — это узор, которого в проекте быть не должно.
+// Рисунок ячейки — ОДНА картинка на все одинаковые зоны. Скобы и заливка
+// запечены в неё вместе, поэтому на плите каждая зона стоит одной плоскостью,
+// а не девятью кусками. Это не украшательство: на десяти местах девять кусков
+// превращались в сотню лишних вызовов отрисовки, и горизонтальный кадр терял
+// на них кадры (замер v2: 11.1 → 12.9 в ландшафте после склейки).
+const _zoneTex = new Map();
+function zoneTexture(halfX, halfZ) {
+  const key = `${halfX.toFixed(3)}x${halfZ.toFixed(3)}`;
+  if (_zoneTex.has(key)) return _zoneTex.get(key);
+  const Z = FORGE_PROPS.zone;
+  // Холст в пропорциях самой ячейки — иначе скобы растянутся вместе с ним.
+  const PX = 256;
+  const w = PX, h = Math.max(32, Math.round(PX * (halfZ / halfX)));
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
 
-  if (variant === 'A') {
-    const body = ownBox(api, slabBox(S.w, D * 1.7, S.d, 'pedestal'));
-    body.position.y = D * 0.85;
-    api.add(body);
-    const glass = ownBox(api, slabBox(S.w * 0.78, D * 0.9, 0.03, 'dark'));
-    glass.position.set(0, D * 1.02, S.d / 2 + 0.015);
-    api.add(glass, { pickable: false });
-    for (let i = 0; i < 2; i++) {
-      const shelf = ownBox(api, slabBox(S.w * 0.74, 0.03, S.d * 0.6, 'decor'));
-      shelf.position.set(0, D * 0.78 + i * 0.34, 0);
-      api.add(shelf, { pickable: false });
-    }
-  } else if (variant === 'B') {
-    const frame = ownBox(api, slabBox(S.w * 1.2, D * 2.4, 0.12, 'dark'));
-    frame.position.y = D * 1.2;
-    api.add(frame, { pickable: false });
-    const leaf = ownBox(api, slabBox(S.w * 0.98, D * 2.2, 0.06, 'pedestal'));
-    leaf.position.set(0, D * 1.16, 0.07);
-    api.add(leaf);
-    const handle = ownBox(api, slabBox(0.05, 0.26, 0.05, 'decor'));
-    handle.position.set(S.w * 0.36, D * 1.1, 0.12);
-    api.add(handle, { pickable: false });
-  } else {
-    const box = ownBox(api, slabBox(S.w * 1.1, D * 0.72, S.d * 1.05, 'pedestal'));
-    box.position.y = D * 0.36;
-    api.add(box);
-    const bag = ownBox(api, slabBox(S.w * 0.56, 0.30, S.d * 0.5, 'decor'));
-    bag.position.y = D * 0.72 + 0.15;
-    api.add(bag);
-    const strap = ownBox(api, slabBox(S.w * 0.30, 0.16, 0.04, 'dark'));
-    strap.position.set(0, D * 0.72 + 0.36, 0);
-    api.add(strap, { pickable: false });
+  const line = '#' + new THREE.Color(MATERIALS.decorLine.color).getHexString();
+  const dark = '#' + new THREE.Color(MATERIALS.decorDark.color).getHexString();
+
+  // Заливка — еле различимая, только чтобы пустое место читалось местом.
+  c.globalAlpha = Z.fill;
+  c.fillStyle = dark;
+  c.fillRect(0, 0, w, h);
+
+  // Скобы по углам, а не сплошная рамка: сплошная на десяти местах превращает
+  // пол в сетку, а сетка — это узор, которого в проекте быть не должно.
+  c.globalAlpha = 1;
+  c.fillStyle = line;
+  const t = Math.max(2, Math.round((Z.line / (halfX * 2)) * w));
+  const lx = Math.round(w * Z.corner);
+  const lz = Math.round(h * Z.corner);
+  for (const [x0, sx] of [[0, 1], [w, -1]]) for (const [y0, sy] of [[0, 1], [h, -1]]) {
+    const x = sx > 0 ? x0 : x0 - lx;
+    const y = sy > 0 ? y0 : y0 - t;
+    c.fillRect(x, y, lx, t);
+    c.fillRect(sx > 0 ? x0 : x0 - t, sy > 0 ? y0 : y0 - lz, t, lz);
   }
-  return api;
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  // Без мип-уровней. Черта здесь тонкая, а ячейка на десяти местах занимает на
+  // экране десятки точек: мип-уровни её просто размывали в ничто — на первом
+  // снимке склеенной разметки зоны почти пропали. Гладкой фильтрации хватает,
+  // потому что рисунок — прямые полосы, а не мелкий шум.
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  _zoneTex.set(key, tex);
+  return tex;
 }
 
-export function buildCabinet(variant = 'A') {
-  const C = FORGE_PROPS.cabinet;
-  const api = propShell(C.label, C.w * 1.75, 0.02, C.d * 0.7 + 0.20);
-  if (api.label) api.label.rotation.x = -Math.PI / 2;
-  const D = FORGE_PROPS.deskY;
+// ═══════════════════ РАЗМЕТКА ЗОНЫ НА ПЛИТЕ ═══════════════════
+// Участок пола, закреплённый за бойцом. Появился в правке v2, потому что на
+// дуге настоящего зала бойцы слипаются в кучу, и чем их больше, тем хуже.
+// Разметка не расталкивает их — она объясняет, что каждый стоит на СВОЁМ месте.
+//
+// Это ещё и то, что уже происходит в игре: боец в состоянии TRAINING работает
+// именно в своей зоне (см. forgeWander, «ЗАНЯТИЕ РАБОТАЕТ В СВОЕЙ ЗОНЕ»).
+// Разметка делает видимым то, что раньше происходило молча — поэтому у зоны
+// есть второе состояние: пока в ней работают, её черта заметнее.
+//
+// ⚠️ Второе состояние — ЯРКОСТЬ ЧЕРТЫ, а не свечение. Материал не аддитивный и
+//    ничего не излучает: правило «одно геройское свечение» зона не трогает.
+export function buildZoneMark(halfX, halfZ) {
+  const Z = FORGE_PROPS.zone;
+  const geo = new THREE.PlaneGeometry(halfX * 2, halfZ * 2);
+  const mat = new THREE.MeshBasicMaterial({
+    map: zoneTexture(halfX, halfZ),
+    transparent: true, opacity: Z.lineOpacity, depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = Z.lift;
+  const group = new THREE.Group();
+  group.add(mesh);
 
-  if (variant === 'A') {
-    const post = ownBox(api, slabBox(C.w * 0.26, D * 1.1, C.d * 0.26, 'dark'));
-    post.position.y = D * 0.55;
-    api.add(post, { pickable: false });
-    const mirror = ownBox(api, slabBox(C.w, D * 1.05, 0.05, 'pedestal'));
-    mirror.position.set(0, D * 1.5, 0);
-    mirror.rotation.x = -0.10;
-    api.add(mirror);
-    const pane = ownBox(api, slabBox(C.w * 0.78, D * 0.82, 0.02, 'decor'));
-    pane.position.set(0, D * 1.5, 0.035);
-    pane.rotation.x = -0.10;
-    api.add(pane, { pickable: false });
-  } else if (variant === 'B') {
-    const frame = ownBox(api, slabBox(C.w * 1.25, D * 2.1, 0.12, 'dark'));
-    frame.position.y = D * 1.05;
-    api.add(frame, { pickable: false });
-    const leaf = ownBox(api, slabBox(C.w, D * 1.92, 0.06, 'pedestal'));
-    leaf.position.set(0, D * 1.02, 0.07);
-    api.add(leaf);
-    const handle = ownBox(api, slabBox(0.05, 0.22, 0.05, 'decor'));
-    handle.position.set(C.w * 0.32, D * 0.96, 0.12);
-    api.add(handle, { pickable: false });
-  } else {
-    const stem = ownBox(api, slabBox(0.07, D * 1.05, 0.07, 'dark'));
-    stem.position.y = D * 0.525;
-    api.add(stem, { pickable: false });
-    const footGeo = new THREE.CylinderGeometry(C.w * 0.42, C.w * 0.46, 0.06, 6);
-    const footM = bodyMat('dark');
-    const foot = new THREE.Mesh(footGeo, footM);
-    foot.position.y = 0.03;
-    api.group.add(foot);
-    api.own(() => { footGeo.dispose(); footM.dispose(); });
-    // Жетон — ромб-грань на ножке, тот же язык, что и хромовый аватар в полосе.
-    const tagGeo = new THREE.CylinderGeometry(C.w * 0.5, C.w * 0.5, 0.05, 6);
-    const tagM = bodyMat('pedestal');
-    const tag = new THREE.Mesh(tagGeo, tagM);
-    tag.rotation.set(Math.PI / 2, 0, Math.PI / 6);
-    tag.position.y = D * 1.15;
-    api.group.add(tag);
-    api.hit.push(tag);
-    api.own(() => { tagGeo.dispose(); tagM.dispose(); });
-  }
-  return api;
+  let busy = false;
+  return {
+    group,
+    /** Идёт ли в зоне занятие. Черта становится заметнее — но не светится. */
+    setBusy(on) { busy = !!on; },
+    tick(dt) {
+      const Zc = FORGE_PROPS.zone;
+      const target = busy ? Zc.busyLine : Zc.lineOpacity;
+      const k = 1 - Math.exp(-5 * Math.min(0.05, dt));
+      mat.opacity += (target - mat.opacity) * k;
+    },
+    // Картинка общая на все одинаковые зоны — здесь её не освобождаем.
+    dispose() { geo.dispose(); mat.dispose(); },
+  };
 }
 
-// ═══════════════════ ТАБЛО СТАТОВ — открывается нажатием на бойца ═══════════════════
-// Поднимается из пола перед бойцом. Несёт ИМЕНА осей и ПУСТЫЕ жёлобы под
-// значения: значения — это цифры, а их в этой работе нет (ТЗ §3.4, §7).
-// Жёлоб оставлен нарочно пустым, чтобы на макете было видно, где они встанут.
-export function buildStatsBoard(axisNames = []) {
+// ═══════════════════ СТАТЫ — НА ПОВЕРХНОСТИ ПЛИТЫ ═══════════════════
+// Открываются нажатием по самому бойцу и проступают НА ПОЛУ перед ним — как
+// надпись на плите, а не предмет в воздухе (правка v2). Ничего не поднимается.
+//
+// Черта и заливка те же, что у разметки зоны: один приём на две задачи —
+// статы читаются как продолжение того же места, а не как второе устройство.
+//
+// ⚠️ ЦИФР НЕТ. Имена осей и ПУСТЫЕ ЖЁЛОБА под будущие значения. Жёлоб оставлен
+//    пустым нарочно, чтобы на макете было видно, где значения встанут.
+export function buildStatsFloor(axisNames = []) {
   const S = FORGE_PROPS.stats;
+  const Z = FORGE_PROPS.zone;
   const group = new THREE.Group();
   const disposers = [];
+  const fade = [];          // всё, что проявляется вместе
 
-  const back = slabBox(S.w, S.h, 0.05, 'pedestal');
-  back.position.y = S.h / 2;
-  group.add(back);
-  disposers.push(() => { back.userData._geo.dispose(); back.userData._mat.dispose(); });
+  const push = (mesh, mat) => { group.add(mesh); fade.push(mat); };
 
-  const edge = slabBox(S.w * 1.04, 0.035, 0.07, 'dark');
-  edge.position.y = S.h;
-  group.add(edge);
-  disposers.push(() => { edge.userData._geo.dispose(); edge.userData._mat.dispose(); });
-
-  const rows = axisNames.slice(0, 8);
-  const top = S.h - 0.16;
-  const gap = rows.length > 1 ? (S.h - 0.30) / (rows.length - 1) : 0;
-  rows.forEach((name, i) => {
-    const y = top - i * gap;
-    const l = buildLabel(name, S.w * 0.40, { align: 'left', dim: 0.85 });
-    l.mesh.position.set(-S.w * 0.27, y, 0.032);
-    group.add(l.mesh);
-    disposers.push(l.dispose);
-    // Пустой жёлоб — место под значение. Ничем не заполнен намеренно.
-    const trough = slabBox(S.w * 0.40, 0.035, 0.02, 'dark');
-    trough.position.set(S.w * 0.22, y, 0.031);
-    group.add(trough);
-    disposers.push(() => { trough.userData._geo.dispose(); trough.userData._mat.dispose(); });
+  const plateMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(MATERIALS.decorDark.color),
+    transparent: true, opacity: 0, depthWrite: false,
   });
+  const plateGeo = new THREE.PlaneGeometry(S.w, S.d);
+  const plate = new THREE.Mesh(plateGeo, plateMat);
+  plate.rotation.x = -Math.PI / 2;
+  plate.position.y = Z.lift;
+  push(plate, plateMat);
+  disposers.push(() => { plateGeo.dispose(); plateMat.dispose(); });
+
+  const rows = axisNames.slice(0, S.rows);
+  const top = S.d / 2 - 0.12;
+  const gap = rows.length > 1 ? (S.d - 0.24) / (rows.length - 1) : 0;
+  const troughMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(MATERIALS.decorLine.color),
+    transparent: true, opacity: 0, depthWrite: false,
+  });
+  const troughGeo = new THREE.PlaneGeometry(S.w * 0.40, 0.022);
+  disposers.push(() => { troughGeo.dispose(); troughMat.dispose(); });
+
+  rows.forEach((name, i) => {
+    const z = -top + i * gap;          // −Z = дальше от камеры, читается сверху вниз
+    const l = buildLabel(name, S.w * 0.42, { align: 'left', dim: 0.9 });
+    l.mesh.rotation.x = -Math.PI / 2;
+    l.mesh.position.set(-S.w * 0.26, Z.lift * 1.3, z);
+    l.mesh.material.transparent = true;
+    l.mesh.material.opacity = 0;
+    group.add(l.mesh);
+    fade.push(l.mesh.material);
+    disposers.push(l.dispose);
+
+    // Пустой жёлоб — место под значение. Ничем не заполнен намеренно.
+    const t = new THREE.Mesh(troughGeo, troughMat);
+    t.rotation.x = -Math.PI / 2;
+    t.position.set(S.w * 0.24, Z.lift * 1.2, z);
+    group.add(t);
+  });
+  fade.push(troughMat);
 
   let open = false;
-  let phase = 0;   // 0 — спрятано, 1 — поднято
-  group.position.y = S.riseFrom;
+  let phase = 0;
   group.visible = false;
-
   return {
     group,
     setOpen(on) { open = !!on; },
-    isOpen: () => open,
     tick(dt, reduced) {
       const target = open ? 1 : 0;
       if (reduced) phase = target;
       else {
-        const step = dt / S.riseDur;
+        const step = dt / S.openDur;
         phase += Math.sign(target - phase) * Math.min(step, Math.abs(target - phase));
       }
       group.visible = phase > 0.001;
-      group.position.y = S.riseFrom * (1 - phase);
-      // Табло приподнимается и проявляется вместе — без второго свечения.
-      group.traverse((o) => {
-        if (o.isMesh && o.material && o.material.transparent) o.material.opacity = phase;
-      });
+      // Проявляется на месте: ничего не едет и не поднимается.
+      for (const m of fade) m.opacity = (m === plateMat ? 0.34 : 0.92) * phase;
     },
     dispose() { disposers.forEach((d) => d()); },
   };
