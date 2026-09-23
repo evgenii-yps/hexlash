@@ -174,6 +174,14 @@ const POSE_VARIANT = (() => {
   } catch { return 'wide'; }
 })();
 
+// Убрана ли панель ростера (?panel=off). Со встраиванием она уходит насовсем, и
+// тогда этот ключ снимается вместе с ней; пока он нужен, чтобы мерить кадр в обоих
+// состояниях на одной сборке.
+const PANEL_OFF = (() => {
+  try { return new URLSearchParams(window.location.search).get('panel') === 'off'; }
+  catch { return false; }
+})();
+
 const CAM = {
   // Not fixed points: the DIRECTION the camera looks from, and a starting guess at
   // the distance. Where it ends up is measured against what is actually on the
@@ -195,7 +203,12 @@ const CAM = {
     // UPRIGHT there is ONE rectangle, because there is one pose: the panel owns
     // the bottom of the screen (--fg-band), so the man gets the band above it,
     // and he gets nearly all of it — he is the only thing in the room.
+    // Полоса под композицию в вертикальном кадре. y1 = 0.52 — это НЕ вкус: нижнюю
+    // половину экрана занимает панель ростера. Со встраиванием панель уходит (её
+    // заменяют планшет и наковальня на плите), и тогда залу достаётся весь кадр —
+    // см. portraitFull ниже и ключ ?panel=off, которым снимаются замеры.
     portrait:          { x0: 0.08, x1: 0.92, y0: 0.05, y1: 0.52 },
+    portraitFull:      { x0: 0.06, x1: 0.94, y0: 0.06, y1: 0.94 },
     overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.14, y1: 0.90 },
     // WORK has to dodge TWO panels, not one. The tree takes the right of a wide
     // screen (the bottom of a tall one), and the fighter's card sits in the bottom
@@ -580,7 +593,7 @@ function frameFor(working) {
   // whole arc; upright the arc is not in the room, so there is nothing for it to
   // show and a second pose would only be a way of standing further back.
   const one = portrait || working;
-  const r = portrait ? CAM.rect.portrait
+  const r = portrait ? (PANEL_OFF ? CAM.rect.portraitFull : CAM.rect.portrait)
     : (one ? CAM.rect.workLandscape : CAM.rect.overviewLandscape);
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
