@@ -515,7 +515,7 @@ function homeFraming() {
   // Точка взгляда смещена к правому краю главного острова: так в стартовой позе
   // боец, планшет и наковальня читаются вместе, а тренировочный остров входит в
   // кадр краем — ровно как просит ТЗ.
-  const target = new THREE.Vector3(compose.slab.width * 0.16, topY + CAM.targetLift, 0);
+  const target = new THREE.Vector3(0, topY + CAM.targetLift, 0);
   const dir = CAM.base.clone().normalize();
   // Два замера: по самой композиции и по ней же вместе с краем соседнего
   // острова. Берём второй, но не дальше чем в NEIGHBOUR_CAP раза от первого —
@@ -532,23 +532,39 @@ function homeFraming() {
   const cam = camera.clone();
   const _p = new THREE.Vector3(), _up = new THREE.Vector3(), _x = new THREE.Vector3(), _z = new THREE.Vector3();
   const pts = framePts();
+  // Куда сажаем середину композиции. По вертикали — ниже середины кадра: верх
+  // достаётся залу, лампам и месту легенды. По горизонтали — чуть левее
+  // середины, чтобы справа осталось место, куда краем входит тренировочный
+  // остров.
   const wantY = camera.aspect < 1 ? 0.62 : 0.52;
-  for (let pass = 0; pass < 12; pass++) {
+  const wantX = 0.44;
+  // Подгонка удаления сама по себе НЕ ставит композицию в кадр: она меняет
+  // только длину, а не точку взгляда. Раньше точка взгляда была сдвинута вправо
+  // числом от ширины плиты — и композиция уезжала влево тем сильнее, чем шире
+  // зал: на десяти местах планшет уходил за левый край совсем. Поэтому середину
+  // композиции доводим по ОБЕИМ осям, а не только по высоте. Оси независимы:
+  // сдвиг точки взгляда вдоль «вправо» камеры двигает картинку только по
+  // горизонтали, вдоль «вверх» — только по вертикали.
+  for (let pass = 0; pass < 16; pass++) {
     cam.position.copy(target).addScaledVector(dir, dist);
     cam.lookAt(target);
     cam.updateMatrixWorld(true);
     cam.updateProjectionMatrix();
-    let b = Infinity, t = -Infinity;
+    let l = Infinity, r = -Infinity, b = Infinity, t = -Infinity;
     for (const q of pts) {
       _p.set(q[0], q[1], q[2]).project(cam);
-      const sy = 1 - (_p.y + 1) / 2;
+      const sx = (_p.x + 1) / 2, sy = 1 - (_p.y + 1) / 2;
+      l = Math.min(l, sx); r = Math.max(r, sx);
       b = Math.min(b, sy); t = Math.max(t, sy);
     }
-    const cy = (b + t) / 2;
-    if (Math.abs(cy - wantY) < 0.004) break;
+    const cx = (l + r) / 2, cy = (b + t) / 2;
+    const dx = cx - wantX, dy = cy - wantY;
+    if (Math.abs(dx) < 0.004 && Math.abs(dy) < 0.004) break;
     const halfH = dist * Math.tan((cam.fov * Math.PI) / 360);
+    const halfW = halfH * cam.aspect;
     cam.matrixWorld.extractBasis(_x, _up, _z);
-    target.addScaledVector(_up, -(cy - wantY) * 2 * halfH);
+    target.addScaledVector(_x, dx * 2 * halfW);
+    target.addScaledVector(_up, -dy * 2 * halfH);
   }
   const position = target.clone().addScaledVector(dir, dist);
   return { position, target, dist };
