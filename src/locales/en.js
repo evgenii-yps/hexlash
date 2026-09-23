@@ -164,6 +164,11 @@ export default {
     treeErrorTitle: "TREE DID NOT LOAD",
     treeErrorBody: "SOMETHING WENT WRONG. THE FIGHTER IS FINE.",
     retry: "RETRY",
+    // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ — надписи на торцах. Слово BACK здесь не годится:
+    // плоская кнопка BACK в полосе наверху уже означает «выйти из зала», и два
+    // BACK с разным смыслом на одном экране — ошибка, а не экономия.
+    crossView: "VIEW",
+    crossHall: "HALL",
     // ОСИ БОЙЦА в блоке статов. Имена самих осей приходят из набора осей
     // (data/behavior.js) и не переводятся — они внутренние имена механики.
     traitsLabel: "TRAITS",

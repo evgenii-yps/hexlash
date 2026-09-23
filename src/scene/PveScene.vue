@@ -34,13 +34,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
 import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
+import { t } from '@/locales/index.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
 import { stateOf as trainingStateOf } from '@/services/training.js';
@@ -161,6 +162,17 @@ const TRAIN = {
   standAhead: 0.86,
   edge: 0.9,
 };
+// Переход между островами: насколько надпись на торце сдвинута от середины к
+// тому краю, в сторону которого она ведёт. Доля полуширины острова.
+const CROSS = {
+  offset: 0.52,
+  // Сколько горит розовым после нажатия. Не «пока палец на стекле»: у нажатия
+  // пальцем между down и up бывает десяток миллисекунд, и разгорание, которое
+  // идёт плавно, просто не успело бы начаться. Поэтому вспышка с фиксированным
+  // сроком, дальше лужица гаснет сама своим же затуханием.
+  flash: 0.35,
+};
+
 const CAM = {
   // ⚠️ РАКУРС ВЗЯТ С ДОМАШНЕГО ОСТРОВА (решение владельца 23.09.2026) и НЕ
   //    подбирается под композицию. Раньше здесь был свой угол и своя подгонка
@@ -490,6 +502,31 @@ function syncBags(busy) {
   }
 }
 
+// ── ПЕРЕХОД МЕЖДУ ОСТРОВАМИ. По надписи на торце каждого: с главного — к
+//    грушам, с тренировочного — обратно в зал.
+//
+//    ПОЧЕМУ НА ТОРЦЕ. Верх плиты занят: по нему бродят бойцы, на нём стоят
+//    планшет, наковальня и полка. Торец — единственная поверхность зала, которую
+//    ничто не может заслонить, и он смотрит ровно на камеру (подъём 26.2°).
+//    Кнопка едет вместе с островом при свободном повороте камеры, потому что
+//    она и есть часть острова, а не наклейка на экране.
+function buildCrossings() {
+  const face = (cx, halfW, halfD, key, label, side) => {
+    const c = buildCrossing(label);
+    // Торец — плоскость z = halfD; табличка выступает из неё вперёд сама.
+    // По ширине она сдвинута к тому краю, в сторону которого ведёт: это
+    // единственная подсказка направления, которая у надписи есть.
+    c.group.position.set(cx + side * halfW * CROSS.offset, 0, halfD);
+    c.key = key;
+    c.pressUntil = 0;
+    scene.add(c.group);
+    propList.push({ key, obj: c });
+    crossings.push(c);
+  };
+  face(0, compose.slab.width / 2, compose.slab.depth / 2, 'toTrain', t.value.forge.crossView, +1);
+  if (trainHalfW > 0) face(trainCx, trainHalfW, trainHalfD, 'toHall', t.value.forge.crossHall, -1);
+}
+
 function buildForgeProps(topY) {
   const z = compose.slab.depth / 2 - 0.9;
   const spots = [
@@ -672,6 +709,9 @@ const hitPrev = new Map();
 let bagSpots = [];               // где груши СТОЯЛИ БЫ — считается сразу
 let bagTopY = 0;
 const propList = [];
+// Надписи-переходы на торцах островов. Держим отдельно от propList: их надо
+// тикать (лужица нажатия гаснет сама) и убирать при разборке зала.
+const crossings = [];
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
 let portrait = false;
@@ -827,6 +867,7 @@ onMounted(() => {
   // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
   buildNeighbourIsland(topY, members.length);
   buildForgeProps(topY);
+  buildCrossings();
 
   // Имена осей берутся из САМОГО набора осей бойца, а не переписываются списком:
   // второй список рано или поздно разошёлся бы с первым.
@@ -1043,6 +1084,11 @@ onMounted(() => {
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
     if (d.entry && d.entry.kind === 'prop') {
+      // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ — единственный предмет, который зал отрабатывает
+      // сам: он двигает камеру, а камера живёт здесь. Наружу всё равно уходит
+      // сообщение о нажатии — по нему страница закрывает открытые блоки, ровно
+      // как их закрывает любой другой предмет.
+      crossTo(d.entry.key);
       emit('press', d.entry.key);
     } else if (d.entry && d.entry.kind === 'fighter') {
       // Touch has no hover, so light the core for a beat BEFORE the framing
@@ -1117,6 +1163,12 @@ onMounted(() => {
     // so the director is not run at all.
     if (!portrait) director?.update(t, dt);
     else tickSwap(dt);        // upright: nobody strolls, but somebody may be arriving
+
+    // Вспышка нажатия на надписях-переходах гаснет сама.
+    for (const c of crossings) {
+      if (c.pressUntil && t > c.pressUntil) { c.setPressed(false); c.pressUntil = 0; }
+      c.tick(dt);
+    }
 
     for (let i = 0; i < roster.length; i++) {
       const r = roster[i];
@@ -1594,6 +1646,18 @@ function makeCurrent(idx) {
   if (!atBags.has(idx)) director?.sendTo(idx, mark.x, mark.z);
 }
 
+// Нажали надпись на торце: перелёт к соседнему острову или обратно в зал.
+// Перелёт — ТОТ ЖЕ, которым зал уводит камеру к занимающемуся (applyCamera по
+// trainingFrame / frameFor), второго здесь не пишется. Во время перелёта
+// нажатие не делает ничего: camMoving стоит ровно на это время.
+function crossTo(key) {
+  if (key !== 'toTrain' && key !== 'toHall') return;
+  const c = crossings.find((x) => x.key === key);
+  if (c) { c.setPressed(true); c.pressUntil = clock.getElapsedTime() + CROSS.flash; }
+  if (camMoving) return;
+  applyCamera(key === 'toTrain' ? trainingFrame() : frameFor(), reduced);
+}
+
 function select(id) {
   const idx = roster.findIndex((r) => r.id === id);
   if (idx < 0) { exitWork(); return; }
@@ -1700,6 +1764,8 @@ onBeforeUnmount(() => {
   // быть вовсе (их строят по мере назначения занятия), поэтому просто обходим
   // то, что есть.
   for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
+  for (const c of crossings) { scene.remove(c.group); c.dispose(); }
+  crossings.length = 0;
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();
   if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }

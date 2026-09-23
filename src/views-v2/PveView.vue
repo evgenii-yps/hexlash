@@ -160,6 +160,13 @@ onBeforeUnmount(() => mq?.removeEventListener('change', readOrientation));
 
 // ПРЕДМЕТ ГЛАВНЕЕ БОЙЦА: планшет и наковальня забирают экран себе, статы уходят.
 function onPress(key) {
+  // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ. Камеру двигает сам зал — он ею и владеет; странице
+  // остаётся убрать со стекла то, что загородило бы новый кадр.
+  if (key === 'toTrain' || key === 'toHall') {
+    statsOpen.value = false;
+    openSection.value = null;
+    return;
+  }
   const want = key === 'roster' ? 'roster' : key === 'upgrade' ? 'tree' : null;
   if (!want) return;
   statsOpen.value = false;
