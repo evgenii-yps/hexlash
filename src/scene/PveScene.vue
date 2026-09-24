@@ -725,7 +725,7 @@ let resizePending = 0;      // coalescing frame for the resize observer
 // on its declared stages plus three settled frames, not on the first frame drawn.
 let load = null;
 let onVisibility;
-let onPointerMove = null, onPointerDown = null, onPointerUp = null;
+let onPointerMove = null, onPointerDown = null, onPointerUp = null, onTouchEnd = null;
 let hoveredId = null;        // whose core the pointer is over (overview only)
 // WHO IS CURRENT vs WHO IS BEING WORKED ON — two different things, deliberately:
 //   currentId — the fighter standing on the MARK, and the ONE core alight in the
@@ -1106,7 +1106,23 @@ onMounted(() => {
       emit('exit');
     }
   };
+  /* ⚠️ ПОЗДНИЙ КЛИК. На сенсорном экране браузер после касания досылает вдогонку
+     обычный клик мышью — примерно через треть секунды. За эту треть секунды
+     панель, которую открыло само касание, успевает встать ПОД ПАЛЕЦ, и клик
+     попадает уже в неё. Замерено на этом зале: десять заходов из десяти, и в
+     семи из них он попадал в кнопку TRAIN — боец уходил заниматься, хотя игрок
+     всего лишь нажал по телу.
+
+     Гасим его здесь, у источника: отменённое действие по концу касания —
+     единственное, что браузер спрашивает перед тем, как этот клик выдумать.
+     Залу обычный клик не нужен вовсе: и тела, и предметы он ловит событиями
+     указателя, которые приходят раньше и от отмены не страдают. Прокрутку это
+     не трогает — её на канвасе и так нет (её снимает сама орбита камеры).
+
+     ⚠️ Слушателя нельзя вешать пассивным: пассивному браузер отменять не даёт. */
   const canvas = renderer.domElement;
+  onTouchEnd = (e) => { e.preventDefault(); };
+  canvas.addEventListener('touchend', onTouchEnd, { passive: false });
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointerup', onPointerUp);
@@ -1749,6 +1765,7 @@ onBeforeUnmount(() => {
     if (onPointerMove) c.removeEventListener('pointermove', onPointerMove);
     if (onPointerDown) c.removeEventListener('pointerdown', onPointerDown);
     if (onPointerUp) c.removeEventListener('pointerup', onPointerUp);
+    if (onTouchEnd) c.removeEventListener('touchend', onTouchEnd);
   }
   if (director) { director.dispose(); director = null; }
   for (const r of roster) {
