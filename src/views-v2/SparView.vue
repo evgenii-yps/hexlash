@@ -1,12 +1,15 @@
 <template>
-  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ SPAR (ТЗ 24.09.2026, вторая редакция «меню слева,
-       сцена с двумя бойцами»). Адрес /dev/spar, ниоткуда не линкуется, закрыта
-       от поисковиков тегом robots (не через robots.txt — строка запрета там
-       публична и работает как указатель).
+  <!-- SPAR — БОЙ-НАСТРОЙКА. Экран игры, вход один: предмет SPAR в зале FORGE
+       (ТЗ 24.09.2026, встраивание).
 
-       ЧТО ЭТО. Бой-настройка: игрок берёт своего бойца и СОБИРАЕТ ему
-       соперника — ядро и кристаллы. Единственный способ увидеть глазами, что
-       дала прокачка: «Зеркало» против «Чистого».
+       ⚠️ СЛУЖЕБНОГО АДРЕСА БОЛЬШЕ НЕТ. Страница жила на /dev/spar, пока была
+       макетом. Двух копий одного экрана в проекте не держим — старый адрес снят
+       вместе с переездом, вместе с ним ушла и мета robots: прятать от поиска
+       обычный игровой экран не от чего.
+
+       ЧТО ЭТО. Игрок берёт своего бойца и СОБИРАЕТ ему соперника — ядро и
+       кристаллы. Единственный способ увидеть глазами, что дала прокачка:
+       «Зеркало» против «Чистого».
 
        ═══ ЧТО ИЗМЕНИЛОСЬ ПРОТИВ ПЕРВОЙ РЕДАКЦИИ ═══════════════════════════
        Первая была плоской: три строки списка, подпись «пусто» и много пустой
@@ -45,11 +48,16 @@
          поворот экрана её не пересобирает (ТЗ §5.8, §6). -->
     <SparScene ref="sceneRef" class="sp-scene" @ready="onSceneReady" />
 
-    <!-- Шапка: возврат. Единственный орган управления вне панели, кроме
-         язычка её открытия. -->
+    <!-- Шапка: возврат В ЗАЛ. Единственный орган управления вне панели, кроме
+         язычка её открытия.
+
+         ⚠️ ВЕДЁТ ИМЕННО В ЗАЛ, а не «назад по истории». Вход сюда один —
+         предмет в зале, — и возврат обязан быть таким же определённым:
+         история могла прийти откуда угодно (обновление страницы, внешняя
+         ссылка), и «назад» унесло бы игрока не туда. -->
     <header class="sp-bar">
-      <button type="button" class="sp-bar__back" @click="goBack">← НАЗАД</button>
-      <span class="sp-bar__title">SPAR · МАКЕТ</span>
+      <button type="button" class="sp-bar__back" @click="toHall">← В ЗАЛ</button>
+      <span class="sp-bar__title">SPAR</span>
     </header>
 
     <!-- ЯЗЫЧОК. Только стоя (широко панель приколочена и открывать нечего).
@@ -100,7 +108,7 @@
           Спарринг собирают вокруг своего бойца, а его нет ни одного.
           Возьмите бойца в зале FORGE и возвращайтесь.
         </p>
-        <button type="button" class="sp-hole__btn" @click="toForge">В ЗАЛ FORGE</button>
+        <button type="button" class="sp-hole__btn" @click="toHall">В ЗАЛ FORGE</button>
       </div>
 
       <!-- ОШИБКА. Одной строкой и с работающим возвратом. Молчаливый чёрный
@@ -108,7 +116,7 @@
       <div v-else-if="fatal" class="sp-hole">
         <p class="sp-hole__t">ЯДРО НЕ СОБРАЛОСЬ</p>
         <p class="sp-hole__b">{{ fatal }}</p>
-        <button type="button" class="sp-hole__btn" @click="goBack">НАЗАД</button>
+        <button type="button" class="sp-hole__btn" @click="toHall">В ЗАЛ</button>
       </div>
 
       <div v-else class="sp-pbody" ref="bodyEl">
@@ -166,6 +174,23 @@
               @click="pickFoeCore(c.id)"
             ><i class="sw" aria-hidden="true"></i>{{ c.name }}</button>
           </div>
+        </section>
+
+        <!-- ── соперник: внешность ─────────────────────────────────────────
+             ⚠️ ЗАПЕРТА, И ЭТО ЧЕСТНО. Создатель внешности — отдельная работа
+             (ТЗ 24.09.2026 §4). Нажатие не делает НИЧЕГО и поддельного окна не
+             открывает: игрок не должен видеть ручки, которых нет.
+
+             Пометка — СЛОВОМ, не цифрой и не полосой: сколько осталось, мы не
+             знаем, и выдумывать это нельзя. Вид — матовый и заметно тише живых
+             кнопок, тем же приёмом, каким в этом же зале помечена пустая полка
+             баффов: место есть, класть в него пока нечего. -->
+        <section class="sp-sec">
+          <p class="sp-label">ВНЕШНОСТЬ СОПЕРНИКА</p>
+          <button type="button" class="sp-locked" disabled aria-disabled="true">
+            <span class="nm">СОБРАТЬ ВНЕШНОСТЬ</span>
+            <span class="soon">скоро</span>
+          </button>
         </section>
 
         <!-- ── соперник: кристаллы ─────────────────────────────────────────
@@ -414,8 +439,12 @@ function pushSide(key) {
   if (!sceneReady.value) return;
   const api = sceneRef.value;
   if (!api) return;
+  // ⚠️ НЕТ БОЙЦА — НЕТ И СОПЕРНИКА. Соперник собирается ПРОТИВ кого-то; один он
+  //    на пустом ростере — фигура без смысла, а панель в это время честно пишет
+  //    «БОЙЦОВ НЕТ». Поэтому пустой ростер гасит ОБЕ стороны, а не одну.
+  const empty = !me.value;
   if (key === 'me') api.setSide('me', { coreId: me.value?.core || null, tree: myTree.value });
-  else api.setSide('foe', { coreId: foeCore.value, tree: foeTree.value });
+  else api.setSide('foe', { coreId: empty ? null : foeCore.value, tree: foeTree.value });
 }
 function pushBoth() { pushSide('me'); pushSide('foe'); }
 watch([() => me.value?.id, myTree], () => pushSide('me'));
@@ -501,22 +530,11 @@ function killLate(e) {
   if (t && t.closest && t.closest(KILL_LATE)) e.preventDefault();
 }
 
-function goBack() { router.back(); }
-function toForge() { router.push('/play/pve'); }
-
-/* Страница закрыта от поисковиков тегом, а не robots.txt: строка запрета там
-   публична и работает как указатель. */
-let robotsTag = null;
-let prevTitle = '';
+/* ВОЗВРАТ — В ЗАЛ, а не по истории: вход сюда один, и выход обязан быть таким же
+   определённым. См. разметку полосы. */
+function toHall() { router.push('/play/pve'); }
 
 onMounted(() => {
-  prevTitle = document.title;
-  document.title = 'SPAR · макет — Hexlash';
-  robotsTag = document.createElement('meta');
-  robotsTag.setAttribute('name', 'robots');
-  robotsTag.setAttribute('content', 'noindex, nofollow, noarchive');
-  document.head.appendChild(robotsTag);
-
   /* Кого открыть первым: того, кого открыл зал, иначе первого по списку.
      Читаем — не выбираем: roster/pick писал бы в сейф. */
   const picked = store.getters['roster/pickedId'];
@@ -535,8 +553,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  document.title = prevTitle;
-  if (robotsTag) robotsTag.remove();
   window.removeEventListener('keydown', onKeydown);
   document.removeEventListener('touchend', killLate);
 });
@@ -749,6 +765,25 @@ onBeforeUnmount(() => {
   letter-spacing: var(--ls-meta); color: var(--ink-dim);
 }
 .sp-slot .nm--empty { color: var(--ink-off); }
+
+/* ── запертая кнопка ──────────────────────────────────────────────
+   Матовая, без свечения и заметно тише живых кнопок: это место, а не действие.
+   Курсор обычный — на неё не нажимают. */
+.sp-locked {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-3);
+  font: inherit; text-align: left; cursor: default;
+  background: color-mix(in srgb, var(--panel) 45%, transparent);
+  border: 1px dashed var(--line);
+}
+.sp-locked .nm {
+  font-family: var(--font-mono); font-size: var(--t-micro);
+  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
+}
+.sp-locked .soon {
+  font-family: var(--font-mono); font-size: var(--t-micro);
+  letter-spacing: var(--ls-meta); color: var(--ink-off); opacity: var(--o-dim);
+}
 
 /* ── в бой ────────────────────────────────────────────────────────── */
 .sp-go {

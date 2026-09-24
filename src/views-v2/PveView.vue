@@ -165,6 +165,19 @@ function onPress(key) {
     openSection.value = null;
     return;
   }
+  // SPAR — единственный предмет зала, который УВОДИТ с экрана. Переход тот же,
+  // каким зал уходит на любой другой экран: обычная смена адреса, а тяжёлый
+  // вход прикрывает общий экран загрузки (meta.scene3d на маршруте). Своего
+  // вида перехода здесь не заводится.
+  //
+  // Открытые блоки закрываем перед уходом: вернёмся — зал должен встретить
+  // чистым, а не с панелью, открытой позапрошлым нажатием.
+  if (key === 'spar') {
+    statsOpen.value = false;
+    openSection.value = null;
+    router.push('/play/spar');
+    return;
+  }
   const want = key === 'roster' ? 'roster' : key === 'upgrade' ? 'tree' : null;
   if (!want) return;
   statsOpen.value = false;

@@ -1,4 +1,5 @@
-<!-- SparScene — сцена страницы-макета SPAR (/dev/spar, ТЗ 24.09.2026 v2).
+<!-- SparScene — сцена экрана SPAR (/play/spar). Заведена макетом (ТЗ 24.09.2026
+     v2), в игру встроена ТЗ 24.09.2026 v3: служебного адреса /dev/spar больше нет.
      ДВОЕ ДРУГ ПРОТИВ ДРУГА: слева боец игрока, справа собираемый соперник.
 
      Своя сцена своими копиями, по рецепту hexlash-3d: свой рендер, своя камера,
@@ -37,8 +38,9 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
 import { buildFighter } from './buildFighter.js';
 import { buildBackdrop } from './hallBackdrop.js';
+import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { resolveBehavior } from '../data/behavior.js';
-import { MATERIALS, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA, coreHue, leaderHue } from '../data/sceneTokens.js';
+import { MATERIALS, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA, coreHue } from '../data/sceneTokens.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -69,12 +71,18 @@ let stance = STANCE.portrait;
 
 let renderer, scene, camera, clock;
 let backdrop = null;
+/* ЭКРАН ЗАГРУЗКИ. SPAR — экран игры, а не служебная страница: вход тяжёлый
+   (две фигуры, своя сцена), и общий экран загрузки обязан держаться до первого
+   устоявшегося кадра. Договор — services/sceneLoading.js: объявить этапы,
+   отметить их по факту, звать frame() в цикле после отрисовки. */
+let load = null;
 let resizeObserver = null, onVisibility = null, mm = null, onMM = null;
 let reduced = false;
 let raised = false;                 // сигнал готовности уже отдан
 /* Две стороны. У каждой — построенное тело и его последняя сборка, чтобы
    лишний раз не пересобирать: смена ядра или кристалла приходит часто. */
 const sides = { me: null, foe: null };
+const decided = new Set();   // стороны, про которые уже сказали, что на них ставить
 /* Точка «где мой соперник» — своя у каждой стороны. Тело читает её каждый кадр,
    чтобы стоять лицом; мозг выключен, поэтому идти и бить по ней некому. */
 const foePoint = { me: new THREE.Vector3(), foe: new THREE.Vector3() };
@@ -133,8 +141,16 @@ function dropSide(key) {
 function setSide(key, { coreId = null, tree = null } = {}) {
   if (!scene) return;
   dropSide(key);
+  decided.add(key);
 
-  const hue = coreId ? coreHue(coreId) : leaderHue();
+  // ⚠️ НЕТ ЯДРА — НЕТ ТЕЛА. Раньше сторона без ядра всё равно строилась, и цвет
+  //    ей доставался розовый (leaderHue) — тот самый, которым в игре владеет
+  //    интерфейс. На пустом ростере это выглядело так: панель честно пишет
+  //    «БОЙЦОВ НЕТ», а в сцене стоят двое, и у левого розовое ядро. Поймано
+  //    снимком пустого ростера. Пусто — значит пусто.
+  if (!coreId) { markBuilt(); return; }
+
+  const hue = coreHue(coreId);
   const behavior = resolveBehavior(coreId, collectLit(tree));
   const fighter = buildFighter(hue, {
     // Сторона — только для яркости ядра (свой ярче, чужой глуше): это
@@ -154,6 +170,15 @@ function setSide(key, { coreId = null, tree = null } = {}) {
   scene.add(fighter.group);
   sides[key] = { fighter };
   placeSide(key);
+  markBuilt();
+}
+
+/** Обе стороны РЕШЕНЫ (построены или намеренно пусты) — сборка сцены закончена,
+    экран загрузки может уйти. Отметка идемпотентна: повторные пересборки
+    (смена ядра) её не трогают. Считаем именно «решены», а не «построены»: на
+    пустом ростере тел нет вовсе, и ожидание тела держало бы экран загрузки. */
+function markBuilt() {
+  if (decided.has('me') && decided.has('foe')) load?.stage('fighters');
 }
 
 /** Зажжённые кристаллы дерева — САМИ ЗАПИСИ, а не их имена: resolveBehavior
@@ -168,6 +193,9 @@ function collectLit(tree) {
 }
 
 onMounted(() => {
+  // Этапы — в том порядке, в котором они происходят ниже.
+  load = beginSceneLoad(['renderer', 'room', 'fighters']);
+
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
   const h = el.clientHeight || window.innerHeight;
@@ -189,6 +217,7 @@ onMounted(() => {
 
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.forge.density);
+  load.stage('renderer');
 
   camera = new THREE.PerspectiveCamera(FOV.forge, w / h, CAMERA.near, CAMERA.far.forge);
 
@@ -233,6 +262,7 @@ onMounted(() => {
   scene.add(backdrop.mesh);
 
   applyFraming();
+  load.stage('room');
 
   clock = new THREE.Clock();
   let elapsed = 0;
@@ -242,6 +272,7 @@ onMounted(() => {
     sides.me?.fighter.update(elapsed, camera);
     sides.foe?.fighter.update(elapsed, camera);
     renderer.render(scene, camera);
+    load?.frame();
     if (!raised) { raised = true; emit('ready'); }
   };
   renderer.setAnimationLoop(loop);
@@ -254,11 +285,12 @@ onMounted(() => {
 
   // ⚠️ ПОВОРОТ ЭКРАНА СЦЕНУ НЕ ПЕРЕСОБИРАЕТ. Меняется только кадр камеры и
   // размер холста: тела, их сборка и выбор остаются те же (ТЗ §5.8).
-  resizeObserver = new ResizeObserver(applyFraming);
+  resizeObserver = new ResizeObserver(() => { applyFraming(); load?.unsettle(); });
   resizeObserver.observe(el);
 });
 
 onBeforeUnmount(() => {
+  load?.dispose();   // ушли посреди сборки — снять экран и ожидание вместе с нами
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (mm && onMM) { mm.removeEventListener ? mm.removeEventListener('change', onMM) : mm.removeListener(onMM); }

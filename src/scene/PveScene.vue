@@ -27,6 +27,27 @@
   </div>
 </template>
 
+<!-- ПАМЯТЬ КАМЕРЫ МЕЖДУ ЗАХОДАМИ. Единственное, что переживает выход из зала.
+
+     ⚠️ ОТДЕЛЬНЫЙ БЛОК, А НЕ `script setup` — И ЭТО НЕ УКРАШЕНИЕ. Всё, что
+     объявлено в `script setup`, компилятор кладёт ВНУТРЬ setup(), то есть заводит
+     заново на каждом входе. Память, объявленная там, молча теряется: снимок на
+     уходе делается, а на входе читать уже нечего. Поймано замером — камера
+     вставала в домашнюю позу при исправном на вид коде. Модульная область живёт
+     только в обычном `script`.
+
+     ЗАЧЕМ. Из зала теперь уходят не только полосой наверху, но и предметом SPAR,
+     и возврат обязан вернуть игрока туда, где он стоял (ТЗ §3.4). Без памяти
+     камера отматывала бы назад тот поворот, которым игрок только что
+     рассматривал бойца.
+
+     ⚠️ ШИРИНА ПЛИТЫ ЗАПОМИНАЕТСЯ ВМЕСТЕ С ПОЗОЙ. Плита растёт ступенями под
+     размер ростера, и поза, снятая на узкой плите, на широкой смотрит мимо. Не
+     совпала ширина — память не применяется, встаём в домашнюю позу. -->
+<script>
+let camMemo = null;   // { pos:[x,y,z], look:[x,y,z], slabW }
+</script>
+
 <script setup>
 import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
 import * as THREE from 'three';
@@ -34,7 +55,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing, buildSparStand } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -631,6 +652,17 @@ function buildForgeProps(topY) {
     // предметы баффов позже). Нажатие по ней ничего не открывает — и это
     // намеренно: пустая панель хуже, чем предмет, который пока молчит.
     { key: 'shelf', make: buildBuffShelf, x: -compose.slab.width * 0.28, z: z - 2.0 },
+    // SPAR — вход в бой-настройку. Стоит НА ПЕРЕДНЕМ КРАЮ, правее планшета и
+    // наковальни: там его видно стоя на телефоне без единого поворота камеры,
+    // а предмет, который надо искать, для игрока не существует. Доля ширины, а
+    // не число: плита растёт ступенями под размер ростера, и закреплённое число
+    // уехало бы с неё при первом же пополнении.
+    // ⚠️ ВЫНЕСЕН ВПЕРЁД НАМЕРЕННО (z + 0.3, а не z - 1.0). На одной глубине с
+    //    наковальней он с этой камеры ложился прямо на неё и читался с ней одним
+    //    спутанным предметом — поймано первым снимком зала. Двигая его, проверяй
+    //    обе раскладки снимком, а не на глаз: камера зала диагональная, и
+    //    разъехавшиеся по миру предметы на экране сходятся.
+    { key: 'spar', make: buildSparStand, x: compose.slab.width * 0.33, z: z + 0.3 },
   ];
   for (const sp of spots) {
     const obj = sp.make();
@@ -706,6 +738,32 @@ function idleReturn(dt) {
   camera.position.lerp(homePose.pos, k);
   controls.target.lerp(homePose.look, k);
   if (camera.position.distanceTo(homePose.pos) < 0.02) { returning = false; idleSince = null; }
+}
+
+/** Снять позу камеры на уходе — чтобы следующий вход вернул её на место. */
+function saveCamMemo() {
+  if (!camera || !controls || !compose) return;
+  camMemo = {
+    pos: [camera.position.x, camera.position.y, camera.position.z],
+    look: [controls.target.x, controls.target.y, controls.target.z],
+    slabW: compose.slab.width,
+  };
+}
+
+/** Вернуть запомненную позу, если она снята на плите той же ширины. */
+function restoreCamMemo() {
+  if (!camMemo || !camera || !controls || !compose) return;
+  if (camMemo.slabW !== compose.slab.width) { camMemo = null; return; }
+  camPos.set(camMemo.pos[0], camMemo.pos[1], camMemo.pos[2]); camPosTo.copy(camPos);
+  camLook.set(camMemo.look[0], camMemo.look[1], camMemo.look[2]); camLookTo.copy(camLook);
+  camera.position.copy(camPos);
+  controls.target.copy(camLook);
+  controls.update();
+  camera.lookAt(camLook);
+  camMoving = false;
+  // Возврат в домашнюю позу по простою заводится заново — иначе камера уехала бы
+  // домой в первый же кадр после восстановления.
+  idleSince = null; returning = false;
 }
 
 // Rest → lit for one body's core, and normal → sunk into the dark for its skin.
@@ -848,6 +906,7 @@ let camMoving = false;   // ведёт ли камеру САМ ЗАЛ прям�
 let homePose = null;
 let idleSince = null;
 let returning = false;
+let firstResize = true;   // см. applyResize: первый вызов наблюдателя — не поворот
 let lamps = null, backdrop = null;
 let legend = null, legendPresence = null, legendParts = null;
 // Счётчик кадров и время сборки тел — только для служебной линейки (__forgeProbe).
@@ -1106,6 +1165,9 @@ onMounted(() => {
   controls.enabled = !reduced;
 
   applyCamera(frameFor(), true);
+  // …и если игрок уже был здесь в этой сессии — вернуть его туда, где он стоял.
+  // Повторяется ещё раз в первом проходе наблюдателя размера — см. там же.
+  restoreCamMemo();
 
   // --- Pointer: hover lights ONE core and names it; a tap picks that fighter.
   //     Same shape as the mode islands (one hovered at a time, eased `lit`), but
@@ -1173,6 +1235,10 @@ onMounted(() => {
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
     if (d.entry && d.entry.kind === 'prop') {
+      // ОТКЛИК НА НАЖАТИЕ — у всех предметов одинаковый: розовая лужица под
+      // предметом зажигается на миг и гаснет сама. На телефоне наведения нет
+      // вовсе, и это единственный ответ, который палец получает от предмета.
+      flashProp(d.entry.key);
       // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ — единственный предмет, который зал отрабатывает
       // сам: он двигает камеру, а камера живёт здесь. Наружу всё равно уходит
       // сообщение о нажатии — по нему страница закрывает открытые блоки, ровно
@@ -1267,10 +1333,23 @@ onMounted(() => {
     // Идёт в ОБЕИХ раскладках: весь состав стоит в зале и бродит по плите.
     director?.update(t, dt);
 
-    // Вспышка нажатия на надписях-переходах гаснет сама.
+    // Вспышка нажатия гаснет сама — у надписей-переходов и у предметов зала.
+    //
+    // ⚠️ ПРЕДМЕТЫ РАНЬШЕ НЕ ТИКАЛИСЬ ВОВСЕ, и это была недоделка, а не решение:
+    //    каждый предмет собран с лужицей нажатия (propShell → setPressed/tick,
+    //    см. шапку forgeProps.js — «в покое предметы матовые, розовое свечение
+    //    только в момент нажатия»), но зал вёл её лишь у переходов. Планшет,
+    //    наковальня и полка молчали на нажатие. Со встраиванием SPAR это стало
+    //    видно: ему положена та же манера, что остальным, а остальные молчат.
+    //    Ведём всех одним списком — новой манеры для одного предмета не заводим.
     for (const c of crossings) {
       if (c.pressUntil && t > c.pressUntil) { c.setPressed(false); c.pressUntil = 0; }
       c.tick(dt);
+    }
+    for (const pr of propList) {
+      if (crossings.includes(pr.obj)) continue;   // их уже провели выше
+      if (pr.obj.pressUntil && t > pr.obj.pressUntil) { pr.obj.setPressed(false); pr.obj.pressUntil = 0; }
+      pr.obj.tick(dt);
     }
 
     for (let i = 0; i < roster.length; i++) {
@@ -1504,6 +1583,13 @@ onMounted(() => {
     // когда зал открылся. Значит, поворот не двигает никого, и пересобрать надо
     // только кадр. Ставим сразу, а не подводим плавно: это новый экран, а не ход.
     applyCamera(frameFor(), true);
+    // ⚠️ ПЕРВЫЙ ВЫЗОВ НАБЛЮДАТЕЛЯ РАЗМЕРА — НЕ ПОВОРОТ ЭКРАНА. ResizeObserver
+    //    дёргает обработчик один раз сразу, как только начал смотреть, и этот
+    //    первый раз приходит ПОСЛЕ монтажа. Восстановленная поза камеры им
+    //    затиралась домашней — снаружи это выглядело как «память не работает»
+    //    при исправном на вид коде памяти. Возвращаем позу здесь же, следом за
+    //    подгонкой кадра; дальше, на настоящем повороте, память не трогается.
+    if (firstResize) { firstResize = false; restoreCamMemo(); }
     // A new composition under ourselves — start the settled-frame count again.
     load?.unsettle();
   };
@@ -1661,6 +1747,14 @@ function makeCurrent(idx) {
   if (!atBags.has(idx)) director?.sendTo(idx, mark.x, mark.z);
 }
 
+/** Зажечь лужицу под предметом на миг. Один ответ на все предметы зала. */
+function flashProp(key) {
+  const pr = propList.find((x) => x.key === key);
+  if (!pr || !pr.obj.setPressed) return;
+  pr.obj.setPressed(true);
+  pr.obj.pressUntil = clock.getElapsedTime() + CROSS.flash;
+}
+
 // Нажали надпись на торце: перелёт к соседнему острову или обратно в зал.
 // Перелёт — ТОТ ЖЕ, которым зал уводит камеру к занимающемуся (applyCamera по
 // trainingFrame / frameFor), второго здесь не пишется. Во время перелёта
@@ -1750,6 +1844,7 @@ function growTo(count) {
 defineExpose({ select, exitWork, growTo });
 
 onBeforeUnmount(() => {
+  saveCamMemo();     // куда смотрели — туда и вернёмся (см. camMemo)
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (stopTrainingWatch) { stopTrainingWatch(); stopTrainingWatch = null; }
   applyTraining = null;

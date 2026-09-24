@@ -27,13 +27,15 @@ src/
     PlayerCabinet.vue          — выезжающая панель кабинета
     CoreSelectView.vue         — выбор ядра
     UpgradeView.vue            — прокачка (drill-down ядро → кристалл → грань)
-    PveView.vue                — PVE-пространство
+    PveView.vue                — PVE-пространство (зал FORGE)
+    SparView.vue               — SPAR: бой-настройка, вход предметом из зала
     SpaceView.vue              — превью пространства
     SceneTransitionOverlay.vue — оверлей перехода между сценами
     RotateHint.vue             — подсказка «поверни телефон»
     PlayStubView.vue           — заглушка
   scene/                       — Three.js
     ArenaScene.vue    🔒        HomeScene.vue        PveScene.vue
+    SparScene.vue              forgeProps.js
     SpaceScene.vue             FighterLabScene.vue
     buildArena.js     🔒        arenaTextures.js 🔒   arenaPresence.js 🔒
     buildFighter.js   🔒        hpIndicator.js   🔒
