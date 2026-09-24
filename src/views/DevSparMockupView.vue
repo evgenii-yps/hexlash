@@ -1,122 +1,124 @@
 <template>
-  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ SPAR (ТЗ 24.09.2026, «SPAR: страница-макет
-       боя-настройки»). Адрес /dev/spar, ниоткуда не линкуется, закрыта от
-       поисковиков тегом robots (не через robots.txt — строка запрета там
+  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ SPAR (ТЗ 24.09.2026, вторая редакция «меню слева,
+       сцена с двумя бойцами»). Адрес /dev/spar, ниоткуда не линкуется, закрыта
+       от поисковиков тегом robots (не через robots.txt — строка запрета там
        публична и работает как указатель).
 
        ЧТО ЭТО. Бой-настройка: игрок берёт своего бойца и СОБИРАЕТ ему
-       соперника — ядро и зажжённые кристаллы. Единственный способ увидеть
-       глазами, что дала прокачка: «Зеркало» против «Чистого» — и разница
-       видна за два нажатия.
+       соперника — ядро и кристаллы. Единственный способ увидеть глазами, что
+       дала прокачка: «Зеркало» против «Чистого».
 
-       ⚠️ SPAR НЕ ДАЁТ ИГРОКУ НИЧЕГО и НИЧЕГО НИКУДА НЕ ЗАПИСЫВАЕТ. Ни права
-       зажечь кристалл, ни счёта боёв, ни истории, ни LASH. Отсюда главное
-       ограничение этого файла: ростер только ЧИТАЕТСЯ (геттеры), ни одного
-       dispatch/commit. Дерево соперника живёт ЗДЕСЬ, в памяти страницы, и
-       строится buildTree() напрямую — в хранилище оно не попадает никогда.
+       ═══ ЧТО ИЗМЕНИЛОСЬ ПРОТИВ ПЕРВОЙ РЕДАКЦИИ ═══════════════════════════
+       Первая была плоской: три строки списка, подпись «пусто» и много пустой
+       черноты. Экран про бой двух фигур не показывал НИ ОДНОЙ фигуры. Лечение
+       не в том, чтобы ужать настройки, а в связке: всё управление уходит в
+       узкую колонку слева, и всё освободившееся место отдаётся сцене, где
+       стоят двое. Вместе с этим сняты полоса из трёх шагов и верхняя строка
+       «боец против сборки» — их работу делают разделы панели и сама сцена.
 
-       ⚠️ НИ ОДНОЙ ЦИФРЫ НА ЭКРАНЕ (ТЗ §3.1). Ни уровней, ни процентов, ни
-       счётчиков, ни «3 / 5». Сборка показывается ИМЕНАМИ кристаллов и наливом
-       по граням — так же, как в зале.
+       ⚠️ ОДНА ПАНЕЛЬ В ДВУХ ПОВЕДЕНИЯХ, а не два экрана. Широко — приколочена
+       колонкой слева, сцена рядом. Стоя на телефоне колонки не существует:
+       та же панель выезжает от левого края поверх сцены и уезжает обратно.
+       Механика взята у кабинета игрока (PlayerCabinet + cabinet.css): тот же
+       сдвиг, та же затемняющая подложка, те же три выхода — крестик, нажатие
+       мимо, Esc. Второго способа делать то же самое нам не нужно.
 
-       ⚠️ ВНУТРЕННЕГО СЛОВАРЯ НАРУЖУ НЕТ (ТЗ §3.2): ни HEXARCH, ни TEMPER, ни
-       DOCTRINE, ни ASCENSION, ни HOUSE. Психологическая строка кристалла
-       подписана CHARACTER — это делает сам ForgeCore.
+       ⚠️ SPAR НЕ ДАЁТ ИГРОКУ НИЧЕГО и НИЧЕГО НИКУДА НЕ ЗАПИСЫВАЕТ. Ростер
+       только ЧИТАЕТСЯ (геттеры), ни одного dispatch/commit. Дерево соперника
+       живёт ЗДЕСЬ, в памяти страницы, и строится buildTree() напрямую.
+
+       ⚠️ НИ ОДНОЙ ЦИФРЫ НА ЭКРАНЕ. Ни в панели, ни на сцене, ни в подписях.
+       ⚠️ ВНУТРЕННЕГО СЛОВАРЯ НАРУЖУ НЕТ: ни HEXARCH, ни TEMPER, ни DOCTRINE,
+          ни ASCENSION, ни HOUSE.
 
        СЛОВАРЬ. ГРАНЬ — весь луч «Печати» от сердца до кромки, их три.
        КРИСТАЛЛ — один из пяти шагов внутри грани, всего пятнадцать. В игровых
-       данных гранью до сих пор зовётся `crystal`, а кристаллом — `face`; имена
-       наружу уходят как были (они часть счёта), переводятся в ForgeCore.
+       данных гранью до сих пор зовётся `crystal`, а кристаллом — `face`.
 
        ЧТО ТРОГАЕТ В ИГРЕ. Ровно один файл — роутер (адрес). Всё остальное
-       только читается: ForgeCore, ростер, данные ядер, иконки баффов.
+       только читается или живёт своими копиями рядом (SparScene.vue — своя
+       сцена страницы, по образцу BuffsPreviewScene у /dev/buffs). -->
+  <div class="sp" :class="{ 'panel-open': panelOpen }">
 
-       КОМПОЗИЦИЯ. Вверху — обе стороны сразу: слева твой боец, справа
-       соперник (ТЗ §4.1). Ниже — три шага, по одному блоку на шаг: лёжа на
-       телефоне два блока рядом не встают, и в зале этот случай уже разведён
-       по шагам (ТЗ §6) — новой формы здесь не изобретается. -->
-  <div class="sp">
+    <!-- ── СЦЕНА ─────────────────────────────────────────────────────────
+         Живёт ВСЕГДА и одна на все раскладки: открытие панели её не трогает,
+         поворот экрана её не пересобирает (ТЗ §5.8, §6). -->
+    <SparScene ref="sceneRef" class="sp-scene" @ready="onSceneReady" />
 
-    <!-- ── полоса ─────────────────────────────────────────────────────── -->
+    <!-- Шапка: возврат. Единственный орган управления вне панели, кроме
+         язычка её открытия. -->
     <header class="sp-bar">
-      <span class="sp-bar__title">SPAR · МАКЕТ</span>
       <button type="button" class="sp-bar__back" @click="goBack">← НАЗАД</button>
+      <span class="sp-bar__title">SPAR · МАКЕТ</span>
     </header>
 
-    <!-- ── ОШИБКА ──────────────────────────────────────────────────────
-         Одной строкой и с работающим возвратом (ТЗ §7.3). Молчаливый чёрный
-         экран — брак. Сюда приходит и несобравшееся дерево соперника: дальше
-         на этой странице делать нечего. -->
-    <main v-if="fatal" class="sp-hole">
-      <p class="sp-hole__t">ЯДРО НЕ СОБРАЛОСЬ</p>
-      <p class="sp-hole__b">{{ fatal }}</p>
-      <button type="button" class="sp-hole__btn" @click="goBack">НАЗАД</button>
-    </main>
+    <!-- ЯЗЫЧОК. Только стоя (широко панель приколочена и открывать нечего).
 
-    <!-- ── ПУСТО ───────────────────────────────────────────────────────
-         Страница служебная, игрок может прийти на неё чистым (ТЗ §7.1).
-         Не пустой экран и не ошибка: понятная заглушка и куда идти. -->
-    <main v-else-if="!fighters.length" class="sp-hole">
-      <p class="sp-hole__t">БОЙЦОВ НЕТ</p>
-      <p class="sp-hole__b">
-        Спарринг собирают вокруг своего бойца, а его нет ни одного.
-        Возьмите бойца в зале FORGE и возвращайтесь.
-      </p>
-      <button type="button" class="sp-hole__btn" @click="toForge">В ЗАЛ FORGE</button>
-    </main>
+         ⚠️ ОТКРЫВАЕТ ПО `pointerup`, А НЕ ПО `click`, и это не стиль. Поздний
+         клик гасится отменой действия по концу касания (см. killLate ниже), а
+         отменённый конец касания уносит с собой И САМ КЛИК — на телефоне язычок
+         переставал открывать панель вовсе. Поймано прогоном. Указатель приходит
+         раньше отменяемого конца касания, поэтому по нему открывается надёжно;
+         клавиатура идёт своей строкой, иначе с неё было бы не открыть.
 
-    <template v-else>
-      <!-- ── ОБЕ СТОРОНЫ СРАЗУ ─────────────────────────────────────────
-           Экран описывает бой, и бой виден целиком в любой момент: слева
-           твой, справа собранный. Нажатие по стороне уводит на её шаг —
-           то же место читается и правится. -->
-      <div class="sp-vs">
-        <button
-          type="button" class="sp-side" :class="{ on: step === 1 }"
-          :style="{ '--core': myCore.hue }" @click="step = 1"
-        >
-          <span class="sp-side__kick">ТВОЙ БОЕЦ</span>
-          <span class="sp-side__name"><i class="sw" aria-hidden="true"></i>{{ me ? me.callsign : '—' }}</span>
-          <span class="sp-side__core">{{ myCore.name }}</span>
-          <span class="sp-side__build">{{ myBuildLine }}</span>
-        </button>
+         ⚠️ И ЯЗЫЧОК НЕ УБИРАЕТСЯ ИЗ РАЗМЕТКИ, А ГАСНЕТ. Здесь стояло
+         `v-if="!panelOpen"`, и это ломало гашение позднего клика полностью:
+         открытие снимало язычок с дерева ПРЯМО МЕЖДУ концом касания и его
+         всплытием, конец касания до гасителя на документе не доходил, отмены
+         не случалось — и досланный клик попадал в подложку, которая как раз
+         встала под палец, и закрывал панель обратно. Замерено: панель не
+         открывалась ни разу. Погашенный язычок остаётся в дереве, конец касания
+         всплывает как положено, а от пальца и от обхода с клавиатуры он закрыт
+         прозрачностью, `pointer-events` и снятым порядком обхода. -->
+    <button
+      type="button" class="sp-tab" :class="{ 'is-hidden': panelOpen }"
+      aria-label="Открыть настройки"
+      :aria-hidden="panelOpen ? 'true' : 'false'"
+      :tabindex="panelOpen ? -1 : 0"
+      @pointerup="openPanel"
+      @keydown.enter.prevent="openPanel"
+      @keydown.space.prevent="openPanel"
+    ><span class="ch">›</span><span class="w">СБОРКА</span></button>
 
-        <span class="sp-vs__x" aria-hidden="true">VS</span>
+    <!-- ПОДЛОЖКА. Только стоя и только при открытой панели: нажатие мимо
+         панели её закрывает. -->
+    <div v-if="panelOpen" class="sp-scrim" @click="closePanel" />
 
-        <button
-          type="button" class="sp-side sp-side--foe" :class="{ on: step === 2 }"
-          :style="{ '--core': foeCoreMeta.hue }" @click="step = 2"
-        >
-          <span class="sp-side__kick">СОПЕРНИК</span>
-          <span class="sp-side__name"><i class="sw" aria-hidden="true"></i>СБОРКА</span>
-          <span class="sp-side__core">{{ foeCoreMeta.name }}</span>
-          <span class="sp-side__build">{{ foeBuildLine }}</span>
-        </button>
+    <!-- ── ПАНЕЛЬ ─────────────────────────────────────────────────────────
+         Всё управление экраном — здесь. Органов вне неё нет. -->
+    <aside class="sp-panel" :class="{ open: panelOpen }" aria-label="Сборка спарринга">
+      <header class="sp-phead">
+        <span class="sp-ptitle">СБОРКА</span>
+        <button type="button" class="sp-x" aria-label="Закрыть" @click="closePanel">✕</button>
+      </header>
+
+      <!-- ПУСТО. Страница служебная, игрок может прийти на неё чистым.
+           Не пустой экран и не ошибка: понятная заглушка и куда идти. -->
+      <div v-if="!fighters.length" class="sp-hole">
+        <p class="sp-hole__t">БОЙЦОВ НЕТ</p>
+        <p class="sp-hole__b">
+          Спарринг собирают вокруг своего бойца, а его нет ни одного.
+          Возьмите бойца в зале FORGE и возвращайтесь.
+        </p>
+        <button type="button" class="sp-hole__btn" @click="toForge">В ЗАЛ FORGE</button>
       </div>
 
-      <!-- ── три шага ────────────────────────────────────────────────── -->
-      <nav class="sp-rail" role="tablist" aria-label="Шаги сборки">
-        <button
-          v-for="s in STEPS" :key="s.n"
-          type="button" class="sp-rail__b" :class="{ on: step === s.n }"
-          role="tab" :aria-selected="step === s.n ? 'true' : 'false'"
-          @click="step = s.n"
-        >{{ s.name }}</button>
-      </nav>
+      <!-- ОШИБКА. Одной строкой и с работающим возвратом. Молчаливый чёрный
+           экран — брак. Сюда приходит несобравшееся дерево соперника. -->
+      <div v-else-if="fatal" class="sp-hole">
+        <p class="sp-hole__t">ЯДРО НЕ СОБРАЛОСЬ</p>
+        <p class="sp-hole__b">{{ fatal }}</p>
+        <button type="button" class="sp-hole__btn" @click="goBack">НАЗАД</button>
+      </div>
 
-      <!-- ⚠️ ТЕЛО ШАГА ПРОКРУЧИВАЕТСЯ. Стоя на телефоне ни один шаг за край не
-           уходит — прокрутки не появляется вовсе. Лёжа высоты всего 390, и
-           карточка ядра в неё не влезает; без прокрутки из кристалла было бы
-           не выйти кнопкой. Её же ищет сам ForgeCore, когда подводит карточку
-           под открытый уровень. -->
-      <main class="sp-body" ref="bodyEl">
+      <div v-else class="sp-pbody" ref="bodyEl">
 
-        <!-- ══ ШАГ 1 · ТВОЙ БОЕЦ ══════════════════════════════════════
-             ⚠️ ЗАНЯТЫЙ ВЫБИРАЕТСЯ НАРАВНЕ СО ВСЕМИ (ТЗ §4.2). SPAR ничего не
-             даёт и ничего не отнимает — запрещать нечего. Состояние показано,
-             потому что по нему читают бойца, а не потому что оно запрещает. -->
-        <section v-show="step === 1" class="sp-step">
-          <p class="sp-label">РОСТЕР</p>
+        <!-- ── твой боец ────────────────────────────────────────────────
+             ⚠️ ЗАНЯТЫЙ ВЫБИРАЕТСЯ НАРАВНЕ СО ВСЕМИ. SPAR ничего не даёт и
+             ничего не отнимает — запрещать нечего. Состояние показано, потому
+             что по нему читают бойца, а не потому что оно запрещает. -->
+        <section class="sp-sec">
+          <p class="sp-label">ТВОЙ БОЕЦ</p>
           <ul class="sp-list">
             <li v-for="f in fighters" :key="f.id">
               <button
@@ -132,30 +134,15 @@
               </button>
             </li>
           </ul>
-
-          <div v-if="me" class="sp-card" :style="{ '--core': myCore.hue }">
-            <p class="sp-card__name">{{ me.callsign }}</p>
-            <p class="sp-card__core"><i class="sw" aria-hidden="true"></i>{{ myCore.name }}</p>
-            <p class="sp-card__row"><span class="k">СОСТОЯНИЕ</span><span class="v">{{ stateWord(stateOf(me.id)) }}</span></p>
-            <p class="sp-label">ЗАЖЖЕНО</p>
-            <p class="sp-card__build">
-              <span v-if="!myLit.length" class="ph">пусто</span>
-              <template v-else><span v-for="(n, i) in myLit" :key="i" class="b">{{ n }}</span></template>
-            </p>
-          </div>
+          <p class="sp-build">
+            <span class="k">ЗАЖЖЕНО</span>
+            <span v-if="!myLit.length" class="ph">пусто</span>
+            <template v-else><span v-for="(n, i) in myLit" :key="i" class="b">{{ n }}</span></template>
+          </p>
         </section>
 
-        <!-- ══ ШАГ 2 · СОПЕРНИК ═══════════════════════════════════════
-             Собирается целиком: ядро — любое из четырёх, кристаллы — до пяти,
-             как угодно по трём граням. Интерфейс кристаллов — ТОТ ЖЕ, что
-             стоит в зале (ForgeCore), новых форм не рисуется.
-
-             ⚠️ ПОГАСИТЬ КРИСТАЛЛ ЗДЕСЬ НЕЧЕМ, и это не упущение этой страницы:
-             ForgeCore умеет только зажигать (в зале гашение тоже недоступно), а
-             править его этой работе нельзя — трогается ровно один игровой файл,
-             роутер. Выход из промаха — «ЧИСТЫЙ»: он обнуляет сборку одним
-             нажатием, и он же тут главный сценарий показа. -->
-        <section v-show="step === 2" class="sp-step">
+        <!-- ── соперник: заготовки ─────────────────────────────────────── -->
+        <section class="sp-sec">
           <p class="sp-label">ЗАГОТОВКИ</p>
           <div class="sp-presets">
             <button type="button" class="sp-preset" @click="presetMirror">ЗЕРКАЛО</button>
@@ -165,7 +152,10 @@
             «Зеркало» — точная копия твоего бойца. «Чистый» — то же ядро без
             единого кристалла. После любой заготовки сборка правится дальше.
           </p>
+        </section>
 
+        <!-- ── соперник: ядро ──────────────────────────────────────────── -->
+        <section class="sp-sec">
           <p class="sp-label">ЯДРО СОПЕРНИКА</p>
           <div class="sp-cores">
             <button
@@ -174,39 +164,45 @@
               :style="{ '--core': c.hue }"
               :aria-pressed="c.id === foeCore ? 'true' : 'false'"
               @click="pickFoeCore(c.id)"
-            >
-              <i class="sw" aria-hidden="true"></i>{{ c.name }}
-            </button>
-          </div>
-
-          <!-- ⚠️ ПОЗДНИЙ КЛИК гасится на этом узле — см. killLateClick ниже. -->
-          <div class="sp-core-host" ref="coreHost">
-            <ForgeCore
-              v-if="foeTree"
-              :core-id="foeCore"
-              :tree="foeTree"
-              :spent="foeSpent"
-              :resource="RESOURCE"
-              :gates="{}"
-              fighter-name="СОПЕРНИК"
-              :core-name="foeCoreMeta.name"
-              @toggle="onFoeToggle"
-            />
+            ><i class="sw" aria-hidden="true"></i>{{ c.name }}</button>
           </div>
         </section>
 
-        <!-- ══ ШАГ 3 · БАФФЫ И БОЙ ════════════════════════════════════
-             ⚠️ БАФФЫ БЕСКОНЕЧНЫЕ И БЕСПЛАТНЫЕ, И ДАЮТСЯ ОБЕИМ СТОРОНАМ. LASH
-             не тратится, запас не считается, цифр нет. Бесконечные у одной
-             стороны сделали бы проверку нечестной, а SPAR ровно для проверки
-             и существует.
+        <!-- ── соперник: кристаллы ─────────────────────────────────────────
+             Интерфейс — ТОТ ЖЕ, что стоит в зале (ForgeCore), без единой
+             правки. Новых форм не рисуется.
 
-             Форма — та же, что в воротах арены (BuffKitSlots): три квадратных
-             слота, тап переключает по кругу, пустой слот пунктиром. Сам
-             компонент ворот сюда не берётся: он приколочен к экрану, знает про
-             запас и LASH и ЗАПИСЫВАЕТ выбор в хранилище — а здесь не
-             записывается ничего. -->
-        <section v-show="step === 3" class="sp-step">
+             ⚠️ ПОГАСИТЬ КРИСТАЛЛ ЗДЕСЬ НЕЧЕМ: ForgeCore умеет только зажигать
+             (в зале гашение тоже недоступно), а править его этой работе
+             нельзя. Выход из промаха — «ЧИСТЫЙ»: он собирает соперника ЗАНОВО
+             с нуля, а не гасит по одному, и результат на экране тот же.
+
+             ⚠️ ПОЗДНИЙ КЛИК гасится на этом узле — см. armLateClick. -->
+        <section class="sp-sec sp-sec--core" ref="coreHost">
+          <p class="sp-label">КРИСТАЛЛЫ СОПЕРНИКА</p>
+          <ForgeCore
+            v-if="foeTree"
+            :core-id="foeCore"
+            :tree="foeTree"
+            :spent="foeSpent"
+            :resource="RESOURCE"
+            :gates="{}"
+            fighter-name="СОПЕРНИК"
+            :core-name="foeCoreMeta.name"
+            @toggle="onFoeToggle"
+          />
+        </section>
+
+        <!-- ── баффы ───────────────────────────────────────────────────────
+             ⚠️ БЕСКОНЕЧНЫЕ, БЕСПЛАТНЫЕ, ОБЕИМ СТОРОНАМ. LASH не тратится,
+             запас не считается, цифр нет. Бесконечные у одной стороны сделали
+             бы проверку нечестной, а SPAR ровно для проверки и существует.
+
+             Форма — та же, что в воротах арены (BuffKitSlots). Сам компонент
+             ворот сюда не берётся: он приколочен к экрану, знает про запас и
+             LASH и ЗАПИСЫВАЕТ выбор в хранилище — а здесь не записывается
+             ничего. -->
+        <section class="sp-sec">
           <p class="sp-label">БАФФЫ · ТВОЙ БОЕЦ</p>
           <div class="sp-kit">
             <button
@@ -236,19 +232,27 @@
               <span v-else class="nm nm--empty">ПУСТО</span>
             </button>
           </div>
-
-          <!-- ЕДИНСТВЕННОЕ ГЕРОЙСКОЕ СВЕЧЕНИЕ НА ЭКРАНЕ, и оно стоит только на
-               этом шаге: на первых двух светиться нечему. -->
-          <button type="button" class="sp-go" @click="openStub">В БОЙ</button>
-          <p class="sp-note">
-            В макете бой не запускается: нажатие показывает состав обеих сторон
-            словами — проверить, что собралось именно то, что собирали.
-          </p>
         </section>
-      </main>
-    </template>
 
-    <!-- ── ЗАГЛУШКА БОЯ ──────────────────────────────────────────────── -->
+        <p class="sp-note">
+          В макете бой не запускается: нажатие показывает состав обеих сторон
+          словами — проверить, что собралось именно то, что собирали.
+        </p>
+      </div>
+
+      <!-- ── В БОЙ ────────────────────────────────────────────────────────
+           ⚠️ ПРИКОЛОЧЕНА К НИЗУ ПАНЕЛИ, А НЕ СТОИТ В ПРОКРУТКЕ. Главное
+           действие экрана не должно доставаться прокруткой мимо всей сборки.
+
+           ⚠️ И БЕЗ ОРЕОЛА, матовой розовой — как приколоченная кнопка кабинета.
+           Геройское свечение на этом экране УЖЕ ЕСТЬ И ОНО ОДНО: ядро бойца в
+           сцене. Светящаяся кнопка встала бы с ним в спор, а на глубине карточки
+           ядра рядом оказывается ещё и её собственная розовая «зажечь» — на
+           снимке это читалось как два главных действия сразу. -->
+      <button v-if="fighters.length && !fatal" type="button" class="sp-go" @click="openStub">В БОЙ</button>
+    </aside>
+
+    <!-- ── ЗАГЛУШКА БОЯ ───────────────────────────────────────────────── -->
     <div v-if="stub" class="sp-stub" role="dialog" aria-modal="true" @click.self="stub = null">
       <div class="sp-stub__box">
         <p class="sp-stub__kick">БОЙ НЕ ЗАПУСКАЕТСЯ · МАКЕТ</p>
@@ -273,10 +277,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import ForgeCore from '@/components/forge/ForgeCore.vue';
+import SparScene from '@/scene/SparScene.vue';
 import { CORES, RESOURCE, getCore } from '@/data/upgradeData.js';
 import { buildTree, litIdsOf, countLit } from '@/data/upgradeTree.js';
 import { crystalTitle } from '@/data/crystalTexts.js';
@@ -289,27 +294,21 @@ import '@/styles/forge.css';   // слой ядра: правила .fc-* жив
 const router = useRouter();
 
 const ICONS = { towel, bucket, dice };
-/* ⚠️ ШАГИ БЕЗ НОМЕРОВ. Здесь стояло «1 · ТВОЙ», «2 · СОПЕРНИК», «3 · БОЙ» —
-   и это были ЕДИНСТВЕННЫЕ цифры на экране, пойманные сплошной вычиткой текста
-   страницы. «Ни одной цифры» — правило без оговорок, а порядок шагов и так
-   сказан их порядком в полосе. */
-const STEPS = [
-  { n: 1, name: 'ТВОЙ БОЕЦ' },
-  { n: 2, name: 'СОПЕРНИК' },
-  { n: 3, name: 'БОЙ' },
-];
 const KIT_SLOTS = 3;
 
-const step = ref(1);
 const stub = ref(null);
 const fatal = ref('');
-const bodyEl = ref(null);
 const coreHost = ref(null);
+const sceneRef = ref(null);
+/* Открыта ли выезжающая панель. Широко она приколочена и этот признак на неё
+   не влияет вовсе — там он управляет только подложкой и язычком, которых на
+   широком экране нет (CSS). */
+const panelOpen = ref(false);
 
 /* ── СТОРОНА ИГРОКА · ТОЛЬКО ЧТЕНИЕ ───────────────────────────────────
    Ростер читается геттерами и не трогается ни одним действием: SPAR ничего
-   никуда не записывает (ТЗ §2). Поэтому и выбранный боец хранится ЗДЕСЬ, а не
-   через roster/pick — тот сохраняется в сейф и увёл бы за собой зал. */
+   никуда не записывает. Поэтому и выбранный боец хранится ЗДЕСЬ, а не через
+   roster/pick — тот сохраняется в сейф и увёл бы за собой зал. */
 const fighters = computed(() => store.getters['roster/fighters']);
 const myId = ref(null);
 const me = computed(() => fighters.value.find((f) => f.id === myId.value) || null);
@@ -352,9 +351,6 @@ const foeLit = computed(() => litNamesOf(foeTree.value));
 function makeTree(coreId, lit) {
   const tree = buildTree(coreId, lit);
   if (!tree) {
-    /* ⚠️ ЗАГЛАВНЫМИ — только короткий заголовок в разметке. Само объяснение
-       набрано предложением: капитель в системе отведена лейблам и ударным
-       словам до трёх, а не фразам (поймано на снимке этого состояния). */
     fatal.value = 'Данные прокачки не прочитались, и собрать сопернику ядро не из чего.';
     return null;
   }
@@ -372,6 +368,9 @@ function presetMirror() {
   foeCore.value = me.value.core;
   foeTree.value = makeTree(me.value.core, litIdsOf(myTree.value));
 }
+/* ⚠️ «ЧИСТЫЙ» СОБИРАЕТ ЗАНОВО, А НЕ ГАСИТ ПО ОДНОМУ. Гасить нечем — ForgeCore
+   умеет только зажигать, — поэтому дерево строится с нуля. Результат на экране
+   тот же, и это оговорено ТЗ §2.4. */
 function presetClean() {
   if (!me.value) return;
   foeCore.value = me.value.core;
@@ -383,7 +382,10 @@ function presetClean() {
    выдаёт и не забирает.
 
    ⚠️ Наружу ForgeCore отдаёт СТАРЫЕ ИМЕНА: crystalId — это грань, faceId —
-   кристалл. Так их зовёт хранилище. */
+   кристалл. Так их зовёт хранилище.
+
+   ⚠️ ДЕРЕВО ЗАМЕНЯЕТСЯ ЦЕЛИКОМ, а не правится на месте: сцена пересобирает
+   фигуру по наблюдателю за ссылкой, и правка вглубь его бы не разбудила. */
 function onFoeToggle({ crystalId, faceId }) {
   const tree = foeTree.value;
   if (!tree) return;
@@ -393,21 +395,38 @@ function onFoeToggle({ crystalId, faceId }) {
   if (branch.faces.filter((f) => f.state === 'lit').length >= branch.limit) return;
   if (countLit(tree) >= RESOURCE) return;
   face.state = 'lit';
+  foeTree.value = tree.map((b) => ({ ...b, faces: b.faces.map((f) => ({ ...f })) }));
 }
 
-/* ── обе стороны одной строкой ─────────────────────────────────────── */
-const buildLine = (names) => (names.length ? names.join(' · ') : 'без кристаллов');
-const myBuildLine = computed(() => (me.value ? buildLine(myLit.value) : '—'));
-const foeBuildLine = computed(() => buildLine(foeLit.value));
+/* ── СЦЕНА ОТВЕЧАЕТ НА СБОРКУ ─────────────────────────────────────────
+   Обе стороны пересобираются, как только меняется их ядро или дерево. Фигура
+   строится ИЗ САМОЙ СБОРКИ — второй записи «как выглядит соперник» нет.
+
+   ⚠️ ЧТО ПРИ ЭТОМ ВИДНО ГЛАЗАМИ. Ядро — полностью: цвет фигуры и её ореол.
+   Кристаллы — на СТОЯЩЕЙ фигуре ничем: они меняют оси, оси меняют МАНЕРУ, а
+   манера живёт в навигации, до которой планка без мозга не доходит. Своего
+   значка «тут горит кристалл» здесь не заводится — это был бы выдуманный язык
+   поверх настоящего; сборка показана там, где она и читается, — на «Печати» в
+   панели. Разбор и цена лечения — в отчёте разведки по внешности. */
+const sceneReady = ref(false);
+function onSceneReady() { sceneReady.value = true; pushBoth(); }
+function pushSide(key) {
+  if (!sceneReady.value) return;
+  const api = sceneRef.value;
+  if (!api) return;
+  if (key === 'me') api.setSide('me', { coreId: me.value?.core || null, tree: myTree.value });
+  else api.setSide('foe', { coreId: foeCore.value, tree: foeTree.value });
+}
+function pushBoth() { pushSide('me'); pushSide('foe'); }
+watch([() => me.value?.id, myTree], () => pushSide('me'));
+watch([foeCore, foeTree], () => pushSide('foe'));
 
 /* ── баффы ────────────────────────────────────────────────────────────
-   Бесконечные, бесплатные, обеим сторонам, нигде не сохраняются. Ни запаса,
-   ни LASH, ни цифр: ряд ворот арены знает про всё это, здесь — ничего. */
+   Бесконечные, бесплатные, обеим сторонам, нигде не сохраняются.
+   ⚠️ Сторона приходит КЛЮЧОМ, а не самим набором: в разметке Vue разворачивает
+   ref в значение, и переданный туда myKit — это уже массив без .value. */
 const myKit = ref(Array(KIT_SLOTS).fill(null));
 const foeKit = ref(Array(KIT_SLOTS).fill(null));
-/* ⚠️ Сторона приходит КЛЮЧОМ, а не самим набором. В разметке Vue разворачивает
-   ref в значение, и переданный туда myKit — это уже массив, у которого нет
-   .value: попытка писать в него молча роняла обработчик. Поймано прогоном. */
 function cycle(side, i) {
   const kit = side === 'me' ? myKit : foeKit;
   const order = [...BUFF_IDS, null];
@@ -420,7 +439,8 @@ const kitWords = (kit) => {
 
 /* ── заглушка боя ─────────────────────────────────────────────────────
    Составом СЛОВАМИ и без единой цифры: проверить, что собралось то, что
-   собирали. Бой в макете не запускается (ТЗ §4.6). */
+   собирали. Бой в макете не запускается. */
+const buildLine = (names) => (names.length ? names.join(' · ') : 'без кристаллов');
 function openStub() {
   stub.value = {
     myName: me.value ? me.value.callsign : '—',
@@ -440,29 +460,46 @@ function pickMine(id) {
   presetClean();
 }
 
+/* ── панель ───────────────────────────────────────────────────────────
+   Три выхода, как у кабинета: крестик, нажатие мимо, Esc. */
+const bodyEl = ref(null);
+/* ⚠️ ПАНЕЛЬ ОТКРЫВАЕТСЯ СВЕРХУ. ForgeCore на монтировании сам подводит свою
+   карточку под верх прокрутки — в зале это правильно (её и открыли), а здесь
+   панель несёт ВСЮ сборку, и игрок попадал сразу в середину, мимо выбора
+   бойца. Сбрасываем один раз на открытии; дальше прокрутку ведёт сам ForgeCore
+   при смене уровня, и в это мы не вмешиваемся. */
+function scrollPanelTop() {
+  nextTick(() => { if (bodyEl.value) bodyEl.value.scrollTop = 0; });
+}
+function openPanel() { panelOpen.value = true; scrollPanelTop(); }
+function closePanel() { panelOpen.value = false; }
+function onKeydown(e) {
+  if (e.key !== 'Escape') return;
+  if (stub.value) { stub.value = null; return; }
+  if (panelOpen.value) closePanel();
+}
+
 /* ── ПОЗДНИЙ КЛИК ──────────────────────────────────────────────────────
    На сенсорном экране браузер после касания досылает вдогонку обычный клик
-   мышью, примерно через треть секунды. За эту треть секунды карточка ядра
-   успевает перестроиться под пальцем — и клик попадает уже в новую разметку:
-   зажигает кристалл, которого игрок не выбирал. Тот же приём, что в зале:
-   отменяем действие по концу касания — это единственное, что браузер
-   спрашивает перед тем, как этот клик выдумать.
+   мышью, примерно через треть секунды. За эту треть секунды разметка под
+   пальцем успевает перестроиться — и клик попадает уже в новую: зажигает
+   кристалл, которого игрок не выбирал, или жмёт кнопку в только что
+   открывшейся панели. Тот же приём, что в зале: отменяем действие по концу
+   касания — это единственное, что браузер спрашивает перед тем, как этот клик
+   выдумать.
 
-   ⚠️ Гасим ТОЛЬКО над самой фигурой (.fc-stage). Гасить на всей странице
-   нельзя: кнопки «зажечь» и «назад» стоят под фигурой и ловят обычный клик —
-   на телефоне они перестали бы работать вовсе.
+   ДВА МЕСТА, И ОБА ТОЧЕЧНЫЕ:
+     · над самой фигурой «Печати» (.fc-stage) — там перестраивается карточка;
+     · на язычке открытия панели — самое удобное место для этой поломки: панель
+       встаёт ровно под палец.
+   ⚠️ Гасить на всей странице нельзя: кнопки «зажечь» и «назад» стоят под
+   фигурой и ловят обычный клик — на телефоне они перестали бы работать вовсе.
    ⚠️ Слушателя нельзя вешать пассивным: пассивному браузер отменять не даёт. */
-let killLateClick = null;
-function armLateClick() {
-  const host = coreHost.value;
-  if (!host || killLateClick) return;
-  killLateClick = (e) => {
-    const t = e.target;
-    if (t && t.closest && t.closest('.fc-stage')) e.preventDefault();
-  };
-  host.addEventListener('touchend', killLateClick, { passive: false });
+const KILL_LATE = '.fc-stage, .sp-tab';
+function killLate(e) {
+  const t = e.target;
+  if (t && t.closest && t.closest(KILL_LATE)) e.preventDefault();
 }
-watch(coreHost, armLateClick);
 
 function goBack() { router.back(); }
 function toForge() { router.push('/play/pve'); }
@@ -488,55 +525,146 @@ onMounted(() => {
     myId.value = list.some((f) => f.id === picked) ? picked : list[0].id;
     presetClean();
   }
-  armLateClick();
+
+  /* Широко панель приколочена и открывать её нечем — сброс прокрутки нужен и
+     там, иначе первый кадр встаёт на середине сборки. */
+  scrollPanelTop();
+
+  window.addEventListener('keydown', onKeydown);
+  document.addEventListener('touchend', killLate, { passive: false });
 });
 
 onBeforeUnmount(() => {
   document.title = prevTitle;
   if (robotsTag) robotsTag.remove();
-  if (coreHost.value && killLateClick) {
-    coreHost.value.removeEventListener('touchend', killLateClick);
-  }
-  killLateClick = null;
+  window.removeEventListener('keydown', onKeydown);
+  document.removeEventListener('touchend', killLate);
 });
 </script>
 
 <style scoped>
 /* ⚠️ ВСЕ ЗНАЧЕНИЯ — ИЗ tokens.css. Своих цветов, кеглей и отступов здесь нет.
    Скругление нулевое везде, включая заглушку боя: система разрешает радиус
-   модальным окнам, но не обязывает, а прямой угол здесь узнаваем. */
-/* ⚠️ ПОВЕРХ ОБОЛОЧКИ ПРИЛОЖЕНИЯ. App.vue держит свою шапку со знаком на всех
+   модальным окнам, но не обязывает, а прямой угол здесь узнаваем.
+
+   ⚠️ ПОВЕРХ ОБОЛОЧКИ ПРИЛОЖЕНИЯ. App.vue держит свою шапку со знаком на всех
    адресах, кроме /play/* и витрины, — на дежурном адресе она встала бы поверх
    полосы этой страницы. Убрать её из App.vue нельзя: эта работа трогает ровно
    один игровой файл, роутер. Поэтому страница — сплошной непрозрачный слой на
-   ступень выше шапки (--z-topbar), как выезжающие панели. Заглушка боя стоит
-   ещё ступенью выше (--z-modal), иначе она ушла бы под саму страницу. */
+   ступень выше шапки (--z-topbar), как выезжающие панели. */
 .sp {
   position: fixed; inset: 0; z-index: var(--z-panel);
-  display: flex; flex-direction: column;
   background: var(--void); color: var(--ink);
   font-family: var(--font-display);
+  overflow: hidden;
 }
 
-/* ── полоса ───────────────────────────────────────────────────────── */
+/* ── сцена ────────────────────────────────────────────────────────────
+   Занимает экран целиком и НЕ переезжает при открытии панели: панель едет
+   поверх неё. Широко панель приколочена слева, и сцене остаётся правая часть —
+   сдвигом кадра, а не пересборкой. */
+.sp-scene { position: absolute; inset: 0; }
+
+/* ── шапка ────────────────────────────────────────────────────────────
+   Поверх сцены, своими указателями: сама полоса их не ловит, чтобы нажатие
+   мимо кнопки уходило странице. */
 .sp-bar {
-  flex: none; display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-3); padding: var(--sp-2) var(--sp-3);
-  border-bottom: 1px solid var(--line);
+  position: absolute; top: 0; left: 0; right: 0; z-index: var(--z-topbar);
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  pointer-events: none;
 }
 .sp-bar__title {
   font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-dim);
+  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
 }
 .sp-bar__back {
+  pointer-events: auto;
   font-family: var(--font-mono); font-size: var(--t-micro);
   letter-spacing: var(--ls-meta); color: var(--ink-dim);
-  background: none; border: 1px solid var(--line); padding: var(--sp-2) var(--sp-3);
-  min-height: 32px; cursor: pointer;
+  background: color-mix(in srgb, var(--void) 70%, transparent);
+  border: 1px solid var(--line); padding: var(--sp-2) var(--sp-3);
+  min-height: 36px; cursor: pointer;
   transition: border-color var(--d-hover) var(--e-weight), color var(--d-hover) var(--e-weight);
 }
 .sp-bar__back:hover { border-color: var(--line-strong); color: var(--ink); }
 .sp-bar__back:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
+
+/* ── язычок ───────────────────────────────────────────────────────────
+   ⚠️ СТОИТ ВНИЗУ, А НЕ ПОСЕРЕДИНЕ КРАЯ. Посередине он ложился ровно на левого
+   бойца — поймано снимком: фигуры стоят в средней трети кадра, и середина
+   левого края это их пояс. Внизу он чист от обеих и заодно попадает в ту зону,
+   до которой на телефоне дотягивается большой палец.
+   Широко он не существует вовсе (CSS ниже): там панель приколочена и открывать
+   нечего. */
+.sp-tab {
+  position: absolute; left: 0; bottom: var(--sp-6);
+  z-index: var(--z-ui);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-1); min-width: 28px; min-height: 96px;
+  cursor: pointer; font: inherit;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--line); border-left: none;
+  color: var(--ink-dim);
+  transition: color var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
+}
+.sp-tab:hover { color: var(--ink); border-color: var(--line-strong); }
+/* Погашен, но остался в дереве — см. разметку. */
+.sp-tab.is-hidden { opacity: 0; pointer-events: none; }
+.sp-tab:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
+.sp-tab .ch { font-size: var(--t-md); line-height: 1; }
+.sp-tab .w {
+  font-family: var(--font-mono); font-size: var(--t-micro);
+  letter-spacing: var(--ls-meta); writing-mode: vertical-rl;
+}
+
+/* ── подложка ─────────────────────────────────────────────────────────
+   Затемнение — void с прозрачностью, не размытие: на телефоне размытие стоит
+   реальных кадров. То же, что у кабинета. */
+.sp-scrim {
+  position: absolute; inset: 0; z-index: var(--z-panel);
+  background: color-mix(in srgb, var(--void) 60%, transparent);
+  animation: sp-scrim-in var(--d-hover) ease both;
+}
+@keyframes sp-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── панель ───────────────────────────────────────────────────────────
+   Стоя — выезжает от ЛЕВОГО края (кабинет едет от правого; механика та же,
+   сторона другая). Широко — приколочена колонкой, см. перелом ниже. */
+.sp-panel {
+  position: absolute; top: 0; left: 0; bottom: 0; z-index: var(--z-panel);
+  width: min(92vw, var(--w-cabinet));
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, var(--carbon) 0%, var(--void) 100%);
+  border-right: 1px solid var(--line);
+  transform: translateX(-100%);
+  transition: transform var(--d-panel) var(--e-spring);
+  will-change: transform;
+}
+.sp-panel.open { transform: translateX(0); }
+
+.sp-phead {
+  flex: none; height: 52px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--sp-3); border-bottom: 1px solid var(--line);
+}
+.sp-ptitle {
+  font-size: var(--t-md); letter-spacing: var(--ls-title); text-transform: uppercase;
+}
+.sp-x {
+  background: none; border: none; color: var(--ink-dim); cursor: pointer;
+  font-size: var(--t-md); min-width: 44px; min-height: 44px;
+}
+.sp-x:hover { color: var(--ink); }
+.sp-x:focus-visible { outline: 1px solid var(--ink); outline-offset: -2px; }
+
+.sp-pbody { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-3); }
+.sp-sec { display: flex; flex-direction: column; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.sp-sec--core { min-width: 0; }
+.sp-label {
+  font-family: var(--font-mono); font-size: var(--t-micro);
+  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
+}
+.sp-note { font-size: var(--t-xs); color: var(--ink-dim); line-height: 1.5; }
 
 /* ── пусто и ошибка ───────────────────────────────────────────────── */
 .sp-hole {
@@ -553,81 +681,11 @@ onBeforeUnmount(() => {
 }
 .sp-hole__btn:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
 
-/* ── обе стороны ──────────────────────────────────────────────────── */
-.sp-vs {
-  flex: none; display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: stretch; gap: var(--sp-2);
-  padding: var(--sp-3); border-bottom: 1px solid var(--line);
-}
-.sp-vs__x {
-  align-self: center; font-family: var(--font-mono);
-  font-size: var(--t-micro); letter-spacing: var(--ls-wide); color: var(--ink-off);
-}
-.sp-side {
-  display: flex; flex-direction: column; gap: 2px; min-width: 0;
-  padding: var(--sp-2); text-align: left; cursor: pointer;
-  background: color-mix(in srgb, var(--panel) 80%, transparent);
-  border: 1px solid var(--line); font: inherit; color: inherit;
-  transition: border-color var(--d-hover) var(--e-weight);
-}
-.sp-side--foe { text-align: right; }
-.sp-side--foe .sp-side__name, .sp-side--foe .sp-side__core { flex-direction: row-reverse; }
-.sp-side:hover { border-color: var(--line-strong); }
-.sp-side.on { border-color: color-mix(in srgb, var(--core) 60%, transparent); }
-.sp-side:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
-.sp-side__kick {
-  font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
-}
-.sp-side__name {
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--t-md); letter-spacing: var(--ls-title); text-transform: uppercase;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.sp-side__core {
-  display: flex; font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); color: var(--core);
-}
-/* ⚠️ ОДНОЙ СТРОКОЙ С ОБРЕЗКОЙ, а не в две с переносом. В две перенос падал
-   ровно после разделителя, и строка кончалась висящим «·» — читалось поломкой,
-   а не продолжением. Здесь это ВЗГЛЯД: полную сборку показывают сама фигура на
-   шаге соперника и заглушка боя. */
-.sp-side__build {
-  font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); color: var(--ink-dim);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* Знак ядра — квадрат его цветом. Не свечение: светится одно на экран. */
-.sw { width: 8px; height: 8px; flex: none; background: var(--core); display: inline-block; }
-
-/* ── три шага ─────────────────────────────────────────────────────── */
-.sp-rail { flex: none; display: flex; border-bottom: 1px solid var(--line); }
-.sp-rail__b {
-  flex: 1 1 0; min-height: 40px; cursor: pointer;
-  background: none; border: none; border-bottom: 2px solid transparent;
-  font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
-  transition: color var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
-}
-.sp-rail__b.on { color: var(--ink); border-bottom-color: var(--line-strong); }
-.sp-rail__b:focus-visible { outline: 1px solid var(--ink); outline-offset: -2px; }
-
-/* ── тело шага ────────────────────────────────────────────────────── */
-.sp-body { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
-.sp-step { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); }
-.sp-label {
-  font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
-  margin-top: var(--sp-2);
-}
-.sp-step > .sp-label:first-child { margin-top: 0; }
-.sp-note { font-size: var(--t-xs); color: var(--ink-dim); line-height: 1.5; }
-
 /* ── ростер ───────────────────────────────────────────────────────── */
 .sp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
 .sp-row {
   width: 100%; min-height: 44px; display: flex; align-items: center; gap: var(--sp-2);
-  padding: 0 var(--sp-3); cursor: pointer; font: inherit; color: inherit; text-align: left;
+  padding: 0 var(--sp-2); cursor: pointer; font: inherit; color: inherit; text-align: left;
   background: color-mix(in srgb, var(--panel) 70%, transparent);
   border: 1px solid transparent;
   transition: border-color var(--d-hover) var(--e-weight);
@@ -645,27 +703,16 @@ onBeforeUnmount(() => {
   letter-spacing: var(--ls-meta); color: var(--ink-off); flex: none;
 }
 .sp-row .cr { color: var(--core); }
+/* Знак ядра — квадрат его цветом. Не свечение: светится одно на экран. */
+.sw { width: 8px; height: 8px; flex: none; background: var(--core); display: inline-block; }
 
-/* ── карточка бойца ───────────────────────────────────────────────── */
-.sp-card {
-  display: flex; flex-direction: column; gap: var(--sp-1);
-  padding: var(--sp-3); background: var(--panel); border: 1px solid var(--line);
-}
-.sp-card__name { font-size: var(--t-lg); letter-spacing: var(--ls-title); text-transform: uppercase; }
-.sp-card__core {
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-family: var(--font-mono); font-size: var(--t-xs);
-  letter-spacing: var(--ls-meta); color: var(--core);
-}
-.sp-card__row { display: flex; gap: var(--sp-2); font-family: var(--font-mono); font-size: var(--t-micro); }
-.sp-card__row .k { letter-spacing: var(--ls-meta); color: var(--ink-off); }
-.sp-card__row .v { letter-spacing: var(--ls-meta); color: var(--ink-dim); }
-.sp-card__build { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-2); }
-.sp-card__build .b, .sp-card__build .ph {
+.sp-build { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-1) var(--sp-2); }
+.sp-build .k, .sp-build .b, .sp-build .ph {
   font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta);
 }
-.sp-card__build .b { color: var(--ink-dim); }
-.sp-card__build .ph { color: var(--ink-off); }
+.sp-build .k { color: var(--ink-off); text-transform: uppercase; }
+.sp-build .b { color: var(--ink-dim); }
+.sp-build .ph { color: var(--ink-off); }
 
 /* ── заготовки и ядра ─────────────────────────────────────────────── */
 .sp-presets, .sp-cores { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
@@ -683,9 +730,6 @@ onBeforeUnmount(() => {
 .sp-preset:hover, .sp-core:hover { border-color: var(--line-strong); color: var(--ink); }
 .sp-core.on { border-color: color-mix(in srgb, var(--core) 60%, transparent); color: var(--ink); }
 .sp-preset:focus-visible, .sp-core:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
-
-/* Карточка ядра приезжает со своим слоем (forge.css) — здесь ей только место. */
-.sp-core-host { display: flex; flex-direction: column; min-width: 0; }
 
 /* ── баффы ────────────────────────────────────────────────────────── */
 .sp-kit { display: flex; gap: var(--sp-2); }
@@ -708,16 +752,18 @@ onBeforeUnmount(() => {
 
 /* ── в бой ────────────────────────────────────────────────────────── */
 .sp-go {
-  margin-top: var(--sp-2); min-height: 52px; cursor: pointer;
+  flex: none; min-height: 52px; cursor: pointer;
   font-family: var(--font-display); font-size: var(--t-md);
   letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink);
-  background: var(--pink); border: none; box-shadow: var(--glow-hero);
+  background: var(--pink); border: none;
+  transition: filter var(--d-fast);
 }
+.sp-go:hover { filter: brightness(1.12); }
 .sp-go:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
 
 /* ── заглушка боя ─────────────────────────────────────────────────── */
 .sp-stub {
-  position: fixed; inset: 0; z-index: var(--z-modal);
+  position: absolute; inset: 0; z-index: var(--z-modal);
   display: grid; place-items: center; padding: var(--sp-4);
   background: color-mix(in srgb, var(--void) 88%, transparent);
 }
@@ -749,27 +795,33 @@ onBeforeUnmount(() => {
 }
 .sp-stub__btn:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
 
-/* ── шире телефона: обе стороны заглушки встают рядом ─────────────── */
-@media (min-width: 560px) {
-  .sp-stub__grid { grid-template-columns: 1fr 1fr; }
+@media (min-width: 560px) { .sp-stub__grid { grid-template-columns: 1fr 1fr; } }
+
+/* ══ ШИРОКО: ПАНЕЛЬ ПРИКОЛОЧЕНА КОЛОНКОЙ СЛЕВА ═══════════════════════
+   ⚠️ ОДНА ПАНЕЛЬ, ДВА ПОВЕДЕНИЯ, а не два экрана: та же разметка, тот же
+   набор разделов, та же логика. Перелом меняет ТОЛЬКО то, стоит она на месте
+   или выезжает. Язычок, крестик и подложка на широком не нужны и снимаются —
+   открывать и закрывать нечего.
+
+   ⚠️ КОЛОНКА УЖЕ ПОЛОВИНЫ ЭКРАНА. Сцена обязана оставаться главной по площади
+   (ТЗ §2.1), поэтому ширина взята кабинетная и ограничена третью кадра.
+   Сцена при этом не перестраивается: она по-прежнему во весь экран, панель
+   стоит поверх её левого края. */
+@media (min-width: 900px) {
+  .sp-tab, .sp-scrim, .sp-x { display: none; }
+  .sp-panel { transform: translateX(0); width: min(var(--w-cabinet), 33vw); }
+  .sp-bar { left: min(var(--w-cabinet), 33vw); }
 }
-/* ── лёжа: полоса и шапка ужимаются, высоту отдаём телу шага ──────── */
-/* ── лёжа: высоты всего 390, и её всю забирает тело шага ──────────────
-   Шапка и полоса шагов ужимаются до минимума, по которому ещё попадают
-   пальцем; карточка ядра на шаге соперника при этом уходит в прокрутку —
-   лёжа два блока рядом не встают, и это оговорено (ТЗ §6). */
+
+/* ── лёжа на телефоне: шапка и панель ужимаются ──────────────────── */
 @media (max-height: 460px) {
-  .sp-bar { padding: var(--sp-1) var(--sp-3); }
-  .sp-vs { padding: var(--sp-2) var(--sp-3); }
-  .sp-side { padding: var(--sp-1) var(--sp-2); }
-  .sp-side__name { font-size: var(--t-base); }
-  .sp-rail__b { min-height: 34px; }
-  .sp-step { gap: var(--sp-1); padding: var(--sp-2) var(--sp-3); }
+  .sp-phead { height: 44px; }
+  .sp-sec { margin-bottom: var(--sp-3); }
 }
-/* ── движения меньше: переходы гасим, анимаций своих здесь нет ────── */
+
+/* ── движения меньше: переходы гасим ─────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .sp-bar__back, .sp-side, .sp-rail__b, .sp-row, .sp-preset, .sp-core, .sp-slot {
-    transition: none;
-  }
+  .sp-panel, .sp-tab, .sp-bar__back, .sp-row, .sp-preset, .sp-core, .sp-slot { transition: none; }
+  .sp-scrim { animation: none; }
 }
 </style>
