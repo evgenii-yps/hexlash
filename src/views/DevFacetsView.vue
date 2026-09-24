@@ -1,23 +1,23 @@
 <template>
-  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ ГРАНЕЙ И КРИСТАЛЛОВ (ТЗ 24.09.2026, правка третья).
+  <!-- СКРЫТАЯ СТРАНИЦА-МАКЕТ ГРАНЕЙ И КРИСТАЛЛОВ (ТЗ 24.09.2026, правка пятая).
        Адрес /dev/facets, ниоткуда не линкуется, закрыта от поисковиков тегом
        robots (не через robots.txt — строка запрета там публична и работает как
-       указатель). Ничего не встраивает в игру: зал FORGE не трогается.
+       указатель). В игру ничего не встраивает: зал FORGE не трогается.
+
+       ⚠️ СЛОВАРЬ ИСПРАВЛЕН. Грань — весь луч целиком, длинный клин от сердца
+       до кромки; их ТРИ. Кристалл — один из пяти шагов внутри грани; их
+       ПЯТНАДЦАТЬ. В правках 1–4 эти два слова стояли наоборот.
 
        ⚠️ ФИГУРА НЕ РИСУЕТСЯ ЗДЕСЬ. Ядро приходит компонентом HexCore — тем же,
        что стоит на лендинге, в деке и на экране входа. Грани, кристаллы и
-       налив выведены из того же coreFigure() через coreFacetSlices.js.
-
-       СЛОВАРЬ: ветка — клин, грань — пятая часть клина, кристалл — то, чем
-       грань зажигается. Три уровня глубины: ядро → грань → кристалл, и на
-       каждом один и тот же приём: выбранное выходит вперёд, остальное уходит
-       назад. -->
+       налив выведены из того же coreFigure() через coreFacets.js. Смена
+       словаря не потребовала менять в общей фигуре ни одного числа. -->
   <div class="fx" :data-state="state">
     <header class="fx-bar">
       <span class="fx-bar__title">ГРАНИ И КРИСТАЛЛЫ · МАКЕТ</span>
       <span class="fx-bar__step">{{ stepLabel }}</span>
       <!-- Служебные органы макета. В игру не идут: там право даёт занятие. -->
-      <button type="button" class="fx-chip" @click="grantRight">выдать право</button>
+      <button type="button" class="fx-chip" @click="rights += 1">выдать право</button>
       <button type="button" class="fx-chip" @click="resetAll">сбросить всё</button>
     </header>
 
@@ -28,37 +28,26 @@
         <div class="fx-dim" aria-hidden="true"></div>
 
         <svg
-          ref="svgRef"
           class="fx-svg"
           :viewBox="`0 0 ${box} ${box}`"
           :style="{ color: hue }"
-                  >
+        >
           <defs>
-            <!-- Налив. У каждой ветки свой растущий круг: сколько граней в ней
-                 зажжено, до того шага и дошёл свет. Ступени даёт кривая
-                 перехода, а не рисунок — делений внутри ветки нет. -->
-            <clipPath v-for="b in branches" :key="`cf${b.id}`" :id="id('flow-' + b.id)">
-              <circle class="fx-flow-clip" cx="0" cy="0" r="1" :style="flowStyle(b)" />
+            <!-- Налив грани. Растущий круг обрезает её горящую часть: сколько
+                 кристаллов зажжено, до того шага и дошёл свет. Ступени даёт
+                 кривая перехода, а не рисунок — делений внутри грани нет. -->
+            <clipPath v-for="f in facets" :key="`cf${f.id}`" :id="id('flow-' + f.id)">
+              <circle class="fx-flow-clip" cx="0" cy="0" r="1" :style="flowStyle(f)" />
             </clipPath>
 
-            <!-- Свет внутри вынесенной грани: от сердца к концу ветки. -->
+            <!-- Свет внутри кристалла: от сердца к концу грани. -->
             <linearGradient
-              v-if="selFacet" :id="id('shard')" gradientUnits="userSpaceOnUse"
-              :x1="selFacet.near[0]" :y1="selFacet.near[1]"
-              :x2="selFacet.far[0]" :y2="selFacet.far[1]"
-            >
-              <stop offset="0" stop-color="currentColor" stop-opacity=".85" />
-              <stop offset="1" stop-color="currentColor" stop-opacity=".12" />
-            </linearGradient>
-
-            <!-- Свет внутри кристалла — тем же путём. -->
-            <linearGradient
-              v-for="c in slots" :key="`cg${c.i}`"
-              :id="id('cry-' + c.i)" gradientUnits="userSpaceOnUse"
+              v-for="c in crystals" :key="`cg${c.key}`"
+              :id="id('lit-' + c.key)" gradientUnits="userSpaceOnUse"
               :x1="c.near[0]" :y1="c.near[1]" :x2="c.far[0]" :y2="c.far[1]"
             >
               <stop offset="0" stop-color="currentColor" stop-opacity=".9" />
-              <stop offset="1" stop-color="currentColor" stop-opacity=".2" />
+              <stop offset="1" stop-color="currentColor" stop-opacity=".25" />
             </linearGradient>
           </defs>
 
@@ -67,64 +56,59 @@
                предмете, а не на промахе. -->
           <rect class="fx-void" x="0" y="0" :width="box" :height="box" />
 
-          <!-- ФИГУРА: ядро, налив и пустое гнездо. Двигается одним куском. -->
-          <g class="fx-figure" :style="figureStyle">
+          <!-- ЯДРО: фигура, налив и пустое гнездо вынесенной грани. -->
+          <g class="fx-core" :style="coreStyle">
             <!-- ⚠️ :fill выключен: своё бегущее заполнение ядра — бесконечная
-                 петля, а здесь наливом управляет зажигание граней. Компонент
-                 при этом не правится — у него для этого есть своё свойство. -->
+                 петля, а здесь наливом управляет зажигание кристаллов.
+                 Компонент при этом не правится: у него для этого есть своё
+                 свойство. -->
             <HexCore mode="full" :hue="hue" :flicker="true" :fill="false" />
 
-            <g v-for="b in branches" :key="`fl${b.id}`" :clip-path="`url(#${id('flow-' + b.id)})`">
-              <polygon class="fx-flow" :points="b.strip" />
+            <g v-for="f in facets" :key="`fl${f.id}`" :clip-path="`url(#${id('flow-' + f.id)})`">
+              <polygon class="fx-flow" :points="f.strip" />
             </g>
 
             <!-- Пустое гнездо: пока грань вынесена, на ядре её нет. -->
             <polygon v-if="selFacet" class="fx-socket" :points="selFacet.points" />
 
-            <!-- ⚠️ ВЕДЕНИЕ, А НЕ ТЫЧОК. Палец лежит на фигуре и водит — под ним
+            <!-- ⚠️ ВЕДЕНИЕ, А НЕ ТЫЧОК. Палец водит по ядру — под ним
                  подсвечивается ЦЕЛАЯ ГРАНЬ; отпустил — она и выбрана.
-                 ⚠️ Слушаем pointerdown, а НЕ только pointermove: на телефоне
-                 при касании ведения не приходит вовсе — приходят лишь нажал и
-                 отпустил (замерено: на тап прилетают pointerdown, pointerup,
-                 click и ни одного pointermove). На одном pointermove подсветка
-                 на телефоне не загоралась никогда, и выбор шёл вслепую.
-                 ⚠️ Зона — весь шестиугольник, а не пятнадцать плиток: грань
-                 берётся по БЛИЖАЙШЕЙ середине, зазоров между зонами нет. -->
+                 ⚠️ Слушаем pointerdown, а не только pointermove: на телефоне
+                 при касании ведения не приходит вовсе (замерено). -->
             <polygon
               class="fx-pad" :points="plate"
-              @pointerdown="onFigDown" @pointermove="onFigMove"
-              @pointerup="onFigUp" @pointercancel="clearGuide"
+              @pointerdown="onCoreDown" @pointermove="onCoreMove"
+              @pointerup="onCoreUp" @pointercancel="clearGuide"
               @pointerleave="clearGuide"
             />
           </g>
 
-          <!-- ГРАНИ. В покое у грани нет никакого рисунка — только подсветка
+          <!-- ТРИ ГРАНИ. На ядре у грани нет своего рисунка — только подсветка
                под пальцем. Огранка появляется у той одной, что вынесена. -->
           <g
-            v-for="f in facets" :key="f.key"
+            v-for="f in facets" :key="f.id"
             class="fx-facet"
-            :class="{ 'is-sel': sel === f.key, 'is-hover': hoverKey === f.key }"
-            :style="sel === f.key ? facetStyle : figureStyle"
+            :class="{ 'is-sel': sel === f.id, 'is-guided': guideFacetId === f.id }"
+            :style="sel === f.id ? facetStyle : coreStyle"
           >
-            <!-- Подсветка под пальцем. Целая грань, и НЕ цветом ядра: цветом
-                 ядра на клине показан налив, и подсвеченная незажжённая грань
-                 читалась бы зажжённой. Показ будущего выбора — не действие,
-                 поэтому и не розовый. -->
+            <!-- Подсветка под пальцем — вся грань целиком, от сердца до кромки.
+                 НЕ цветом ядра: цветом ядра показан налив, и подсвеченная
+                 незажжённая грань читалась бы зажжённой. И не розовая:
+                 показ будущего выбора — ещё не действие. -->
             <polygon class="fx-facet__glow" :points="f.points" />
 
-            <template v-if="sel === f.key">
+            <template v-if="sel === f.id">
+              <!-- Вынесенная грань — ТОТ ЖЕ длинный клин, что был на ядре:
+                   сужается к концу, узнаётся как та самая деталь. -->
               <polygon class="fx-shard__body" :points="f.points" />
               <polygon
-                v-for="(bv, bi) in f.bevels" :key="`bv${bi}`"
-                class="fx-bevel" :class="BEVEL_FACE[bi]" :points="bv"
+                v-for="(bv, bi) in f.bevels" :key="`fb${bi}`"
+                class="fx-bevel" :class="FACET_BEVEL[bi]" :points="bv"
               />
               <polygon class="fx-shard__face" :points="f.inner" />
-              <polygon
-                v-if="facetLit(f)" class="fx-shard__lit"
-                :points="f.inner" :fill="`url(#${id('shard')})`"
-              />
+
               <!-- Тот же приём уровнем глубже: ведём по вынесенной грани —
-                   подсвечивается целый кристалл, отпустили — он и выбран. -->
+                   подсвечивается один кристалл целиком. -->
               <polygon
                 class="fx-cpad" :points="f.points"
                 @pointerdown="onFacetDown" @pointermove="onFacetMove"
@@ -135,102 +119,85 @@
 
             <polygon
               class="fx-facet__key" :points="f.points"
-              role="button" tabindex="0" :aria-label="labelOf(f)"
+              role="button" tabindex="0" :aria-label="facetName(f)"
               @keydown.enter.prevent="chooseFacet(f)"
               @keydown.space.prevent="chooseFacet(f)"
-              @focus="guide = { kind: 'facet', key: f.key }"
+              @focus="guide = { kind: 'facet', key: f.id }"
               @blur="clearGuide"
             />
           </g>
 
-          <!-- КРИСТАЛЛЫ выбранной грани. Лежат на ней как предметы: пока грань
-               впереди — едут вместе с ней; выбранный выходит вперёд тем же
-               движением, каким грань выходила из ядра. -->
+          <!-- ПЯТНАДЦАТЬ КРИСТАЛЛОВ. Видны только внутри вынесенной грани:
+               пять гнёзд по её длине, в каждом один кристалл. -->
           <g
-            v-for="c in slots" :key="`cr${c.i}`"
+            v-for="c in selCrystals" :key="c.key"
             class="fx-cryst"
             :class="{
-              'is-sel': cry === c.i,
-              'is-guided': hoverCry === c.i,
-              'is-lit': litIndex === c.i,
-              'is-spent': litIndex !== null && litIndex !== c.i,
+              'is-sel': cry === c.index,
+              'is-guided': guideCryIndex === c.index,
+              'is-lit': isLit(c),
+              'is-spent': !isLit(c) && litCount >= CAP,
             }"
-                        :style="cry === c.i ? crystalStyle(c) : facetStyle"
+            :style="cry === c.index ? crystalStyle(c) : facetStyle"
           >
             <polygon class="fx-shard__body" :points="c.points" />
             <polygon
               v-for="(bv, bi) in c.bevels" :key="`cb${bi}`"
-              class="fx-bevel" :class="BEVEL_FACE[bi]" :points="bv"
+              class="fx-bevel" :class="CRY_BEVEL[bi]" :points="bv"
             />
             <polygon class="fx-shard__face" :points="c.inner" />
             <polygon
-              v-if="litIndex === c.i" class="fx-shard__lit"
-              :points="c.inner" :fill="`url(#${id('cry-' + c.i)})`"
+              v-if="isLit(c)" class="fx-shard__lit"
+              :points="c.inner" :fill="`url(#${id('lit-' + c.key)})`"
             />
-            <!-- Подсветка под пальцем — целый кристалл, нейтральная. -->
             <polygon class="fx-cryst__glow" :points="c.inner" />
-            <!-- Клавиатурная цель. Пальцем по ней не попадают: выбор ведёт
-                 пад грани по ближайшей середине кристалла. -->
-            <polygon
-              class="fx-cryst__hit" :points="c.points"
-              role="button" tabindex="0" :aria-label="cryList[c.i]?.name"
-              @keydown.enter.prevent="chooseCrystal(c)"
-              @keydown.space.prevent="chooseCrystal(c)"
-              @focus="guide = { kind: 'crystal', key: c.i }"
-              @blur="clearGuide"
-            />
 
-            <!-- Название под предметом. Прячется у вынесенного: там имя стоит
-                 в панели рядом с полным описанием. -->
-            <!-- ⚠️ Подпись КОНТР-ПОВОРАЧИВАЕТСЯ. Предметы построены в осях
-                 своей ветки, поэтому доворот группы ставит их ровно; текст же
-                 набран в осях холста, и тот же доворот кладёт его набок. Без
-                 этой строки названия на боковых ветках читались вертикально и
-                 задом наперёд (поймано рендером). -->
+            <!-- Подпись — своя у каждого кристалла, сбоку от его гнезда:
+                 грань длинная и узкая, под гнездом места нет. -->
             <text
-              v-if="cry !== c.i"
+              v-if="cry !== c.index"
               class="fx-cryst__name"
               :x="c.labX" :y="c.labY"
               :transform="`rotate(${-facetTurn(selFacet)} ${c.labX} ${c.labY})`"
-              :style="{ fontSize: `${labSize(c)}px` }"
-            >
-              <tspan
-                v-for="(ln, li) in nameLines(c.i, c.oneLine)" :key="li"
-                :x="c.labX" :dy="li ? c.labStep : 0"
-              >{{ ln }}</tspan>
-            </text>
+              :style="{ fontSize: `${c.labSize}px` }"
+            >{{ crystalName(c) }}</text>
+
+            <polygon
+              class="fx-cryst__key" :points="c.points"
+              role="button" tabindex="0" :aria-label="crystalName(c)"
+              @keydown.enter.prevent="chooseCrystal(c)"
+              @keydown.space.prevent="chooseCrystal(c)"
+              @focus="guide = { kind: 'crystal', key: c.index }"
+              @blur="clearGuide"
+            />
           </g>
 
           <!-- Отклик на выбор. ⚠️ ОТДЕЛЬНЫМ СЛОЕМ И ПОСЛЕДНИМ В ПОРЯДКЕ.
                Отдельным — потому что предмет в этот момент уже летит вперёд, и
                розовое улетало вместе с ним. Последним — потому что летящий
-               предмет стартует ровно с места вспышки и закрывал её собой
-               (поймано рендером). Вспышка остаётся ТАМ, ГДЕ ОТПУСТИЛИ, и живёт
-               четверть секунды. Это единственное розовое на странице. -->
-          <g v-if="flashShape" class="fx-flash" :style="flashStyle" aria-hidden="true">
-            <polygon :points="flashShape" />
+               предмет стартует ровно с места вспышки и закрывал её собой.
+               Вспышка остаётся ТАМ, ГДЕ ОТПУСТИЛИ, и живёт четверть секунды.
+               Это единственное розовое на странице. -->
+          <g v-if="flash" class="fx-flash" :style="flashStyle" aria-hidden="true">
+            <polygon :points="flash.points" />
           </g>
         </svg>
       </section>
 
-      <!-- ── ПАНЕЛЬ: подсказка · кристаллы · описание ──────────────── -->
+      <!-- ── ПАНЕЛЬ: подсказка · имя · описание ─────────────────────── -->
       <section class="fx-side">
-        <template v-if="state === 'rest' || state === 'pick'">
-          <p class="fx-hint">{{ hint }}</p>
-          <button
-            v-if="state === 'pick'" type="button" class="fx-back fx-back--solo"
-            @click="goBack"
-          >← назад</button>
-        </template>
+        <p v-if="state === 'rest'" class="fx-hint">{{ hint }}</p>
 
         <div v-else class="fx-panel">
           <header class="fx-panel__head">
-            <span class="fx-panel__kicker">{{ branchName }}</span>
-            <h2 class="fx-panel__name">{{ state === 'crystal' ? cryName : facetName }}</h2>
+            <span class="fx-panel__kicker">{{ facetName(selFacet) }}</span>
+            <h2 class="fx-panel__name">
+              {{ state === 'crystal' ? crystalName(selCrystal) : facetName(selFacet) }}
+            </h2>
           </header>
 
           <div class="fx-panel__body">
-            <p v-if="state === 'open'" class="fx-hint fx-hint--left">{{ openHint }}</p>
+            <p v-if="state === 'facet'" class="fx-hint fx-hint--left">{{ facetHint }}</p>
             <p v-else class="fx-panel__desc">{{ cryText }}</p>
           </div>
 
@@ -251,197 +218,160 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, useId } from 'vue';
 import HexCore from '@/components/core/HexCore.vue';
-import { coreFacetSlices, crystalSlots } from '@/data/coreFacetSlices.js';
+import { coreFacets } from '@/data/coreFacets.js';
 import { accentRgb } from '@/data/coreCycle.js';
 import { CRYSTALS } from '@/data/upgradeData.js';
-import { crystalsOf } from '@/locales/facetCrystals.mockup.en.js';
+import { crystalText } from '@/locales/crystals.mockup.en.js';
 
-/* Макет показан на ядре ONSLAUGHT: у него в данных игры уже есть имена веток
-   и граней. Кристаллы — заглушки, см. facetCrystals.mockup.en.js. */
+/* Макет показан на ядре ONSLAUGHT: у него в данных игры уже лежат имена трёх
+   граней и пятнадцати кристаллов. Описания — заглушки, см. crystals.mockup. */
 const CORE_ID = 'natisk';
 
-/* Потолок: пять зажжённых граней на бойца. Цифрой на экран не выходит ни
-   разу — сколько осталось, игрок видит по налитому ядру. */
+/* Потолок: пять зажжённых КРИСТАЛЛОВ на бойца, как угодно разложенных по трём
+   граням. Цифрой на экран не выходит ни разу — сколько осталось, видно по
+   налитому ядру. */
 const CAP = 5;
 
-/* Рост фигуры на выборе. Ядро НЕ ДВИГАЕТСЯ: рост идёт вокруг его середины.
-   Числа разные, потому что кадр разный: в вертикали фигуру держит ширина
-   экрана, в горизонтали — высота. Выше — фигура выходит за край. */
-const PICK_PORTRAIT = 1.5;
-const PICK_LANDSCAPE = 1.33;
-
 /* Три уровня глубины, один приём на всех: выбранное выходит вперёд, остальное
-   уходит назад. Числа — в единицах холста (0…600). */
+   уходит назад. Числа — в единицах холста (0…600), выверены так, чтобы ни
+   предмет, ни подписи не выходили за край в обеих раскладках. */
 const L = {
-  /* грань вынесена */
-  facet: { y: 395, k: 7.4, coreLift: -150, coreK: 0.34 },
-  /* кристалл вынесен: грань отходит назад, ядро ещё дальше */
-  crystal: { y: 400, k: 18, facetY: 215, facetK: 2.0, coreLift: -205, coreK: 0.2 },
+  /* грань вынесена: длинный клин стоит слева, подписи кристаллов — справа */
+  facet: { x: 210, y: 332, k: 2.3, coreLift: -238, coreK: 0.18 },
+  /* кристалл вынесен: грань отходит влево и мельчает, ядро уходит ещё дальше */
+  crystal: { x: 372, y: 300, k: 11, facetX: 100, facetY: 322, facetK: 0.95, coreLift: -252, coreK: 0.14 },
 };
 
-/* Плоскости фаски по порядку из coreFacetSlices. Свет со стороны сердца. */
-const BEVEL_FACE = ['is-side', 'is-far', 'is-side', 'is-near'];
+/* Плоскости фаски по порядку рёбер из coreFacets. Свет со стороны сердца.
+   У грани рёбер шесть (клин), у кристалла четыре (гнездо). */
+const FACET_BEVEL = ['is-side', 'is-side', 'is-far', 'is-side', 'is-side', 'is-near'];
+const CRY_BEVEL = ['is-side', 'is-far', 'is-side', 'is-near'];
+
+/* Сколько места остаётся подписи справа от грани, в единицах холста. */
+const LABEL_ROOM = 290;
+/* Доля ширины знака к кеглю у моноширинного шрифта. */
+const GLYPH_W = 0.62;
 
 const uid = useId();
 const id = (n) => `fx-${n}-${uid}`;
 
-const slices = coreFacetSlices('full');
-const box = slices.box;
-const branches = slices.branches;
-const facets = branches.flatMap((b) => b.facets);
-const plate = branches.length ? slices.plate : '';
-const stops = branches[0].stops;
+const fig = coreFacets('full');
+const box = fig.box;
+const plate = fig.plate;
+const facets = fig.facets;
+const crystals = facets.flatMap((f) => f.crystals);
+const stops = facets[0].stops;
 
 const hue = computed(() => `rgb(${accentRgb(CORE_ID).join(' ')})`);
 
-/* rest · pick · open (грань вынесена) · crystal (кристалл вынесен) */
+/* rest · facet (грань вынесена) · crystal (кристалл вынесен) */
 const state = ref('rest');
-const sel = ref(null);      // ключ грани
-const cry = ref(null);      // номер кристалла на этой грани
-/* Что сейчас под пальцем. Подсвечена ВСЕГДА ОДНА единица: на ядре — грань,
-   на вынесенной грани — кристалл. { kind: 'facet'|'crystal', key }. */
+const sel = ref(null);      // ключ грани: a · b · c
+const cry = ref(null);      // номер кристалла внутри неё: 0…4
+
+/* Что сейчас под пальцем. Подсвечена ВСЕГДА ОДНА единица: на ядре — ЦЕЛАЯ
+   ГРАНЬ (кристаллы на ядре не подсвечиваются и не выбираются никогда), на
+   вынесенной грани — один кристалл. { kind: 'facet'|'crystal', key }. */
 const guide = ref(null);
 const clearGuide = () => { guide.value = null; };
-const hoverKey = computed(() => (guide.value?.kind === 'facet' ? guide.value.key : null));
-const hoverCry = computed(() => (guide.value?.kind === 'crystal' ? guide.value.key : null));
-const svgRef = ref(null);
+const guideFacetId = computed(() => (guide.value?.kind === 'facet' ? guide.value.key : null));
+const guideCryIndex = computed(() => (guide.value?.kind === 'crystal' ? guide.value.key : null));
 
-/* Зажжённое. Ключ грани → номер кристалла, которым её зажгли. */
+/* Зажжённое: множество ключей кристаллов (a1 … c5). */
 const lit = ref({});
 const rights = ref(0);
 const litCount = computed(() => Object.keys(lit.value).length);
-const facetLit = (f) => lit.value[f.key] !== undefined;
-const litIndex = computed(() => (sel.value ? lit.value[sel.value] ?? null : null));
+const isLit = (c) => !!lit.value[c.key];
 
-/* Налив ветки: сколько её граней зажжено, столько шагов и налито — светом от
-   сердца, без делений. */
-const branchLit = (b) => b.facets.filter((f) => facetLit(f)).length;
-const flowStyle = (b) => ({
-  transform: `translate(${box / 2}px, ${box / 2}px) scale(${stops[branchLit(b)]})`,
+/* Налив грани. Зажёгся кристалл — прибавился ОДИН шаг света, и свет идёт
+   непрерывно от сердца: делений внутри грани нет, ступени даёт кривая
+   перехода. Считаем зажжённые в этой грани, а не номер последнего: иначе
+   между зажжёнными остались бы тёмные провалы, а налив должен быть сплошным. */
+const facetLitCount = (f) => f.crystals.filter((c) => isLit(c)).length;
+const flowStyle = (f) => ({
+  transform: `translate(${box / 2}px, ${box / 2}px) scale(${stops[facetLitCount(f)]})`,
 });
 
-const gameBranches = CRYSTALS[CORE_ID];
-const byId = (bid) => gameBranches.find((b) => b.id === bid);
-const labelOf = (f) => {
-  const b = byId(f.branchId);
-  return `${b ? b.name : f.branchId} — ${b ? b.faces[f.id - 1].name : f.key}`;
+const gameFacets = CRYSTALS[CORE_ID];
+const gameFacet = (fid) => gameFacets.find((b) => b.id === fid) || null;
+const facetName = (f) => (f ? (gameFacet(f.id)?.name || f.id) : '');
+const crystalName = (c) => (c ? (gameFacet(c.facetId)?.faces[c.index]?.name || c.key) : '');
+
+const selFacet = computed(() => facets.find((f) => f.id === sel.value) || null);
+const selCrystals = computed(() => selFacet.value?.crystals || []);
+const selCrystal = computed(() => (cry.value === null ? null : selCrystals.value[cry.value] || null));
+const cryText = computed(() => (selCrystal.value ? crystalText(selCrystal.value.key) : ''));
+
+/* Кегль подписи ужимается под место справа от грани, если имя длинное:
+   иначе «BUILDING MOMENTUM» уезжает за край холста. */
+const labFont = (c) => {
+  const n = crystalName(c).length || 1;
+  return +Math.min(c.labSize, (LABEL_ROOM / L.facet.k) / (GLYPH_W * n)).toFixed(3);
 };
-
-const selFacet = computed(() => facets.find((f) => f.key === sel.value) || null);
-const cryList = computed(() => (sel.value ? crystalsOf(sel.value) : []));
-const slots = computed(() => (selFacet.value
-  ? crystalSlots(selFacet.value, cryList.value.length)
-  : []));
-
-/* Название кристалла под предметом — в две строки. Ломаем по пробелу,
-   БЛИЖАЙШЕМУ К СЕРЕДИНЕ слова: по первому пробелу вторая строка выходила
-   длиннее места под предметом и залезала на соседа. */
-const nameLines = (i, oneLine = false) => {
-  const n = (cryList.value[i]?.name || '').toUpperCase();
-  if (oneLine) return [n];
-  let best = -1;
-  for (let k = 0; k < n.length; k++) {
-    if (n[k] !== ' ') continue;
-    if (best < 0 || Math.abs(k - n.length / 2) < Math.abs(best - n.length / 2)) best = k;
-  }
-  return best < 0 ? [n] : [n.slice(0, best), n.slice(best + 1)];
-};
-
-/* Кегль подписи ужимается под место, если название длинное: иначе подписи
-   соседних кристаллов смыкаются (поймано рендером на паре ROOTED / DEAF TO
-   NOISE). 0.62 — доля ширины знака к кеглю у моноширинного шрифта. */
-function labSize(c) {
-  const longest = Math.max(1, ...nameLines(c.i, c.oneLine).map((l) => l.length));
-  return +Math.min(c.labSize, c.slotW / (0.62 * longest)).toFixed(3);
-}
-
-const branchName = computed(() => byId(selFacet.value?.branchId)?.name || '');
-const facetName = computed(() => {
-  const f = selFacet.value;
-  const b = f && byId(f.branchId);
-  return b ? b.faces[f.id - 1].name : '';
-});
-const cryName = computed(() => cryList.value[cry.value]?.name || '');
-const cryText = computed(() => cryList.value[cry.value]?.text || '');
 
 const stepLabel = computed(() => ({
-  rest: 'покой', pick: 'выбор грани',
-  open: 'грань вынесена', crystal: 'кристалл вынесен',
+  rest: 'покой', facet: 'грань вынесена', crystal: 'кристалл вынесен',
 }[state.value]));
-const hint = computed(() => (state.value === 'rest'
-  ? 'Нажмите по ядру — грани станут выбираемыми.'
-  : 'Выберите грань. Она выйдет вперёд, ядро уйдёт назад.'));
-const openHint = computed(() => (litIndex.value !== null
-  ? 'Грань уже зажжена выбранным кристаллом.'
-  : 'Выберите кристалл — он выйдет вперёд.'));
+const hint = 'Ведите пальцем по ядру — под пальцем подсветится грань. Отпустите — она выйдет вперёд.';
+const facetHint = computed(() => (litCount.value >= CAP
+  ? 'Больше кристаллов боец не удержит.'
+  : 'Ведите по грани — подсветится кристалл. Отпустите — он выйдет вперёд.'));
 const backLabel = computed(() => (state.value === 'crystal' ? '← назад к грани' : '← назад к ядру'));
 
-/* Зажечь можно, пока грань не зажжена, есть право и потолок не выбран. */
+/* Зажечь можно, пока кристалл не горит, есть право и потолок не выбран. */
 const canLight = computed(() => (
   state.value === 'crystal'
-  && litIndex.value === null
+  && selCrystal.value
+  && !isLit(selCrystal.value)
   && rights.value > 0
   && litCount.value < CAP
 ));
 const whyNot = computed(() => {
-  if (litIndex.value !== null) {
-    return litIndex.value === cry.value
-      ? 'Этот кристалл горит.'
-      : 'Грань уже зажжена другим кристаллом.';
-  }
-  if (litCount.value >= CAP) return 'Больше граней боец не удержит.';
-  return 'Право зажечь грань боец получает за занятие.';
+  if (selCrystal.value && isLit(selCrystal.value)) return 'Этот кристалл горит.';
+  if (litCount.value >= CAP) return 'Больше кристаллов боец не удержит.';
+  return 'Право зажечь кристалл боец получает за занятие.';
 });
-
-/* Раскладка кадра: от неё зависит, насколько фигура может вырасти, не выйдя
-   за край. Обновляется на поворот телефона. */
-const portrait = ref(true);
-const syncOrientation = () => { portrait.value = window.innerHeight >= window.innerWidth; };
-const pickScale = computed(() => (portrait.value ? PICK_PORTRAIT : PICK_LANDSCAPE));
 
 /* ⚠️ ВСЕ КОНЦЫ ПЕРЕХОДА ЗАПИСАНЫ ОДИНАКОВО: translate · rotate · scale ·
    translate. Покой — это НЕ 'none'. Браузер переходит между двумя записями по
    частям, и если в покое стоит 'none', каждая часть едет от своей единицы по
    отдельности: предмет успевает вырасти раньше, чем доехать, и в середине
-   перехода улетает за край экрана (поймано рендером). При одинаковой записи
-   середина перехода — ровно середина пути. */
+   перехода улетает за край экрана (поймано рендером). */
 const hold = (x, y, rot, k, ox, oy) =>
   `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${k}) translate(${-ox}px, ${-oy}px)`;
 
-/* Вынесенная грань доворачивается так, как стоит верхняя ветка: предмет
-   ложится ровно, и кристаллы с подписями читаются, а не стоят боком.
-   У верхней ветки доворот нулевой — её вид не меняется вовсе. */
-const facetTurn = (f) => -(f.deg + 90);
+/* Вынесенная грань доворачивается так, как стоит верхняя: клин встаёт ровно,
+   сердцем вниз, и подписи читаются, а не стоят боком. У верхней грани доворот
+   нулевой — её вид не меняется вовсе. */
+const facetTurn = (f) => (f ? -(f.deg + 90) : 0);
 
-const figureStyle = computed(() => {
+const coreStyle = computed(() => {
   const c = box / 2;
   if (state.value === 'crystal') return { transform: hold(c, c + L.crystal.coreLift, 0, L.crystal.coreK, c, c) };
-  if (state.value === 'open') return { transform: hold(c, c + L.facet.coreLift, 0, L.facet.coreK, c, c) };
-  if (state.value === 'pick') return { transform: hold(c, c, 0, pickScale.value, c, c) };
+  if (state.value === 'facet') return { transform: hold(c, c + L.facet.coreLift, 0, L.facet.coreK, c, c) };
   return { transform: hold(c, c, 0, 1, c, c) };
 });
 
 /* Где стоит вынесенная грань: впереди — пока выбирают кристалл; отходит
-   назад — когда кристалл вынесен. */
+   назад и мельчает — когда кристалл вынесен. */
 const facetStyle = computed(() => {
   const f = selFacet.value;
   const c = box / 2;
-  if (!f) return { transform: hold(c, c, 0, 1, c, c) };
+  if (!f) return coreStyle.value;
   const t = facetTurn(f);
   return state.value === 'crystal'
-    ? { transform: hold(box / 2, L.crystal.facetY, t, L.crystal.facetK, f.cx, f.cy) }
-    : { transform: hold(box / 2, L.facet.y, t, L.facet.k, f.cx, f.cy) };
+    ? { transform: hold(L.crystal.facetX, L.crystal.facetY, t, L.crystal.facetK, f.cx, f.cy) }
+    : { transform: hold(L.facet.x, L.facet.y, t, L.facet.k, f.cx, f.cy) };
 });
 
 const crystalStyle = (c) => ({
-  transform: hold(box / 2, L.crystal.y, facetTurn(selFacet.value), L.crystal.k, c.cx, c.cy),
+  transform: hold(L.crystal.x, L.crystal.y, facetTurn(selFacet.value), L.crystal.k, c.cx, c.cy),
 });
 
-/* Розовое — только на миг нажатия, там, где нажали. */
+/* Розовое — только на миг выбора, там, где отпустили. Единственное на странице. */
 const flash = ref(null);   // { points, level }
 let flashTimer = null;
-const flashShape = computed(() => flash.value?.points || null);
-const flashStyle = computed(() => (flash.value?.level === 'crystal' ? facetStyle.value : figureStyle.value));
+const flashStyle = computed(() => (flash.value?.level === 'crystal' ? facetStyle.value : coreStyle.value));
 function pulse(points, level) {
   flash.value = { points, level };
   if (flashTimer) clearTimeout(flashTimer);
@@ -449,37 +379,16 @@ function pulse(points, level) {
 }
 
 /* ── попадание пальцем ──────────────────────────────────────────────────
-   Зона грани не рисуется плиткой: весь шестиугольник поделён по БЛИЖАЙШЕЙ
-   середине грани. Зазоров нет, зоны не налезают, промаха «мимо всех» внутри
-   фигуры не бывает. */
-const HEART_R = 58;   // ближе к середине — это ядро, а не грань
+   Зоны не рисуются плиткой: разбор идёт по БЛИЖАЙШЕЙ середине. Зазоров нет,
+   зоны не налезают — палец между двумя, выигрывает та, чья середина ближе. */
+const HEART_R = 58;   // ближе к середине — это сердце, а не грань
 
 function toCanvas(e) {
-  const el = e.currentTarget;
-  const m = el.getScreenCTM();
+  const m = e.currentTarget.getScreenCTM();
   if (!m) return null;
   const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
   return [p.x, p.y];
 }
-function nearestFacet(e) {
-  const pt = toCanvas(e);
-  if (!pt) return null;
-  /* ⚠️ Проверка «внутри ли фигуры» обязательна, хотя полотно и есть сам
-     шестиугольник: палец захвачен, и события приходят на полотно даже когда
-     он ушёл далеко за край. Без неё подсветка не гасла за фигурой, а
-     отпускание в пустоте выбирало ближайшую грань (поймано зондом). */
-  if (!inPoly(pt, plate)) return null;
-  const c = box / 2;
-  if (Math.hypot(pt[0] - c, pt[1] - c) < HEART_R) return null;
-  let best = null;
-  let bd = Infinity;
-  for (const f of facets) {
-    const d = (f.cx - pt[0]) ** 2 + (f.cy - pt[1]) ** 2;
-    if (d < bd) { bd = d; best = f; }
-  }
-  return best;
-}
-const facetOpenable = (f) => facetLit(f) || litCount.value < CAP;
 
 /* Лежит ли точка внутри многоугольника (луч вправо). */
 function inPoly(pt, points) {
@@ -493,51 +402,63 @@ function inPoly(pt, points) {
   return inside;
 }
 
-/* ── ведение по ядру: единица — ГРАНЬ ──────────────────────────────────
-   ⚠️ Палец захватывается на pointerdown. Без захвата отпускание за краем
-   фигуры не доходит до пада, подсветка залипает и гаснет только со следующим
-   касанием. */
-function grab(e) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* не критично */ } }
-
-function guideFacet(e) {
-  if (state.value !== 'pick') { clearGuide(); return null; }
-  const f = nearestFacet(e);
-  const ok = f && facetOpenable(f);
-  guide.value = ok ? { kind: 'facet', key: f.key } : null;
-  return ok ? f : null;
-}
-function onFigDown(e) { grab(e); guideFacet(e); }
-function onFigMove(e) { guideFacet(e); }
-function onFigUp(e) {
-  if (state.value === 'rest') { clearGuide(); state.value = 'pick'; return; }
-  if (state.value === 'pick') {
-    const f = guideFacet(e);
-    clearGuide();
-    if (f) chooseFacet(f);
-    return;
+function nearestFacet(e) {
+  const pt = toCanvas(e);
+  if (!pt) return null;
+  /* ⚠️ Проверка «внутри ли фигуры» обязательна, хотя полотно и есть сам
+     шестиугольник: палец захвачен, и события приходят даже когда он ушёл
+     далеко за край. Без неё подсветка не гасла за фигурой, а отпускание в
+     пустоте выбирало ближайшую грань (поймано зондом). */
+  if (!inPoly(pt, plate)) return null;
+  const c = box / 2;
+  if (Math.hypot(pt[0] - c, pt[1] - c) < HEART_R) return null;
+  let best = null; let bd = Infinity;
+  for (const f of facets) {
+    const d = (f.cx - pt[0]) ** 2 + (f.cy - pt[1]) ** 2;
+    if (d < bd) { bd = d; best = f; }
   }
-  /* Отпустил на ушедшем назад ядре — шаг вверх. */
-  clearGuide();
-  goBack();
+  return best;
 }
 
-/* ── ведение по вынесенной грани: единица — КРИСТАЛЛ ───────────────── */
 function nearestCrystal(e) {
   const pt = toCanvas(e);
   const f = selFacet.value;
   if (!pt || !f || !inPoly(pt, f.points)) return null;
   let best = null; let bd = Infinity;
-  for (const c of slots.value) {
-    if (litIndex.value !== null && litIndex.value !== c.i) continue;  // погасшие не берутся
+  for (const c of f.crystals) {
     const d = (c.cx - pt[0]) ** 2 + (c.cy - pt[1]) ** 2;
     if (d < bd) { bd = d; best = c; }
   }
   return best;
 }
+
+/* ⚠️ Палец захватывается на pointerdown. Без захвата отпускание за краем
+   фигуры не доходит до пада, подсветка залипает и гаснет только со следующим
+   касанием. */
+function grab(e) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* не критично */ } }
+
+/* ── ведение по ядру: единица — ГРАНЬ ────────────────────────────────── */
+function guideFacet(e) {
+  if (state.value !== 'rest') { clearGuide(); return null; }
+  const f = nearestFacet(e);
+  guide.value = f ? { kind: 'facet', key: f.id } : null;
+  return f;
+}
+function onCoreDown(e) { grab(e); guideFacet(e); }
+function onCoreMove(e) { guideFacet(e); }
+function onCoreUp(e) {
+  if (state.value !== 'rest') { clearGuide(); goBack(); return; }
+  const f = guideFacet(e);
+  clearGuide();
+  /* Отпустил вне фигуры — не выбрано ничего и ничего не изменилось. */
+  if (f) chooseFacet(f);
+}
+
+/* ── ведение по вынесенной грани: единица — КРИСТАЛЛ ─────────────────── */
 function guideCrystal(e) {
-  if (state.value !== 'open') { clearGuide(); return null; }
+  if (state.value !== 'facet') { clearGuide(); return null; }
   const c = nearestCrystal(e);
-  guide.value = c ? { kind: 'crystal', key: c.i } : null;
+  guide.value = c ? { kind: 'crystal', key: c.index } : null;
   return c;
 }
 function onFacetDown(e) { grab(e); guideCrystal(e); }
@@ -551,35 +472,31 @@ function onFacetUp(e) {
 
 /* ── переходы ─────────────────────────────────────────────────────────── */
 function chooseFacet(f) {
-  if (state.value === 'rest') { state.value = 'pick'; return; }
-  if (state.value !== 'pick' || !facetOpenable(f)) return;
+  if (state.value !== 'rest') return;
   pulse(f.points, 'facet');   // одна розовая вспышка там, где отпустили
-  sel.value = f.key;
+  sel.value = f.id;
   cry.value = null;
-  state.value = 'open';
+  state.value = 'facet';
 }
 function chooseCrystal(c) {
-  if (state.value !== 'open') return;
-  if (litIndex.value !== null && litIndex.value !== c.i) return;   // погасший не берётся
+  if (state.value !== 'facet') return;
   pulse(c.points, 'crystal');
-  cry.value = c.i;
+  cry.value = c.index;
   state.value = 'crystal';
 }
 function lightUp() {
   if (!canLight.value) return;
-  lit.value = { ...lit.value, [sel.value]: cry.value };
+  lit.value = { ...lit.value, [selCrystal.value.key]: true };
   rights.value -= 1;
 }
 function goBack() {
   clearGuide();
-  if (state.value === 'crystal') { state.value = 'open'; cry.value = null; return; }
-  if (state.value === 'open') { state.value = 'pick'; sel.value = null; return; }
-  if (state.value === 'pick') state.value = 'rest';
+  if (state.value === 'crystal') { state.value = 'facet'; cry.value = null; return; }
+  if (state.value === 'facet') { state.value = 'rest'; sel.value = null; }
 }
 function onKey(e) { if (e.key === 'Escape') goBack(); }
 
-/* Служебные органы макета. */
-function grantRight() { rights.value += 1; }
+/* Служебный орган макета. В игру не идёт: там право даёт занятие. */
 function resetAll() {
   lit.value = {};
   rights.value = 0;
@@ -594,7 +511,6 @@ function resetAll() {
    как указатель на скрытый адрес. */
 let robotsTag = null;
 let prevTitle = null;
-let mq = null;
 
 onMounted(() => {
   prevTitle = document.title;
@@ -604,18 +520,12 @@ onMounted(() => {
   robotsTag.setAttribute('content', 'noindex, nofollow, noarchive');
   document.head.appendChild(robotsTag);
   window.addEventListener('keydown', onKey);
-  syncOrientation();
-  mq = window.matchMedia('(orientation: portrait)');
-  mq.addEventListener('change', syncOrientation);
-  window.addEventListener('resize', syncOrientation);
 });
 onBeforeUnmount(() => {
   if (prevTitle !== null) document.title = prevTitle;
   if (robotsTag) robotsTag.remove();
   if (flashTimer) clearTimeout(flashTimer);
   window.removeEventListener('keydown', onKey);
-  if (mq) mq.removeEventListener('change', syncOrientation);
-  window.removeEventListener('resize', syncOrientation);
 });
 </script>
 
@@ -726,7 +636,10 @@ onBeforeUnmount(() => {
   display: block;
   /* ⚠️ Ведение пальцем по фигуре — наш жест, не браузерный. Страница не
      прокручивается вовсе (у .fx жёсткая высота), отнимать у неё нечего;
-     описание под фигурой прокручивается своим блоком и сюда не входит. */
+     описание сбоку прокручивается своим блоком и сюда не входит.
+     ⚠️ Стоять это должно ИМЕННО НА КОРНЕ холста: внутри SVG браузер
+     touch-action не читает — на втором движении пальца прилетал
+     pointercancel и ведение обрывалось (поймано журналом событий). */
   touch-action: none;
   width: min(100%, 100cqh);
   height: auto;
@@ -738,7 +651,7 @@ onBeforeUnmount(() => {
 
 /* Всё, что ездит между уровнями, ездит одним свойством. Единицы px внутри
    transform равны единицам холста — это даёт transform-box. */
-.fx-figure,
+.fx-core,
 .fx-facet,
 .fx-cryst,
 .fx-flash {
@@ -747,11 +660,11 @@ onBeforeUnmount(() => {
   transition: transform var(--d-panel) var(--e-weight),
               opacity var(--d-panel) var(--e-settle);
 }
-.fx[data-state='open'] .fx-figure,
-.fx[data-state='crystal'] .fx-figure { opacity: .3; }
+.fx[data-state='facet'] .fx-core,
+.fx[data-state='crystal'] .fx-core { opacity: .3; }
 
-/* Налив клина: одна сплошная полоса, обрезанная растущим кругом.
-   ⚠️ ДЕЛЕНИЙ ВНУТРИ ВЕТКИ НЕТ: ни линий, ни точек, ни бусин. Шаги показывает
+/* Налив грани: одна сплошная полоса, обрезанная растущим кругом.
+   ⚠️ ДЕЛЕНИЙ ВНУТРИ ГРАНИ НЕТ: ни линий, ни точек, ни бусин. Шаги показывает
    движение, а не рисунок (решение 22.09.2026, подтверждено дважды). */
 .fx-flow { fill: currentColor; fill-opacity: .9; }
 .fx-flow-clip {
@@ -764,15 +677,9 @@ onBeforeUnmount(() => {
 .fx-socket { fill: var(--void); pointer-events: none; }
 
 /* ⚠️ Полотно, по которому водят пальцем. Прозрачное и во весь шестиугольник:
-   грань берётся по ближайшей середине, а не по своей плитке.
-   ⚠️ Запрет на браузерный жест стоит НЕ ЗДЕСЬ, а на корне холста (.fx-svg):
-   touch-action внутри SVG браузер не читает. Поставленный здесь, он не
-   срабатывал: на втором же движении пальца прилетал pointercancel, ведение
-   обрывалось и подсветка гасла (поймано журналом событий). */
-.fx-pad, .fx-cpad {
-  fill: transparent;
-  cursor: pointer;
-}
+   грань берётся по ближайшей середине, а не по своей плитке — зазоров между
+   зонами нет и они не налезают друг на друга. */
+.fx-pad, .fx-cpad { fill: transparent; cursor: pointer; }
 .fx[data-state='crystal'] .fx-cpad { cursor: default; }
 
 /* ── предметы: грань и кристалл огранены одинаково ────────────────── */
@@ -786,10 +693,11 @@ onBeforeUnmount(() => {
 .fx-bevel.is-far  { fill: color-mix(in srgb, var(--void) 55%, var(--panel)); }
 
 /* ⚠️ Подсветка под пальцем — НЕЙТРАЛЬНАЯ, не цветом ядра и не розовая.
-   Цветом ядра на клине показан налив: подсвеченная им незажжённая грань
-   читалась бы зажжённой. Розовое принадлежит действию, а подсветка — это ещё
-   не действие, а показ того, что будет выбрано, если отпустить.
-   В покое ноль: внутри клина нет никаких отметок. */
+   Цветом ядра показан налив: подсвеченная им незажжённая грань читалась бы
+   зажжённой. Розовое принадлежит действию, а подсветка — ещё не действие, а
+   показ того, что будет выбрано, если отпустить.
+   ⚠️ На ядре подсвечивается ТОЛЬКО ЦЕЛАЯ ГРАНЬ. Кристаллы на ядре не
+   подсвечиваются и не выбираются никогда — их там и не рисуют. */
 .fx-facet__glow {
   fill: var(--ink);
   fill-opacity: .3;
@@ -797,19 +705,15 @@ onBeforeUnmount(() => {
   pointer-events: none;
   transition: opacity var(--d-fast) var(--e-settle);
 }
-.fx[data-state='pick'] .fx-facet.is-hover .fx-facet__glow { opacity: 1; }
+.fx[data-state='rest'] .fx-facet.is-guided .fx-facet__glow { opacity: 1; }
 
-/* Клавиатурная цель. Пальцем по ней не попадают — попадание ведёт .fx-pad. */
-.fx-facet__key { fill: none; pointer-events: none; outline: none; }
+/* Клавиатурная цель. Пальцем по ней не попадают — попадание ведёт полотно. */
+.fx-facet__key, .fx-cryst__key { fill: none; pointer-events: none; outline: none; }
 
-.fx[data-state='open'] .fx-facet:not(.is-sel),
+.fx[data-state='facet'] .fx-facet:not(.is-sel),
 .fx[data-state='crystal'] .fx-facet:not(.is-sel) { opacity: 0; }
 
-/* Кристалл: пока грань впереди — предмет на ней; зажжённый горит, остальные
-   в этой грани гаснут — грань уже зажжена выбранным. */
-.fx-cryst { cursor: pointer; }
-.fx-cryst__hit { fill: none; pointer-events: none; outline: none; }
-/* Подсветка кристалла под пальцем — тем же нейтральным светом, что у грани. */
+/* Кристалл: пять гнёзд по длине вынесенной грани, в каждом один. */
 .fx-cryst__glow {
   fill: var(--ink);
   fill-opacity: .3;
@@ -817,18 +721,21 @@ onBeforeUnmount(() => {
   pointer-events: none;
   transition: opacity var(--d-fast) var(--e-settle);
 }
-.fx[data-state='open'] .fx-cryst.is-guided .fx-cryst__glow { opacity: 1; }
-.fx-cryst.is-spent { opacity: .35; cursor: default; }
+.fx[data-state='facet'] .fx-cryst.is-guided .fx-cryst__glow { opacity: 1; }
+/* Потолок выбран — незажжённые гаснут: зажечь их уже нечем. */
+.fx-cryst.is-spent { opacity: .35; }
 .fx-cryst__name {
   fill: var(--ink-dim);
   font-family: var(--font-mono);
   letter-spacing: var(--ls-meta);
-  text-anchor: middle;
+  text-anchor: start;
+  dominant-baseline: middle;
   pointer-events: none;
 }
+.fx-cryst.is-lit .fx-cryst__name { fill: var(--ink); }
 .fx[data-state='crystal'] .fx-cryst:not(.is-sel) { opacity: .18; }
 
-/* Розовое — только на миг нажатия. */
+/* Розовое — только на миг выбора. Оно тут одно на весь холст. */
 .fx-flash polygon { fill: var(--pink); opacity: .75; pointer-events: none; }
 
 /* ── панель ───────────────────────────────────────────────────────── */
@@ -922,7 +829,6 @@ onBeforeUnmount(() => {
 }
 .fx-light:active { opacity: var(--o-dim); }
 
-.fx-back--solo { align-self: center; margin-top: var(--sp-3); }
 .fx-back {
   min-height: var(--h-btn-sm);
   padding: 0 var(--sp-3);
@@ -941,10 +847,10 @@ onBeforeUnmount(() => {
 .fx-back:active { opacity: var(--o-dim); }
 
 /* «Уменьшить движение»: переходов нет, конечные состояния те же.
-   Отклик на нажатие остаётся — он не украшение. */
+   Отклик на выбор остаётся — он не украшение. */
 @media (prefers-reduced-motion: reduce) {
   .fx-dim,
-  .fx-figure,
+  .fx-core,
   .fx-facet,
   .fx-cryst,
   .fx-flash,
