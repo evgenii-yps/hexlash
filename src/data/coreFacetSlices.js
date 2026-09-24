@@ -39,6 +39,8 @@ const len = (a) => Math.hypot(a[0], a[1]);
  * @param {'full'|'muted'|'quiet'} mode режим яркости (нужен только чтобы взять
  *        ту же фигуру, что рисует HexCore — числа граней от режима не зависят)
  * @returns {{ box:number, c:number, r:number, branches:Array }}
+ *   plate  — контур шестиугольника: по нему ловится нажатие (зона грани —
+ *            не её плитка, а часть фигуры, ближайшая к середине грани);
  *   branches[k] = { id, strip, stops, facets: [...] }
  *   strip  — вся горящая часть клина одной фигурой (из coreFigure), по ней
  *            идёт налив: клин заполняется светом от сердца к концу, шагами;
@@ -55,7 +57,10 @@ const len = (a) => Math.hypot(a[0], a[1]);
  *   deg    — наклон ветки в градусах;
  *   near, far — середины ближнего к сердцу и дальнего срезов грани. По ним
  *            свет внутри вынесенной грани идёт тем же путём, что налив на
- *            ядре: от сердца к концу.
+ *            ядре: от сердца к концу;
+ *   ax, nx — единичные оси грани: вдоль ветки (наружу) и поперёк;
+ *   halfW, lenU — полуширина и длина грани в своих осях. По ним на грани
+ *            раскладываются кристаллы (crystalSlots ниже).
  */
 export function coreFacetSlices(mode = 'full') {
   const fig = coreFigure(mode);
@@ -120,6 +125,10 @@ export function coreFacetSlices(mode = 'full') {
         ])),
         near: mid(q[0], q[3]).map((v) => +v.toFixed(2)),
         far: mid(q[1], q[2]).map((v) => +v.toFixed(2)),
+        ax: [+ax[0].toFixed(5), +ax[1].toFixed(5)],
+        nx: [+nx[0].toFixed(5), +nx[1].toFixed(5)],
+        halfW: +(halfAt((t0 + t1) / 2) * R).toFixed(3),
+        lenU: +((t1 - t0) * R).toFixed(3),
         cx: +cx.toFixed(2),
         cy: +cy.toFixed(2),
         deg,
@@ -128,10 +137,84 @@ export function coreFacetSlices(mode = 'full') {
     return { id: b.id, strip: b.strip, stops: b.stops.slice(), facets };
   });
 
-  return { box: fig.box, c: C, r: R, branches };
+  return { box: fig.box, c: C, r: R, plate: fig.plate, branches };
 }
 
 /** Все пятнадцать граней одним списком, в порядке веток. */
 export function allFacets(mode = 'full') {
   return coreFacetSlices(mode).branches.flatMap((b) => b.facets);
+}
+
+/* ---- огранка ------------------------------------------------------------
+   Четырёхугольник → тело, поджатая плоскость и четыре плоскости фаски между
+   ними. Один приём на все уровни: осколок грани и кристалл на ней огранены
+   одинаково, отличаются только размером. */
+
+/** Порядок плоскостей: [0] бок, [1] дальний срез, [2] бок, [3] ближний срез. */
+export function bevelQuad(q, k = 0.82) {
+  const cx = q.reduce((s, p) => s + p[0], 0) / 4;
+  const cy = q.reduce((s, p) => s + p[1], 0) / 4;
+  const inner = q.map((p) => [cx + (p[0] - cx) * k, cy + (p[1] - cy) * k]);
+  return {
+    points: fmtPts(q),
+    inner: fmtPts(inner),
+    bevels: [0, 1, 2, 3].map((e) => fmtPts([
+      q[e], q[(e + 1) % 4], inner[(e + 1) % 4], inner[e],
+    ])),
+    cx: +cx.toFixed(2),
+    cy: +cy.toFixed(2),
+  };
+}
+
+/**
+ * Места кристаллов НА грани. Кристаллы лежат в ряд поперёк ветки, подписи —
+ * под ними, ближе к сердцу. Всё в тех же единицах холста, что и сама грань:
+ * когда грань выходит вперёд, кристаллы едут вместе с ней одним движением.
+ *
+ * @param {object} f грань из coreFacetSlices
+ * @param {number} n сколько кристаллов на этой грани
+ */
+export function crystalSlots(f, n) {
+  if (!n) return [];
+  const [ax, ay] = f.ax;
+  const [nxx, nxy] = f.nx;
+  /* Ряд занимает ширину грани; кристалл — две трети своего места, остальное
+     зазор. По длине грань делится надвое: предмет ближе к концу ветки,
+     подпись — ближе к сердцу. */
+  const stepV = (2 * f.halfW) / n;
+  const halfV = stepV * 0.33;
+  const halfU = f.lenU * 0.17;
+  const outU = f.lenU * 0.18;    // предмет
+  const labU = -f.lenU * 0.28;   // подпись
+
+  const at = (u, v) => [
+    f.cx + ax * u + nxx * v,
+    f.cy + ay * u + nxy * v,
+  ];
+
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const v = (i - (n - 1) / 2) * stepV;
+    const q = [
+      at(outU + halfU, v - halfV),
+      at(outU + halfU, v + halfV),
+      at(outU - halfU, v + halfV),
+      at(outU - halfU, v - halfV),
+    ];
+    const lab = at(labU, v);
+    out.push({
+      i,
+      ...bevelQuad(q, 0.74),
+      /* Свет внутри кристалла идёт тем же путём, что налив: от сердца наружу. */
+      near: at(outU - halfU, v).map((x) => +x.toFixed(2)),
+      far: at(outU + halfU, v).map((x) => +x.toFixed(2)),
+      labX: +lab[0].toFixed(2),
+      labY: +lab[1].toFixed(2),
+      /* Кегль подписи в единицах холста: он едет вместе с гранью, поэтому
+         задаётся в её масштабе, а не в точках экрана. */
+      labSize: +(f.lenU * 0.125).toFixed(3),
+      labStep: +(f.lenU * 0.145).toFixed(3),
+    });
+  }
+  return out;
 }
