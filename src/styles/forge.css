@@ -315,19 +315,38 @@
   text-transform: uppercase; color: var(--ink-off); text-align: center;
 }
 .fc-hint--left { text-align: left; }
-/* Перечень того, что кристалл меняет. Словами, без чисел.
-   Длинный перечень прокручивается сам, а не выдавливает кнопки за край: у
-   иных кристаллов строк четыре, и в самой низкой раскладке они уносили возврат
-   под нижний край (замерено — на 67 точек). */
+/* ОПИСАНИЕ КРИСТАЛЛА — что он даёт в бою и как меняет манеру. Настоящий текст,
+   а не перечень фраз из игровых данных (ТЗ 24.09.2026). Цифр здесь нет ни одной.
+
+   ⚠️ ПРОКРУТКА ОСТАЁТСЯ, и она здесь единственная страховка от того, ради чего
+   ограничение и заводилось: длинное описание не должно выдавливать «ЗАЖЕЧЬ» и
+   возврат под нижний край (замерено прежде — на 67 точек в самой низкой
+   раскладке). Потолок поднят с 4.2em до 7.5em, потому что вместо двух-трёх
+   слов тут теперь два предложения: при прежнем потолке строка характера
+   пряталась под сгиб целиком, и её приходилось искать прокруткой.
+
+   ⚠️ КАПИТЕЛИ У ПРЕДЛОЖЕНИЙ НЕТ. Она в системе отведена лейблам и ударным
+   словам до трёх (hexlash-design §3); целое предложение заглавными и читается
+   хуже, и занимает заметно больше места. Заглавными здесь только подпись
+   CHARACTER — она лейбл. Трекинга у предложений тоже нет: он для подписей. */
 .fc-lines {
-  margin: var(--sp-2) 0 0; padding: 0; list-style: none;
-  max-height: 4.2em; overflow-y: auto; overscroll-behavior: contain;
+  margin: var(--sp-2) 0 0; padding: 0;
+  max-height: 7.5em; overflow-y: auto; overscroll-behavior: contain;
 }
-.fc-lines li {
-  font-size: var(--t-micro); line-height: 1.55; letter-spacing: var(--ls-meta);
-  text-transform: uppercase; color: var(--ink-off);
+/* ⚠️ Предложения переносятся, а не обрезаются: ни одного обрезающего правила
+   здесь быть не должно. Длинное слово ломается, чтобы не распирать колонку. */
+.fc-line, .fc-char__text {
+  margin: 0; font-family: var(--font-display); font-size: var(--t-xs);
+  line-height: 1.45; color: var(--ink-dim);
+  overflow-wrap: anywhere; hyphens: none;
 }
-.fc-lines li.lead { color: var(--ink-dim); }
+.fc-char { margin: var(--sp-2) 0 0; }
+/* Подпись строки характера — лейбл, потому моно и заглавными. */
+.fc-char__label {
+  display: block; font-family: var(--font-mono); font-size: var(--t-micro);
+  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
+}
+.fc-char__text { display: block; margin-top: var(--sp-1); }
 
 .fc-foot {
   margin-top: var(--sp-3); flex: 0 0 auto; display: flex; align-items: center;

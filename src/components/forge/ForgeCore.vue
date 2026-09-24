@@ -200,14 +200,19 @@
 
         <p v-if="level === 'facet'" class="fc-hint fc-hint--left">{{ t.forge.facetHint }}</p>
 
-        <!-- ОПИСАНИЕ — из игровых данных, а не придуманное. Прозы у кристаллов
-             в игре нет; что есть — перечень того, что кристалл меняет, и он
-             сюда и идёт, СЛОВАМИ БЕЗ ЧИСЕЛ: направление живёт в самой
-             формулировке («держит дистанцию» против «дерётся вплотную»), а
-             величина — цифра, которой в зале быть не должно. -->
-        <ul v-else-if="cryLines.length" class="fc-lines">
-          <li v-for="(ln, i) in cryLines" :key="i" :class="{ lead: i === 0 }">{{ ln }}</li>
-        </ul>
+        <!-- ОПИСАНИЕ КРИСТАЛЛА — две вещи и ни одной цифры (ТЗ 24.09.2026):
+             что он даёт бойцу в бою, и как он меняет его манеру. Вторую
+             подписываем словом CHARACTER — внутреннего словаря игрок не видит.
+             ⚠️ Предложения набраны своим регистром, а не капителью: капитель в
+             системе отведена лейблам и ударным словам до трёх. Заглавными здесь
+             только сама подпись CHARACTER — она лейбл. -->
+        <div v-else-if="cryText" class="fc-lines">
+          <p class="fc-line fc-line--effect">{{ cryText.effect }}</p>
+          <p class="fc-char">
+            <span class="fc-char__label">{{ t.forge.characterLabel }}</span>
+            <span class="fc-char__text">{{ cryText.character }}</span>
+          </p>
+        </div>
       </template>
     </div>
 
@@ -231,7 +236,7 @@ import { t } from '@/locales/index.js';
 import HexCore from '@/components/core/HexCore.vue';
 import { coreFacets } from '@/data/coreFacets.js';
 import { getCore } from '@/data/upgradeData.js';
-import { facetEffects } from '@/data/facetReadout.js';
+import { facetTitle, crystalTitle, crystalText } from '@/data/crystalTexts.js';
 
 const props = defineProps({
   coreId: { type: String, required: true },
@@ -304,20 +309,25 @@ const facetLitCount = (f) => {
   return b ? b.faces.filter((x) => x.state === 'lit').length : 0;
 };
 
-const facetName = (f) => (f ? (branchOf(f)?.name || f.id.toUpperCase()) : '');
-const crystalName = (c) => (c ? (faceOf(c)?.name || '') : '');
+/* ИМЕНА — ИЗ СЛОЯ ТЕКСТОВ, а не из игровых данных (ТЗ 24.09.2026 §4.3).
+   В данных имя кристалла было и ключом содержания, и надписью на экране; теперь
+   они разведены. Ключи (branch.id · face.id) не тронуты — они часть счёта.
+   Запасной вариант — прежнее имя из данных: если слой текстов вдруг не знает
+   этого места, гнездо покажет старую подпись, а не пустоту. */
+const facetName = (f) => (f ? (facetTitle(f.id) || branchOf(f)?.name || f.id.toUpperCase()) : '');
+const crystalName = (c) => (c ? (crystalTitle(c.facetId, c.index) || faceOf(c)?.name || '') : '');
 
 const selFacet = computed(() => facets.find((f) => f.id === sel.value) || null);
 const selCrystals = computed(() => selFacet.value?.crystals || []);
 const selCrystal = computed(() => (cry.value === null ? null : selCrystals.value[cry.value] || null));
 
-/* ОПИСАНИЕ — перечень того, что кристалл меняет, СЛОВАМИ БЕЗ ЧИСЕЛ.
-   Прозы у кристаллов в игре нет вовсе; это единственное настоящее описание,
-   какое там лежит. Знак и величину не берём намеренно: направление уже внутри
-   формулировки, а величина — цифра, которой в зале быть не должно. */
-const cryLines = computed(() => (selCrystal.value
-  ? facetEffects(faceOf(selCrystal.value)).map((e) => e.phrase).filter(Boolean)
-  : []));
+/* ОПИСАНИЕ — настоящий текст кристалла: что он даёт в бою и как меняет манеру
+   (ТЗ 24.09.2026). Прежде здесь шёл перечень фраз эффектов из игровых данных —
+   прозы у кристаллов не было вовсе. Теперь она есть, и лежит отдельно от счёта.
+   ⚠️ НИ ОДНОЙ ЦИФРЫ: ни процентов, ни остатка прав. Их отдельный проход позже. */
+const cryText = computed(() => (selCrystal.value
+  ? crystalText(selCrystal.value.facetId, selCrystal.value.index)
+  : null));
 
 /* ── можно ли зажигать ─────────────────────────────────────────────────── */
 const canLightAny = computed(() => !props.gates.light && props.spent < props.resource);

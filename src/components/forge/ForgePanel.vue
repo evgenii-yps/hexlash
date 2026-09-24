@@ -251,6 +251,7 @@ import { computed, ref } from 'vue';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import { AXIS_IDS } from '@/data/behavior.js';
+import { crystalTitle } from '@/data/crystalTexts.js';
 import ForgeCore from '@/components/forge/ForgeCore.vue';
 
 const props = defineProps({
@@ -401,10 +402,14 @@ const treeLoadingText = computed(() => interpolate(t.value.forge.treeLoading, {
 
 // What he is built out of — the same read the tree's footer used to do, one
 // level up, because it is a block of the panel now rather than part of the tree.
+// ⚠️ ИМЯ БЕРЁТСЯ ИЗ СЛОЯ ТЕКСТОВ, как и на самом ядре (ТЗ 24.09.2026 §4.3):
+// в игровых данных `face.name` — ключ содержания, а не надпись для игрока. Две
+// надписи для одного кристалла разошлись бы в первый же день. Запасной
+// вариант — прежнее имя из данных.
 const litNames = computed(() => {
   const out = [];
-  (props.picked?.upgrade || []).forEach((cr) => cr.faces.forEach((f) => {
-    if (f.state === 'lit') out.push(f.name);
+  (props.picked?.upgrade || []).forEach((cr) => cr.faces.forEach((f, i) => {
+    if (f.state === 'lit') out.push(crystalTitle(cr.id, i) || f.name);
   }));
   return out;
 });

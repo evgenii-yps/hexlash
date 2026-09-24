@@ -118,6 +118,10 @@ export default {
     coreHint: "GUIDE OVER THE CORE · A FACET LIGHTS UP",
     facetHint: "GUIDE OVER THE FACET · A CRYSTAL LIGHTS UP",
     lightUp: "LIGHT IT",
+    // Подпись второй строки описания кристалла: как он меняет манеру бойца.
+    // ⚠️ Внутреннего словаря здесь быть не может — игрок его не видит. Слово
+    // DOCTRINE и прочее наружу не выходит; для игрока это просто характер.
+    characterLabel: "CHARACTER",
     backToFacet: "← BACK TO THE FACET",
     backToCore: "← BACK TO THE CORE",
     // почему этот кристалл не зажечь — по одной причине на случай
