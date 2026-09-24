@@ -32,8 +32,7 @@
           class="fx-svg"
           :viewBox="`0 0 ${box} ${box}`"
           :style="{ color: hue }"
-          @click.self="onBackdrop"
-        >
+                  >
           <defs>
             <!-- Налив. У каждой ветки свой растущий круг: сколько граней в ней
                  зажжено, до того шага и дошёл свет. Ступени даёт кривая
@@ -63,7 +62,10 @@
             </linearGradient>
           </defs>
 
-          <rect class="fx-void" x="0" y="0" :width="box" :height="box" @click="onBackdrop" />
+          <!-- Пустое место. Отпустил здесь — не выбрано ничего и ничего не
+               изменилось: возврат живёт на кнопке, Esc и на ушедшем назад
+               предмете, а не на промахе. -->
+          <rect class="fx-void" x="0" y="0" :width="box" :height="box" />
 
           <!-- ФИГУРА: ядро, налив и пустое гнездо. Двигается одним куском. -->
           <g class="fx-figure" :style="figureStyle">
@@ -79,21 +81,21 @@
             <!-- Пустое гнездо: пока грань вынесена, на ядре её нет. -->
             <polygon v-if="selFacet" class="fx-socket" :points="selFacet.points" />
 
-            <!-- ⚠️ ЗОНА НАЖАТИЯ — ВЕСЬ ШЕСТИУГОЛЬНИК, А НЕ ПЯТНАДЦАТЬ ПЛИТОК.
-                 Грань выбирается по БЛИЖАЙШЕЙ середине: зазоров между зонами
-                 нет, промаха «мимо всех» не бывает, попал между двумя — берётся
-                 та, к чьей середине ближе. Глазами зона не показывается никак. -->
+            <!-- ⚠️ ВЕДЕНИЕ, А НЕ ТЫЧОК. Палец лежит на фигуре и водит — под ним
+                 подсвечивается ЦЕЛАЯ ГРАНЬ; отпустил — она и выбрана.
+                 ⚠️ Слушаем pointerdown, а НЕ только pointermove: на телефоне
+                 при касании ведения не приходит вовсе — приходят лишь нажал и
+                 отпустил (замерено: на тап прилетают pointerdown, pointerup,
+                 click и ни одного pointermove). На одном pointermove подсветка
+                 на телефоне не загоралась никогда, и выбор шёл вслепую.
+                 ⚠️ Зона — весь шестиугольник, а не пятнадцать плиток: грань
+                 берётся по БЛИЖАЙШЕЙ середине, зазоров между зонами нет. -->
             <polygon
               class="fx-pad" :points="plate"
-              @pointermove="onPadMove" @pointerleave="hoverKey = null" @click="onPadTap"
+              @pointerdown="onFigDown" @pointermove="onFigMove"
+              @pointerup="onFigUp" @pointercancel="clearGuide"
+              @pointerleave="clearGuide"
             />
-          </g>
-
-          <!-- Отклик на нажатие. ⚠️ ОТДЕЛЬНЫМ СЛОЕМ: предмет в этот момент уже
-               летит вперёд, и розовое улетало вместе с ним. Здесь вспышка
-               остаётся ТАМ, ГДЕ НАЖАЛИ, и живёт четверть секунды. -->
-          <g v-if="flashShape" class="fx-flash" :style="flashStyle" aria-hidden="true">
-            <polygon :points="flashShape" />
           </g>
 
           <!-- ГРАНИ. В покое у грани нет никакого рисунка — только подсветка
@@ -104,6 +106,10 @@
             :class="{ 'is-sel': sel === f.key, 'is-hover': hoverKey === f.key }"
             :style="sel === f.key ? facetStyle : figureStyle"
           >
+            <!-- Подсветка под пальцем. Целая грань, и НЕ цветом ядра: цветом
+                 ядра на клине показан налив, и подсвеченная незажжённая грань
+                 читалась бы зажжённой. Показ будущего выбора — не действие,
+                 поэтому и не розовый. -->
             <polygon class="fx-facet__glow" :points="f.points" />
 
             <template v-if="sel === f.key">
@@ -117,13 +123,23 @@
                 v-if="facetLit(f)" class="fx-shard__lit"
                 :points="f.inner" :fill="`url(#${id('shard')})`"
               />
+              <!-- Тот же приём уровнем глубже: ведём по вынесенной грани —
+                   подсвечивается целый кристалл, отпустили — он и выбран. -->
+              <polygon
+                class="fx-cpad" :points="f.points"
+                @pointerdown="onFacetDown" @pointermove="onFacetMove"
+                @pointerup="onFacetUp" @pointercancel="clearGuide"
+                @pointerleave="clearGuide"
+              />
             </template>
 
             <polygon
               class="fx-facet__key" :points="f.points"
               role="button" tabindex="0" :aria-label="labelOf(f)"
-              @keydown.enter.prevent="pickFacet(f)"
-              @keydown.space.prevent="pickFacet(f)"
+              @keydown.enter.prevent="chooseFacet(f)"
+              @keydown.space.prevent="chooseFacet(f)"
+              @focus="guide = { kind: 'facet', key: f.key }"
+              @blur="clearGuide"
             />
           </g>
 
@@ -135,11 +151,11 @@
             class="fx-cryst"
             :class="{
               'is-sel': cry === c.i,
+              'is-guided': hoverCry === c.i,
               'is-lit': litIndex === c.i,
               'is-spent': litIndex !== null && litIndex !== c.i,
             }"
-            :style="cry === c.i ? crystalStyle(c) : facetStyle"
-            @click.stop="pickCrystal(c)"
+                        :style="cry === c.i ? crystalStyle(c) : facetStyle"
           >
             <polygon class="fx-shard__body" :points="c.points" />
             <polygon
@@ -151,12 +167,18 @@
               v-if="litIndex === c.i" class="fx-shard__lit"
               :points="c.inner" :fill="`url(#${id('cry-' + c.i)})`"
             />
-            <!-- ⚠️ Зона нажатия отдельной прозрачной фигурой. Все рисованные
-                 части предмета стоят на pointer-events: none — иначе фаска
-                 перехватывает нажатие раньше лицевой плоскости. Без неё клик
-                 по кристаллу проваливался на фон и уводил на уровень вверх
-                 (поймано проверкой потока). -->
-            <polygon class="fx-cryst__hit" :points="c.points" />
+            <!-- Подсветка под пальцем — целый кристалл, нейтральная. -->
+            <polygon class="fx-cryst__glow" :points="c.inner" />
+            <!-- Клавиатурная цель. Пальцем по ней не попадают: выбор ведёт
+                 пад грани по ближайшей середине кристалла. -->
+            <polygon
+              class="fx-cryst__hit" :points="c.points"
+              role="button" tabindex="0" :aria-label="cryList[c.i]?.name"
+              @keydown.enter.prevent="chooseCrystal(c)"
+              @keydown.space.prevent="chooseCrystal(c)"
+              @focus="guide = { kind: 'crystal', key: c.i }"
+              @blur="clearGuide"
+            />
 
             <!-- Название под предметом. Прячется у вынесенного: там имя стоит
                  в панели рядом с полным описанием. -->
@@ -170,20 +192,36 @@
               class="fx-cryst__name"
               :x="c.labX" :y="c.labY"
               :transform="`rotate(${-facetTurn(selFacet)} ${c.labX} ${c.labY})`"
-              :style="{ fontSize: `${c.labSize}px` }"
+              :style="{ fontSize: `${labSize(c)}px` }"
             >
               <tspan
-                v-for="(ln, li) in nameLines(c.i)" :key="li"
+                v-for="(ln, li) in nameLines(c.i, c.oneLine)" :key="li"
                 :x="c.labX" :dy="li ? c.labStep : 0"
               >{{ ln }}</tspan>
             </text>
+          </g>
+
+          <!-- Отклик на выбор. ⚠️ ОТДЕЛЬНЫМ СЛОЕМ И ПОСЛЕДНИМ В ПОРЯДКЕ.
+               Отдельным — потому что предмет в этот момент уже летит вперёд, и
+               розовое улетало вместе с ним. Последним — потому что летящий
+               предмет стартует ровно с места вспышки и закрывал её собой
+               (поймано рендером). Вспышка остаётся ТАМ, ГДЕ ОТПУСТИЛИ, и живёт
+               четверть секунды. Это единственное розовое на странице. -->
+          <g v-if="flashShape" class="fx-flash" :style="flashStyle" aria-hidden="true">
+            <polygon :points="flashShape" />
           </g>
         </svg>
       </section>
 
       <!-- ── ПАНЕЛЬ: подсказка · кристаллы · описание ──────────────── -->
       <section class="fx-side">
-        <p v-if="state === 'rest' || state === 'pick'" class="fx-hint">{{ hint }}</p>
+        <template v-if="state === 'rest' || state === 'pick'">
+          <p class="fx-hint">{{ hint }}</p>
+          <button
+            v-if="state === 'pick'" type="button" class="fx-back fx-back--solo"
+            @click="goBack"
+          >← назад</button>
+        </template>
 
         <div v-else class="fx-panel">
           <header class="fx-panel__head">
@@ -260,7 +298,12 @@ const hue = computed(() => `rgb(${accentRgb(CORE_ID).join(' ')})`);
 const state = ref('rest');
 const sel = ref(null);      // ключ грани
 const cry = ref(null);      // номер кристалла на этой грани
-const hoverKey = ref(null);
+/* Что сейчас под пальцем. Подсвечена ВСЕГДА ОДНА единица: на ядре — грань,
+   на вынесенной грани — кристалл. { kind: 'facet'|'crystal', key }. */
+const guide = ref(null);
+const clearGuide = () => { guide.value = null; };
+const hoverKey = computed(() => (guide.value?.kind === 'facet' ? guide.value.key : null));
+const hoverCry = computed(() => (guide.value?.kind === 'crystal' ? guide.value.key : null));
 const svgRef = ref(null);
 
 /* Зажжённое. Ключ грани → номер кристалла, которым её зажгли. */
@@ -290,13 +333,27 @@ const slots = computed(() => (selFacet.value
   ? crystalSlots(selFacet.value, cryList.value.length)
   : []));
 
-/* Название кристалла под предметом — в две строки по пробелу: места под
-   подписью ровно столько, сколько занимает сам предмет. */
-const nameLines = (i) => {
+/* Название кристалла под предметом — в две строки. Ломаем по пробелу,
+   БЛИЖАЙШЕМУ К СЕРЕДИНЕ слова: по первому пробелу вторая строка выходила
+   длиннее места под предметом и залезала на соседа. */
+const nameLines = (i, oneLine = false) => {
   const n = (cryList.value[i]?.name || '').toUpperCase();
-  const sp = n.indexOf(' ');
-  return sp < 0 ? [n] : [n.slice(0, sp), n.slice(sp + 1)];
+  if (oneLine) return [n];
+  let best = -1;
+  for (let k = 0; k < n.length; k++) {
+    if (n[k] !== ' ') continue;
+    if (best < 0 || Math.abs(k - n.length / 2) < Math.abs(best - n.length / 2)) best = k;
+  }
+  return best < 0 ? [n] : [n.slice(0, best), n.slice(best + 1)];
 };
+
+/* Кегль подписи ужимается под место, если название длинное: иначе подписи
+   соседних кристаллов смыкаются (поймано рендером на паре ROOTED / DEAF TO
+   NOISE). 0.62 — доля ширины знака к кеглю у моноширинного шрифта. */
+function labSize(c) {
+  const longest = Math.max(1, ...nameLines(c.i, c.oneLine).map((l) => l.length));
+  return +Math.min(c.labSize, c.slotW / (0.62 * longest)).toFixed(3);
+}
 
 const branchName = computed(() => byId(selFacet.value?.branchId)?.name || '');
 const facetName = computed(() => {
@@ -407,6 +464,11 @@ function toCanvas(e) {
 function nearestFacet(e) {
   const pt = toCanvas(e);
   if (!pt) return null;
+  /* ⚠️ Проверка «внутри ли фигуры» обязательна, хотя полотно и есть сам
+     шестиугольник: палец захвачен, и события приходят на полотно даже когда
+     он ушёл далеко за край. Без неё подсветка не гасла за фигурой, а
+     отпускание в пустоте выбирало ближайшую грань (поймано зондом). */
+  if (!inPoly(pt, plate)) return null;
   const c = box / 2;
   if (Math.hypot(pt[0] - c, pt[1] - c) < HEART_R) return null;
   let best = null;
@@ -419,34 +481,86 @@ function nearestFacet(e) {
 }
 const facetOpenable = (f) => facetLit(f) || litCount.value < CAP;
 
-function onPadMove(e) {
-  if (state.value !== 'pick') { hoverKey.value = null; return; }
-  const f = nearestFacet(e);
-  hoverKey.value = f && facetOpenable(f) ? f.key : null;
+/* Лежит ли точка внутри многоугольника (луч вправо). */
+function inPoly(pt, points) {
+  const q = points.trim().split(/\s+/).map((t) => t.split(',').map(Number));
+  let inside = false;
+  for (let i = 0, j = q.length - 1; i < q.length; j = i++) {
+    const [xi, yi] = q[i]; const [xj, yj] = q[j];
+    if ((yi > pt[1]) !== (yj > pt[1])
+      && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
 }
-function onPadTap(e) {
-  if (state.value === 'rest') { state.value = 'pick'; return; }
+
+/* ── ведение по ядру: единица — ГРАНЬ ──────────────────────────────────
+   ⚠️ Палец захватывается на pointerdown. Без захвата отпускание за краем
+   фигуры не доходит до пада, подсветка залипает и гаснет только со следующим
+   касанием. */
+function grab(e) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* не критично */ } }
+
+function guideFacet(e) {
+  if (state.value !== 'pick') { clearGuide(); return null; }
+  const f = nearestFacet(e);
+  const ok = f && facetOpenable(f);
+  guide.value = ok ? { kind: 'facet', key: f.key } : null;
+  return ok ? f : null;
+}
+function onFigDown(e) { grab(e); guideFacet(e); }
+function onFigMove(e) { guideFacet(e); }
+function onFigUp(e) {
+  if (state.value === 'rest') { clearGuide(); state.value = 'pick'; return; }
   if (state.value === 'pick') {
-    const f = nearestFacet(e);
-    if (f) pickFacet(f);
+    const f = guideFacet(e);
+    clearGuide();
+    if (f) chooseFacet(f);
     return;
   }
-  /* Нажатие по ушедшему назад ядру — шаг вверх. */
+  /* Отпустил на ушедшем назад ядре — шаг вверх. */
+  clearGuide();
   goBack();
 }
 
+/* ── ведение по вынесенной грани: единица — КРИСТАЛЛ ───────────────── */
+function nearestCrystal(e) {
+  const pt = toCanvas(e);
+  const f = selFacet.value;
+  if (!pt || !f || !inPoly(pt, f.points)) return null;
+  let best = null; let bd = Infinity;
+  for (const c of slots.value) {
+    if (litIndex.value !== null && litIndex.value !== c.i) continue;  // погасшие не берутся
+    const d = (c.cx - pt[0]) ** 2 + (c.cy - pt[1]) ** 2;
+    if (d < bd) { bd = d; best = c; }
+  }
+  return best;
+}
+function guideCrystal(e) {
+  if (state.value !== 'open') { clearGuide(); return null; }
+  const c = nearestCrystal(e);
+  guide.value = c ? { kind: 'crystal', key: c.i } : null;
+  return c;
+}
+function onFacetDown(e) { grab(e); guideCrystal(e); }
+function onFacetMove(e) { guideCrystal(e); }
+function onFacetUp(e) {
+  if (state.value === 'crystal') { clearGuide(); goBack(); return; }
+  const c = guideCrystal(e);
+  clearGuide();
+  if (c) chooseCrystal(c);
+}
+
 /* ── переходы ─────────────────────────────────────────────────────────── */
-function pickFacet(f) {
+function chooseFacet(f) {
   if (state.value === 'rest') { state.value = 'pick'; return; }
-  if (!facetOpenable(f)) return;   // потолок выбран: грань видна, но не берётся
-  pulse(f.points, 'facet');
+  if (state.value !== 'pick' || !facetOpenable(f)) return;
+  pulse(f.points, 'facet');   // одна розовая вспышка там, где отпустили
   sel.value = f.key;
   cry.value = null;
   state.value = 'open';
 }
-function pickCrystal(c) {
-  if (state.value !== 'open' && state.value !== 'crystal') return;
-  if (state.value === 'crystal' && cry.value === c.i) { state.value = 'open'; cry.value = null; return; }
+function chooseCrystal(c) {
+  if (state.value !== 'open') return;
+  if (litIndex.value !== null && litIndex.value !== c.i) return;   // погасший не берётся
   pulse(c.points, 'crystal');
   cry.value = c.i;
   state.value = 'crystal';
@@ -457,11 +571,11 @@ function lightUp() {
   rights.value -= 1;
 }
 function goBack() {
+  clearGuide();
   if (state.value === 'crystal') { state.value = 'open'; cry.value = null; return; }
   if (state.value === 'open') { state.value = 'pick'; sel.value = null; return; }
   if (state.value === 'pick') state.value = 'rest';
 }
-function onBackdrop() { goBack(); }
 function onKey(e) { if (e.key === 'Escape') goBack(); }
 
 /* Служебные органы макета. */
@@ -471,7 +585,7 @@ function resetAll() {
   rights.value = 0;
   sel.value = null;
   cry.value = null;
-  hoverKey.value = null;
+  guide.value = null;
   state.value = 'rest';
 }
 
@@ -610,6 +724,10 @@ onBeforeUnmount(() => {
 .fx-svg {
   position: relative;
   display: block;
+  /* ⚠️ Ведение пальцем по фигуре — наш жест, не браузерный. Страница не
+     прокручивается вовсе (у .fx жёсткая высота), отнимать у неё нечего;
+     описание под фигурой прокручивается своим блоком и сюда не входит. */
+  touch-action: none;
   width: min(100%, 100cqh);
   height: auto;
   max-width: 34rem;
@@ -645,11 +763,17 @@ onBeforeUnmount(() => {
 /* Пустое гнездо там, где грань вынута. Не подсвечивается. */
 .fx-socket { fill: var(--void); pointer-events: none; }
 
-/* ⚠️ Зона нажатия. Прозрачная и во весь шестиугольник: грань выбирается по
-   ближайшей середине, а не по своей плитке. Глазами не показывается никак. */
-.fx-pad { fill: transparent; cursor: pointer; }
-.fx[data-state='open'] .fx-pad,
-.fx[data-state='crystal'] .fx-pad { cursor: default; }
+/* ⚠️ Полотно, по которому водят пальцем. Прозрачное и во весь шестиугольник:
+   грань берётся по ближайшей середине, а не по своей плитке.
+   ⚠️ Запрет на браузерный жест стоит НЕ ЗДЕСЬ, а на корне холста (.fx-svg):
+   touch-action внутри SVG браузер не читает. Поставленный здесь, он не
+   срабатывал: на втором же движении пальца прилетал pointercancel, ведение
+   обрывалось и подсветка гасла (поймано журналом событий). */
+.fx-pad, .fx-cpad {
+  fill: transparent;
+  cursor: pointer;
+}
+.fx[data-state='crystal'] .fx-cpad { cursor: default; }
 
 /* ── предметы: грань и кристалл огранены одинаково ────────────────── */
 .fx-shard__body { fill: var(--void); pointer-events: none; }
@@ -661,16 +785,19 @@ onBeforeUnmount(() => {
 .fx-bevel.is-side { fill: color-mix(in srgb, var(--ink) 6%, var(--panel)); }
 .fx-bevel.is-far  { fill: color-mix(in srgb, var(--void) 55%, var(--panel)); }
 
-/* Подсветка грани под пальцем. В покое ноль: внутри клина нет отметок. */
+/* ⚠️ Подсветка под пальцем — НЕЙТРАЛЬНАЯ, не цветом ядра и не розовая.
+   Цветом ядра на клине показан налив: подсвеченная им незажжённая грань
+   читалась бы зажжённой. Розовое принадлежит действию, а подсветка — это ещё
+   не действие, а показ того, что будет выбрано, если отпустить.
+   В покое ноль: внутри клина нет никаких отметок. */
 .fx-facet__glow {
-  fill: currentColor;
-  fill-opacity: .55;
+  fill: var(--ink);
+  fill-opacity: .3;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--d-hover) var(--e-settle);
+  transition: opacity var(--d-fast) var(--e-settle);
 }
-.fx[data-state='pick'] .fx-facet.is-hover .fx-facet__glow,
-.fx[data-state='pick'] .fx-facet:focus-within .fx-facet__glow { opacity: 1; }
+.fx[data-state='pick'] .fx-facet.is-hover .fx-facet__glow { opacity: 1; }
 
 /* Клавиатурная цель. Пальцем по ней не попадают — попадание ведёт .fx-pad. */
 .fx-facet__key { fill: none; pointer-events: none; outline: none; }
@@ -681,8 +808,16 @@ onBeforeUnmount(() => {
 /* Кристалл: пока грань впереди — предмет на ней; зажжённый горит, остальные
    в этой грани гаснут — грань уже зажжена выбранным. */
 .fx-cryst { cursor: pointer; }
-.fx-cryst__hit { fill: transparent; pointer-events: auto; }
-.fx-cryst.is-spent .fx-cryst__hit { pointer-events: none; }
+.fx-cryst__hit { fill: none; pointer-events: none; outline: none; }
+/* Подсветка кристалла под пальцем — тем же нейтральным светом, что у грани. */
+.fx-cryst__glow {
+  fill: var(--ink);
+  fill-opacity: .3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-fast) var(--e-settle);
+}
+.fx[data-state='open'] .fx-cryst.is-guided .fx-cryst__glow { opacity: 1; }
 .fx-cryst.is-spent { opacity: .35; cursor: default; }
 .fx-cryst__name {
   fill: var(--ink-dim);
@@ -787,6 +922,7 @@ onBeforeUnmount(() => {
 }
 .fx-light:active { opacity: var(--o-dim); }
 
+.fx-back--solo { align-self: center; margin-top: var(--sp-3); }
 .fx-back {
   min-height: var(--h-btn-sm);
   padding: 0 var(--sp-3);
@@ -814,6 +950,7 @@ onBeforeUnmount(() => {
   .fx-flash,
   .fx-flow-clip,
   .fx-facet__glow,
+  .fx-cryst__glow,
   .fx-chip,
   .fx-light,
   .fx-back { transition: none !important; }
