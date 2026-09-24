@@ -617,11 +617,7 @@ function idleReturn(dt) {
 // Called every frame AFTER fighter.update() (see coreParts).
 const _lightC = new THREE.Color();
 function applyFighterLight(r) {
-  // `fade` is the upright swap: 1 while a man is simply there, running to 0 as he
-  // is replaced and up from 0 as he replaces. It rides the same three handles as
-  // everything else — core, skin, the pool on the floor.
-  const f = r.fade === undefined ? 1 : r.fade;
-  const glow = (CORE_LIGHT.rest + (1 - CORE_LIGHT.rest) * r.lit) * f;
+  const glow = CORE_LIGHT.rest + (1 - CORE_LIGHT.rest) * r.lit;
   if (r.parts) {
     if (r.parts.gem && r.parts.gemBase) {
       r.parts.gem.material.color.copy(r.parts.gemBase).multiplyScalar(glow);
@@ -630,12 +626,11 @@ function applyFighterLight(r) {
   }
   if (r.skin) {
     r.skin.mat.color.copy(r.skin.base).lerp(_lightC.setHex(0x0b0d14), WORK.dimSkin * r.dim);
-    if (r.skin.mat.transparent) r.skin.mat.opacity = f;
   }
   if (r.glow && r.glow.mesh && r.glow.mesh.material) {
     const m = r.glow.mesh.material;
     if (m.userData.baseOpacity === undefined) m.userData.baseOpacity = m.opacity;
-    m.opacity = m.userData.baseOpacity * (1 - (1 - WORK.dimGlow) * r.dim) * (0.16 + 0.84 * r.lit) * f;
+    m.opacity = m.userData.baseOpacity * (1 - (1 - WORK.dimGlow) * r.dim) * (0.16 + 0.84 * r.lit);
   }
 }
 
@@ -893,7 +888,6 @@ onMounted(() => {
       skin: null,
       lit: 0,                          // eased 0…1 core brightness
       dim: 0,                          // eased 0…1 "sunk into the dark"
-      fade: 1,                         // 0…1 presence — drives the upright swap
     });
   });
 
@@ -1175,10 +1169,8 @@ onMounted(() => {
 
     // Strolls and errands: the director only moves each body's LURE — the walking
     // itself is the fighter's own locomotion, one frame later, inside update().
-    // Upright there is one man and he is standing on the mark: nobody strolls,
-    // so the director is not run at all.
-    if (!portrait) director?.update(t, dt);
-    else tickSwap(dt);        // upright: nobody strolls, but somebody may be arriving
+    // Идёт в ОБЕИХ раскладках: весь состав стоит в зале и бродит по плите.
+    director?.update(t, dt);
 
     // Вспышка нажатия на надписях-переходах гаснет сама.
     for (const c of crossings) {
@@ -1204,7 +1196,7 @@ onMounted(() => {
       if (spot && director && !director.isWalking(i)) {
         turnTowards(r.fighter.group, spot.x, spot.z, turnK);
         pushBag(i, r.fighter, spot);
-      } else if (portrait || !director || director.isStill(i)) {
+      } else if (!director || director.isStill(i)) {
         turnTowards(r.fighter.group, camPos.x, camPos.z, turnK);
       }
 
@@ -1412,19 +1404,11 @@ onMounted(() => {
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
 
-    // A turn of the phone changes WHO is in the room — one man upright, the whole
-    // arc sideways. It happens inside the living scene: the hall is not rebuilt,
-    // the loading screen is not shown, the address does not change, and the
-    // picked fighter stays picked. The plate is not touched: its size was settled
-    // when the hall opened and turning the phone is not a reason to recount the
-    // ground. Bodies that a sideways screen needs and has never had are built
-    // here, once; after that a turn only adds and removes them from the scene.
-    const wasPortrait = portrait;
+    // Поворот телефона БОЛЬШЕ НЕ МЕНЯЕТ СОСТАВ КОМНАТЫ: весь ростер стоит в зале
+    // в обеих раскладках. Плита тоже не трогается — её размер решён один раз,
+    // когда зал открылся. Значит, поворот не двигает никого, и пересобрать надо
+    // только кадр. Ставим сразу, а не подводим плавно: это новый экран, а не ход.
     portrait = ch >= cw;
-    if (wasPortrait !== portrait) applyPresence(true);
-    // The arc itself does not change with the screen's shape (see above), so a
-    // rotation moves nobody — only the framing is rebuilt. Snap rather than ease:
-    // this is a new screen, not a move.
     applyCamera(frameFor(), true);
     // A new composition under ourselves — start the settled-frame count again.
     load?.unsettle();
@@ -1447,13 +1431,20 @@ onMounted(() => {
 //               lit: he is still the one the player picked.
 
 // ── Who exists, and who is in the picture ─────────────────────────────────
-// SIDEWAYS the hall is the arc: every fighter has a body, a zone and a stroll.
-// UPRIGHT it is one man large: the arc of ten needs about fourteen units of
-// width and a phone held upright has no such width at any bend — the camera
-// would back off until the haze ate the room. So upright the hall shows the
-// PICKED fighter and nobody else, and "nobody else" is meant literally: the
-// other bodies are not built, not in the scene and not updated. Nothing is
-// hidden behind transparency, because nothing is there.
+// ВЕСЬ СОСТАВ СТОИТ В ЗАЛЕ — в ОБЕИХ раскладках (решение владельца 24.09.2026).
+//
+// Раньше стоя (вертикальный экран) зал показывал одного бойца, а остальных не
+// строил вовсе. Довод был про ширину: дуга из десяти занимает около четырнадцати
+// единиц, а у телефона, поставленного вертикально, такой ширины нет. Довод
+// оказался дороже пользы: зал выглядел пустым, круг «отправил — ушёл — вернулся»
+// на телефоне не показывался вовсе (режиссёра стоя не заводили, значит и до груш
+// никто не доходил), и половина работы зала была невидима ровно на том экране, с
+// которого в него чаще всего заходят.
+//
+// Поэтому тела теперь строятся все и всегда. Кадр при этом НЕ подгоняется: правило
+// удаления камеры — домашнее и не трогается (см. CAM), так что стоя края дуги
+// уходят за рамку. Уводить их обратно — не задача этой правки: у камеры есть
+// свободный поворот и отъезд, и зал целиком доступен руками.
 //
 // The plate does NOT follow. Its size is settled once, when the hall opens, from
 // how many fighters the roster holds — turning the phone is not a reason to
@@ -1504,11 +1495,9 @@ function ensureBody(i) {
   if (DEV_MODE) buildMs.push(+(performance.now() - _t0).toFixed(1));
 }
 
-/** Is this entry supposed to be in the picture on the current screen? */
-function wanted(r) { return portrait ? r.id === currentId : true; }
-
 /**
- * Put the scene's contents in step with the screen and the selection.
+ * Поставить содержимое зала в согласие с выбором. Тело есть у КАЖДОГО из состава
+ * — отбора по экрану здесь больше нет (см. выше).
  * `place` also stands the picked fighter on the mark and the rest in their zones
  * — used on build and whenever the shape of the room changes under us.
  */
@@ -1519,21 +1508,14 @@ function applyPresence(place) {
 
   for (let i = 0; i < roster.length; i++) {
     const r = roster[i];
-    if (wanted(r)) {
-      ensureBody(i);
-      if (!r.fighter.group.parent) { scene.add(r.fighter.group); scene.add(r.glow.mesh); }
-      if (place) {
-        const onMark = r.id === currentId;
-        r.fighter.group.position.set(onMark ? mark.x : r.home.x, topY, onMark ? mark.z : r.home.z);
-        r.glow.mesh.position.set(r.fighter.group.position.x, topY + GLOW.yLift, r.fighter.group.position.z);
-        faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
-        r.lit = onMark ? 1 : 0;
-        r.fade = 1;
-      }
-    } else if (r.fighter && r.fighter.group.parent) {
-      // Out of the picture: out of the scene. Not rendered, not walked, not lit.
-      scene.remove(r.fighter.group);
-      scene.remove(r.glow.mesh);
+    ensureBody(i);
+    if (!r.fighter.group.parent) { scene.add(r.fighter.group); scene.add(r.glow.mesh); }
+    if (place) {
+      const onMark = r.id === currentId;
+      r.fighter.group.position.set(onMark ? mark.x : r.home.x, topY, onMark ? mark.z : r.home.z);
+      r.glow.mesh.position.set(r.fighter.group.position.x, topY + GLOW.yLift, r.fighter.group.position.z);
+      faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
+      r.lit = onMark ? 1 : 0;
     }
   }
 
@@ -1554,82 +1536,12 @@ function applyPresence(place) {
   }
 }
 
-// ── The upright swap ──────────────────────────────────────────────────────
-// Sideways, changing who is picked is a walk: one man leaves the mark, another
-// walks out to it. Upright neither is possible — there is one body in the room
-// and the one replacing him is not in it — so he is simply put in the other's
-// place: build if he has never had a body, stand him on the mark, take the old
-// one out of the room.
-// …and it is a DISSOLVE, not a cut. One man replacing another in the same spot
-// between two frames reads as a fault in the picture rather than as a choice
-// being made; a short fade reads as the room answering. Both halves run through
-// the same handles this scene already writes every frame — the body's own core
-// and its own skin material — so there is still one place that decides how
-// bright a body is (applyFighterLight). No camera movement: upright there is one
-// pose, and the swap happens inside it.
-const SWAP = { sec: 0.30 };   // out and in together — short enough to read as one move
-let swapOut = -1;             // roster index on its way out (-1 = nobody)
-
-// Out of the factory a skin is OPAQUE, and it goes back to opaque the moment the
-// swap is over. Leaving it transparent for good was tried and is not free: ten
-// see-through bodies put the whole arc in the sorted pass and cost 16.5 ms a
-// frame sideways — paying that everywhere, forever, to serve a fade that only
-// ever happens upright and only to one man at a time. So it is switched on for
-// the two bodies in the swap and switched off behind them. One property, on a
-// material this scene already owns and writes to every frame — the combat file
-// is not touched.
-function setSeeThrough(r, on) {
-  if (!r || !r.skin || r.skin.mat.transparent === on) return;
-  r.skin.mat.transparent = on;
-  r.skin.mat.opacity = 1;
-  r.skin.mat.needsUpdate = true;
-}
-
-function swapOnMark(prevIdx, idx) {
-  const topY = slab ? slab.refs.topY : 0;
-  ensureBody(idx);
-  const to = roster[idx];
-  to.fighter.group.position.set(mark.x, topY, mark.z);
-  to.glow.mesh.position.set(mark.x, topY + GLOW.yLift, mark.z);
-  faceTowards(to.fighter.group, CAM.dir[0], CAM.dir[2]);
-  if (!to.fighter.group.parent) { scene.add(to.fighter.group); scene.add(to.glow.mesh); }
-
-  const leaving = prevIdx >= 0 && roster[prevIdx].fighter ? prevIdx : -1;
-  if (reduced) {
-    // Motion is reduced: place him, do not dissolve him.
-    to.fade = 1;
-    if (leaving >= 0) removeBody(leaving);
-    swapOut = -1;
-    return;
-  }
-  to.fade = 0;        // he comes up out of the dark…
-  swapOut = leaving;  // …while the other goes back down into it
-  setSeeThrough(to, true);
-  if (leaving >= 0) setSeeThrough(roster[leaving], true);
-}
-
-function removeBody(i) {
-  const r = roster[i];
-  if (!r || !r.fighter) return;
-  scene.remove(r.fighter.group);
-  scene.remove(r.glow.mesh);
-  r.fade = 1;         // left ready for the next time he is called for
-  setSeeThrough(r, false);
-}
-
-/** One frame of the dissolve. Ends by taking the old body out of the room. */
-function tickSwap(dt) {
-  const step = Math.min(1, dt / SWAP.sec);
-  const cur = roster.findIndex((r) => r.id === currentId);
-  if (cur >= 0 && roster[cur].fighter && roster[cur].fade < 1) {
-    roster[cur].fade = Math.min(1, roster[cur].fade + step);
-    if (roster[cur].fade >= 1) setSeeThrough(roster[cur], false);   // arrived — solid again
-  }
-  if (swapOut < 0) return;
-  const out = roster[swapOut];
-  out.fade = Math.max(0, out.fade - step);
-  if (out.fade <= 0) { removeBody(swapOut); swapOut = -1; }
-}
+// ЗАМЕНА ТЕЛА НА МЕСТЕ — СНЯТА (24.09.2026). Здесь жил «перевод стоя»: раз в
+// вертикальной раскладке тело в зале было ровно одно, сменить выбранного можно
+// было только подменив его на метке с растворением. Теперь в зале стоит весь
+// состав в обеих раскладках, менять выбранного всегда есть кому и пешком — и
+// подмена стала недостижимой. Вместе с ней ушла и прозрачность шкуры, ради
+// которой тела попадали в сортируемый проход отрисовки.
 
 // Send a fighter out to the mark, and whoever is standing there back home. Both
 // leave at the same moment — neither waits for the other. Called with the roster
@@ -1640,13 +1552,6 @@ function makeCurrent(idx) {
   const prevIdx = roster.findIndex((r) => r.id === currentId);
 
   currentId = entry.id;    // the light moves NOW — the hall answers the tap at once
-
-  if (portrait) {
-    // Upright nobody walks: there is one man in the room, and the one taking his
-    // place is not in it yet — there is nowhere to walk FROM.
-    swapOnMark(prevIdx, idx);
-    return;
-  }
 
   if (reduced) {
     // Motion is reduced: no walking. Place them, do not slide them.
