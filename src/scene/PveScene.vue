@@ -80,41 +80,47 @@ const SLAB = {
   height: 1.0,         // plate thickness; the walkable top ends up at half of this
 };
 
-// THE ARC. Every fighter owns a spot on ONE arc that faces the player: its centre
-// stands FURTHEST from the camera and its ends come FORWARD, so nobody is behind
-// anybody. Spots are DETERMINISTIC — the n-th fighter is always n-th — so a fighter
-// keeps his place between visits and across a rotation.
+// ПОЛЕ БОЙЦОВ. Раньше здесь была ОДНА ДУГА поперёк плиты: десять бойцов вставали
+// в линию шириной одиннадцать единиц при глубине ряда в полторы (замер 24.09.2026 —
+// 73% ширины плиты против 13% её глубины). Линия занимала всю ширину, и на
+// вертикальном экране её края уходили за рамку, потому что у поставленного стоя
+// телефона ширины нет, а глубины — сколько угодно.
 //
-// The two numbers that matter and why:
-//   `step` is measured ALONG the arc, not across the screen, so the gap between
-//   neighbours is the same at the ends as in the middle. It has to clear a body
-//   (0.73 wide, measured — see BODY) plus both their zones plus air — see ZONE.
-//   `radius` is how gently the arc bows. It cannot be tightened much: the tighter
-//   the bow, the more of the step goes into DEPTH instead of sideways, and two
-//   fighters separated only by depth are exactly the "one behind the other" the
-//   composition must not have.
-const ARC = {
-  // 1.4 is not a taste: a body MEASURES 0.73 wide (Box3 on a built fighter), the
-  // zones add 2 × ZONE.halfX, and what is left over is the air between two
-  // silhouettes at their worst case — about 0.35, a third of a body. Tightening
-  // this is what makes the arc overlap; widening it is what pushes the camera so
-  // far back the hall goes dark.
-  step: 1.4,           // spacing between neighbours, measured along the arc
-  radius: 16,          // bow radius — bigger = flatter arc
-  maxCount: 10,        // the hall is built for this many; ROSTER_MAX matches it
-  // Where the middle of the arc stands is NOT typed: it is placed so the arc and
-  // the mark together sit centred on their plate (see composeFor).
+// Теперь бойцы разведены ПО ВСЕЙ ПЛОЩАДИ: рядами в глубину, с разбежкой соседних
+// рядов на полшага вбок, чтобы никто не стоял ровно за спиной у другого. Место
+// каждого по-прежнему ОДНОЗНАЧНО — n-й боец всегда n-й, — так что он сохраняет
+// своё место между заходами и при повороте телефона.
+//
+// Числа: шаг вдоль ряда должен разводить два тела (0.73 в ширину, замер) плюс их
+// зоны плюс воздух; шаг между рядами — то же самое по глубине, и он больше, потому
+// что тело смотрит на игрока и в глубину читается длиннее.
+const FIELD = {
+  step: 1.4,           // между соседями в ряду
+  rowStep: 1.9,        // между рядами
+  // Разбежка соседних рядов, в долях шага. Разводится СИММЕТРИЧНО — чётные ряды
+  // на полразбежки влево, нечётные вправо, — чтобы поле оставалось по центру
+  // плиты и прирастало вбок вдвое меньше, чем при сдвиге одних только нечётных.
+  stagger: 0.5,
+  // Насколько поле УЖЕ квадрата. Не вкус: замером на 390×844 поле-квадрат из
+  // десяти всё ещё вылезало правым задним углом за рамку (доля кадра 1.02),
+  // потому что удаление камеры считается от ШИРИНЫ острова, а вертикальному
+  // экрану ширины не хватает при любом удалении. Глубины же у него сколько
+  // угодно, поэтому лишнее уходит в ряды. 1.6 — первое значение, при котором
+  // в рамку влезают все составы от одного до десяти.
+  narrow: 1.6,
+  maxCount: 10,        // зал построен на столько; ROSTER_MAX совпадает
+  // Где стоит середина поля, ЗДЕСЬ НЕ ЗАДАНО: оно ставится так, чтобы поле вместе
+  // с меткой село по центру своей плиты (см. composeFor).
 };
 
-// A fighter's PERSONAL ZONE — the patch he strolls on. Deliberately narrow across
-// the arc and deep along the view: depth costs almost no screen width, so he can
-// walk a real distance without ever closing on a neighbour. Worst case, two
-// neighbours at their facing zone edges still stand ARC.step − 2·halfX apart,
-// which is wider than a body — that is the no-overlap guarantee, and it is
-// geometric, not a hope.
+// A fighter's PERSONAL ZONE — the patch he strolls on. Теперь она почти квадратная:
+// глубина перестала быть даровой, ею занят соседний ряд. Худший случай — два соседа
+// у обращённых друг к другу краёв зон: вдоль ряда между ними остаётся
+// FIELD.step − 2·halfX = 0.90, между рядами FIELD.rowStep − 2·halfZ = 0.90 — и то и
+// другое шире тела. Это геометрическая гарантия, а не надежда.
 const ZONE = {
-  halfX: 0.15,         // half-width across the arc
-  halfZ: 0.70,         // half-depth along the view
+  halfX: 0.25,         // полуширина поперёк ряда
+  halfZ: 0.50,         // полуглубина вдоль взгляда
 };
 // What a body actually MEASURES (Box3 on a built fighter), not a guess: the
 // framing used to pad this to 1.24 × 2.25 and the camera backed off half the hall
@@ -128,26 +134,32 @@ const BODY = { halfW: 0.40, height: 1.95 };
 // the cutoff radius with the growth itself, which is exactly what a 1/r² falloff
 // costs to hold the floor at one brightness across all three plates.
 const LAMP_REACH = {
-  intensity: 30,       // at the small plate; scaled by k² on the bigger ones
+  // 30 → 75 (24.09.2026). Не вкус: зал стал вдвое шире (бойцы разведены вглубь,
+  // плита выросла, и одна из четырёх ламп ушла на соседний остров), а четыре
+  // лампы на вдвое большую площадь дают вдвое меньше света на квадрат. Число
+  // подобрано ЗАМЕРОМ по средней яркости кадра, обратно к тому, что было до
+  // перестановки: зал 21.1 → 17.0 при 30 → 20.9 при 75; остров 21.6 → 17.4 → 21.0.
+  intensity: 75,       // at the small plate; scaled by k² on the bigger ones
   distance: 26,        // cutoff radius at the small plate; scaled by k
   hangLift: 1.2,       // lift the shades up out of the frame, above the heads
 };
 
-// THE MARK — the spot the picked fighter walks out to, in front of the whole arc
+// THE MARK — the spot the picked fighter walks out to, in front of the whole field
 // and on its centre line. Kept clear of every zone by construction.
 const MARK = {
-  // Far enough forward that the man on it clears the row ON SCREEN, not just in the
-  // world: the camera looks down, so depth is what lifts the row clear of his head.
-  // But no further — every unit here is also a unit of bare ground between the row
-  // and the mark, and a plate deep enough to hold it.
+  // Far enough forward that the man on it clears the front row ON SCREEN, not just
+  // in the world: the camera looks down, so depth is what lifts the row clear of his
+  // head. But no further — каждая единица здесь это ещё и единица голой земли между
+  // полем и меткой, и плита, достаточно глубокая, чтобы её вместить.
   //
-  // This started at 3.9, which left a gap you could park in. The floor was found by
-  // hiding every body but one, photographing it alone, and comparing that silhouette
-  // with what is actually visible of it in the full scene: at 2.6 every body still
-  // showed 100% of itself at every roster size and screen shape. 2.9 is that floor
-  // plus room for the fact that the bodies WANDER — they are not standing where the
-  // measurement caught them.
-  ahead: 2.9,          // how far in FRONT of the arc's foremost spot the mark sits
+  // 2.9 → 2.0 (24.09.2026). Прежнее число подбиралось, когда бойцы стояли ОДНОЙ
+  // ЛИНИЕЙ поперёк плиты: метке надо было уйти вперёд от всей её ширины. Теперь
+  // перед меткой стоит передний РЯД из одного-трёх бойцов, он и так близко к
+  // камере, а лишний вынос вперёд оплачивался глубиной плиты — а через неё и
+  // шириной, и удалением камеры, то есть общей мелкостью всего в кадре.
+  // 2.0 — замер: на составах 1…10 в обеих раскладках ни одно тело не за рамкой,
+  // а до ближайшего соседа на экране остаётся не меньше 0.15 доли кадра.
+  ahead: 2.0,          // how far in FRONT of the field's foremost row the mark sits
 };
 
 // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
@@ -156,11 +168,30 @@ const MARK = {
 // Числа перенесены из принятого макета /dev/forge как есть — это его эталон.
 const TRAIN = {
   gap: 0.35,          // зазор между островами: дорога, а не пропасть
-  rowMax: 5,          // груш в ряду; дальше второй ряд
-  bagStep: 1.25,
+  // Груш в ряду; дальше следующий ряд. Было 5 — и десять груш вставали в две
+  // широкие линии поперёк острова, ровно как бойцы в зале до 24.09.2026, с тем же
+  // следствием: стоя края уходили за рамку. Три — и десяток разложен четырьмя
+  // неглубокими рядами, которым вертикальный экран как раз впору.
+  rowMax: 3,
+  // Шаг между грушами в ряду. Было 1.25 — и два занимающихся рядом сходились до
+  // 0.65 (замер), то есть ближе ширины тела: боец доходит до места с допуском в
+  // треть шага, и два допуска съедали зазор. 1.45 оставляет в худшем случае 0.85
+  // — шире тела, как и в зале.
+  bagStep: 1.45,
   rowGap: 2.10,
   standAhead: 0.86,
   edge: 0.9,
+  // Разбежка соседних рядов, в долях шага, симметрично — как у поля бойцов.
+  // Здесь у неё своя польза: занимающийся стоит ПЕРЕД своей грушей, и без
+  // разбежки он вставал бы ровно под грушей следующего ряда.
+  stagger: 0.5,
+  // Форма острова. Ширина острова — это РЫЧАГ КАМЕРЫ: удаление считается от неё
+  // (домашнее правило, см. CAM), а лишняя ширина — лишние пиксели под отрисовку.
+  // Поэтому она подобрана замером, а не взята у плиты: 1.0 и 1.3 роняли крайних
+  // занимающихся за рамку вертикального экрана (доли кадра −0.17 и 0.047), 1.45
+  // оставляет самому крайнему запас в десятую кадра. Вышло почти как у плиты —
+  // значит, у обоих островов проверенная форма, а не одно и то же число дважды.
+  aspect: 1.45,
 };
 // Переход между островами: насколько надпись на торце сдвинута от середины к
 // тому краю, в сторону которого она ведёт. Доля полуширины острова.
@@ -274,16 +305,48 @@ function buildUnderGlow(colorHex, topY) {
 // around each shade are gone — the lamps now read as lit from inside the dish (the
 // visible bulb + the PointLight), with no blurry orange blobs in the air.
 
-// ── How big the arc is, for a given number of fighters ──────────────────────
-// Fighters are spaced by ARC.step ALONG the arc, which is then wrapped onto a
-// circle of ARC.radius whose near side faces the player: the middle spot sits
-// furthest away, the ends come forward. That is the shape the hall wants, and it
-// is also what makes the composition legible — because every spot differs from its
-// neighbour ACROSS the screen and not only in depth, no fighter stands behind
-// another.
-const halfAngle = (n) => (n <= 1 ? 0 : (ARC.step * (n - 1)) / 2 / ARC.radius);
-const arcHalfWidth = (n) => ARC.radius * Math.sin(halfAngle(n));      // how far the ends reach sideways
-const arcBow = (n) => ARC.radius * (1 - Math.cos(halfAngle(n)));      // how far forward they come
+// ── РАССТАНОВКА ПОЛЯ ───────────────────────────────────────────────────────
+// Сколько рядов и сколько в ряду. Считается, а не пишется таблицей: берём столько
+// столбцов, чтобы прямоугольник поля вышел примерно квадратным В МИРЕ — то есть с
+// поправкой на то, что шаг между рядами больше шага вдоль ряда. Квадрат — это и
+// есть «по всей площади»: ни линии поперёк, ни колонны в затылок.
+function fieldShape(n) {
+  if (n <= 0) return { cols: 0, rows: 0, per: 0 };
+  const cols = Math.max(1, Math.ceil(Math.sqrt((n * FIELD.rowStep) / (FIELD.step * FIELD.narrow))));
+  const rows = Math.ceil(n / cols);
+  return { cols, rows, per: Math.ceil(n / rows) };
+}
+
+// Места поля относительно его середины. Ряд 0 — самый дальний от камеры; ряды
+// идут к игроку. Нечётные ряды сдвинуты на полшага вбок, поэтому ни один боец не
+// стоит ровно за спиной у другого.
+function fieldSpots(n, centreZ) {
+  const { rows, per } = fieldShape(n);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / per);
+    const inRow = Math.min(per, n - r * per);
+    const k = i - r * per;
+    out.push({
+      x: (k - (inRow - 1) / 2) * FIELD.step
+         + (r % 2 ? 1 : -1) * FIELD.step * FIELD.stagger / 2,
+      z: centreZ + (r - (rows - 1) / 2) * FIELD.rowStep,
+    });
+  }
+  return out;
+}
+
+/** Насколько поле раскинулось от своей середины: вбок и в обе стороны по глубине. */
+function fieldExtent(n) {
+  const spots = fieldSpots(n, 0);
+  let halfX = 0, back = 0, front = 0;
+  for (const sp of spots) {
+    halfX = Math.max(halfX, Math.abs(sp.x));
+    back = Math.min(back, sp.z);
+    front = Math.max(front, sp.z);
+  }
+  return { halfX, back, front };
+}
 
 // ── The plate, worked out rather than typed ─────────────────────────────────
 // For the biggest roster a step must hold, measure what has to sit on the plate:
@@ -291,9 +354,10 @@ const arcBow = (n) => ARC.radius * (1 - Math.cos(halfAngle(n)));      // how far
 // SLAB.edge of bare ground all round. Then take the smallest plate OF THE FIXED
 // SHAPE that contains it — so every step is the same plate, only bigger.
 function slabFor(maxCount) {
-  const backRel = -(ZONE.halfZ + BODY.halfW);                       // deepest point, from the arc's centre
-  const frontRel = arcBow(maxCount) + MARK.ahead + BODY.halfW;      // the mark's front edge
-  const needHalfW = arcHalfWidth(maxCount) + ZONE.halfX + BODY.halfW + SLAB.edge;
+  const e = fieldExtent(maxCount);
+  const backRel = e.back - (ZONE.halfZ + BODY.halfW);                // deepest point, from the field's centre
+  const frontRel = e.front + MARK.ahead + BODY.halfW;                // the mark's front edge
+  const needHalfW = e.halfX + ZONE.halfX + BODY.halfW + SLAB.edge;
   const needHalfD = (frontRel - backRel) / 2 + SLAB.edge;
   // One shape, scaled until both fit: a unit plate is SLAB.aspect wide by 1 deep.
   const scale = Math.max((2 * needHalfW) / SLAB.aspect, 2 * needHalfD);
@@ -308,36 +372,29 @@ function stepFor(count) {
 }
 
 // Everything the hall's geometry needs, derived together so it cannot disagree
-// with itself: which plate, how big, where the arc stands on it, where the mark is.
+// with itself: which plate, how big, where the field stands on it, where the mark is.
 //
-// The arc is placed so that the composition — its deepest zone through to the front
-// of the mark — sits CENTRED on the plate. That is what puts an equal margin of
-// bare ground behind the row and in front of the mark, and it is computed for the
-// step's MAXIMUM roster so the row does not slide about as fighters are added.
+// The field is placed so that the composition — its deepest zone through to the
+// front of the mark — sits CENTRED on the plate. That is what puts an equal margin
+// of bare ground behind the back row and in front of the mark, and it is computed
+// for the step's MAXIMUM roster so the rows do not slide about as fighters are added.
 function composeFor(count) {
   const step = stepFor(count);
   const maxCount = SLAB.steps[step];
   const slab = slabFor(maxCount);
-  const backRel = -(ZONE.halfZ + BODY.halfW);
-  const frontRel = arcBow(maxCount) + MARK.ahead + BODY.halfW;
+  const e = fieldExtent(maxCount);
+  const backRel = e.back - (ZONE.halfZ + BODY.halfW);
+  const frontRel = e.front + MARK.ahead + BODY.halfW;
   const arcZ = -(frontRel + backRel) / 2;
   return { step, maxCount, slab, arcZ };
 }
 
-// ── Roster layout — ONE arc, DETERMINISTIC, so a fighter keeps his place between
-//    visits and across a rotation. Fewer fighters do not leave holes at the ends:
-//    the arc is always centred, so a short roster closes toward the middle.
+// ── Roster layout — ПОЛЕ, DETERMINISTIC, so a fighter keeps his place between
+//    visits and across a rotation. Fewer fighters do not leave holes: the field is
+//    always centred, so a short roster closes toward the middle.
 function layoutRoster(count, arcZ) {
   if (count <= 0) return [];
-  if (count === 1) return [{ x: 0, z: arcZ }];
-  const R = ARC.radius;
-  const half = halfAngle(count);
-  const spots = [];
-  for (let i = 0; i < count; i++) {
-    const a = -half + (2 * half * i) / (count - 1);
-    spots.push({ x: R * Math.sin(a), z: arcZ + R * (1 - Math.cos(a)) });
-  }
-  return spots;
+  return fieldSpots(count, arcZ);
 }
 
 // The personal zone around a spot — what the wander director may walk him inside.
@@ -350,19 +407,26 @@ function zoneFor(spot) {
   };
 }
 
-// Where the four lamps hang. Two out over the ends of the arc, two over the mark,
-// their spread taken from the plate rather than typed — a table written for one
-// plate leaves the ends of a bigger one in the dark. Still FOUR: the count, the
-// colour and the no-shadow rule are untouched, so the phone's bill does not move.
+// Where the four lamps hang. Still FOUR: the count, the colour and the no-shadow
+// rule are untouched, so the phone's bill does not move. What moved is where they
+// hang — потому что зал стал ДВУМЯ островами, а лампы висели только над первым.
+//
+// Раньше их было две над концами ряда и две над меткой. Ряд был линией поперёк
+// плиты, и две лампы по его краям накрывали его целиком. Теперь бойцы разведены
+// вглубь, а рядом стоит остров с грушами, до которого от прежних мест свет не
+// доходил: замер 24.09.2026 — средняя яркость кадра с грушами упала с 21.6 до
+// 14.8, пик с 73 до 41. Поэтому: две по краям поля на его средней глубине, одна
+// над меткой, одна над соседним островом.
 function lampPositions() {
-  const endX = arcHalfWidth(compose ? compose.maxCount : ARC.maxCount) * 0.80;
-  const arcRowZ = (compose ? compose.arcZ : 0) - 0.4;
+  const e = fieldExtent(compose ? compose.maxCount : FIELD.maxCount);
+  const endX = Math.max(e.halfX + 0.9, FIELD.step);
+  const fieldZ = (compose ? compose.arcZ : 0) + (e.back + e.front) / 2;
   const markZ = mark ? mark.z : 2;
   return [
-    { x: -endX, z: arcRowZ, drop: 0.0 },
-    { x: endX, z: arcRowZ, drop: 0.7 },
-    { x: -ARC.step * 1.2, z: markZ, drop: 0.3 },
-    { x: ARC.step * 1.35, z: markZ, drop: 1.0 },
+    { x: -endX, z: fieldZ, drop: 0.0 },
+    { x: endX, z: fieldZ, drop: 0.7 },
+    { x: 0, z: markZ, drop: 0.3 },
+    { x: trainCx || FIELD.step * 1.35, z: 0, drop: 1.0 },
   ];
 }
 
@@ -397,19 +461,33 @@ function buildHallLamps() {
   scene.add(lamps.group);
 }
 
-// Where the picked fighter stands: in FRONT of the arc's foremost spot, clear of
+// Where the picked fighter stands: in FRONT of the field's foremost row, clear of
 // every zone, and — this is the part that is easy to get wrong — in the GAP between
-// the two middle spots rather than dead on the centre line. With an odd roster the
-// centre line has a fighter standing on it, and the man out on the mark then covers
-// him. Half a step across puts the mark exactly as far from its nearest neighbour
-// as the arc's own neighbours are from each other. With an even roster the centre
-// line IS the gap, so the mark stays dead centre.
+// the two middle spots of that row rather than dead on the centre line. With an odd
+// row the centre line has a fighter standing on it, and the man out on the mark then
+// covers him. Half a step across puts the mark exactly as far from its nearest
+// neighbour as the row's own neighbours are from each other.
 function markFor(count, arcZ) {
   const spots = layoutRoster(count, arcZ);
-  let frontZ = arcZ;
+  if (!spots.length) return { x: 0, z: arcZ + MARK.ahead };
+  let frontZ = -Infinity;
   for (const sp of spots) if (sp.z > frontZ) frontZ = sp.z;
-  const offCentre = count >= 3 && count % 2 === 1 ? -ARC.step / 2 : 0;
-  return { x: offCentre, z: frontZ + MARK.ahead };
+  // Сколько бойцов в переднем ряду и где его середина — от этого зависит, надо ли
+  // уводить метку с осевой. Передний ряд может быть короче остальных.
+  const front = spots.filter((sp) => Math.abs(sp.z - frontZ) < 1e-6);
+  let mid = 0;
+  for (const sp of front) mid += sp.x;
+  mid /= front.length;
+  // Нечётный передний ряд стоит НА своей середине, и метка ровно за ним закрыла
+  // бы его. Уходим на полшага — но в ту сторону, которая БЛИЖЕ к осевой плиты:
+  // уход не в ту сторону утаскивал метку к самому краю кадра (замер на составе
+  // из семи: доля кадра 0.01, то есть боец на метке наполовину за рамкой).
+  let x = mid;
+  if (front.length % 2 === 1) {
+    const a = mid - FIELD.step / 2, b = mid + FIELD.step / 2;
+    x = Math.abs(a) <= Math.abs(b) ? a : b;
+  }
+  return { x, z: frontZ + MARK.ahead };
 }
 
 // ── Reaching INTO a fighter from outside (the sanctioned pattern — the combat
@@ -445,21 +523,38 @@ function skinOf(fighter) {
 }
 
 // ── Соседний остров: плита того же рода + груши. Из макета /dev/forge. ──
+// Раскладка груш. Та же мысль, что и у поля бойцов: рядами в глубину, соседние
+// ряды в разбежку, — и остров ТОЙ ЖЕ ФОРМЫ, что главная плита (SLAB.aspect).
+//
+// ⚠️ ФОРМА ОСТРОВА — НЕ УКРАШЕНИЕ. Удаление камеры считается от ШИРИНЫ острова
+//    (домашнее правило, см. CAM), поэтому остров, обрезанный по самые груши,
+//    подтягивает к себе и камеру: на вертикальном экране в кадр входит около
+//    трёх пятых его ширины, и крайние груши срезаются при любом удалении. Общая
+//    форма даёт глубокому ряду ту боковую землю, за которую камера отъезжает.
 function bagLayout(n) {
   const rows = Math.ceil(n / TRAIN.rowMax);
   const per = Math.ceil(n / rows);
+  const shift = TRAIN.bagStep * TRAIN.stagger / 2;
+  // Содержимое НЕ симметрично по глубине: боец стоит перед своей грушей, значит
+  // спереди занято на standAhead больше, чем сзади. Считаем края честно и потом
+  // сдвигаем весь блок так, чтобы он сел по центру острова.
+  const backZ = -((rows - 1) / 2) * TRAIN.rowGap - 0.4;
+  const frontZ = ((rows - 1) / 2) * TRAIN.rowGap + TRAIN.standAhead + BODY.halfW;
+  const midZ = (backZ + frontZ) / 2;
   const out = [];
   for (let i = 0; i < n; i++) {
     const r = Math.floor(i / per);
     const inRow = Math.min(per, n - r * per);
     const k = i - r * per;
-    out.push({ x: (k - (inRow - 1) / 2) * TRAIN.bagStep, z: (r - (rows - 1) / 2) * TRAIN.rowGap });
+    out.push({
+      x: (k - (inRow - 1) / 2) * TRAIN.bagStep + (r % 2 ? shift : -shift),
+      z: (r - (rows - 1) / 2) * TRAIN.rowGap - midZ,
+    });
   }
-  return {
-    spots: out,
-    width: (per - 1) * TRAIN.bagStep + 2 * (TRAIN.edge + 0.4),
-    depth: (rows - 1) * TRAIN.rowGap + 2 * (TRAIN.edge + TRAIN.standAhead + 0.4),
-  };
+  const needHalfW = ((per - 1) / 2) * TRAIN.bagStep + shift + 0.4 + TRAIN.edge;
+  const needHalfD = (frontZ - backZ) / 2 + TRAIN.edge;
+  const scale = Math.max((2 * needHalfW) / TRAIN.aspect, 2 * needHalfD);
+  return { spots: out, width: TRAIN.aspect * scale, depth: scale };
 }
 
 function buildNeighbourIsland(topY, count) {
@@ -814,7 +909,7 @@ onMounted(() => {
   // number. Nothing re-reads it while the player is inside: the roster is edited in
   // the shop, on another route, so arriving here always rebuilds the hall. That is
   // also what makes "the plate never shrinks under you" true by construction.
-  const members = (store.getters['roster/fighters'] || []).slice(0, ARC.maxCount);
+  const members = (store.getters['roster/fighters'] || []).slice(0, FIELD.maxCount);
   rosterCount = members.length;
 
   // --- The plate. ONE ground: the hall's own plate, built at the size this roster
@@ -843,6 +938,9 @@ onMounted(() => {
   // middle left its ends in the dark. Spreading them is a position override from
   // outside — the shared lamp file is untouched and the count is unchanged, so the
   // phone pays for four PointLights exactly as before.
+  // ⚠️ Соседний остров строится ДО ламп: одна из четырёх висит над ним, и её
+  //    место берётся из него (см. lampPositions).
+  buildNeighbourIsland(topY, members.length);
   buildHallLamps();
   backdrop = buildBackdrop({ radius: 45, centerY: 1.6 });
   scene.add(backdrop.mesh);
@@ -859,7 +957,6 @@ onMounted(() => {
   // Соседний остров с грушами + два предмета на главной плите. Шаг 1 встраивания:
   // ГЕОМЕТРИЯ ТОЛЬКО. Ни нажатий, ни перелёта, ни переноса занятия сюда — это
   // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
-  buildNeighbourIsland(topY, members.length);
   buildForgeProps(topY);
   buildCrossings();
 
