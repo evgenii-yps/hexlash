@@ -709,7 +709,6 @@ const propList = [];
 const crossings = [];
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
-let portrait = false;
 let viewW = 0, viewH = 0;   // canvas CSS size — the framing is measured in these
 let resizePending = 0;      // coalescing frame for the resize observer
 // Pre-load readiness: emit once after the first frame is rendered so the
@@ -891,7 +890,6 @@ onMounted(() => {
     });
   });
 
-  portrait = viewH >= viewW;
   applyPresence(true);                 // build + place whoever this screen needs
   load.stage('roster');
 
@@ -915,14 +913,14 @@ onMounted(() => {
   applyTraining = () => {
     if (!director) return;
     const byId = new Map((store.getters['roster/fighters'] || []).map((f) => [f.id, f]));
-    // ⚠️ НА СОСЕДНИЙ ОСТРОВ ТЕЛО ИДЁТ НЕ ВСЕГДА. Ходьбой владеет режиссёр, а он
-    //    водит только тех, у кого ЕСТЬ тело. Стоя (портрет) тело в зале ровно
-    //    одно, режиссёр не заведён вовсе; при системной «уменьшить движение» он
-    //    заведён, но выключен. В обоих случаях боец остаётся на месте — и груша
-    //    ему не ставится: иначе на пустом острове висел бы предмет, к которому
-    //    никто не идёт, а убрать его было бы некому (замер 23.09.2026 —
-    //    именно так и было).
-    const canBag = !portrait && !reduced;
+    // ⚠️ НА СОСЕДНИЙ ОСТРОВ ТЕЛО ИДЁТ В ОБЕИХ РАСКЛАДКАХ. Раньше стоя — нет: в
+    //    зале было одно тело и режиссёра не заводили вовсе. Теперь состав стоит
+    //    целиком и ходит везде, так что единственное оставшееся исключение —
+    //    системная «уменьшить движение»: режиссёр заведён, но выключен, боец
+    //    остался бы на месте. Груша ему тогда не ставится — иначе на пустом
+    //    острове висел бы предмет, к которому никто не идёт, а убрать его было бы
+    //    некому (замер 23.09.2026 — именно так и было).
+    const canBag = !reduced;
     for (let i = 0; i < roster.length; i++) {
       const st = trainingStateOf(byId.get(roster[i].id) || null);
       const spot = canBag ? bagSpots[i] : null;
@@ -1408,7 +1406,6 @@ onMounted(() => {
     // в обеих раскладках. Плита тоже не трогается — её размер решён один раз,
     // когда зал открылся. Значит, поворот не двигает никого, и пересобрать надо
     // только кадр. Ставим сразу, а не подводим плавно: это новый экран, а не ход.
-    portrait = ch >= cw;
     applyCamera(frameFor(), true);
     // A new composition under ourselves — start the settled-frame count again.
     load?.unsettle();
