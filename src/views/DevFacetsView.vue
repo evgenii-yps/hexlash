@@ -34,8 +34,8 @@
         >
           <defs>
             <!-- Налив грани. Растущий круг обрезает её горящую часть: сколько
-                 кристаллов зажжено, до того шага и дошёл свет. Ступени даёт
-                 кривая перехода, а не рисунок — делений внутри грани нет. -->
+                 кристаллов зажжено, до того шага и дошёл свет. Делений внутри
+                 грани нет — ступень даёт остановка движения, а не линия. -->
             <clipPath v-for="f in facets" :key="`cf${f.id}`" :id="id('flow-' + f.id)">
               <circle class="fx-flow-clip" cx="0" cy="0" r="1" :style="flowStyle(f)" />
             </clipPath>
@@ -65,7 +65,7 @@
             <HexCore mode="full" :hue="hue" :flicker="true" :fill="false" />
 
             <g v-for="f in facets" :key="`fl${f.id}`" :clip-path="`url(#${id('flow-' + f.id)})`">
-              <polygon class="fx-flow" :points="f.strip" />
+              <polygon class="fx-flow" :points="f.points" />
             </g>
 
             <!-- Пустое гнездо: пока грань вынесена, на ядре её нет. -->
@@ -103,9 +103,18 @@
               <polygon class="fx-shard__body" :points="f.points" />
               <polygon
                 v-for="(bv, bi) in f.bevels" :key="`fb${bi}`"
-                class="fx-bevel" :class="FACET_BEVEL[bi]" :points="bv"
+                class="fx-bevel" :class="f.faces[bi]" :points="bv"
               />
               <polygon class="fx-shard__face" :points="f.inner" />
+
+              <!-- ⚠️ Налив на самой вынесенной грани. Обрезается ТЕМ ЖЕ
+                   растущим кругом, что и налив на ядре позади: одно
+                   состояние, показанное в двух местах, разойтись они не
+                   могут. Свет идёт от широкого конца к узкому, ступень
+                   даёт остановка движения, а не линия. -->
+              <g :clip-path="`url(#${id('flow-' + f.id)})`">
+                <polygon class="fx-flow" :points="f.points" />
+              </g>
 
               <!-- Тот же приём уровнем глубже: ведём по вынесенной грани —
                    подсвечивается один кристалл целиком. -->
@@ -143,7 +152,7 @@
             <polygon class="fx-shard__body" :points="c.points" />
             <polygon
               v-for="(bv, bi) in c.bevels" :key="`cb${bi}`"
-              class="fx-bevel" :class="CRY_BEVEL[bi]" :points="bv"
+              class="fx-bevel" :class="c.faces[bi]" :points="bv"
             />
             <polygon class="fx-shard__face" :points="c.inner" />
             <polygon
@@ -242,11 +251,6 @@ const L = {
   crystal: { x: 372, y: 300, k: 11, facetX: 100, facetY: 322, facetK: 0.95, coreLift: -252, coreK: 0.14 },
 };
 
-/* Плоскости фаски по порядку рёбер из coreFacets. Свет со стороны сердца.
-   У грани рёбер шесть (клин), у кристалла четыре (гнездо). */
-const FACET_BEVEL = ['is-side', 'is-side', 'is-far', 'is-side', 'is-side', 'is-near'];
-const CRY_BEVEL = ['is-side', 'is-far', 'is-side', 'is-near'];
-
 /* Сколько места остаётся подписи справа от грани, в единицах холста. */
 const LABEL_ROOM = 290;
 /* Доля ширины знака к кеглю у моноширинного шрифта. */
@@ -258,9 +262,10 @@ const id = (n) => `fx-${n}-${uid}`;
 const fig = coreFacets('full');
 const box = fig.box;
 const plate = fig.plate;
+const heart = fig.heart;
 const facets = fig.facets;
 const crystals = facets.flatMap((f) => f.crystals);
-const stops = facets[0].stops;
+const fillStops = facets[0].fillStops;
 
 const hue = computed(() => `rgb(${accentRgb(CORE_ID).join(' ')})`);
 
@@ -289,7 +294,7 @@ const isLit = (c) => !!lit.value[c.key];
    между зажжёнными остались бы тёмные провалы, а налив должен быть сплошным. */
 const facetLitCount = (f) => f.crystals.filter((c) => isLit(c)).length;
 const flowStyle = (f) => ({
-  transform: `translate(${box / 2}px, ${box / 2}px) scale(${stops[facetLitCount(f)]})`,
+  transform: `translate(${box / 2}px, ${box / 2}px) scale(${fillStops[facetLitCount(f)]})`,
 });
 
 const gameFacets = CRYSTALS[CORE_ID];
@@ -380,8 +385,11 @@ function pulse(points, level) {
 
 /* ── попадание пальцем ──────────────────────────────────────────────────
    Зоны не рисуются плиткой: разбор идёт по БЛИЖАЙШЕЙ середине. Зазоров нет,
-   зоны не налезают — палец между двумя, выигрывает та, чья середина ближе. */
-const HEART_R = 58;   // ближе к середине — это сердце, а не грань
+   зоны не налезают — палец между двумя, выигрывает та, чья середина ближе.
+
+   ⚠️ СЕРДЦЕ ВЫРЕЗАНО ИЗ ЗОНЫ. Не кругом на глаз, а самой кромкой сердца из
+   общей фигуры: зона нажатия совпадает с подсветкой ровно, и ведение по
+   сердцу не выбирает ни одну грань. */
 
 function toCanvas(e) {
   const m = e.currentTarget.getScreenCTM();
@@ -410,8 +418,7 @@ function nearestFacet(e) {
      далеко за край. Без неё подсветка не гасла за фигурой, а отпускание в
      пустоте выбирало ближайшую грань (поймано зондом). */
   if (!inPoly(pt, plate)) return null;
-  const c = box / 2;
-  if (Math.hypot(pt[0] - c, pt[1] - c) < HEART_R) return null;
+  if (inPoly(pt, heart)) return null;
   let best = null; let bd = Infinity;
   for (const f of facets) {
     const d = (f.cx - pt[0]) ** 2 + (f.cy - pt[1]) ** 2;
@@ -670,7 +677,11 @@ onBeforeUnmount(() => {
 .fx-flow-clip {
   transform-box: view-box;
   transform-origin: 0 0;
-  transition: transform 1.3s steps(5, end);
+  /* ⚠️ Движение, а не скачок. Прежде здесь стояло steps(5, end) — оно
+     делило переход на пять рывков, когда налив шёл сразу на пять шагов
+     петлёй. Теперь шаг прибавляется по одному, и пять рывков внутри одного
+     шага читались бы дрожью. Ступень даёт остановка в конце. */
+  transition: transform .9s var(--e-weight);
 }
 
 /* Пустое гнездо там, где грань вынута. Не подсвечивается. */
