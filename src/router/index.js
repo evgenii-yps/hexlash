@@ -261,6 +261,12 @@ const devRoutes = [
     // плоские иконки, панель боя и слоты выбора — до того, как баффы попадут в
     // бой. Ничего не встраивает, тот же принцип, что и у /dev/core.
     {path: '/dev/buffs', name: 'DevBuffsPreview', component: () => import('@/views/DevBuffsPreviewView.vue')},
+    // /dev/spar — превью SPAR (ТЗ 24.09.2026): бой-настройка, в которой игрок
+    // берёт своего бойца и СОБИРАЕТ ему соперника — ядро и кристаллы. Макет
+    // ничего не встраивает и ничего никуда не записывает: ростер только
+    // читается, дерево соперника живёт в памяти страницы. Тот же принцип, что
+    // у /dev/core и /dev/buffs, и та же защита от поисковиков тегом robots.
+    {path: '/dev/spar', name: 'DevSparMockup', component: () => import('@/views/DevSparMockupView.vue')},
 ];
 
 const routes = [
