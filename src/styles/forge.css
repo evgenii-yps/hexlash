@@ -175,36 +175,203 @@
   text-transform: uppercase; color: var(--ink-off); text-wrap: balance;
 }
 
-/* ── 3 · tree ────────────────────────────────────────────────────────────── */
-.fp-tree { display: flex; flex-direction: column; min-width: 0; }
-/* The tree was written for a wider box. In the panel the depth rail and the
-   spend counter share one narrow line, so the counter is kept off the wrap. */
-.fp .fp-tree .ft-pool { white-space: nowrap; flex: none; }
-/* …and its chamber was written for two thirds of a screen. It gets the height
-   the hall freed up, but not all of it: the roster underneath has to show as a
-   LIST at rest, not as one row and the top of a second. */
-/* 250px is not a taste: the tree lays its crystals on a radius of 31% of the
-   chamber, and below that the ring falls inside the core and the labels land on
-   top of it. Where the panel is shorter than that, the tree is a thing you
-   scroll to — which is why the short layouts below put the roster first. */
-.fp .fp-tree .ft-depth { height: clamp(250px, 30vh, 320px); }
-/* The tree drops its switcher's WORDS below 1024px of VIEWPORT — a rule written
-   when it was two thirds of a wide screen. In the panel the width that matters
-   is the panel's, not the window's, and the three words fit in it at every size,
-   so they stay: three unlabelled diamonds are not a switcher. */
-.fp .fp-tree .ft-step .lb { display: inline; }
-.fp .fp-tree .ft-step { padding: 0 var(--sp-2); }
+/* ── 3 · ЯДРО КАК ИНТЕРФЕЙС ПРОКАЧКИ ─────────────────────────────────────
+   Здесь была ПЛОСКАЯ КАРТОЧКА ДЕРЕВА (ForgeTree): схема рядом с фигурой, с
+   разрядной шкалой CORE · CRYSTAL · FACET и счётчиком «0 / 5». Она ушла целиком
+   вместе с двумя своими бедами — цифрами в зале и перевёрнутым словарём, где
+   лучом звали шаг, а шагом луч.
 
-/* The one line under the tree: what to do with an empty one, or that there is
-   nothing left to put in a full one. While the first is showing, the tree's own
-   step hint is hidden — two hints stacked under one drawing is noise, and this
-   is the one the player needs first. */
+   Теперь игрок ведёт по самой «Печати»: ForgeCore. Правила те же, что на
+   эталоне /dev/facets, и расхождение с ним считается ошибкой.
+
+   ⚠️ Светится тут одно: розовая вспышка в миг выбора и кнопка зажигания.
+   Подсветка под пальцем НЕЙТРАЛЬНАЯ — см. .fc-facet__glow. */
+.fp-tree { display: flex; flex-direction: column; min-width: 0; }
+
+.fc { display: flex; flex-direction: column; min-width: 0; }
+
+/* Кто открыт — одной строкой. Имя заглавными, ядро своим цветом. */
+.fc-who {
+  margin: 0 0 var(--sp-2); flex: 0 0 auto;
+  display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0;
+}
+.fc-who .nm {
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
+  letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fc-who .cr {
+  font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--core); white-space: nowrap;
+}
+
+/* Сцена. Высота задана ЯВНО, а не долей и не пропорцией: только при заданной
+   высоте разрешается 100cqh ниже, и холст вписывается в МЕНЬШУЮ сторону. На
+   пропорции холст брал ширину колонки, и лёжа фигура вылезала за панель.
+   ⚠️ ВЫСОТА ЗАДАНА ЯВНО, а не остатком колонки. Остатком её пробовал: панель
+   стоя — полоса всего в 40vh, и остаток после кнопки занятия и описания давал
+   фигуре 107 точек, а на низком лежащем телефоне и вовсе выдавливал возврат за
+   край, причём БЕЗ прокрутки — доля отдана флексом, и переполнение уходит мимо
+   прокрутки панели. С явной высотой панель честно прокручивается, а карточка
+   сама показывает то, ради чего открыта (см. showCard в ForgeCore).
+   150 — ниже клин с пятью гнёздами не разобрать; 300 — выше он не нужен. */
+.fc-stage {
+  position: relative; width: 100%; height: clamp(150px, 26vh, 300px);
+  display: grid; place-items: center; overflow: hidden;
+  container-type: size;
+  /* ⚠️ ФОН ЯВНО ТЁМНЫЙ, а не унаследованный от панели. Панель стоит на --panel,
+     и на нём грань с кристаллами (их плоскость — тот же --panel) пропадала:
+     предмет сливался с подложкой. Фигура живёт на void — так она и задумана. */
+  background: var(--void);
+}
+.fc-svg {
+  display: block; width: min(100%, 100cqh); height: auto; aspect-ratio: 1;
+  overflow: visible; color: var(--core);
+  /* ⚠️ Ведение пальцем по фигуре — наш жест, не браузерный. Запрет стоит
+     ИМЕННО НА КОРНЕ холста: внутри SVG браузер touch-action не читает, и
+     поставленный на детях он не срабатывал — ведение обрывалось на втором
+     движении пальца. */
+  touch-action: none;
+}
+.fc-void { fill: transparent; }
+
+/* Всё, что ездит между уровнями, ездит одним свойством. Единицы px внутри
+   transform равны единицам холста — это даёт transform-box. */
+.fc-core, .fc-facet, .fc-cryst, .fc-flash {
+  transform-box: view-box; transform-origin: 0 0;
+  transition: transform var(--d-panel) var(--e-weight),
+              opacity var(--d-panel) var(--e-settle);
+}
+.fc[data-level='facet'] .fc-core,
+.fc[data-level='crystal'] .fc-core { opacity: .3; }
+
+/* Налив грани: сплошная полоса, обрезанная растущим кругом. ДЕЛЕНИЙ ВНУТРИ
+   ГРАНИ НЕТ — ступень даёт остановка движения, а не линия. */
+.fc-flow { fill: currentColor; fill-opacity: .9; }
+.fc-flow-clip {
+  transform-box: view-box; transform-origin: 0 0;
+  /* Налив идёт ДВИЖЕНИЕМ, а не скачком: длительность — самая долгая из
+     переходов интерфейса, шаг у налива длинный. */
+  transition: transform var(--d-panel) var(--e-weight);
+}
+/* Пустое гнездо там, где грань вынута. Не подсвечивается. */
+.fc-socket { fill: var(--void); pointer-events: none; }
+
+/* Полотно ведения: прозрачное, во весь шестиугольник — грань берётся по
+   ближайшей середине, а не по своей плитке. */
+.fc-pad, .fc-cpad { fill: transparent; cursor: pointer; }
+.fc[data-level='crystal'] .fc-cpad { cursor: default; }
+
+/* Предметы: грань и кристалл огранены одинаково, отличаются размером. */
+.fc-shard__body { fill: var(--void); pointer-events: none; }
+.fc-shard__face { fill: var(--panel); pointer-events: none; }
+.fc-shard__lit { pointer-events: none; }
+.fc-bevel { pointer-events: none; }
+.fc-bevel.is-near { fill: color-mix(in srgb, var(--ink) 13%, var(--panel)); }
+.fc-bevel.is-side { fill: color-mix(in srgb, var(--ink) 6%, var(--panel)); }
+.fc-bevel.is-far  { fill: color-mix(in srgb, var(--void) 55%, var(--panel)); }
+
+/* ⚠️ ПОДСВЕТКА ПОД ПАЛЬЦЕМ — НЕЙТРАЛЬНАЯ, не цветом ядра и не розовая.
+   Цветом ядра показан налив: подсвеченная им незажжённая грань читалась бы
+   зажжённой. Розовое принадлежит действию, а подсветка — ещё не действие. */
+.fc-facet__glow, .fc-cryst__glow {
+  fill: var(--ink); fill-opacity: .3; opacity: 0; pointer-events: none;
+  transition: opacity var(--d-fast) var(--e-settle);
+}
+.fc[data-level='core'] .fc-facet.is-guided .fc-facet__glow,
+.fc[data-level='facet'] .fc-cryst.is-guided .fc-cryst__glow { opacity: 1; }
+/* Клавиатурная цель. Пальцем по ней не попадают — попадание ведёт полотно. */
+.fc-facet__key, .fc-cryst__key { fill: none; pointer-events: none; outline: none; }
+
+.fc[data-level='facet'] .fc-facet:not(.is-sel),
+.fc[data-level='crystal'] .fc-facet:not(.is-sel) { opacity: 0; }
+/* Зажигать больше нечем — незажжённые гаснут. */
+.fc-cryst.is-spent { opacity: .35; }
+.fc-cryst__name {
+  fill: var(--ink-dim); font-family: var(--font-mono);
+  letter-spacing: var(--ls-meta); text-anchor: start;
+  dominant-baseline: middle; pointer-events: none;
+}
+.fc-cryst.is-lit .fc-cryst__name { fill: var(--ink); }
+.fc[data-level='crystal'] .fc-cryst:not(.is-sel) { opacity: .18; }
+
+/* Розовое — только на миг выбора. Оно тут одно на всю сцену. */
+.fc-flash polygon { fill: var(--pink); opacity: .75; pointer-events: none; }
+
+/* ── что сейчас открыто, и что с этим делать ─────────────────────────── */
+.fc-read { margin-top: var(--sp-3); min-width: 0; flex: 0 0 auto; }
+.fc-head { display: flex; flex-direction: column; gap: var(--sp-1); }
+.fc-kicker {
+  font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-off);
+}
+.fc-name {
+  margin: 0; font-family: var(--font-display); font-size: var(--t-sm);
+  font-weight: 700; letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink);
+}
+.fc-hint {
+  margin: 0; font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-off); text-align: center;
+}
+.fc-hint--left { text-align: left; }
+/* Перечень того, что кристалл меняет. Словами, без чисел.
+   Длинный перечень прокручивается сам, а не выдавливает кнопки за край: у
+   иных кристаллов строк четыре, и в самой низкой раскладке они уносили возврат
+   под нижний край (замерено — на 67 точек). */
+.fc-lines {
+  margin: var(--sp-2) 0 0; padding: 0; list-style: none;
+  max-height: 4.2em; overflow-y: auto; overscroll-behavior: contain;
+}
+.fc-lines li {
+  font-size: var(--t-micro); line-height: 1.55; letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-off);
+}
+.fc-lines li.lead { color: var(--ink-dim); }
+
+.fc-foot {
+  margin-top: var(--sp-3); flex: 0 0 auto; display: flex; align-items: center;
+  gap: var(--sp-3); flex-wrap: wrap;
+}
+.fc-why {
+  margin: 0; font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-off);
+}
+/* Зажечь — главное действие экрана, потому розовое. Оно тут одно. */
+.fc-light {
+  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  border: 0; border-radius: var(--r-none); background: var(--pink);
+  color: var(--ink); font-family: var(--font-display); font-size: var(--t-xs);
+  font-weight: 700; letter-spacing: var(--ls-title);
+  text-transform: uppercase; cursor: pointer;
+  transition: opacity var(--d-hover) var(--e-settle);
+}
+.fc-light:active { opacity: var(--o-dim); }
+.fc-back {
+  min-height: var(--h-btn-sm); padding: 0 var(--sp-3);
+  border: 1px solid var(--line); border-radius: var(--r-none);
+  background: var(--fill-1); color: var(--ink-soft);
+  font: inherit; font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; cursor: pointer;
+  transition: border-color var(--d-hover) var(--e-settle),
+              color var(--d-hover) var(--e-settle);
+}
+.fc-back:hover { border-color: var(--line-strong); color: var(--ink); }
+.fc-back:active { opacity: var(--o-dim); }
+
+/* «Уменьшить движение»: переходов нет, конечные состояния те же. Отклик на
+   выбор остаётся — он не украшение. */
+@media (prefers-reduced-motion: reduce) {
+  .fc-core, .fc-facet, .fc-cryst, .fc-flash, .fc-flow-clip,
+  .fc-facet__glow, .fc-cryst__glow,
+  .fc-light, .fc-back { transition: none !important; }
+}
+
 .fp-hint {
   margin-top: var(--sp-2);
   font-size: var(--t-micro); letter-spacing: var(--ls-title);
   text-transform: uppercase; color: var(--ink-off); text-align: center;
 }
-.fp .fp-tree.is-fresh .ft-foot { display: none; }
 
 /* a block that has nothing to show, and says why. Used by the tree's four
    silent states and by the empty roster. */
@@ -328,6 +495,14 @@
   .fp-train  { order: 2; }
   .fp-style  { order: 3; }
   .fp-tree   { order: 4; }
+  /* ⚠️ КАРТОЧКА ЯДРА — ИСКЛЮЧЕНИЕ, И ОНО ОБРАТНОЕ. Порядок выше писан для
+     полной панели, где дерево было последним из пяти блоков и к нему
+     прокручивались. Карточку ядра открывают НАРОЧНО — наковальней или строкой
+     из статов, — и прокручиваться к тому, ради чего её открыли, незачем.
+     Занятие уходит под фигуру: оно здесь не шаг назад, а ответ на «зажечь
+     нечем» — сходи позанимайся. */
+  .fp.is-core .fp-tree  { order: 0; }
+  .fp.is-core .fp-train { order: 1; }
 }
 
 /* ── phone, upright: a band along the BOTTOM ─────────────────────────────

@@ -49,7 +49,6 @@
         :picked="picked"
         :spent="spent"
         :resource="resource"
-        :roster-max="rosterMax"
         :is-guest="isGuest"
         :status="status"
         :tree-status="treeStatus"
@@ -75,7 +74,6 @@
         :picked="picked"
         :spent="spent"
         :resource="resource"
-        :roster-max="rosterMax"
         :is-guest="isGuest"
         :status="status"
         :tree-status="treeStatus"
@@ -211,7 +209,6 @@ const picked = computed(() => store.getters['roster/picked']);
 const pickedCore = computed(() => (picked.value ? getCore(picked.value.core) : null));
 const spent = computed(() => (picked.value ? store.getters['roster/spentOf'](picked.value.id) : 0));
 const resource = computed(() => store.getters['roster/resource']);
-const rosterMax = computed(() => store.getters['roster/max']);
 // The hall is tinted by the picked fighter's own core (and by nothing at rest).
 const coreVars = computed(() => (picked.value
   ? { '--core': pickedCore.value.hue, '--core-sup': pickedCore.value.sup }

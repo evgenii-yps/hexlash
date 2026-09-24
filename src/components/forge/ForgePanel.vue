@@ -36,14 +36,19 @@
      change leaves as an event. Whose roster it is and where it is stored is the
      hall's business (PveView → the roster store). -->
 <template>
-  <aside class="fp" :class="{ 'is-guest': isGuest }" :style="coreVars">
+  <aside class="fp" :class="{ 'is-guest': isGuest, 'is-core': showTree }" :style="coreVars">
 
     <!-- ── 1 · head — who is selected ─────────────────────────────────────
          ШАПКА ГАСНЕТ, КОГДА РЯДОМ СТОИТ БЛОК СТАТОВ (24.09.2026). Лёжа нажатие
-         по бойцу открывает обе стороны сразу: статы слева, дерево справа. Имя и
-         ядро говорит левый блок, и второй раз их писать справа не нужно — стоя
-         же дерево открывается одно, и шапка ему обязательна. -->
-    <header v-if="showHead" class="fp-head">
+         по бойцу открывает обе стороны сразу: статы слева, ядро справа. Имя и
+         ядро говорит левый блок, и второй раз их писать справа не нужно.
+
+         И ГАСНЕТ НАД САМИМ ЯДРОМ (24.09.2026, перенос интерфейса ядра). Четыре
+         строки шапки съедали ту высоту, в которой фигуре и жить: лёжа на
+         телефоне панель всего 390 высотой, и ядру оставалось 180 — клин мельчал
+         до нечитаемого, а описание и возврат уходили под нижний край (замерено).
+         Имя бойца теперь несёт само ядро, одной строкой над фигурой. -->
+    <header v-if="showHead && !showTree" class="fp-head">
       <p class="fp-kicker">{{ t.forge.selected }}</p>
 
       <!-- a fighter, and his data is here -->
@@ -104,7 +109,11 @@
       <!-- Кнопку держит тот блок, который сейчас на экране один: статы, если
            открыты они, иначе дерево (его открывает наковальня — и там кнопка
            стояла и стоит). Двух одинаковых кнопок на одном кадре быть не должно. -->
-      <section v-if="picked && (showStats || (showTree && showHead))" class="fp-train">
+      <!-- Кнопку держит тот блок, который сейчас на экране: статы, если открыты
+           они, иначе карточка ядра. Двух одинаковых кнопок на одном кадре быть
+           не должно, а без кнопки в карточке ядра из зала не выйти на занятие
+           лёжа — там карточку открывает наковальня, и статов рядом нет. -->
+      <section v-if="picked && (showStats || showTree)" class="fp-train">
         <button
           type="button" class="fp-train-btn"
           :class="{ 'is-cancel': pickedState === 'busy' }"
@@ -121,12 +130,16 @@
         v-if="showStats && picked && canOpenTree"
         type="button" class="fp-to-tree"
         @click="$emit('open-tree')"
-      >{{ t.forge.openCrystals }}</button>
+      >{{ t.forge.openCore }}</button>
 
-      <!-- ── 3 · tree ───────────────────────────────────────────────────── -->
-      <section v-if="showTree" class="fp-tree" :class="{ 'is-fresh': treeState === 'live' && !litNames.length }">
-        <!-- the mechanic, untouched -->
-        <ForgeTree
+      <!-- ── 3 · ЯДРО БОЙЦА ──────────────────────────────────────────────
+           Здесь стояла ПЛОСКАЯ КАРТОЧКА ДЕРЕВА (ForgeTree). Механика та же —
+           те же пятнадцать единиц и тот же потолок пять, — но ведёт её теперь
+           игрок по самой фигуре «Печать»: ForgeCore, перенос принятого макета
+           /dev/facets. Вместе с карточкой ушли две её беды: цифры в зале и
+           перевёрнутый словарь, где лучом звали шаг, а шагом луч. -->
+      <section v-if="showTree" class="fp-tree">
+        <ForgeCore
           v-if="treeState === 'live'"
           ref="treeRef"
           :core-id="picked.core"
@@ -134,6 +147,8 @@
           :spent="spent"
           :resource="resource"
           :gates="gates"
+          :fighter-name="picked.callsign"
+          :core-name="pickedCore ? pickedCore.name : ''"
           @toggle="$emit('toggle', $event)"
         />
 
@@ -155,26 +170,20 @@
           </template>
         </div>
 
-        <!-- One line under the tree, whichever applies. The second does NOT take
-             the tree away — the pool is given back by quenching a facet, so the
-             tree has to stay reachable exactly when it is full.
-
-             ПРИЧИНА ОТКАЗА — ПЕРВОЙ (18.09.2026). Грани видны, но не
-             зажигаются — и игрок обязан прочесть почему ДО нажатия, а не после.
-
-             ⚠️ Причина живёт ИМЕННО ЗДЕСЬ, а не внизу камеры дерева, где она
-                напрашивалась: та строка скрыта, пока у бойца ни одной зажжённой
-                грани (.fp-tree.is-fresh .ft-foot в forge.css) — то есть ровно в том
-                случае, в котором причина нужнее всего. Измерено: коробка 0×0. -->
-        <p v-if="treeState === 'live' && lightWhy" class="fp-hint">{{ whyText(lightWhy) }}</p>
-        <p v-else-if="treeState === 'live' && !litNames.length" class="fp-hint">{{ t.forge.treeHint }}</p>
-        <p v-else-if="treeState === 'live' && spent >= resource" class="fp-hint">{{ t.forge.treeSpent }}</p>
+        <!-- ⚠️ ТРЁХ СТРОК-ОБЪЯСНЕНИЙ ЗДЕСЬ БОЛЬШЕ НЕТ. Они писали под деревом,
+             почему зажечь нельзя, потому что само дерево сказать этого не
+             умело. Ядро умеет: причина стоит там, где игрок держит палец, — под
+             вынесенным кристаллом, рядом с кнопкой, которой на него нет. Две
+             копии одних и тех же слов разошлись бы при первой же правке. -->
       </section>
 
-      <!-- ── 4 · style — what he is built out of ────────────────────────── -->
-      <!-- В блоке статов строки характера нет: лёжа она стояла бы дважды —
-           и слева, и справа под деревом. Её место — там, где грани зажигают. -->
-      <section v-if="!showStats" class="fp-style">
+      <!-- ── 4 · style — what he is built out of ──────────────────────────
+           НАД ЯДРОМ ЕЁ ТОЖЕ НЕТ (24.09.2026). Строка перечисляла зажжённое
+           именами — ровно то, что теперь показывает сама фигура: горящие
+           кристаллы в своих гнёздах и налив по граням. Две записи одной правды
+           расходятся при первой же правке, и лишние строки здесь — это ещё и
+           высота, отнятая у фигуры. Остаётся она там, где ядра нет: в списке. -->
+      <section v-if="!showStats && !showTree" class="fp-style">
         <p class="fp-label">{{ t.forge.styleLabel }}</p>
         <p class="fp-style-v">
           <span v-if="!litNames.length" class="ph">{{ t.forge.buildEmpty }}</span>
@@ -192,10 +201,11 @@
            состояния, которые на выбор влияют. В шапке стоят все три слова — там
            это одна строка про одного бойца. -->
       <section v-if="showRoster" class="fp-roster">
-        <p class="fp-label">
-          {{ t.forge.rosterLabel }}
-          <span v-if="fighters.length" class="c">{{ fighters.length }} / {{ rosterMax }}</span>
-        </p>
+        <!-- ⚠️ БЕЗ СЧЁТЧИКА. Здесь стояло «3 / 10» — сколько бойцов из скольких.
+             Цифр в зале не остаётся ни одной (ТЗ §9.1): сколько их, видно по
+             самому списку, а сколько влезет — по тому, что новых больше не
+             берут. Счётчик прав и «0 / 5» ушли вместе с плоской карточкой. -->
+        <p class="fp-label">{{ t.forge.rosterLabel }}</p>
 
         <ul v-if="fighters.length" class="fp-list">
           <li v-for="f in fighters" :key="f.id">
@@ -241,7 +251,7 @@ import { computed, ref } from 'vue';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import { AXIS_IDS } from '@/data/behavior.js';
-import ForgeTree from '@/components/forge/ForgeTree.vue';
+import ForgeCore from '@/components/forge/ForgeCore.vue';
 
 const props = defineProps({
   // КАКИЕ БЛОКИ ПОКАЗЫВАТЬ. Встраивание v1: панель больше не стоит в экране
@@ -260,7 +270,6 @@ const props = defineProps({
   picked: { type: Object, default: null },
   spent: { type: Number, default: 0 },
   resource: { type: Number, required: true },
-  rosterMax: { type: Number, required: true },
   isGuest: { type: Boolean, default: false },
   // 'ready' | 'loading' | 'error' — what the HEAD knows about the picked fighter
   status: { type: String, default: 'ready' },

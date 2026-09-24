@@ -106,22 +106,24 @@ export default {
   // upgrade screen (which carried its copy inline); they are keyed here.
   forge: {
     noFights: "none yet",
-    // tree
-    openCrystals: "Open the crystals",
-    stepCore: "Core",
-    stepCrystal: "Crystal",
-    stepFacet: "Facet",
-    hintCore: "Tap the core to enter the tree",
-    hintCrystal: "Pick a crystal",
-    hintFacet: "Light one — quench another",
-    stLit: "Lit",
-    stOpen: "Open",
-    stLocked: "Locked",
-    stLimit: "Limit",
-    stNoPts: "No pts",
-    // Грань видна, но занятие под неё не отработано. Молчаливой недоступности
-    // быть не должно: игрок обязан понимать, что именно мешает.
-    stUntrained: "Untrained",
+
+    // ── ЯДРО КАК ИНТЕРФЕЙС ПРОКАЧКИ (ForgeCore) ──────────────────────────
+    // ⚠️ СЛОВАРЬ. Прежние подписи стояли в перевёрнутом значении: лучом звали
+    // шаг, шагом луч. Здесь он верный и другого нет:
+    //   FACET   — весь луч «Печати» целиком. Их три.
+    //   CRYSTAL — один из пяти шагов внутри грани. Их пятнадцать.
+    // ⚠️ НИ ОДНОЙ ЦИФРЫ. Ни счётчика прав, ни «0 / 5», ни процентов: сколько
+    // зажжено — видно по наливу самого ядра.
+    openCore: "OPEN HIS CORE",
+    coreHint: "GUIDE OVER THE CORE · A FACET LIGHTS UP",
+    facetHint: "GUIDE OVER THE FACET · A CRYSTAL LIGHTS UP",
+    lightUp: "LIGHT IT",
+    backToFacet: "← BACK TO THE FACET",
+    backToCore: "← BACK TO THE CORE",
+    // почему этот кристалл не зажечь — по одной причине на случай
+    whyLit: "THIS ONE IS ALREADY LIT",
+    whyFacetFull: "THIS FACET IS FULL",
+    whySpent: "HE HOLDS ALL HE CAN · NOTHING LEFT TO LIGHT",
     buildEmpty: "NOTHING LIT YET",
 
     // ── the hall's PANEL (the block beside the 3D hall) ──────────────────
@@ -143,25 +145,23 @@ export default {
     trainCancel: "CANCEL",
     // причины отказа — спокойными словами, без восклицаний
     whyBusy: "HE IS WORKING · LET HIM FINISH",
-    whyReady: "HIS LESSON IS DONE · LIGHT A FACET TO TAKE IT",
-    whyFull: "EVERY FACET IS LIT · NOTHING LEFT TO WORK FOR",
-    whyUntrained: "A FACET IS EARNED, NOT PICKED · TRAIN HIM FIRST",
-    whyHolds: "ONE LESSON, ONE FACET · LIGHT THE ONE HE EARNED FIRST",
+    whyReady: "HIS LESSON IS DONE · LIGHT A CRYSTAL TO TAKE IT",
+    whyFull: "EVERY CRYSTAL IS LIT · NOTHING LEFT TO WORK FOR",
+    whyUntrained: "A CRYSTAL IS EARNED, NOT PICKED · TRAIN HIM FIRST",
+    whyHolds: "ONE LESSON, ONE CRYSTAL · LIGHT THE ONE HE EARNED FIRST",
     // строка под кнопкой, пока занятие идёт — ни чисел, ни полосы
     trainingNote: "HE IS DRILLING IN THE HALL",
-    readyNote: "HIS LESSON IS DONE · ONE FACET IS HIS TO LIGHT",
+    readyNote: "HIS LESSON IS DONE · ONE CRYSTAL IS HIS TO LIGHT",
     // шапка — по одному состоянию на строку
     headNoPick: "NO FIGHTER",
     headNoPickSub: "PICK ONE FROM THE ROSTER",
     headEmpty: "NO FIGHTERS",
     headLoading: "LOADING FIGHTER",
     headError: "FIGHTER DATA DID NOT LOAD",
-    // дерево — состояния
-    treeHint: "PICK A CRYSTAL TO LIGHT A FACET",
-    treeSpent: "RESOURCE SPENT · NOTHING LEFT TO LIGHT",
-    treeNoFighter: "NO TREE WITHOUT A FIGHTER",
+    // ядро — состояния, когда показывать нечего
+    treeNoFighter: "NO CORE WITHOUT A FIGHTER",
     treeLoading: "READING FIGHTER · {n} OF {total}",
-    treeErrorTitle: "TREE DID NOT LOAD",
+    treeErrorTitle: "HIS CORE DID NOT LOAD",
     treeErrorBody: "SOMETHING WENT WRONG. THE FIGHTER IS FINE.",
     retry: "RETRY",
     // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ — надписи на торцах. Слово BACK здесь не годится:
