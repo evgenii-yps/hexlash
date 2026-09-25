@@ -55,10 +55,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing, buildSparStand } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing, buildSparStand, buildAscensionStand } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
+import { buildTree } from '@/data/upgradeTree.js';
+import { legendHue, heartHandle } from './ascensionRite.js';
 import { createLegendPresence } from './legendPresence.js';
 import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
@@ -66,7 +68,7 @@ import { t } from '@/locales/index.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { DEV_MODE } from '@/services/devMode.js';
 import { stateOf as trainingStateOf } from '@/services/training.js';
-import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
+import { CORE_HUE, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 // THE PLATE. The hall has ONE ground and it is a plate — the same torn, hex-topped
@@ -289,6 +291,18 @@ const LEGEND = {
   bobAmplitude: 0.18,  // vertical bob
   hazeDensity: 90,     // warm cloud particle count
 };
+// ⚠️ ЧЕТЫРЁХ ВЕЛИЧИН ЗДЕСЬ БОЛЬШЕ НЕ ПРОСЯТ, И ЭТО ПОЧИНКА, А НЕ УПРОЩЕНИЕ.
+//    Ниже по файлу у парящей фигуры спрашивали LEGEND.coreLevel, .hazeOpacity,
+//    .pedestalGlow и .smokeOpacity — а объявлены они НЕ БЫЛИ НИКОГДА (проверено
+//    по всей истории файла). Каждая приходила как `undefined`, и дальше:
+//      · цвет ядра умножался на undefined → NaN, сердце фигуры гасло;
+//      · прозрачность ореола умножалась на undefined → NaN;
+//      · блик постамента и дым считались от undefined → NaN.
+//    Разворот объекта настроек перекрывает умолчания даже значением undefined,
+//    поэтому запасные числа самого облака тоже не срабатывали. Теперь эти
+//    величины просто НЕ ПЕРЕДАЮТСЯ — работают умолчания legendPresence.js, где
+//    они объявлены и прокомментированы, — а приглушение сердца делает общая
+//    ручка обряда (ascensionRite.heartHandle), одна на зал и на обряд.
 // Палитра ядер — из общих токенов. RAIDER здесь раньше горел #FFD930: это
 // ВТОРОЙ тон, а не основной, и в зале боец светился не тем цветом, что в
 // магазине. Отменено (Документ А 2.3): читаемость под янтарными лампами
@@ -299,7 +313,10 @@ const CORE_PALETTE = [
   { id: 'skala',  hue: CORE_HUE.skala  },
   { id: 'zasada', hue: CORE_HUE.zasada },
 ];
-const LEGEND_HUE = AMBER;   // янтарь HEXARCH — единственный тёплый якорь зала
+// ⚠️ ЯНТАРЬ HEXARCH ОТСЮДА УЕХАЛ. Он был цветом безымянного тренера, который
+// висел над залом всегда. Теперь над залом парит боец самого игрока, и цвет её
+// сердца выводится из ЕЁ ядра — золото с подмесом (ascensionRite.legendHue),
+// одним местом на проект. Второго объявления цвета легенды здесь быть не может.
 
 // ─────────────────────────── Ambient dust — REMOVED on PVE ───────────────────────────
 // The drifting amber dust (home recipe) was dropped from this scene per design — no
@@ -663,6 +680,19 @@ function buildForgeProps(topY) {
     //    обе раскладки снимком, а не на глаз: камера зала диагональная, и
     //    разъехавшиеся по миру предметы на экране сходятся.
     { key: 'spar', make: buildSparStand, x: compose.slab.width * 0.33, z: z + 0.3 },
+    // ASCENSION — вход в обряд. Стоит в открытой середине плиты, между
+    // планшетом и наковальней, ближе к игроку, чем они.
+    //
+    // ⚠️ МЕСТО ПРОВЕРЕНО СНИМКОМ, А НЕ ВЫБРАНО ПО СИММЕТРИИ. Сначала предмет
+    //    поставили зеркально SPAR (−0.33), рассудив, что два предмета про
+    //    одного бойца должны стоять по краям, — и он ушёл ЗА ЛЕВЫЙ КРАЙ КАДРА
+    //    целиком: камера зала диагональная, и левая часть плиты в неё не
+    //    попадает. Предмет, которого не видно, для игрока не существует.
+    //    Двигая его, проверяй снимком обе раскладки, как и SPAR.
+    //
+    // Доля ширины, а не число: плита растёт ступенями под размер ростера, и
+    // закреплённое число уехало бы с неё при первом же пополнении.
+    { key: 'ascension', make: buildAscensionStand, x: compose.slab.width * 0.12, z: z - 0.4 },
   ];
   for (const sp of spots) {
     const obj = sp.make();
@@ -1116,33 +1146,60 @@ onMounted(() => {
   stopTrainingWatch = watch(trainingSig, () => applyTraining?.());
   applyTraining();
 
-  // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
-  //     the wander), floating LEGEND.height over the plate centre, drifting forever
-  //     inside its warm cloud (legendPresence).
-  //     He hangs HIGH — feet well above the tallest head — and over the open floor
-  //     between the arc and the mark, so he presides over the hall instead of
-  //     standing behind the row's shoulders, and his cloud crosses nobody's zone. ---
-  const legendBehavior = resolveBehavior(null, []);
-  legend = buildFighter(LEGEND_HUE, { side: 'player', coreId: null, behavior: legendBehavior, bounds: { x: 1, z: 1 }, neutralColor: false, getFoePos: () => null });
-  legend.setReducedMotion(reduced);
-  legend.group.children.forEach((o) => { if (o.isSprite) o.visible = false; }); // no HP plate
-  scene.add(legend.group);
-  legendPresence = createLegendPresence({
-    baseX: 0, baseZ: 0, floorY: topY,
-    driftSpeed: LEGEND.driftSpeed, driftRadius: LEGEND.driftRadius,
-    bobAmplitude: LEGEND.bobAmplitude, hazeDensity: LEGEND.hazeDensity,
-    hazeOpacity: LEGEND.hazeOpacity,
-    PEDESTAL: { glow: LEGEND.pedestalGlow },
-    SMOKE: { opacity: LEGEND.smokeOpacity },
-    ORBIT: { highAboveTop: LEGEND.height }, // feet height at the high/centre phase = LEGEND.height
-    reduced,
-  });
-  // …and his own core, held under the pick's. Same handle the roster cores use,
-  // applied after his update() for the same reason: update() rewrites the halo.
-  legendParts = coreParts(legend);
-  legend.group.position.copy(legendPresence.position);
-  scene.add(legendPresence.group);
-  scene.add(legendPresence.trail); // world-space descent smoke wisps
+  // --- ЛЕГЕНДА. Парит над серединой плиты, в тёплом облаке (legendPresence),
+  //     высоко — стопы заведомо выше самой высокой головы и над открытым полом
+  //     между дугой и меткой, чтобы она ПРЕДСЕДАТЕЛЬСТВОВАЛА над залом, а не
+  //     стояла у ряда за плечами, и чтобы её облако не задевало ничью зону.
+  //
+  //     ⚠️ ЛЕГЕНДА ПОЯВЛЯЕТСЯ ТОЛЬКО ПОСЛЕ ОБРЯДА (ТЗ 24.09.2026 §5). До него
+  //     место над плитой ПУСТУЕТ, и это видно: кольцо на предмете ASCENSION
+  //     ждёт того, кто его займёт. Раньше здесь всегда висел HEXARCH —
+  //     безымянный тренер с янтарным сердцем; теперь над залом парит боец
+  //     САМОГО ИГРОКА, и янтарь стал его золотом.
+  //
+  //     ⚠️ ЧИТАЕТСЯ ОДИН РАЗ, вместе с ростером, — как и всё остальное в этом
+  //     зале. Вознесение случается на другом экране, и возврат сюда собирает
+  //     зал заново; переспрашивать посреди жизни зала нечего.
+  const legendRec = store.getters['roster/legend'];
+  if (legendRec) {
+    // Манера наследуется целиком: ядро и зажжённые кристаллы (ТЗ §4). Дерево
+    // строится из сохранённой малой формы — своей копии сбора здесь нет.
+    const legendTree = buildTree(legendRec.core, legendRec.lit || null);
+    const legendLit = [];
+    for (const branch of legendTree || []) {
+      for (const f of branch.faces || []) if (f.state === 'lit') legendLit.push(f);
+    }
+    // Цвет сердца — золото с подмесом её ядра. Выводится ОДНИМ местом на
+    // проект (ascensionRite.legendHue), тем же, каким его наливает обряд.
+    const goldHex = legendHue(legendRec.core);
+    legend = buildFighter(goldHex, {
+      side: 'player',
+      coreId: legendRec.core,
+      behavior: resolveBehavior(legendRec.core, legendLit),
+      bounds: { x: 1, z: 1 },
+      neutralColor: false,
+      getFoePos: () => null,
+    });
+    legend.setReducedMotion(reduced);
+    legend.group.children.forEach((o) => { if (o.isSprite) o.visible = false; }); // no HP plate
+    scene.add(legend.group);
+    legendPresence = createLegendPresence({
+      baseX: 0, baseZ: 0, floorY: topY,
+      driftSpeed: LEGEND.driftSpeed, driftRadius: LEGEND.driftRadius,
+      bobAmplitude: LEGEND.bobAmplitude, hazeDensity: LEGEND.hazeDensity,
+      ORBIT: { highAboveTop: LEGEND.height }, // feet height at the high/centre phase = LEGEND.height
+      reduced,
+    });
+    // …и ручка к её сердцу, придержанная под телом: тело переписывает цвет и
+    // яркость ядра каждый кадр, поэтому приглушение накладывается ПОСЛЕ
+    // update(). Ручка та же, что у обряда, — одна на проект.
+    legendParts = heartHandle(legend, goldHex);
+    legend.group.position.copy(legendPresence.position);
+    scene.add(legendPresence.group);
+    scene.add(legendPresence.trail); // world-space descent smoke wisps
+  }
+  // Предмет ASCENSION гаснет, когда место занято: второго вознесения нет.
+  propList.find((x) => x.key === 'ascension')?.obj.setPresent?.(!!legendRec);
   load.stage('legend');
 
   // --- Camera: FIXED and frontal. No orbit, no auto-rotate (owner's call): the
@@ -1395,13 +1452,10 @@ onMounted(() => {
     for (const [, bag] of bags) bag.tick(dt, reduced);
 
     // Legend: idle body, ride the drift, and slowly face the camera (presiding).
+    // Сердце красится ПОСЛЕ тела и ПОЛНОСТЬЮ золотым (mix = 1): здесь легенда
+    // уже поднята, наливать нечего — наливает обряд.
     legend?.update(t, camera);
-    if (legendParts) {
-      if (legendParts.gem && legendParts.gemBase) {
-        legendParts.gem.material.color.copy(legendParts.gemBase).multiplyScalar(LEGEND.coreLevel);
-      }
-      if (legendParts.halo) legendParts.halo.material.opacity *= LEGEND.coreLevel;
-    }
+    legendParts?.apply(1);
     if (legendPresence) {
       legendPresence.tick(t, dt);
       legend.group.position.copy(legendPresence.position);

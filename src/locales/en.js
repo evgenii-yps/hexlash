@@ -188,6 +188,34 @@ export default {
     // строка гостя
     guestLine: "GUEST · WORK IS KEPT WHILE THIS TAB IS OPEN",
   },
+  // ПОСВЯЩЕНИЕ В ЛЕГЕНДУ (24.09.2026). Одноразовое необратимое событие: один
+  // боец уходит из ростера и становится легендой, которая парит над залом.
+  // Слов здесь нарочно мало и все они простые — обряд не объясняют, его
+  // проводят. Ни одной цифры: условий на вознесение нет, считать нечего.
+  ascension: {
+    title: "ASCENSION",
+    back: "\u2190 FORGE",
+    // Экран выбора
+    lead: "ONE FIGHTER BECOMES A LEGEND.",
+    note: "He leaves the roster for good. His core and every crystal he holds go with him.",
+    pickLabel: "CHOOSE WHO RISES",
+    go: "ASCEND",
+    pickFirst: "PICK A FIGHTER FIRST",
+    // Пусто и занято — честные состояния, а не пустой экран
+    empty: "NO FIGHTERS",
+    emptyBody: "There is nobody to raise. Take a fighter in the FORGE hall and come back.",
+    emptyBtn: "TO THE HALL",
+    // Окно подтверждения. Второй раз не спрашивают — поэтому сказано прямо.
+    confirmTitle: "ASCEND {name}?",
+    confirmBody: "This cannot be undone. {name} stops being a fighter: he leaves the roster and rises over the hall as your legend.",
+    confirmYes: "ASCEND HIM",
+    confirmNo: "CANCEL",
+    // Ход обряда — одно слово, пока фигура поворачивается
+    rising: "RISING",
+    // ⚠️ Подписи предмета зала (ASCENSION / SOON) здесь НЕТ: она гравируется
+    //    прямо в 3D и живёт вместе с самим предметом (FORGE_PROPS.ascension),
+    //    как ROSTER, FORGE и SPAR. Второго её объявления быть не должно.
+  },
   // Ворота арены — пространство за дверью ARENA. Имена и строки самих режимов
   // лежат в data/arenaModes.js рядом с их размерами состава: они игровые данные,
   // а не оформление, и раздваивать их между двумя файлами нечем.

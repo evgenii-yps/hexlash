@@ -139,6 +139,30 @@ export const FORGE_PROPS = {
   // ⚠️ ФИГУРА ТЁМНАЯ И МАТОВАЯ, БЕЗ СВЕЧЕНИЯ, и ядра у неё нет вовсе. В зале
   //    уже есть геройское свечение — ядро бойца; второго быть не может.
   //    Безликость намеренная: соперника ещё не собрали.
+  // ASCENSION — МЕСТО, ГДЕ БОЙЦА ПОДНИМАЮТ. Низкий шестигранный постамент, и
+  // над ним, в пустоте, висит шестигранное кольцо: место для того, кого ещё
+  // никто не занял. Кольцо — уже принятый в проекте знак «здесь будет легенда»
+  // (buildLegendAnchor выше), и второй формы для того же смысла не заводится.
+  //
+  // ⚠️ ПОСТАМЕНТ ТОТ ЖЕ, ЧТО У SPAR, и это намеренно: оба предмета говорят про
+  //    одного бойца, поставленного отдельно от остальных. Семью держит форма.
+  //
+  // ⚠️ НИ ЗОЛОТА, НИ СВЕЧЕНИЯ В ПОКОЕ. Золото принадлежит самой легенде, и в
+  //    зале оно появляется ровно тогда, когда легенда там есть. Предмет,
+  //    светящийся золотом до обряда, обещал бы то, чего ещё нет.
+  ascension: {
+    pedR: 0.38,        // радиус постамента — тот же, что у SPAR
+    pedThick: 0.12,    // и толщина та же
+    ringR: 0.26,       // радиус висящего кольца
+    ringTube: 0.022,   // толщина его прутка
+    ringY: 0.62,       // высота кольца над полом — на уровне пояса стоящего рядом
+    ringSpin: 0.10,    // оборотов в секунду; медленно, чтобы место читалось живым
+    label: 'ASCENSION',
+    // Легенда поднята — второго вознесения в этой версии нет. Слово честное:
+    // не «сделано», а «позже», потому что запрет временный, а не вечный.
+    labelDone: 'SOON',
+  },
+
   spar: {
     pedR: 0.38,        // радиус постамента
     pedThick: 0.12,    // его толщина
@@ -689,6 +713,78 @@ export function buildSparStand() {
   fig.rotation.y = Math.PI;
   api.add(fig);
   api.own(() => { figGeo.dispose(); figMat.dispose(); });
+
+  return api;
+}
+
+// ═══════════════ ASCENSION — МЕСТО, ГДЕ БОЙЦА ПОДНИМАЮТ ═══════════════
+// Постамент SPAR плюс висящее над ним пустое кольцо. Настройки и доводы — в
+// FORGE_PROPS.ascension выше.
+//
+// ⚠️ У ПРЕДМЕТА ДВА СОСТОЯНИЯ, и второе — честная заглушка, а не украшение:
+//    легенда поднята → кольцо снимается (место занято), подпись меняется на
+//    SOON и приглушается, нажатие перестаёт зажигать лужицу. Зал при этом
+//    продолжает отдавать нажатие по нему — страница сама решает, что с ним
+//    делать; заслон на «второй раз нельзя» стоит в хранилище, а не в форме.
+export function buildAscensionStand() {
+  const A = FORGE_PROPS.ascension;
+  const api = propShell(A.label, A.pedR * 2.2, 0.02, A.pedR + 0.30, {
+    puddleW: A.pedR * 2.6, puddleH: A.pedR * 2.6,
+  });
+  if (api.label) api.label.rotation.x = -Math.PI / 2;
+
+  // Вторая подпись — своя плоскость на том же месте. Перерисовывать холст на
+  // лету дороже и рискованнее, чем держать две готовых и гасить лишнюю: тот же
+  // приём, что у якоря легенды.
+  const doneLbl = buildLabel(A.labelDone, A.pedR * 2.2, { dim: 0.55 });
+  doneLbl.mesh.rotation.x = -Math.PI / 2;
+  doneLbl.mesh.position.set(0, 0.02, A.pedR + 0.30);
+  doneLbl.mesh.visible = false;
+  api.group.add(doneLbl.mesh);
+  api.own(doneLbl.dispose);
+
+  const pedGeo = new THREE.CylinderGeometry(A.pedR, A.pedR * 0.88, A.pedThick, 6, 1);
+  const pedMat = bodyMat('pedestal');
+  const ped = new THREE.Mesh(pedGeo, pedMat);
+  ped.position.y = A.pedThick / 2;
+  api.add(ped);
+  api.own(() => { pedGeo.dispose(); pedMat.dispose(); });
+
+  // Кольцо. Шесть сегментов — шестигранник, а не круг: круглого в этом мире
+  // нет. Матовое, тоном декора, своего цвета не объявляется.
+  const ringGeo = new THREE.TorusGeometry(A.ringR, A.ringTube, 6, 6);
+  const ringMat = bodyMat('decor');
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = A.ringY;
+  api.add(ring);
+  api.own(() => { ringGeo.dispose(); ringMat.dispose(); });
+
+  let taken = false;
+  const basePressed = api.setPressed;
+  const baseTick = api.tick;
+
+  api.setPresent = (on) => {
+    taken = !!on;
+    ring.visible = !taken;
+    if (api.label) api.label.visible = !taken;
+    doneLbl.mesh.visible = taken;
+    if (taken) basePressed(false);   // погашенный предмет не держит нажатие
+  };
+  // Занятое место не зажигается вовсе — лужица там читалась бы приглашением.
+  api.setPressed = (on) => basePressed(taken ? false : on);
+  // ⚠️ ВРЕМЯ СЧИТАЕТСЯ ЗДЕСЬ, а не приходит снаружи: зал ведёт предметы одной
+  //    строкой `pr.obj.tick(dt)` и часов им не передаёт. Просить их значило бы
+  //    править общий цикл зала ради одного предмета.
+  let spun = 0;
+  api.tick = (dt) => {
+    baseTick(dt);
+    // Пока место свободно, кольцо медленно поворачивается: место живое и ждёт.
+    // Занятое — не крутится: крутить больше нечего.
+    if (taken) return;
+    spun += (Number.isFinite(dt) ? dt : 0) * A.ringSpin * Math.PI * 2;
+    ring.rotation.z = spun;
+  };
 
   return api;
 }

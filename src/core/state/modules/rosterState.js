@@ -31,6 +31,19 @@
 // держится в согласии одной мутацией SETTLE. Само оно НЕ СОХРАНЯЕТСЯ: сохранённое
 // «занят» разошлось бы со сроком занятия в первый же раз, когда срок вышел без нас.
 //
+// ЛЕГЕНДА ЖИВЁТ ЗДЕСЬ ЖЕ (24.09.2026). Вознесение — одноразовое необратимое
+// событие: один боец уходит из ростера и становится легендой, которая парит над
+// залом FORGE. Легенда в игре ОДНА, второго вознесения нет.
+//
+// Хранится она тем же способом, что и бойцы, — отдельным полем в той же секции
+// сейфа (`lg`), а не своим модулем: легенда это бывший боец, и всё, чем она
+// отличается от строки ростера, — отсутствие тренировки и отсутствие права
+// драться. Наследует она ВСЁ, что определяло манеру: ядро и зажжённые грани.
+//
+// ⚠️ БОЕЦ ПРИ ЭТОМ УДАЛЯЕТСЯ, копии не остаётся (ТЗ §4). Это одна запись, а не
+//    две: между «легенда уже есть» и «боец ещё в списке» не должно быть мига, в
+//    котором игрок увидел бы обоих.
+//
 // WHO IS SELECTED lives here too (15.09.2026). It used to be plain component
 // state inside the FORGE hall, so a refresh — or a trip to the arena and back —
 // silently threw the choice away and the hall re-picked the oldest fighter. It is
@@ -126,6 +139,17 @@ function snapshotOf(s) {
     };
     if (s.pickedId) out.picked = s.pickedId;
     if (s.seeded) out.seeded = true;
+    // Легенда пишется только когда она есть: у игрока без вознесения она не
+    // должна стоить в сейфе ни байта, ровно как незанимавшийся боец.
+    if (s.legend) {
+        out.lg = {
+            id: s.legend.id,
+            callsign: s.legend.callsign,
+            core: s.legend.core,
+            at: s.legend.ascendedAt,
+        };
+        if (Object.keys(s.legend.lit || {}).length) out.lg.lit = s.legend.lit;
+    }
     return out;
 }
 
@@ -189,7 +213,28 @@ function restore() {
         && out.some((f) => f.id === saved.picked)
         ? saved.picked
         : null;
-    return { fighters: out, pickedId, seeded: saved ? saved.seeded === true : false };
+    return {
+        fighters: out,
+        pickedId,
+        seeded: saved ? saved.seeded === true : false,
+        legend: restoreLegend(saved && saved.lg),
+    };
+}
+
+// ЛЕГЕНДА ИЗ СЕЙФА. Читается по тем же правилам, что и боец: запись с
+// неизвестным ядром или без позывного не чинится, а отбрасывается — зал тогда
+// просто встретит пустое место, а не сломанную фигуру.
+function restoreLegend(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (typeof raw.id !== 'string' || typeof raw.callsign !== 'string') return null;
+    if (!CORE_IDS.includes(raw.core)) return null;
+    return {
+        id: raw.id,
+        callsign: raw.callsign,
+        core: raw.core,
+        lit: raw.lit && typeof raw.lit === 'object' ? raw.lit : {},
+        ascendedAt: typeof raw.at === 'number' ? raw.at : 0,
+    };
 }
 
 // ЗАНЯТИЕ КОНЧИЛОСЬ — единственное место, где занятый становится готовым.
@@ -237,6 +282,8 @@ const needStarter = !restored.seeded && restored.fighters.length === 0;
 
 const state = {
     fighters: needStarter ? makeStarterRoster() : restored.fighters,
+    // Легенда. Одна на игру и навсегда: null — вознесения не было.
+    legend: restored.legend,
     // Who the FORGE hall is working on. An id, not a fighter (see the header).
     pickedId: restored.pickedId,
     // Отметка ставится и тому, кто тройку получил, и тому, у кого ростер уже был:
@@ -283,6 +330,14 @@ const getters = {
         return f ? countLit(f.upgrade) : 0;
     },
     resource: () => RESOURCE,
+    // ── ЛЕГЕНДА ────────────────────────────────────────────────────────
+    // Запись легенды или null. Читают: зал FORGE (кого поднять над плитой),
+    // предмет ASCENSION (гореть ему или стоять погашенным) и экран обряда
+    // (пускать ли на него вообще).
+    legend: (s) => s.legend,
+    // Короткий вопрос для тех, кому нужен только факт. Через него же читается
+    // условие показа переключателя COMMAND в арене, когда тот появится.
+    hasLegend: (s) => !!s.legend,
 };
 
 const mutations = {
@@ -337,6 +392,30 @@ const mutations = {
     SETTLE(s) {
         if (settleList(s.fighters, Date.now())) persist(s);
     },
+    // ВОЗНЕСЕНИЕ. Одна запись: боец уходит из списка и в тот же момент
+    // становится легендой. Отказывает молча, если легенда уже есть или бойца
+    // нет — экран до этого места с такими условиями не доходит, но заслон
+    // стоит здесь, а не только в интерфейсе.
+    ASCEND(s, id) {
+        if (s.legend) return;
+        const i = s.fighters.findIndex((f) => f.id === id);
+        if (i === -1) return;
+        const f = s.fighters[i];
+        s.legend = {
+            id: f.id,
+            callsign: f.callsign,
+            core: f.core,
+            // Зажжённые грани — в той же малой форме, в какой они лежат в
+            // сейфе у бойца. Легенда наследует манеру целиком (ТЗ §4).
+            lit: litIdsOf(f.upgrade),
+            ascendedAt: Date.now(),
+        };
+        s.fighters.splice(i, 1);
+        // Открытый боец ушёл — снимаем выбор той же записью, иначе в сейфе
+        // остался бы указатель на того, кого больше нет.
+        if (s.pickedId === id) s.pickedId = null;
+        persist(s);
+    },
     REMOVE(s, id) {
         const i = s.fighters.findIndex((f) => f.id === id);
         if (i === -1) return;
@@ -365,6 +444,21 @@ const actions = {
     },
     dismiss({ commit }, id) {
         commit('REMOVE', id);
+    },
+    /**
+     * Вознести бойца. Необратимо и один раз за игру.
+     * Возвращает true, если получилось; false — если легенда уже есть или
+     * такого бойца нет. Условия на самого бойца НЕТ: вознести можно любого,
+     * с любым числом зажжённых граней (ТЗ §3.1).
+     *
+     * ⚠️ Занятие снимать отдельно не нужно: боец уходит из списка вместе со
+     *    своим сроком (ТЗ §8).
+     */
+    ascend({ state: s, commit }, id) {
+        if (s.legend) return false;
+        if (!s.fighters.some((f) => f.id === id)) return false;
+        commit('ASCEND', id);
+        return true;
     },
     /**
      * Назначить бойцу занятие. Возвращает причину отказа или null, если началось:

@@ -178,6 +178,21 @@ function onPress(key) {
     router.push('/play/spar');
     return;
   }
+  // ASCENSION — второй предмет зала, который уводит с экрана. Уходим тем же
+  // обычным переходом, что и SPAR; тяжёлый вход прикрывает общий экран
+  // загрузки (meta.scene3d на маршруте).
+  //
+  // ⚠️ ЛЕГЕНДА УЖЕ ЕСТЬ — НАЖАТИЕ НЕ ДЕЛАЕТ НИЧЕГО (ТЗ §2). Предмет в этот
+  //    момент стоит погашенным и с подписью SOON, то есть честно показывает,
+  //    что он не кнопка. Заслон стоит и здесь, и на самом экране: второго
+  //    вознесения в этой версии нет.
+  if (key === 'ascension') {
+    if (store.getters['roster/hasLegend']) return;
+    statsOpen.value = false;
+    openSection.value = null;
+    router.push('/play/ascension');
+    return;
+  }
   const want = key === 'roster' ? 'roster' : key === 'upgrade' ? 'tree' : null;
   if (!want) return;
   statsOpen.value = false;
