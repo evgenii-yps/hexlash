@@ -51,6 +51,11 @@ const props = defineProps({
   // FLIES between them (see transitionFlight.js) — except on the very first mount,
   // where a direct /play/mode load must land on the mode framing with no flight.
   stage: { type: String, default: 'home' }, // 'home' | 'select'
+  // Легенда игрока ({ core, … }) либо null. Решает, что стоит на постаменте
+  // острова FORGE: тёмный безликий силуэт (места тренера ещё никто не занял)
+  // или сама легенда с золотым сердцем. Читается при сборке плит один раз —
+  // см. buildModePlates.
+  legend: { type: Object, default: null },
 });
 
 // arrived('home'|'select') — the camera is on the final framing and the 2D chrome
@@ -1143,6 +1148,7 @@ onMounted(() => {
     homeDepth: arena.refs.totalDepth,
     homeHeight: 1,
     reduced,
+    legend: props.legend,
   });
   const platesMs = PERF_ON ? performance.now() - platesT0 : 0;
   modePlates.group.position.set(0, FLIGHT.modeY, -FLIGHT.modeZ);

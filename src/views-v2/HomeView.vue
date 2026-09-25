@@ -18,6 +18,7 @@
       :grid-cells="gridCells"
       :ghost="ghost"
       :stage="stage"
+      :legend="legend"
       @arrived="onArrived"
       @dive-start="onDiveStart"
       @pick="onPickMode"
@@ -385,6 +386,10 @@ onMounted(() => { setTimeout(() => { introPlaying.value = false; }, 1700); });
 // Player fighter from the existing pre-fight store. No core picked → default
 // fighter (canon pink). Drives the 3D core hue + the cabinet's fighter card.
 const coreId = computed(() => store.getters['prefight/selectedCoreId'] || null);
+// Легенда игрока — её читает остров FORGE: пока её нет, место тренера пустует
+// тёмным силуэтом. Читает ВИД и передаёт вниз свойством, как читает и всё
+// остальное: сцена сама в хранилище не ходит.
+const legend = computed(() => store.getters['roster/legend']);
 const core = computed(() => (coreId.value ? getCore(coreId.value) : null));
 const coreHue = computed(() => core.value?.hue || '#FF0069');
 const coreName = computed(() => core.value?.name || 'ONSLAUGHT');

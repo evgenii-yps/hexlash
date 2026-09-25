@@ -85,12 +85,19 @@ export default {
   // The keys keep their old pve/pvp names because the plate ids are wired through
   // the scene, the tags module and the router; the WORDS PVE and PVP are gone from
   // the product and must not come back into any string the player can read.
-  //   pve → FORGE  (the hexarch trains the roster)   → /play/pve
+  //   pve → FORGE  (the player trains his own roster) → /play/pve
   //   pvp → ARENA  (fight another trainer)           → /play
   mode: {
     back: "← Back",
     pveName: "FORGE",
-    pveDesc: "The hexarch trains your roster",
+    // ⚠️ ГЕКСАРХ ИЗ ПОДПИСИ УБРАН (ТЗ 24.09.2026). Он обещал тренера, которого
+    //    у игрока ещё нет: место тренера на острове пустует до обряда. Заодно
+    //    закрыта давняя оговорка — слово HEXARCH числится внутренним (см. шапку
+    //    секции landing) и во внешний текст идти не должно было вовсе.
+    //    Смысл новой подписи: тренер здесь — сам игрок.
+    //    Строй тот же, что у соседней двери («Fight another trainer»): глагол и
+    //    то, над чем он совершается.
+    pveDesc: "Train your roster yourself",
     pvpName: "ARENA",
     pvpDesc: "Fight another trainer",
   },

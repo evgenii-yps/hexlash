@@ -43,6 +43,10 @@
 // Exports: MODE_PLATES (the tuning block), buildModePlates.
 import * as THREE from 'three';
 import { makeHexGridTexture, makeRadialTexture, makeCoreBandTexture, makeHaloBandTexture } from './arenaTextures.js';
+// Золото легенды и доля, на которую приглушено её сердце. Оба — из одного места
+// на проект: тем же выводом красит сердце зал FORGE и сам обряд.
+import { legendHue, RITE } from './ascensionRite.js';
+import { coreHue } from '../data/sceneTokens.js';
 
 // ─────────────────────────────── Tuning ───────────────────────────────
 // Every number the owner might want to feel out on preview lives here.
@@ -94,9 +98,22 @@ export const MODE_PLATES = {
     // vertical and the key light is overhead, so anything darker than the plate
     // disappears into it — dark here means "does not glow", not "invisible".
     body: 0x2b3446,     // ring figures: matte, in the homeProps prop family
-    hexBody: 0x4a5a78,  // the hexarch stands clear of both his students and the plate
-    core: 0.1,          // amber core emissive at rest (matte — nothing glows at rest)
-    coreLit: 1.7,       // …and while the plate is lit. This is the island's ONE glow.
+    hexBody: 0x4a5a78,  // приподнятый тон: фигура стоит наособицу и от учеников, и от плиты
+    // Насколько тело легенды забирает цвет своего ядра (решение владельца
+    // 25.09.2026: «силуэт получает цвет ядра вознесённого бойца»).
+    //
+    // ⚠️ ДОЛЯ БОЛЬШАЯ, НО ЯРКОСТЬ ТЕЛА НЕ РАСТЁТ — см. bodyHue ниже: после
+    //    подмеса тон возвращается к прежней светлоте hexBody. Поэтому здесь
+    //    можно брать цвет щедро, не выводя фигуру из тёмной семьи плиты.
+    //    Подобрано снимком: ниже 0.3 ядро на таком удалении уже не называется.
+    legendTint: 0.55,
+    // ⚠️ СЕРДЦЕ ТЕПЕРЬ НЕ ЯНТАРНОЕ И НЕ ВСЕГДА ЕСТЬ. Оно принадлежит легенде
+    //    игрока и красится её золотом (см. buildForgeEmblem); пока легенды нет,
+    //    сердца нет вовсе. Эти две величины остались формой отклика — насколько
+    //    оно горит в покое и насколько разгорается при наведении, — и к ним
+    //    домножается доля приглушения обряда.
+    core: 0.1,          // сердце в покое (матово — в покое не светится ничто)
+    coreLit: 1.7,       // …и при наведении на плиту.
     coreR: 0.085,       // core crystal radius, in figure-height units
 
     // the pedestal, the legendPresence recipe cut down to what a door needs (no
@@ -425,10 +442,53 @@ export const FIGURE_H = 1.065; // head top of figureGeometry(), for framing math
 // imported: it builds a moving island for a live stage and would drag ~130 particles
 // per plate into a scene that only has to read from a passing camera.
 //
-// GLOW: the hexarch's amber core is the island's only lit thing, and only while the
-// plate is lit. The contact disc is additive + fog:false, so it MUST ride `lit` (it
-// is zero at rest); everything else here is fogged like any other surface.
-function buildForgeEmblem(o, topY) {
+// GLOW: the island's lit things are the heart on the pedestal and the amber contact
+// disc, and only while the plate is lit. The disc is additive + fog:false, so it MUST
+// ride `lit` (it is zero at rest); everything else here is fogged like any other
+// surface.
+//
+// ⚠️ МЕСТО ТРЕНЕРА ПУСТУЕТ, ПОКА ЕГО НЕ ЗАРАБОТАЛИ (ТЗ 24.09.2026). Раньше на
+//    постаменте всегда стоял гексарх с янтарным сердцем — игра выдавала тренера
+//    бесплатно, до обряда. Теперь у фигуры два состояния:
+//
+//      легенды нет  — тёмный безликий силуэт, БЕЗ сердца вовсе. Тон — тот же, что
+//                     у учеников: «то же вещество, никого особенного здесь ещё
+//                     нет». Кольцо учеников на месте, постамент на месте.
+//      легенда есть — та же фигура в приподнятом тоне, и у неё ЗОЛОТОЕ СЕРДЦЕ с
+//                     подмесом цвета её ядра — по тем же правилам, что в зале и в
+//                     обряде (ascensionRite.legendHue), одним местом на проект.
+//
+// ⚠️ СИЛУЭТ ОСТАЁТСЯ СИЛУЭТОМ И ПОСЛЕ ОБРЯДА (решение владельца 24.09.2026).
+//    Настоящего бойца (buildFighter) здесь по-прежнему нет: остров смотрится
+//    издалека, разницы почти не видно, а цена заметная — ровно то, ради чего
+//    весь этот файл и собран из склеенных буферов (см. шапку файла).
+//
+// ⚠️ ОТКЛИК ДВЕРИ НА ПАЛЕЦ НЕСЁТ ЯНТАРНЫЙ БЛИК ПОСТАМЕНТА, а не сердце. Это
+//    важно: без сердца дверь FORGE осталась бы вовсе без ответа на наведение,
+//    пока ARENA продолжает зажигать свой разлом, — а молчащая дверь на телефоне
+//    читается как промах. Блик зажигается в обоих состояниях (решение владельца).
+// Тело легенды: приподнятый тон, взявший цвет своего ядра, — НО РОВНО ТОЙ ЖЕ
+// СВЕТЛОТЫ, что и был.
+//
+// ⚠️ ВОЗВРАТ СВЕТЛОТЫ — ГЛАВНОЕ ЗДЕСЬ, а не сам подмес. Цвета ядер яркие и
+//    насыщенные; подмешав их в тёмное тело «как есть», фигуру получаешь
+//    крашеную и светлее всего вокруг — она вываливается из тёмной семьи плиты и
+//    читается игрушкой (снято на 0.5 и на 0.32, оба раза одна и та же беда,
+//    только разной громкости). Прижав светлоту обратно к hexBody, получаем
+//    ТЁМНО-красное, ТЁМНО-бирюзовое тело: ядро называется с одного взгляда, а
+//    материал остаётся тем же, что у плиты и учеников.
+//
+// Светлота считается по обычным весам восприятия — глаз видит зелёное много
+// ярче синего, и без весов бирюзовая легенда вышла бы заметно светлее красной.
+function tintedBody(f, coreId) {
+  const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+  const base = new THREE.Color(f.hexBody);
+  const out = base.clone().lerp(new THREE.Color(coreHue(coreId)), f.legendTint);
+  const k = lum(base) / Math.max(1e-4, lum(out));
+  return out.multiplyScalar(k);
+}
+
+function buildForgeEmblem(o, topY, legend) {
   const f = o.forge;
   const group = new THREE.Group();
   const amber = new THREE.Color(o.amber);
@@ -497,43 +557,82 @@ function buildForgeEmblem(o, topY) {
   rise.add(disc);
   owned.push(discGeo);
 
-  // — the hexarch himself, standing on the pedestal —
+  // — the figure on the pedestal: an empty place, or the player's legend —
+  //
+  // ТОН ТЕЛА — то, по чему два состояния различаются с первого взгляда.
+  //   пусто    — тон учеников (f.body): та же материя, никого особенного здесь
+  //              ещё нет;
+  //   легенда  — приподнятый тон, ПОДМЕШАННЫЙ цветом её ядра. Так игрок узнаёт,
+  //              кого именно он поднял, ровно как узнаёт бойцов по ядру.
+  //
+  // ⚠️ ЭТО РАСХОЖДЕНИЕ С ЗАПИСАННЫМ ПРАВИЛОМ, И ОНО ОСОЗНАННОЕ. Дизайн-система
+  //    говорит: цвет ядра — это СВЕТ, а не заливка, перекрашивать тело в цвет
+  //    ядра пробовали и откатили. Здесь тело цвет всё-таки берёт — прямым
+  //    решением владельца (ТЗ 25.09.2026 §3), потому что на этом острове у
+  //    фигуры нет ни рамки, ни подписи, которыми ядро объявляется в интерфейсе,
+  //    а узнать легенду надо. Смягчено тем, что это ПОДМЕС долей (legendTint),
+  //    а не чистый цвет: материал, огранка и матовость остаются плитяными.
+  //    Одна величина — одно место правки, если владелец решит иначе.
+  const bodyHue = legend ? tintedBody(f, legend.core) : new THREE.Color(f.body);
+
   const hexMat = new THREE.MeshStandardMaterial({
-    color: f.hexBody, flatShading: true, roughness: 0.8, metalness: 0.16,
+    color: bodyHue.clone(),
+    flatShading: true, roughness: 0.8, metalness: 0.16,
   });
   const hexarch = new THREE.Mesh(figGeo, hexMat);
   hexarch.scale.setScalar(f.hexScale);
   rise.add(hexarch);
 
-  // his amber core, at chest height on the torso front
-  const coreGeo = new THREE.OctahedronGeometry(f.coreR * f.hexScale, 0);
-  const coreMat = new THREE.MeshStandardMaterial({
-    color: amber.clone().multiplyScalar(0.45),
-    emissive: amber, emissiveIntensity: f.core,
-    flatShading: true, roughness: 0.45, metalness: 0.3,
-  });
-  const core = new THREE.Mesh(coreGeo, coreMat);
-  core.position.set(0, 0.7 * f.hexScale, 0.12 * f.hexScale);
-  rise.add(core);
-  owned.push(coreGeo);
+  // — сердце. ЕСТЬ ТОЛЬКО У ЛЕГЕНДЫ: пустое место не светится ничем. —
+  //
+  // Цвет — золото с подмесом её ядра, выведенное ОДНИМ местом на проект
+  // (ascensionRite.legendHue). Второго вывода золота здесь нет и быть не может.
+  let core = null, coreMat = null;
+  const heartHue = legend ? new THREE.Color(legendHue(legend.core)) : null;
+  if (legend) {
+    const coreGeo = new THREE.OctahedronGeometry(f.coreR * f.hexScale, 0);
+    coreMat = new THREE.MeshStandardMaterial({
+      color: heartHue.clone().multiplyScalar(0.45),
+      emissive: heartHue, emissiveIntensity: f.core * RITE.glowLevel,
+      flatShading: true, roughness: 0.45, metalness: 0.3,
+    });
+    core = new THREE.Mesh(coreGeo, coreMat);
+    core.position.set(0, 0.7 * f.hexScale, 0.12 * f.hexScale);
+    rise.add(core);
+    owned.push(coreGeo);
+  }
 
   const baseY = rise.position.y;
   const bobW = (Math.PI * 2) / f.bobPeriod;
   const tick = (t, lit, presence) => {
     rise.position.y = baseY + Math.sin(t * bobW) * f.bob;
     ringMat.color.setHex(f.body).multiplyScalar(presence);
-    hexMat.color.setHex(f.hexBody).multiplyScalar(presence);
+    hexMat.color.copy(bodyHue).multiplyScalar(presence);
     pedMat.color.setHex(0x1b2433).multiplyScalar(presence);
     pedEdgeMat.opacity = f.pedEdge * presence;
-    coreMat.color.copy(amber).multiplyScalar(0.45 * presence);
-    coreMat.emissiveIntensity = THREE.MathUtils.lerp(f.core, f.coreLit, lit) * presence;
+    // Сердца может не быть вовсе — тогда светить нечему.
+    //
+    // ⚠️ ПРИГЛУШЕНИЕ ОБРЯДА (RITE.glowLevel) ИДЁТ НА ВСЮ ЯРКОСТЬ — и в покое, и
+    //    на пике, — как и в зале, и в самом обряде. Сначала я применил его
+    //    только к пику, испугавшись, что остров потеряет присутствие НА
+    //    ТЕЛЕФОНЕ, где наведения нет: ровно так уже ломался разлом ARENA, и ему
+    //    пришлось заводить отдельный покой (`haloRest`). Опасение снялось
+    //    вместе с решением владельца отдать телу цвет ядра: теперь остров
+    //    объявляет себя телом, а не одной искрой на груди, и сердцу не нужно
+    //    тянуть эту работу в одиночку.
+    if (coreMat) {
+      coreMat.color.copy(heartHue).multiplyScalar(0.45 * presence);
+      coreMat.emissiveIntensity =
+        THREE.MathUtils.lerp(f.core, f.coreLit, lit) * RITE.glowLevel * presence;
+    }
     discMat.opacity = f.pedGlow * lit * presence;
   };
   const still = () => { rise.position.y = baseY; };
   const dispose = () => {
     owned.forEach((g) => g.dispose());
     ringMat.dispose(); hexMat.dispose(); pedMat.dispose();
-    pedEdgeMat.dispose(); discMat.dispose(); discTex.dispose(); coreMat.dispose();
+    pedEdgeMat.dispose(); discMat.dispose(); discTex.dispose();
+    coreMat?.dispose();   // сердца может не быть — см. выше
   };
   return { group, tick, still, dispose };
 }
@@ -736,6 +835,13 @@ function buildArenaEmblem(o, halfW, halfD, topY) {
  *   homeDepth  — the home slab depth (arena.refs.totalDepth)
  *   homeHeight — the home slab thickness
  *   reduced    — prefers-reduced-motion (emblems hold still, lit response kept)
+ *   legend     — запись легенды игрока из ростера ({ core, … }) либо null.
+ *                Решает, стоит на постаменте FORGE тёмный безликий силуэт или
+ *                легенда с золотым сердцем (см. buildForgeEmblem).
+ *                ⚠️ ЧИТАЕТСЯ ОДИН РАЗ, при сборке плит, и это нарочно: плиты
+ *                строятся на подъёме сцены и не пересобираются на переходах
+ *                (см. HomeScene). Обряд идёт на другом экране, и возврат сюда
+ *                собирает сцену заново.
  *
  * @returns {{ group, layout, bounds, setHover, hovered, update, captionScreen,
  *             captionSlots, pickables, dispose }}
@@ -768,7 +874,7 @@ export function buildModePlates(opts) {
     const slab = buildSlab(halfW, halfD, height, hexTex, o);
     root.add(slab.group);
     const emblem = id === 'pve'
-      ? buildForgeEmblem(o, slab.topY)                  // FORGE — hexarch + ring
+      ? buildForgeEmblem(o, slab.topY, opts.legend || null)  // FORGE — фигура + кольцо
       : buildArenaEmblem(o, halfW, halfD, slab.topY);   // ARENA — rift + gloves
     root.add(emblem.group);
     group.add(root);
