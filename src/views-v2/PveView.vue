@@ -16,9 +16,10 @@
      работать над бойцом, уходят полосой наверху (← BACK), а дерутся через
      дом → FIGHT → остров ARENA → выбор состава.
 
-     Chrome: the shared .hs-strip (home.css) without the brand block — BACK left,
-     SHOP + cabinet right. Its tokens are mirrored on the root so the strip is
-     portable here without editing home.css. -->
+     Chrome: the shared .hs-strip (home.css) without the brand block. В ЗАЛЕ она
+     стоит ИНАЧЕ, чем на остальных экранах: оба чипа (SHOP + кабинет) и BACK
+     прижаты к левому верхнему углу двумя рядами, правый угол пуст. Переворот
+     сделан scoped-стилями этого экрана — home.css общий и не тронут. -->
 <template>
   <div class="pve-root forge-root" :style="coreVars">
     <PveScene ref="sceneRef" @hover="onHover" @pick="onPick" @exit="onExit" @press="onPress" />
@@ -92,13 +93,13 @@
       />
     </Transition>
 
-    <!-- shared chrome (brand removed on PVE): ← BACK left, SHOP + cabinet right -->
+    <!-- ЛЕВЫЙ УГОЛ, ДВА РЯДА — только в зале FORGE (решение владельца 25.09.2026).
+         Сверху SHOP + кабинет, под ними BACK. Кластер идёт в разметке ПЕРВЫМ,
+         потому что порядок рядов задаёт порядок детей: полоса здесь колонка.
+         Сама .hs-strip (home.css) не тронута — переворот живёт в scoped-стилях
+         этого экрана, поэтому дом, магазин, экран режимов, ворота арены и
+         пространство остаются с прежней раскладкой. -->
     <div class="hs-strip">
-      <!-- BACK (left) — matte-chrome family member, arrow glyph + label → /play/mode -->
-      <button type="button" class="hs-chrome pve-back" @click="goMode" :aria-label="t.home.back">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
-        <span class="n">{{ t.home.back }}</span>
-      </button>
       <div class="hs-cluster">
         <!-- SHOP — bag glyph + single label; ведёт в магазин (→ /play/home?view=shop) -->
         <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
@@ -110,6 +111,12 @@
           <span class="av" aria-hidden="true"></span>
         </button>
       </div>
+      <!-- BACK — matte-chrome family member, arrow glyph + label → /play/mode.
+           Второй ряд, под кластером. -->
+      <button type="button" class="hs-chrome pve-back" @click="goMode" :aria-label="t.home.back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+        <span class="n">{{ t.home.back }}</span>
+      </button>
     </div>
 
     <PlayerCabinet
@@ -478,11 +485,29 @@ function goMode() { router.push('/play/mode'); }
   font-family: var(--font-display);
 }
 
-/* brand removed on PVE → the strip carries BACK (left) + the SHOP/cabinet cluster
-   (right). .hs-strip is justify-content:space-between; pin the cluster to the right
-   edge here (scoped to PVE — home.css stays shared/untouched). BACK + SHOP + cabinet
-   are all .hs-chrome family members (see template), so they need no styling here. */
-.hs-cluster { margin-left: auto; }
+/* ЛЕВЫЙ УГОЛ, ДВА РЯДА — только здесь (решение владельца 25.09.2026).
+   Общая .hs-strip раскладывает детей по краям одной строкой: слева бренд или
+   BACK, справа кластер. В зале владелец попросил другое: сверху SHOP + кабинет,
+   под ними BACK, правый угол пуст. Полоса поэтому становится колонкой, прижатой
+   к левому краю, а высота отпускается — двух рядов по 44 в жёсткие 74 не влезает.
+   Отступ сверху держим равным тому, что общая полоса давала центрированием
+   одного ряда: (74 − 44) / 2 = 15 ≈ --sp-4; на телефоне (60 − 44) / 2 = 8 = --sp-2.
+   Всё это живёт в scoped-стилях экрана: home.css шарится домом, магазином,
+   экраном режимов, воротами арены и пространством — там раскладка прежняя.
+   BACK + SHOP + кабинет — члены семьи .hs-chrome, своего вида им тут не нужно. */
+.pve-root .hs-strip {
+  height: auto;
+  flex-direction: column; align-items: flex-start; justify-content: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+}
+/* Общая полоса прижимала кластер вправо через auto-отступ — в колонке он бы
+   растолкал ряды по высоте. */
+.pve-root .hs-cluster { margin-left: 0; }
+
+@media (max-width: 560px) {
+  .pve-root .hs-strip { gap: var(--sp-2); padding: var(--sp-2) var(--sp-4); }
+}
 
 /* ⚠️ Полоса обязана заканчиваться там, где начинается панель бойца. Лёжа панель
    стоит справа во всю высоту и на слое --z-panel (30), то есть ВЫШЕ полосы
