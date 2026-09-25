@@ -165,7 +165,7 @@
      f-bloom  — the only glow: a soft pink radial behind the slab (breathes on idle)
      f-plinth — the dark cabinet, offset DOWN: the visible side/thickness of the slab
      f-face   — the lit hex face: top→bottom gradient + top blik + bottom inner shadow,
-                carrying the label, arrow and a slow rare sheen glint.
+                carrying the label and a slow rare sheen glint.
    Motion is heavy with no overshoot (the shared --e-spring). */
 .hs-fight { display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); }
 .hs-fight .fbtn { position: relative; display: inline-flex; align-items: center; justify-content: center;
@@ -185,7 +185,7 @@
   transform: translateY(6px); transition: transform var(--d-panel) var(--e-weight); }
 
 /* layer 3 — face (lit hex top with a blik and an inner-shadow base) */
-.hs-fight .f-face { position: relative; z-index: var(--z-ui); display: flex; align-items: center; justify-content: center; gap: var(--sp-5);
+.hs-fight .f-face { position: relative; z-index: var(--z-ui); display: flex; align-items: center; justify-content: center;
   padding: var(--sp-5) var(--padx); overflow: hidden; clip-path: var(--hs-hex); color: var(--ink);
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--pink) 82%, var(--ink)) 0%, var(--pink) 42%,
@@ -195,7 +195,9 @@
   transition: transform var(--d-panel) var(--e-weight), filter var(--d-panel) var(--e-weight); }
 .hs-fight .f-label { font-family: var(--font-display); font-weight: 900; font-size: var(--t-2xl); letter-spacing: var(--ls-title);
   line-height: 1; text-transform: uppercase; color: var(--ink); text-shadow: 0 1px 0 color-mix(in srgb, var(--pink-deep) 50%, transparent); }
-.hs-fight .f-arr { width: var(--icon-lg); height: var(--icon-lg); flex: 0 0 auto; color: var(--ink); transition: transform var(--d-panel) var(--e-weight); }
+/* Стрелки на плите больше нет (решение владельца 25.09.2026): на лице осталось
+   одно слово, и оно встаёт по центру само — .f-face уже justify-content:center.
+   Плита, цвет, ореол и поведение при нажатии не менялись. */
 /* slow rare sheen — a skewed white glint that crosses then rests off-frame (::after) */
 .hs-fight .f-face::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(105deg, transparent 42%, var(--line-strong) 50%, transparent 58%);
@@ -205,7 +207,6 @@
 .hs-fight .fbtn:hover .f-face { transform: translateY(-5px); filter: brightness(1.04); }
 .hs-fight .fbtn:hover .f-plinth { transform: translateY(9px); }
 .hs-fight .fbtn:hover .f-bloom { animation: none; opacity: 1; transform: translate(-50%, -50%) scale(1.16); }
-.hs-fight .fbtn:hover .f-arr { transform: translateX(6px); }
 /* press — the face sinks into the plinth (snappy) */
 .hs-fight .fbtn:active .f-face { transform: translateY(4px) scale(0.992); filter: brightness(0.97); transition-duration: var(--d-press); }
 .hs-fight .fbtn:active .f-plinth { transform: translateY(2px); transition-duration: var(--d-press); }
@@ -316,7 +317,7 @@
   /* idle + entrance never run here (gated by no-preference). Final static view:
      the slab keeps its layers (bloom, plinth thickness, lit face) but does not
      breathe/glint/lift; the chrome chips don't lift; the view cross-fade is cut. */
-  .hs-fight .f-face, .hs-fight .f-plinth, .hs-fight .f-arr,
+  .hs-fight .f-face, .hs-fight .f-plinth,
   .hs-brandblock { transition: none; }
   /* chrome family: keep the colour/shadow state change (final state visible),
      drop the lift/press transforms and the sheen sweep */
@@ -326,7 +327,6 @@
   .hs-fight .fbtn:hover .f-face, .hs-fight .fbtn:active .f-face { transform: none; filter: none; }
   .hs-fight .fbtn:hover .f-plinth, .hs-fight .fbtn:active .f-plinth { transform: translateY(6px); }
   .hs-fight .fbtn:hover .f-bloom, .hs-fight .fbtn:active .f-bloom { transform: translate(-50%, -50%); opacity: var(--o-dim); }
-  .hs-fight .fbtn:hover .f-arr { transform: none; }
   .hs-chrome:hover, .hs-chrome:active { transform: none; }
   .hs-chrome:hover::after { animation: none; }
   .hs-view-enter-active, .hs-view-leave-active { transition: none; }
@@ -352,12 +352,11 @@
   .hs-fight { gap: var(--sp-2); }
   /* по вертикали — шаг шкалы; по горизонтали текучая ширина полей плиты, это
      форма компонента (--padx в узком виде), а не ритм. */
-  .hs-fight .f-face { padding: var(--sp-3) clamp(34px, 6vw, 56px); gap: var(--sp-4); }
+  .hs-fight .f-face { padding: var(--sp-3) clamp(34px, 6vw, 56px); }
   /* Был текучий clamp(22px, 7vh, 30px) — размер зависел от высоты окна. Шкала
      такой ступени не знает; --t-xl (24px) лежит внутри всего прежнего диапазона,
      поэтому ни на одной высоте этой полосы плита не переполняется. */
   .hs-fight .f-label { font-size: var(--t-xl); }
-  .hs-fight .f-arr { width: 20px; height: 20px; }
   .hs-fight .f-bloom { filter: blur(11px); }
   .hs-fight .fsub { font-size: var(--t-micro); letter-spacing: var(--ls-meta); }
   /* EDIT SPACE sat over the plate's sublabel at this height — pull it into the
