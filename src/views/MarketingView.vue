@@ -2,12 +2,25 @@
   <div class="lp" ref="rootRef">
     <div class="app" :class="{ 'is-in': isIn }">
       <!-- fixed background (shared with the auth screen) -->
+      <!-- ⚠️ ЦВЕТ СЮДА БОЛЬШЕ НЕ ПЕРЕДАЁТСЯ. Раньше стоял :accent="accent" —
+           цвет переключался ступенькой на границе раздела. Теперь он ведётся
+           глубиной и перетекает каждый кадр: правило .lp .lp-bg .lp-bg__ink в
+           landing.css отдаёт фигуре готовое --journey-rgb.
+           Проп не передаём намеренно: иначе в LandingBackground просыпается
+           класс is-shifting, а это постоянный CSS-переход на наследуемом цвете
+           — ровно то, что там измеряли и специально убрали (19.8 мс против
+           16.6 мс на медленном телефоне). Плавность теперь даёт пересчёт. -->
       <LandingBackground
-        :accent="accent"
         :core="activeCore"
         :scanlines="config.scanlines"
         :grain="config.grain"
       />
+
+      <!-- Слой затемнения между фоном и текстом. Сила — одним числом
+           (--journey-dim в landing.css); сейчас 0, то есть слоя не видно.
+           Заведён заранее, чтобы прижать фон под текстом одной правкой, если
+           на каком-то разделе он начнёт мешать читать. -->
+      <div class="lp-journey-dim" aria-hidden="true"></div>
 
       <LandingNav />
 
@@ -58,20 +71,92 @@ const config = {
   scanlines: true,
 };
 
-/* Круг цветов по разделам: розовый → четыре ядра → снова розовый.
-   Разделов на странице семь, круг из пяти — значит он успевает замкнуться
-   и пойти по второму разу, это и задумано. */
+/* Круг цветов: розовый → четыре ядра → снова розовый.
+   Остановок столько же, сколько разделов (семь) — круг из пяти успевает
+   замкнуться и пойти по второму разу, это и задумано. Раньше номер остановки
+   выдавал наблюдатель границ; теперь его выдаёт ГЛУБИНА (см. flightTick). */
 const activeIndex = ref(0);
 const activeCore = computed(() => coreAt(activeIndex.value));
-const accent = computed(() => accentRgb(activeCore.value));
-
-let coreObserver = null;
 
 const isIn = ref(false);
 
 let revealObserver = null;
 let revealSafety = null;
 let entranceTimer = null;
+
+/* ======================= ПОЛЁТ ВГЛУБЬ ЯДРА ==============================
+   Прокрутка ведёт ОДНУ величину — «насколько мы приблизились», от 0 в начале
+   страницы до 1 в конце. Всё остальное — производные от неё, и считаются они
+   в одном кадре: фон приближается, разделы проходят мимо камеры, цвет ядра
+   перетекает. Второго обработчика прокрутки на странице нет.
+
+   ⚠️ Числа глубины и выноса живут в landing.css (--journey-zoom,
+   --journey-push, --journey-dim) — сюда их не переносить. Здесь только то,
+   что считается на месте.                                                  */
+
+/* Доля пути мимо камеры, на которой раздел читается в полную силу. Дальше он
+   растворяется. Выше — текст дольше остаётся плотным, ниже — полёт заметнее.
+   Живёт здесь, а не в стилях: прозрачность считается этим кадром. */
+const TEXT_HOLD = 0.45;
+
+/* Разделы, участвующие в полёте: первый экран и подвал не входят — у первого
+   свой вход при загрузке, подвал обязан читаться в самом низу страницы. */
+let flightSecs = [];
+/* Цвета остановок круга. Считаются один раз: accentRgb читает значения из
+   стилей документа, делать это каждый кадр незачем. */
+let flightStops = [];
+let flightQueued = false;
+
+function flightTick() {
+  flightQueued = false;
+  const root = rootRef.value;
+  if (!root || flightStops.length < 2) return;
+
+  const vh = window.innerHeight || 1;
+  const span = Math.max(1, document.documentElement.scrollHeight - vh);
+  const depth = Math.min(1, Math.max(0, window.scrollY / span));
+
+  /* Сначала ЧИТАЕМ всё, потом ПИШЕМ всё: иначе браузер пересчитывает
+     раскладку по разу на каждый раздел. */
+  const rects = flightSecs.map((el) => el.getBoundingClientRect());
+
+  root.style.setProperty('--journey', depth.toFixed(4));
+
+  /* Цвет: круг разложен по глубине и перетекает между соседними остановками.
+     Ступенчатой осталась только ЯРКОСТЬ фигуры (проп core) — она берёт
+     ближайшую остановку, как и раньше, и заодно перезапускает налив веток. */
+  const last = flightStops.length - 1;
+  const t = depth * last;
+  const i = Math.min(last - 1, Math.floor(t));
+  const f = t - i;
+  const a = flightStops[i];
+  const b = flightStops[i + 1];
+  const mix = (k) => Math.round(a[k] + (b[k] - a[k]) * f);
+  root.style.setProperty('--journey-rgb', `${mix(0)}, ${mix(1)}, ${mix(2)}`);
+  const stop = Math.round(t);
+  if (stop !== activeIndex.value) activeIndex.value = stop;
+
+  /* Разделы. --pass: −1 раздел ещё впереди, 0 — ровно посередине экрана,
+     +1 — камера его прошла. Делим на полусумму высот, а не на высоту экрана:
+     раздел бывает выше экрана, и тогда ±1 приходится ровно на момент, когда
+     он с экрана ушёл — растворяться раньше ему незачем. */
+  for (let k = 0; k < flightSecs.length; k += 1) {
+    const r = rects[k];
+    const reach = (vh + r.height) / 2;
+    const pass = Math.max(-1, Math.min(1, (vh / 2 - (r.top + r.height / 2)) / reach));
+    const away = Math.abs(pass);
+    const near = away <= TEXT_HOLD ? 1 : 1 - (away - TEXT_HOLD) / (1 - TEXT_HOLD);
+    const st = flightSecs[k].style;
+    st.setProperty('--pass', pass.toFixed(4));
+    st.setProperty('--near', near.toFixed(4));
+  }
+}
+
+function onFlightScroll() {
+  if (flightQueued) return;
+  flightQueued = true;
+  requestAnimationFrame(flightTick);
+}
 
 // PLAY → into the game. Anonymous visitors enter via signup (authed users are
 // redirected to /play by the route's beforeEnter, so they never see this CTA).
@@ -117,23 +202,19 @@ onMounted(() => {
   // hero load entrance (reference: setTimeout 90ms → .is-in)
   entranceTimer = setTimeout(() => { isIn.value = true; }, 90);
 
-  /* Цвет фона ведёт РАЗДЕЛ, а не таймер и не положение прокрутки в пикселях:
-     активен тот, что пересекает середину экрана. Обработчика на каждый кадр
-     нет — наблюдатель просыпается только на границах. */
+  /* ПОЛЁТ. Раньше здесь стоял наблюдатель границ, переключавший цвет на
+     границе раздела — цвет менялся ступенькой и был привязан к НОМЕРУ экрана.
+     Теперь и цвет, и приближение фона, и проход разделов ведёт одна величина
+     глубины, и считается она одним кадром. */
   const sections = pageRef.value ? Array.from(pageRef.value.children) : [];
-  if (sections.length && 'IntersectionObserver' in window) {
-    coreObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const i = sections.indexOf(entry.target);
-          if (i >= 0) activeIndex.value = i;
-        });
-      },
-      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
-    );
-    sections.forEach((el) => coreObserver.observe(el));
-  }
+  /* Остановок цвета столько же, сколько разделов — прежний круг сохранён. */
+  flightStops = sections.map((_, i) => accentRgb(coreAt(i)));
+  /* В полёте — только разделы .sec: первый экран и подвал не участвуют. */
+  flightSecs = sections.filter((el) => el.classList.contains('sec'));
+
+  window.addEventListener('scroll', onFlightScroll, { passive: true });
+  window.addEventListener('resize', onFlightScroll);
+  flightTick();
 
   // in-page anchor smooth-scroll (delegated)
   rootRef.value.addEventListener('click', onAnchorClick);
@@ -167,7 +248,10 @@ onBeforeUnmount(() => {
   if (entranceTimer) clearTimeout(entranceTimer);
   if (revealSafety) clearTimeout(revealSafety);
   if (revealObserver) revealObserver.disconnect();
-  if (coreObserver) coreObserver.disconnect();
+  window.removeEventListener('scroll', onFlightScroll);
+  window.removeEventListener('resize', onFlightScroll);
+  flightSecs = [];
+  flightStops = [];
   if (rootRef.value) rootRef.value.removeEventListener('click', onAnchorClick);
 });
 </script>
