@@ -21,7 +21,9 @@
 //   5. неиспользованные после боя возвращаются в запас;
 //   6. боец пал — остаток эффекта пропадает;
 //   7. на павшего бросить нельзя;
-//   8. бой кончился во время баффа — эффект просто прекращается.
+//   8. бой кончился во время баффа — эффект просто прекращается;
+//   9. после броска карточка в ОТКАТЕ несколько секунд и не нажимается. Откат
+//      общий на сторону игрока, у каждого вида свой, запас он не возвращает.
 //
 // ⚠️ ПОРЯДОК ДЕЙСТВИЙ РАЗВЁРНУТ (ТЗ 26.09.2026). Было: тап по карточке →
 //    подсветка своих → тап по бойцу. Стало: боец выбран заранее и всегда, тап по
@@ -50,6 +52,10 @@ import {
  *   active   — бой идёт, панель на экране
  *   cards    — карточки набора: { key, id, name, mono, left, state }
  *   badges   — значки над бойцами: { key, id, mono, own, face, ring, x, y }
+ *   cool     — откат по каждому виду: { [id]: { left, frac } }, где left —
+ *              секунды до конца (0 = свободен), frac — доля отката 1..0.
+ *              Отдельно от карточек нарочно: откат меняется КАЖДЫЙ кадр, а
+ *              карточки пересобираются только на смену состояния.
  *
  * Выбранной карточки здесь больше нет: карточка не выбирается, она бросается.
  */
@@ -57,6 +63,7 @@ export const buffFightState = reactive({
   active: false,
   cards: [],
   badges: [],
+  cool: {},
 });
 
 // ── Привязка к арене ─────────────────────────────────────────────────────
@@ -103,6 +110,19 @@ let devFace = null;
 let stopPickWatch = null;
 /** Можно ли было бросить на прошлом кадре — см. причину в buffTick. */
 let lastCanThrow = null;
+/**
+ * Когда каждый вид снова можно бросить — по часам боя (правило 9). Общий на
+ * сторону игрока, как и набор. Ноль/прошлое = свободен.
+ *
+ * ⚠️ СВОИХ ЧАСОВ НЕ ЗАВОДИМ. Срок считается по тому же времени боя, что уже
+ *    считает сроки самих баффов, — арена отдаёт его каждый кадр в buffTick.
+ *
+ * ⚠️ БОТА ОТКАТ НЕ КАСАЕТСЯ: у него свой набор и своя пауза между бросками
+ *    (BUFF_BALANCE.bot.minGapSec). Откат — рычаг игрока, и он на стороне игрока.
+ */
+let coolUntil = {};
+/** Кто был в откате на прошлом кадре — см. причину у lastCooling в klich.js. */
+let lastCooling = '';
 export function setDevDiceFace(n) {
   devFace = DEV_MODE && n >= 1 && n <= 6 ? Math.floor(n) : null;
 }
@@ -172,6 +192,9 @@ export function buffStartFight() {
   kitInitial = [...kit];
   botKit = rollBotKit();
   botLastThrowAt = -1e9;
+  coolUntil = {};
+  lastCooling = '';
+  buffFightState.cool = {};
   buffFightState.active = true;
   // ⚠️ ЗДЕСЬ БРОСАТЬ ЕЩЁ НЕКОМУ, И ЭТО НОРМАЛЬНО. Бой начинается, когда плита
   //    ПУСТА — бойцов ставят позже, уже в кадрах, — значит и выбранного в этот
@@ -191,9 +214,12 @@ export function buffEndFight() {
   kitInitial = [];
   botKit = [];
   clearEffects();
+  coolUntil = {};
+  lastCooling = '';
   buffFightState.active = false;
   buffFightState.cards = [];
   buffFightState.badges = [];
+  buffFightState.cool = {};
 }
 
 /** Снять все эффекты, не трогая запас. */
@@ -218,10 +244,12 @@ function syncCards() {
     const left = counts.get(id);
     let state = 'normal';
     if (left <= 0) state = 'empty';
-    // «НЕЛЬЗЯ СЕЙЧАС». Выбранный уже под баффом (правило 2) или выбирать ещё
-    // некого. Причина видна состоянием карточки — приглушением, — а не словами:
-    // подсказки под панелью в новом порядке нет, её ждать было незачем.
-    else if (!canThrow) state = 'locked';
+    // «НЕЛЬЗЯ СЕЙЧАС». Три причины, состояние одно, и четвёртого заводить
+    // нельзя (ТЗ): идёт откат (правило 9), выбранный уже под баффом
+    // (правило 2), или выбирать ещё некого. Все три читаются одинаково —
+    // «сейчас нельзя, но предмет цел». Чем именно нельзя, говорит панель
+    // справа: при откате она ведёт отсчёт.
+    else if (!canThrow || isCooling(id)) state = 'locked';
     return { key: id, id, name: BUFF_META[id].name, mono: BUFF_META[id].mono, left, state };
   });
   syncBadgesList();
@@ -231,6 +259,11 @@ function syncCards() {
  * Кому бросаем — ВЫБРАННЫЙ боец, если на него МОЖНО (правила 2 и 7). Своего
  * списка целей у баффа больше нет: цель одна, её держит выбор.
  */
+/** Идёт ли откат у этого вида прямо сейчас. */
+function isCooling(id) {
+  return (coolUntil[id] || 0) > nowT;
+}
+
 function targetUnit() {
   if (!A || !buffFightState.active) return null;
   const u = selectedUnit();
@@ -248,6 +281,7 @@ export function useBuffCard(key) {
   if (!buffFightState.active) return;
   const card = buffFightState.cards.find((c) => c.key === key);
   if (!card || card.left <= 0) return; // потраченная карточка не бросается
+  if (isCooling(key)) return;          // откат: карточка погашена разметкой
   const unit = targetUnit();
   if (!unit) return;                   // уже под баффом или выбирать некого
   applyBuff(key, unit, true);
@@ -275,6 +309,9 @@ function applyBuff(id, unit, own) {
     // просто не состоится, и карточка останется на месте.
     if (!spendFromStock(id)) return false;
     kit.splice(i, 1);
+    // ОТКАТ ставится в тот же миг, что списывается предмет (правило 9). Только
+    // у игрока: у бота своя пауза между бросками, и она уже есть.
+    coolUntil[id] = nowT + BUFF_BALANCE.cooldownSec;
   } else {
     const i = botKit.indexOf(id);
     if (i < 0) return false;
@@ -394,8 +431,31 @@ export function buffTick(dt, t) {
   // пал и выбор перескочил на свободного — тоже. Пересобираем ТОЛЬКО когда
   // изменилось: шестьдесят пересборок в секунду незачем.
   const canThrow = !!targetUnit();
-  if (canThrow !== lastCanThrow) { lastCanThrow = canThrow; syncCards(); }
+  syncCool();
+  // Карточки пересобираются на ИЗМЕНЕНИЕ: можно/нельзя бросить или кончился
+  // чей-то откат. Строка «кто сейчас в откате» — самый дешёвый способ поймать
+  // второе, не сравнивая по одному.
+  const cooling = BUFF_IDS.filter(isCooling).join(',');
+  if (canThrow !== lastCanThrow || cooling !== lastCooling) {
+    lastCanThrow = canThrow; lastCooling = cooling; syncCards();
+  }
   syncBadges();
+}
+
+/**
+ * ОСТАТОК ОТКАТА — для панели рычагов. Считается каждый кадр: панель ведёт
+ * отсчёт, и он обязан идти плавно, а не прыгать вместе с пересборкой карточек.
+ * Пишем ровно три числа, поэтому дёшево.
+ */
+function syncCool() {
+  const total = BUFF_BALANCE.cooldownSec;
+  for (const id of BUFF_IDS) {
+    const left = Math.max(0, (coolUntil[id] || 0) - nowT);
+    const cur = buffFightState.cool[id];
+    const frac = total > 0 ? left / total : 0;
+    if (!cur) buffFightState.cool[id] = { left, frac };
+    else { cur.left = left; cur.frac = frac; }
+  }
 }
 
 // ── Значки над бойцами ───────────────────────────────────────────────────

@@ -23,11 +23,26 @@
 //      игрока (панель не пустует посреди боя);
 //   6. бой кончился — выбора нет, метка гаснет.
 //
+// КАК ВИДНО, КТО ВЫБРАН. Кружок под ногами. Кружки на плите УЖЕ ЕСТЬ — тонкие
+// белые кольца под стороной игрока, — и выбранный получает свой в цвет ядра,
+// остальные остаются белыми. Своего кольца этот файл не заводит: он перекрашивает
+// существующее, подменив ему материал, и возвращает прежний, когда выбор ушёл.
+//
+// ⚠️ МАТЕРИАЛ КОЛЬЦА ОБЩИЙ НА ВСЕ КОЛЬЦА. Арена собирает их из одной геометрии и
+//    одного материала (makeOwnRing) — покрасить материал на месте значило бы
+//    покрасить ВСЕ кольца разом. Поэтому выбранному кольцу подсовывается свой
+//    материал, а прежний запоминается на самом кольце и возвращается обратно.
+//
+// ⚠️ КРУЖОК — ЕДИНСТВЕННАЯ МЕТКА ВЫБОРА. Раньше их было две: плоские скобки
+//    поверх кадра. Их верхние уголки ложились на плашку здоровья и читались
+//    вторым знаком — «зелёной подсветкой плашки», которой никто не задумывал.
+//    Сняты целиком (ТЗ 26.09.2026, откат и кружок).
+//
 // ЧТО ЭТОТ ФАЙЛ НЕ ДЕЛАЕТ:
 //   · не знает про кличи и баффы — они спрашивают его, не наоборот;
-//   · ничего не кладёт в трёхмерный мир: метка плоская, поверх кадра;
+//   · не добавляет в сцену ни одного предмета — только красит существующий;
 //   · не заводит своих чисел — их у выбора нет вовсе;
-//   · не рисует метку и панель — это Vue-компонент, он читает состояние ниже.
+//   · не рисует панель — это Vue-компонент, он читает состояние ниже.
 //
 // ⚠️ НИГДЕ НЕ СОХРАНЯЕТСЯ. Обновление страницы = новый бой, выбран собственный
 //    боец. Это ТЗ дословно.
@@ -36,17 +51,15 @@
 //               selectStartFight, selectEndFight, selectTick, selectedUnit.
 import { reactive } from 'vue';
 import * as THREE from 'three';
-import { getCore } from '@/data/upgradeData.js';
+import { coreHue } from '@/data/sceneTokens.js';
 
 /**
  * ЧТО ВИДИТ ЭКРАН. Панель рычагов и метка читают отсюда и больше ниоткуда.
  *   active — бой идёт и кто-то выбран
- *   key    — номер выбора: меняется, когда сменился боец (панель по нему
- *            перерисовывает заголовок и цвет)
- *   name   — заголовок панели: ник бойца, а у союзного бота — имя его ядра
- *   coreId — ядро выбранного: им панель красится
- *   own    — собственный боец игрока (иначе союзный бот)
- *   mark   — плоская метка на его месте на экране: { x, y, on }
+ *   key    — номер выбора: меняется, когда сменился боец. Панель им больше не
+ *            пользуется (заголовка у неё нет), но по нему пересобираются
+ *            карточки баффов: «нельзя сейчас» зависит от того, КТО выбран.
+ *   coreId — ядро выбранного. Им красится кружок под ногами.
  *
  * ⚠️ САМОЙ ЗАПИСИ БОЙЦА ЗДЕСЬ НЕТ. Состояние реактивное: всё, что в него
  *    положено, Vue оборачивает своей обёрткой — вглубь, до тел Three.js.
@@ -56,10 +69,7 @@ import { getCore } from '@/data/upgradeData.js';
 export const selectState = reactive({
   active: false,
   key: 0,
-  name: '',
   coreId: '',
-  own: false,
-  mark: { x: -9999, y: -9999, on: false },
 });
 
 // ── Привязка к арене ─────────────────────────────────────────────────────
@@ -90,6 +100,7 @@ export function unbindSelectArena() {
   A.canvas.removeEventListener('pointerdown', onPointerDown);
   A.canvas.removeEventListener('pointerup', onPointerUp);
   selectEndFight();
+  if (selMat) { selMat.dispose(); selMat = null; }
   A = null;
 }
 
@@ -106,21 +117,19 @@ export function unbindSelectArena() {
  */
 export function selectStartFight() {
   if (!A) return;
+  unpaintRing(selected);
   selected = null;
   selectState.active = false;
-  selectState.mark.on = false;
   publish();
 }
 
 /** БОЙ КОНЧИЛСЯ. Выбора нет, метка гаснет. */
 export function selectEndFight() {
+  unpaintRing(selected);
   selected = null;
   selectState.active = false;
   selectState.key = 0;
-  selectState.name = '';
   selectState.coreId = '';
-  selectState.own = false;
-  selectState.mark.on = false;
 }
 
 // ── Кто выбран ───────────────────────────────────────────────────────────
@@ -152,25 +161,20 @@ function isPickable(u) {
  */
 function setSelected(u) {
   if (selected === u) return;
+  unpaintRing(selected);
   selected = u;
   seq += 1;
   publish();
+  paintRing(selected);
 }
 
 /** Переписать описание выбранного в состояние экрана. */
 function publish() {
   if (!isPickable(selected)) {
     selectState.active = false;
-    selectState.mark.on = false;
     return;
   }
-  const spec = selected.spec || {};
-  const core = getCore(spec.coreId);
-  // ЗАГОЛОВОК. Ник, а у союзного бота ника нет — тогда имя его ядра. Пустого
-  // заголовка быть не должно: панель без него выглядит сломанной (ТЗ).
-  selectState.name = spec.name || (core ? core.name : '');
-  selectState.coreId = spec.coreId || '';
-  selectState.own = !spec.isBot;
+  selectState.coreId = (selected.spec && selected.spec.coreId) || '';
   selectState.key = seq;
   selectState.active = true;
 }
@@ -233,7 +237,7 @@ function pickUnitAt(clientX, clientY) {
 // ── Кадр ─────────────────────────────────────────────────────────────────
 
 /**
- * Зовётся ареной каждый кадр: держит выбор живым и считает место метки.
+ * Зовётся ареной каждый кадр: держит выбор живым и кружок покрашенным.
  *
  * @param {number} dt секунд с прошлого кадра (не нужен, принимается для
  *                    единообразия с buffTick и klichTick — все три зовутся рядом)
@@ -242,34 +246,55 @@ function pickUnitAt(clientX, clientY) {
 export function selectTick(dt, t) { // eslint-disable-line no-unused-vars
   if (!A) return;
   ensureSelection();
-  syncMark();
+  // ПЕРЕКРАСКА ПОДТВЕРЖДАЕТСЯ КАЖДЫЙ КАДР, И ЭТО НЕ ЛИШНЕЕ. Кольцо бойцу могут
+  // завести или снять не спрашивая нас (арена делает это при выходе на плиту и
+  // при выбывании), и краска тогда потерялась бы молча. Проверка — сравнение
+  // двух ссылок, стоит ноль.
+  if (selected && selected.ring && selMat && selected.ring.material !== selMat) paintRing(selected);
 }
 
-/**
- * МЕТКА ВЫБРАННОГО — на его месте на экране, на уровне груди.
- *
- * ⚠️ МЕТКА ПЛОСКАЯ, А НЕ В СЦЕНЕ. Подсветить тело значило бы завести на арене
- *    второе свечение рядом с ядром бойца — ровно то, что запрещено. Метка
- *    принадлежит интерфейсу, живёт поверх кадра и гаснет вместе с боем. Тот же
- *    приём и та же высота, что у снятой подсветки целей, — её место она и
- *    занимает.
- */
-const MARK_BODY_Y = 1.1;
-const _prj = new THREE.Vector3();
-const _fwd = new THREE.Vector3();
-const _off = new THREE.Vector3();
+// ── Кружок под ногами ────────────────────────────────────────────────────
 
-function syncMark() {
-  const m = selectState.mark;
-  if (!isPickable(selected)) { m.on = false; return; }
-  const r = A.canvas.getBoundingClientRect();
-  A.camera.getWorldDirection(_fwd);
-  _prj.copy(selected.f.group.position); _prj.y += MARK_BODY_Y;
-  // За спиной у камеры проекция переворачивается и дала бы метку не там —
-  // такой кадр просто прячется.
-  if (_fwd.dot(_off.copy(_prj).sub(A.camera.position)) <= 0) { m.on = false; return; }
-  _prj.project(A.camera);
-  m.x = r.left + (_prj.x * 0.5 + 0.5) * r.width;
-  m.y = r.top + (-_prj.y * 0.5 + 0.5) * r.height;
-  m.on = true;
+/**
+ * ЦВЕТ КОЛЬЦА ВЫБРАННОГО. Берётся из четырёх существующих ядер, новых нет.
+ *
+ * ⚠️ ЯРЧЕ БЕЛОГО, НО НЕ СВЕТИТСЯ. Обычное кольцо стоит на 0.34 — в цвете такая
+ *    прозрачность не читалась бы вовсе. Ярче оно только заливкой: ни свечения,
+ *    ни доп. смешивания, ни исключения из тонировки — на арене светится один
+ *    разлом, и метка на полу не имеет права стать вторым источником света.
+ */
+const SEL_RING_OPACITY = 0.9;
+
+/** Наш материал — один на всю сцену, у него меняется только цвет. */
+let selMat = null;
+
+function ensureSelMat() {
+  if (!selMat) {
+    selMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: SEL_RING_OPACITY, depthWrite: false,
+    });
+  }
+  return selMat;
+}
+
+/** Покрасить кольцо выбранного в цвет его ядра. */
+function paintRing(u) {
+  const mesh = u && u.ring;
+  if (!mesh) return;                       // кольца у бойца нет — красить нечего
+  const hex = u.spec && u.spec.coreId ? coreHue(u.spec.coreId) : '';
+  if (!hex) return;                        // ядро неизвестно — оставляем белым
+  const mat = ensureSelMat();
+  mat.color.set(hex);
+  // Прежний материал запоминается НА САМОМ КОЛЬЦЕ: так его вернёт даже тот, кто
+  // не знает, каким он был, — и подмена не зависит от порядка вызовов.
+  if (!mesh.userData.selBaseMat) mesh.userData.selBaseMat = mesh.material;
+  mesh.material = mat;
+}
+
+/** Вернуть кольцу его обычный белый материал. */
+function unpaintRing(u) {
+  const mesh = u && u.ring;
+  if (!mesh || !mesh.userData.selBaseMat) return;
+  mesh.material = mesh.userData.selBaseMat;
+  mesh.userData.selBaseMat = null;
 }

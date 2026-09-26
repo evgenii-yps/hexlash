@@ -16,8 +16,8 @@
     class="bc-card"
     :class="[`is-${state}`, { 'is-live': clickable }]"
     :type="clickable ? 'button' : undefined"
-    :disabled="clickable && state === 'empty' ? true : undefined"
-    @click="clickable && state !== 'empty' && $emit('pick')"
+    :disabled="clickable && (state === 'empty' || state === 'locked') ? true : undefined"
+    @click="clickable && state === 'normal' && $emit('pick')"
   >
     <div class="bc-icon">
       <img v-if="icon" :src="icon" :alt="item.name" />
@@ -78,7 +78,9 @@ defineEmits(['pick']);
 .bc-card.is-live { cursor: pointer; }
 .bc-card.is-live:disabled { cursor: default; }
 .bc-card.is-empty { opacity: var(--o-dim); }
-.bc-card.is-locked { border-color: var(--chrome-hi); }
+/* «Нельзя сейчас» — приглушение, а не подсветка. Причина та же, что у карты
+   клича (см. её файл): с откатом это состояние стало обычным ходом боя. */
+.bc-card.is-locked { opacity: 0.78; }
 .bc-lock {
   position: absolute;
   top: 3px;

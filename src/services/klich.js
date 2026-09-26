@@ -28,7 +28,9 @@
 //   7. боец пал — сдвиг гаснет с ним, заряд НЕ возвращается;
 //   8. бой кончился — ничего не переносится в следующий;
 //   9. заряды кончились — карта гаснет и не нажимается (причина — счётчик ×0);
-//  10. клич адресный: применяется ВЫБРАННОМУ бойцу.
+//  10. клич адресный: применяется ВЫБРАННОМУ бойцу;
+//  11. после применения рычаг в ОТКАТЕ несколько секунд и не нажимается. Откат
+//      общий на сторону игрока, у каждого клича свой, запас он не возвращает.
 //
 // ⚠️ ПОРЯДОК ДЕЙСТВИЙ РАЗВЁРНУТ (ТЗ 26.09.2026). Было: тап по карте → подсветка
 //    своих → тап по бойцу. Стало: боец выбран заранее и всегда, тап по карте
@@ -52,6 +54,10 @@ import { selectedUnit } from './fighterSelect.js';
  *   active   — бой идёт, ряд на экране
  *   cards    — карты: { key, id, name, mono, glyph, left, state }
  *   badges   — значки над бойцами: { key, id, glyph, ring, x, y, on }
+ *   cool     — откат по каждому кличу: { [id]: { left, frac } }, где left —
+ *              секунды до конца (0 = свободен), frac — доля отката 1..0.
+ *              Отдельно от карт нарочно: откат меняется КАЖДЫЙ кадр, а карты
+ *              пересобираются только на смену состояния.
  *
  * Выбранной карты здесь больше нет: карта не выбирается, она применяется.
  */
@@ -59,6 +65,7 @@ export const klichFightState = reactive({
   active: false,
   cards: [],
   badges: [],
+  cool: {},
 });
 
 // ── Привязка к арене ─────────────────────────────────────────────────────
@@ -70,6 +77,14 @@ let A = null; // { camera, canvas, field }
 
 /** Сколько применений каждого клича осталось В ЭТОМ БОЮ. */
 let charges = {};
+/**
+ * Когда каждый клич снова можно крикнуть — по часам боя (правило 11). Общий на
+ * сторону игрока, как и запас. Ноль/прошлое = свободен.
+ *
+ * ⚠️ СВОИХ ЧАСОВ НЕ ЗАВОДИМ. Срок считается по тому же времени боя, что уже
+ *    считает затухание сдвига, — арена отдаёт его каждый кадр в klichTick.
+ */
+let coolUntil = {};
 /** Действующие сдвиги: боец → что на нём висит. */
 const effects = new Map();
 /** Свой номер каждому значку. Записи бойцов своих номеров не имеют. */
@@ -88,6 +103,13 @@ let nowT = 0;
  *    пересобирать их шестьдесят раз в секунду незачем.
  */
 let lastHadPick = null;
+/**
+ * Были ли рычаги в откате на прошлом кадре — по каждому отдельно. Нужно ровно
+ * затем же, зачем lastHadPick: карта в откате приглушена, и когда откат
+ * кончился, она обязана ожить в тот же миг. Пересобирать карты каждый кадр ради
+ * этого незачем — пересобираем на ИЗМЕНЕНИЕ.
+ */
+let lastCooling = '';
 
 // ── Привязка / отвязка ───────────────────────────────────────────────────
 
@@ -133,6 +155,9 @@ export function klichStartFight() {
   //    никогда: пересчёт ждёт ИЗМЕНЕНИЯ, а изменения уже не будет. Поймано
   //    снимком экрана — весь бой ряд стоял серым.
   lastHadPick = null;
+  lastCooling = '';
+  coolUntil = {};
+  klichFightState.cool = {};
   for (const id of KLICH_IDS) charges[id] = KLICH_BALANCE.chargesPerKlich;
   klichFightState.active = true;
   syncCards();
@@ -142,10 +167,13 @@ export function klichStartFight() {
 export function klichEndFight() {
   clearEffects();
   charges = {};
+  coolUntil = {};
   lastHadPick = null;
+  lastCooling = '';
   klichFightState.active = false;
   klichFightState.cards = [];
   klichFightState.badges = [];
+  klichFightState.cool = {};
 }
 
 /** Снять все сдвиги, не трогая запас. */
@@ -168,10 +196,19 @@ function syncCards() {
     const left = charges[id] || 0;
     let state = 'normal';
     if (left <= 0) state = 'empty';                       // правило 9
-    else if (!hasPick) state = 'locked';                  // кричать некому
+    // ОТКАТ И «КРИЧАТЬ НЕКОМУ» — ОДНО СОСТОЯНИЕ, И ЭТО НАРОЧНО. Четвёртого
+    // состояния карты заводить нельзя (ТЗ): обе причины читаются одинаково —
+    // «сейчас нельзя, но заряд цел». Чем именно нельзя, говорит панель справа:
+    // при откате она ведёт отсчёт, а без выбранного бойца боя ещё нет.
+    else if (!hasPick || isCooling(id)) state = 'locked';
     return { key: id, id, name: KLICH_META[id].name, mono: KLICH_META[id].mono, glyph: KLICH_META[id].glyph, left, state };
   });
   syncBadgesList();
+}
+
+/** Идёт ли откат у этого клича прямо сейчас. */
+function isCooling(id) {
+  return (coolUntil[id] || 0) > nowT;
 }
 
 // ── Тап по карте ─────────────────────────────────────────────────────────
@@ -192,6 +229,7 @@ export function useKlichCard(key) {
   // тап по ней сюда не доходит вовсе. Видимая причина — сам счётчик ×0 и
   // приглушение, как у баффов.
   if (card.left <= 0) return;
+  if (isCooling(key)) return;   // откат: карта погашена разметкой, сюда не дойдёт
   const unit = selectedUnit();
   if (!unit) return;            // выбрать ещё некого: плита пуста
   applyKlich(key, unit);
@@ -211,6 +249,8 @@ function applyKlich(id, unit) {
   const f = unit.f;
   if (!f.applyKlich) return false; // боец без рычага — молча ничего
   charges[id] -= 1;
+  // ОТКАТ ставится в тот же миг, что списывается заряд (правило 11).
+  coolUntil[id] = nowT + KLICH_BALANCE.cooldownSec;
   // Правило 4: новый клич ЗАМЕНЯЕТ предыдущий. Рычаг бойца сам перезаписывает
   // сдвиг, поэтому снимать старый отдельно не нужно — довольно заменить запись.
   f.applyKlich(KLICH_BALANCE.axes[id], KLICH_BALANCE.holdSec, KLICH_BALANCE.fadeSec);
@@ -233,7 +273,14 @@ export function klichTick(dt, t) {
   if (!A || !klichFightState.active) return;
 
   const hasPick = !!selectedUnit();
-  if (hasPick !== lastHadPick) { lastHadPick = hasPick; syncCards(); }
+  syncCool();
+  // Карты пересобираются на ИЗМЕНЕНИЕ: появился/исчез выбранный или кончился
+  // чей-то откат. Строка «кто сейчас в откате» — самый дешёвый способ поймать
+  // второе, не сравнивая по одному.
+  const cooling = KLICH_IDS.filter(isCooling).join(',');
+  if (hasPick !== lastHadPick || cooling !== lastCooling) {
+    lastHadPick = hasPick; lastCooling = cooling; syncCards();
+  }
 
   for (const [unit, e] of [...effects]) {
     const f = unit.f;
@@ -243,6 +290,22 @@ export function klichTick(dt, t) {
   }
 
   syncBadges();
+}
+
+/**
+ * ОСТАТОК ОТКАТА — для панели рычагов. Считается каждый кадр: панель ведёт
+ * отсчёт, и он обязан идти плавно, а не прыгать вместе с пересборкой карт.
+ * Пишем ровно три числа, поэтому дёшево.
+ */
+function syncCool() {
+  const total = KLICH_BALANCE.cooldownSec;
+  for (const id of KLICH_IDS) {
+    const left = Math.max(0, (coolUntil[id] || 0) - nowT);
+    const cur = klichFightState.cool[id];
+    const frac = total > 0 ? left / total : 0;
+    if (!cur) klichFightState.cool[id] = { left, frac };
+    else { cur.left = left; cur.frac = frac; }
+  }
 }
 
 // ── Значки над бойцами ───────────────────────────────────────────────────

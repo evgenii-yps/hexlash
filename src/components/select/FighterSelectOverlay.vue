@@ -1,12 +1,20 @@
-<!-- FighterSelectOverlay — ВЫБРАННЫЙ БОЕЦ ПОВЕРХ БОЯ: метка на его месте и узкая
-     панель рычагов у правого края.
+<!-- FighterSelectOverlay — ПАНЕЛЬ РЫЧАГОВ у правого края.
+
+     ЧТО ОНА ГОВОРИТ, И ЧЕГО НЕ ГОВОРЯТ КАРТЫ. Карты внизу отвечают «сколько
+     осталось» — счётчиком ×N. Панель отвечает «когда снова можно» — отсчётом
+     отката. Это разные вопросы, и второй на картах не помещается: там уже стоит
+     счётчик, и два числа на одной карте читались бы как одно.
+
+     ⚠️ ПАНЕЛЬ БОЛЬШЕ НЕ ПРИВЯЗАНА К ВЫБРАННОМУ БОЙЦУ (ТЗ 26.09.2026). У неё был
+     заголовок с ником и покраска в цвет ядра — снято целиком: откат общий на
+     сторону игрока, и привязывать его к одному бойцу значило бы врать. Кто
+     выбран, теперь видно на плите — цветным кружком под ногами.
 
      ЖИВЁТ СНАРУЖИ СЦЕНЫ, рядом с рядами кличей и баффов (см. шапку
      PlayStubView.vue): защищённая арена про панель не знает, панель про арену —
-     тоже. Между ними один файл правил — services/fighterSelect.js, — и всё, что
-     здесь есть, оттуда читается.
+     тоже. Числа отката приходят из services/klich.js и services/buffs.js.
 
-     ⚠️ СЛОЙ НЕ ЛОВИТ ПАЛЕЦ ВООБЩЕ. Панель — ПОКАЗАНИЯ, а не кнопки: нажимаются
+     ⚠️ СЛОЙ НЕ ЛОВИТ ПАЛЕЦ ВООБЩЕ. Панель — показания, а не кнопки: нажимаются
      по-прежнему карты внизу, и рычаг у игрока остаётся ровно один на вид. Если
      бы панель ловила палец, она вдобавок заслоняла бы бойца, который стоит у
      правого края, — и тап по нему уходил бы в пустоту.
@@ -29,60 +37,35 @@
      ними при первой же правке их размеров. -->
 <template>
   <div v-if="s.active" class="fso">
-    <!-- МЕТКА ВЫБРАННОГО. Плоская, поверх кадра, в цвет его ядра. Тела не
-         подсвечивает: светится на арене один разлом, и второго свечения рядом с
-         ядром бойца быть не должно. Четыре уголка — не кружок и не квадрат:
-         снятая подсветка целей была ими, и метка не должна читаться как «сюда
-         можно», она читается как «этот выбран».
-         Ключ по номеру выбора: со сменой бойца элемент пересоздаётся, и короткий
-         одиночный толчок проигрывается заново. -->
-    <div
-      v-show="s.mark.on"
-      :key="s.key"
-      class="fso-mark"
-      :style="markStyle"
-    >
-      <i v-for="n in 4" :key="n" :class="`c${n}`" />
-    </div>
-
-    <!-- ПАНЕЛЬ РЫЧАГОВ. Заголовок — ник выбранного (у союзного бота ника нет,
-         тогда имя его ядра), дальше значки рычагов со счётчиками. -->
-    <aside class="fso-panel" :style="panelStyle" aria-live="polite">
-      <!-- Ключ по номеру выбора — заголовок сменяется коротким проявлением, а не
-           подменяется молча: смена выбранного обязана быть заметной. -->
-      <h2 :key="s.key" class="fso-name">{{ s.name }}</h2>
+    <aside class="fso-panel" :style="panelStyle" aria-live="off">
+      <p class="fso-head">{{ t.select.cooldown }}</p>
 
       <div class="fso-levers">
-        <!-- Кличи: рисованный значок, тот же, что на карте ряда. -->
         <div
-          v-for="c in klich.cards" :key="`k-${c.key}`"
-          class="fso-lever" :class="`is-${c.state}`"
-          :aria-label="`${c.name}, ${c.left} left`"
+          v-for="l in levers" :key="l.key"
+          class="fso-lever"
+          :class="{ 'is-empty': l.spent, 'is-locked': l.locked, 'is-cooling': l.cooling }"
+          :aria-label="l.aria"
         >
-          <span class="fso-glyph"><KlichGlyph :glyph="c.glyph" /></span>
-          <span class="fso-count">×{{ c.left }}</span>
-        </div>
+          <span class="fso-glyph">
+            <KlichGlyph v-if="l.glyph" :glyph="l.glyph" />
+            <img v-else :src="l.icon" :alt="l.name" />
+          </span>
 
-        <!-- Баффы: тот же снимок предмета, что на карточке панели.
-             ⚠️ ЗНАЧКОВ РОВНО СТОЛЬКО, СКОЛЬКО ВИДОВ ИГРОК ВЗЯЛ В БОЙ. Три
-             одинаковых предмета — это ОДИН значок со счётчиком ×3, а пустой
-             запас — ни одного. Панель повторяет ряд карточек, а не обещает
-             шесть рычагов там, где их нет. -->
-        <div
-          v-for="c in buff.cards" :key="`b-${c.key}`"
-          class="fso-lever" :class="`is-${c.state}`"
-          :aria-label="`${c.name}, ${c.left} left`"
-        >
-          <span class="fso-glyph"><img :src="BUFF_ICONS[c.id]" :alt="c.name" /></span>
-          <span class="fso-count">×{{ c.left }}</span>
+          <!-- ОДНА СТРОКА НА ТРИ СОСТОЯНИЯ, И ОНА НЕ ПРЫГАЕТ. Место под неё
+               держится всегда (пустой пробел), иначе значки ездили бы вверх-вниз
+               на каждый откат. Свободный рычаг молчит — так «спокойно доступен»
+               читается тем, что сказать про него нечего. -->
+          <span class="fso-note">{{ l.note }}</span>
+
+          <!-- ОТСЧЁТ ПОЛОСКОЙ, А НЕ КОЛЬЦОМ. На телефоне лёжа значок 18 точек —
+               кольцо вокруг него было бы толщиной в волос. Полоска во всю ширину
+               плитки убывает слева направо и читается с одного взгляда.
+               Ширина ставится кадром, поэтому ни петли, ни перехода здесь нет:
+               гасить нечего и при «уменьшить движение». -->
+          <span v-if="l.cooling" class="fso-drain"><i :style="{ width: `${l.pct}%` }" /></span>
         </div>
       </div>
-
-      <!-- ⚠️ ПОДПИСЬ ОБЯЗАТЕЛЬНА И ЧИТАЕТСЯ ИМЕННО ТАК. Счётчики выше — остаток
-           НА БОЙ, общий на всю сторону игрока: он одинаков у любого выбранного
-           бойца. Без этой строки панель молча врала бы, будто это запас именно
-           этого бойца. Заряды поштучно на бойца — отдельная балансная работа. -->
-      <p class="fso-note">{{ t.select.leftThisFight }}</p>
     </aside>
   </div>
 </template>
@@ -103,13 +86,42 @@ import dice from '@/assets/images/buff_dice.png';
 const BUFF_ICONS = { towel, bucket, dice };
 
 /**
- * Цвет ядра выбранного. Берётся ОБЪЯВЛЕНИЕМ ТОКЕНА, а не значением: читать
- * значение из стилей в JS пришлось бы после того, как они применены, и на первом
- * кадре цвет был бы пустым. Ядер четыре, пятого нет; ядро неизвестно — тихая
- * мета-серая рамка, без цвета.
+ * ШЕСТЬ РЫЧАГОВ ОДНИМ СПИСКОМ: сначала три клича, потом баффы.
+ *
+ * ⚠️ БАФФОВ БЫВАЕТ МЕНЬШЕ ТРЁХ. Значков ровно столько, сколько ВИДОВ игрок взял
+ *    в бой: три одинаковых предмета — это один значок, а пустой запас — ни
+ *    одного. Панель повторяет ряды карт, а не обещает шесть рычагов там, где их
+ *    нет.
  */
-const coreVar = computed(() => (s.coreId ? `var(--core-${s.coreId})` : 'var(--ink-dim)'));
-const panelStyle = computed(() => ({ '--pcore': coreVar.value, '--fso-lift': `${lift.value}px` }));
+const levers = computed(() => {
+  const out = [];
+  const add = (c, cool, extra) => {
+    const left = cool ? cool.left : 0;
+    const cooling = left > 0.05 && c.state !== 'empty';
+    const spent = c.state === 'empty';
+    out.push({
+      key: extra.key,
+      name: c.name,
+      ...extra,
+      spent,
+      cooling,
+      // «Нельзя сейчас» БЕЗ отката — например, боец уже под баффом. Отсчёта тут
+      // нет, потому что ждать нечего: причина уйдёт сама, когда сменится
+      // обстановка, а не по часам.
+      locked: c.state === 'locked' && !cooling,
+      // Секунды ОКРУГЛЯЕМ ВВЕРХ И ЦЕЛЫМИ. Дробное число менялось бы шестьдесят
+      // раз в секунду и читалось бы как мельтешение; целое меняется раз в
+      // секунду, а плавность берёт на себя полоска.
+      note: spent ? '×0' : (cooling ? `${Math.ceil(left)}` : ' '),
+      pct: cooling ? Math.max(0, Math.min(100, cool.frac * 100)) : 0,
+      aria: spent ? `${c.name}, spent`
+        : (cooling ? `${c.name}, ${Math.ceil(left)} seconds` : `${c.name}, ready`),
+    });
+  };
+  for (const c of klich.cards) add(c, klich.cool[c.id], { key: `k-${c.id}`, glyph: c.glyph });
+  for (const c of buff.cards) add(c, buff.cool[c.id], { key: `b-${c.id}`, icon: BUFF_ICONS[c.id] });
+  return out;
+});
 
 /**
  * ПОДЪЁМ НАД РЯДАМИ КАРТ — только для портрета (см. предупреждение в шапке).
@@ -119,6 +131,7 @@ const panelStyle = computed(() => ({ '--pcore': coreVar.value, '--fso-lift': `${
  */
 const LIFT_FALLBACK = 240; // обе панели не нашлись — всё равно не ляжем на них
 const lift = ref(LIFT_FALLBACK);
+const panelStyle = computed(() => ({ '--fso-lift': `${lift.value}px` }));
 let ro = null;
 
 function measureBars() {
@@ -142,11 +155,6 @@ onMounted(() => {
   requestAnimationFrame(measureBars);
 });
 onBeforeUnmount(() => { if (ro) { ro.disconnect(); ro = null; } });
-const markStyle = computed(() => ({
-  left: `${s.mark.x}px`,
-  top: `${s.mark.y}px`,
-  '--pcore': coreVar.value,
-}));
 </script>
 
 <style scoped>
@@ -157,33 +165,9 @@ const markStyle = computed(() => ({
   pointer-events: none; /* слой сквозной целиком — см. предупреждение в шапке */
 }
 
-/* --- МЕТКА: четыре уголка. Обводка в цвет ядра, БЕЗ свечения. --- */
-.fso-mark {
-  position: fixed;
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px; /* ставим по середине метки */
-  animation: fso-pop var(--d-hover) var(--e-weight) 1; /* один толчок на смену выбора */
-}
-.fso-mark i {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border: 1px solid var(--pcore);
-  opacity: 0.9;
-}
-.fso-mark .c1 { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.fso-mark .c2 { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.fso-mark .c3 { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-.fso-mark .c4 { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-@keyframes fso-pop {
-  from { transform: scale(1.35); opacity: 0.2; }
-  to   { transform: scale(1);    opacity: 1; }
-}
-
 /* --- ПАНЕЛЬ. Узкая, у правого края, по середине высоты. Материал — тот же
-       матовый хром, что у прочих накладок боя; от ядра берётся только рамка и
-       едва заметная подложка, чтобы цвет читался, но не спорил с бойцами. --- */
+       матовый хром, что у прочих накладок боя. Ни розового, ни цвета ядра:
+       откат общий на сторону, а не чей-то личный. --- */
 .fso-panel {
   position: absolute;
   right: var(--sp-2);
@@ -195,28 +179,20 @@ const markStyle = computed(() => ({
   align-items: stretch;
   gap: var(--sp-2);
   padding: var(--sp-2);
-  border: 1px solid var(--pcore);
-  background: color-mix(in srgb, var(--pcore) 9%, var(--chrome-glass));
+  border: 1px solid var(--chrome-line);
+  background: var(--chrome-glass);
   -webkit-backdrop-filter: blur(var(--blur-glass));
   backdrop-filter: blur(var(--blur-glass));
-  /* Смена выбранного меняет цвет — коротким переходом, не мгновенной подменой. */
-  transition: border-color var(--d-hover) var(--e-weight),
-              background-color var(--d-hover) var(--e-weight);
 }
 
-.fso-name {
+.fso-head {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: var(--t-xs);
+  font-size: var(--t-micro);
   letter-spacing: var(--ls-meta);
-  color: var(--pcore);
+  color: var(--ink-dim);
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  animation: fso-fade var(--d-hover) var(--e-weight) 1;
 }
-@keyframes fso-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Три в строку: сверху кличи, ниже баффы. Ровно «три клича и три баффа». */
 .fso-levers {
@@ -225,21 +201,24 @@ const markStyle = computed(() => ({
   gap: var(--sp-1);
 }
 
-/* СОСТОЯНИЯ РАЗЛИЧАЮТСЯ ФОРМОЙ И ЯРКОСТЬЮ, НЕ ЦВЕТОМ: цвет занят ядром.
-   готов — рамка видна, значок в полную яркость;
-   потрачен — приглушён и счётчик ×0 (он же и есть причина);
-   нельзя сейчас — приглушён, рамка пунктиром: «не сейчас», а не «кончилось». */
+/* СОСТОЯНИЯ РАЗЛИЧАЮТСЯ ФОРМОЙ И ЯРКОСТЬЮ, НЕ ЦВЕТОМ.
+   свободен — рамка видна, значок в полную яркость, строка пуста;
+   в откате — приглушён, секунды и убывающая полоска;
+   нельзя сейчас (без отката) — приглушён, рамка пунктиром;
+   потрачен — приглушён сильнее всех и ×0 (он же и есть причина). */
 .fso-lever {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  padding: 3px 0;
+  padding: 3px 0 4px;
   border: 1px solid var(--line-strong);
   background: var(--fill-1);
 }
-.fso-lever.is-empty  { opacity: 0.32; }
-.fso-lever.is-locked { opacity: 0.45; border-style: dashed; }
+.fso-lever.is-cooling { opacity: 0.5; }
+.fso-lever.is-locked  { opacity: 0.45; border-style: dashed; }
+.fso-lever.is-empty   { opacity: 0.32; }
 
 .fso-glyph {
   display: block;
@@ -249,20 +228,25 @@ const markStyle = computed(() => ({
 }
 .fso-glyph img { width: 100%; height: 100%; object-fit: contain; }
 
-.fso-count {
+.fso-note {
   font-family: var(--font-mono);
   font-size: var(--t-micro);
+  line-height: 1.1;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
 
-.fso-note {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta);
-  color: var(--ink-dim);
-  text-align: center;
+/* Полоска отката — по нижнему краю плитки, во всю её ширину. */
+.fso-drain {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--fill-1);
+}
+.fso-drain i {
+  display: block;
+  height: 100%;
+  background: var(--ink-dim);
 }
 
 /* ПОРТРЕТ: панель уходит вниз, полосой над рядами карт — единственная полоса
@@ -278,25 +262,24 @@ const markStyle = computed(() => ({
     padding: var(--sp-1) var(--sp-2);
   }
   .fso-levers { grid-template-columns: repeat(6, 1fr); }
-  .fso-lever { padding: 2px 3px; }
+  .fso-lever { padding: 2px 4px 4px; }
   .fso-glyph { width: 18px; height: 18px; }
 }
 
 /* Телефон лёжа: высоты мало. Панель ложится в ОДНУ строку из шести значков —
-   так она втрое короче и не налезает на ряды карт у нижнего края. Подпись
-   остаётся: без неё счётчики начали бы врать. */
+   так она втрое короче и не налезает на ряды карт у нижнего края. */
 @media (max-height: 460px) {
   .fso-panel { width: auto; gap: var(--sp-1); padding: var(--sp-1) var(--sp-2); }
   .fso-levers { grid-template-columns: repeat(6, 1fr); gap: var(--sp-1); }
-  .fso-lever { padding: 2px 3px; }
+  .fso-lever { padding: 2px 4px 4px; }
   .fso-glyph { width: 18px; height: 18px; }
 }
 
-/* «Уменьшить движение»: ни метка, ни заголовок, ни цвет не двигаются — всё
-   встаёт сразу в конечный вид. Мигания и пульсации здесь нет и в обычном
-   режиме: толчок и проявление одиночные, по одному разу на смену выбора. */
+/* «Уменьшить движение»: гасить нечего. Ни петель, ни переходов в панели нет —
+   отсчёт идёт числом раз в секунду и шириной полоски, а это показания, а не
+   украшение. Правило оставлено пустым нарочно: пусть следующая правка, если
+   заведёт движение, наткнётся на него, а не забудет. */
 @media (prefers-reduced-motion: reduce) {
-  .fso-mark, .fso-name { animation: none; }
-  .fso-panel { transition: none; }
+  .fso-panel, .fso-drain i { animation: none; transition: none; }
 }
 </style>

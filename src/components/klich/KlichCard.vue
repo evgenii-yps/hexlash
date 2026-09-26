@@ -22,9 +22,9 @@
     class="kc-card"
     :class="[`is-${state}`]"
     type="button"
-    :disabled="state === 'empty'"
+    :disabled="state === 'empty' || state === 'locked'"
     :aria-label="`${item.name}, ${count} left`"
-    @click="state !== 'empty' && $emit('pick')"
+    @click="state === 'normal' && $emit('pick')"
   >
     <div class="kc-icon"><KlichGlyph :glyph="item.glyph" /></div>
     <div class="kc-name">{{ item.name }}</div>
@@ -80,7 +80,15 @@ defineEmits(['pick']);
    действие в этот момент. Ровно как у карты баффа. */
 /* Заряды кончились: погашена и не нажимается — причина видна счётчиком ×0. */
 .kc-card.is-empty { opacity: var(--o-dim); }
-.kc-card.is-locked { border-color: var(--chrome-hi); }
+/* «НЕЛЬЗЯ СЕЙЧАС» — ПРИГЛУШЕНИЕ, А НЕ ПОДСВЕТКА. Здесь стояла ЯРКАЯ рамка: в
+   прежнем порядке это состояние значило «целей нет» и было редким исключением,
+   которое хотелось заметить. С откатом (ТЗ 26.09.2026) оно стало обычным ходом
+   боя — карта гаснет на несколько секунд после каждого применения, — и яркая
+   рамка читалась бы как «жми сюда» ровно тогда, когда жать нельзя. Приглушена
+   слабее, чем потраченная: заряд-то цел, и порядок яркостей должен читаться
+   как «свободна ярче, чем нельзя сейчас, а та ярче, чем пустая» — 1 / 0.78 /
+   --o-dim (0.6). */
+.kc-card.is-locked { opacity: 0.78; }
 .kc-lock {
   position: absolute;
   top: 3px;
