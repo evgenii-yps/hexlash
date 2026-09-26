@@ -10,18 +10,23 @@
        OpenFieldPanels — открытое поле: счётчик живых сторон поверх боя и то же
                      честное состояние «бойцов не хватает». Итог у него ОБЩИЙ
                      (FightResultPanel) — это обычный бой, просто на двадцать тел.
-       BuffFightOverlay — баффы поверх боя: нижняя панель карточек, значки над
-                     бойцами и подсветка целей. Сама сцена про панель не знает,
-                     панель про сцену — тоже; между ними services/buffs.js.
-       KlichFightOverlay — кличи поверх боя: ряд карт над панелью баффов, значки
-                     над бойцами и подсветка целей. Устроен так же и по той же
-                     причине; между ним и сценой — services/klich.js.
+       BuffFightOverlay — баффы поверх боя: нижняя панель карточек и значки над
+                     бойцами. Сама сцена про панель не знает, панель про сцену —
+                     тоже; между ними services/buffs.js.
+       KlichFightOverlay — кличи поверх боя: ряд карт над панелью баффов и значки
+                     над бойцами. Устроен так же и по той же причине; между ним и
+                     сценой — services/klich.js.
+       FighterSelectOverlay — выбранный боец: метка на его месте и узкая панель
+                     рычагов у правого края. Палец не ловит вовсе — это показания;
+                     нажимаются по-прежнему карты внизу. Между ним и сценой —
+                     services/fighterSelect.js.
        RunInterrupted — сюда НЕ ставится: брошенный забег или турнир уводит игрока в
                      ворота, и сообщение показывают там (см. сам компонент). -->
 <template>
   <ArenaScene />
   <BuffFightOverlay />
   <KlichFightOverlay />
+  <FighterSelectOverlay />
   <FightResultPanel />
   <ChainPanels />
   <CollapsePanels />
@@ -32,6 +37,7 @@
 import ArenaScene from '@/scene/ArenaScene.vue';
 import BuffFightOverlay from '@/components/buff/BuffFightOverlay.vue';
 import KlichFightOverlay from '@/components/klich/KlichFightOverlay.vue';
+import FighterSelectOverlay from '@/components/select/FighterSelectOverlay.vue';
 import FightResultPanel from '@/components/panel/FightResultPanel.vue';
 import ChainPanels from '@/components/chain/ChainPanels.vue';
 import CollapsePanels from '@/components/collapse/CollapsePanels.vue';

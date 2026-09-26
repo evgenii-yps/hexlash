@@ -190,7 +190,6 @@ const ITEM_BY_ID = Object.fromEntries(ITEM_META.map((it) => [it.id, it]));
 
 const PANEL_STATES = [
   { id: 'normal', label: 'ОБЫЧНАЯ', desc: 'Бафф в запасе, ждёт выбора.' },
-  { id: 'selected', label: 'ВЫБРАНА', desc: 'Подсвечена, ждёт тапа по бойцу.' },
   { id: 'empty', label: 'ПУСТАЯ (0 ШТУК)', desc: 'Тусклая, не нажимается.' },
   { id: 'locked', label: 'ЗАБЛОКИРОВАНА', desc: 'Бафф на бойце уже действует — нажать можно, но подсветка цели не появится.' },
 ];

@@ -15,7 +15,7 @@
 //
 // ПРАВИЛА (ТЗ 22.09.2026, работа 2) — все восемь живут здесь:
 //   1. до трёх баффов в бой, можно одинаковые;
-//   2. на одном бойце одновременно один бафф; пока действует — не подсвечивается;
+//   2. на одном бойце одновременно один бафф; пока действует — карта не нажимается;
 //   3. разным своим бойцам — одновременно можно;
 //   4. сгорает сразу: из набора −1, из запаса −1;
 //   5. неиспользованные после боя возвращаются в запас;
@@ -23,11 +23,19 @@
 //   7. на павшего бросить нельзя;
 //   8. бой кончился во время баффа — эффект просто прекращается.
 //
+// ⚠️ ПОРЯДОК ДЕЙСТВИЙ РАЗВЁРНУТ (ТЗ 26.09.2026). Было: тап по карточке →
+//    подсветка своих → тап по бойцу. Стало: боец выбран заранее и всегда, тап по
+//    карточке бросает бафф НЕМЕДЛЕННО. Поэтому отсюда ушло всё, что ждало
+//    второго тапа: выбранная карточка, подсветка целей, подсказка под панелью,
+//    ловля пальца и луч по телам. Палец теперь ловит один файл на всех —
+//    services/fighterSelect.js, — и бафф только спрашивает у него, кто выбран.
+//
 // Экспортирует: buffFightState, bindBuffArena, unbindBuffArena, buffStartFight,
-//               buffEndFight, buffTick, armBuffCard, cancelBuffArm.
-import { reactive } from 'vue';
+//               buffEndFight, buffTick, useBuffCard.
+import { reactive, watch } from 'vue';
 import * as THREE from 'three';
 import { BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie } from '@/data/buffBalance.js';
+import { selectState, selectedUnit } from './fighterSelect.js';
 import { DEV_MODE } from './devMode.js';
 import { buildTowel, buildBucket, buildDice, buildActionGlow } from '@/scene/buffItems.js';
 import {
@@ -41,18 +49,14 @@ import {
  * ЧТО ВИДИТ ЭКРАН. Панель и значки читают отсюда и больше ниоткуда.
  *   active   — бой идёт, панель на экране
  *   cards    — карточки набора: { key, id, name, mono, left, state }
- *   armedKey — какая карточка выбрана (ждёт тапа по бойцу) или null
  *   badges   — значки над бойцами: { key, id, mono, own, face, ring, x, y }
- *   marks    — подсветка целей: места своих бойцов, на которых можно бросить
- *   hint     — ключ подсказки под панелью ('tapFighter' | 'noTarget' | '')
+ *
+ * Выбранной карточки здесь больше нет: карточка не выбирается, она бросается.
  */
 export const buffFightState = reactive({
   active: false,
   cards: [],
-  armedKey: null,
   badges: [],
-  marks: [],
-  hint: '',
 });
 
 // ── Привязка к арене ─────────────────────────────────────────────────────
@@ -95,6 +99,10 @@ let unwatchDice = null;
  *    (Decisions Log 100), и эта дырка закроется вместе с ним.
  */
 let devFace = null;
+/** Снять наблюдателя за сменой выбранного бойца (ставится в bindBuffArena). */
+let stopPickWatch = null;
+/** Можно ли было бросить на прошлом кадре — см. причину в buffTick. */
+let lastCanThrow = null;
 export function setDevDiceFace(n) {
   devFace = DEV_MODE && n >= 1 && n <= 6 ? Math.floor(n) : null;
 }
@@ -103,24 +111,27 @@ export function setDevDiceFace(n) {
 
 /**
  * Арена зовёт это один раз при сборке. Пока не позвали, баффов не существует
- * вовсе: панель не показывается, палец не ловится, бот не бросает.
+ * вовсе: панель не показывается, бот не бросает. Палец здесь больше не ловится:
+ * его ловит выбор бойца.
  */
 export function bindBuffArena({ scene, camera, canvas, field, reduced = false }) {
   A = { scene, camera, canvas, field, reduced };
-  canvas.addEventListener('pointerdown', onPointerDown);
-  canvas.addEventListener('pointerup', onPointerUp);
   // Заряд кубика меняется не по нашему кадру, а по попаданиям — значок должен
   // узнавать об этом сразу, иначе кольцо отстаёт на кадр.
   unwatchDice = watchDiceCharge(() => { syncCards(); });
+  // СМЕНИЛСЯ ВЫБРАННЫЙ — ПЕРЕСОБРАТЬ КАРТОЧКИ. «Нельзя сейчас» у баффа зависит
+  // от того, КТО выбран: на бойце под баффом второй не бросить (правило 2).
+  // Значит при переходе выбора с забаффленного на свободного карточки должны
+  // ожить в тот же миг, а не на следующем событии.
+  stopPickWatch = watch(() => selectState.key, () => { syncCards(); });
   return unbindBuffArena;
 }
 
 /** Уход с арены. Всё снимается, чтобы следующий бой начался с чистого. */
 export function unbindBuffArena() {
   if (!A) return;
-  A.canvas.removeEventListener('pointerdown', onPointerDown);
-  A.canvas.removeEventListener('pointerup', onPointerUp);
   if (unwatchDice) { unwatchDice(); unwatchDice = null; }
+  if (stopPickWatch) { stopPickWatch(); stopPickWatch = null; }
   buffEndFight(); // не брошенное ничего не стоило — возвращать нечего
   disposeFlying();
   A = null;
@@ -162,7 +173,11 @@ export function buffStartFight() {
   botKit = rollBotKit();
   botLastThrowAt = -1e9;
   buffFightState.active = true;
-  buffFightState.armedKey = null;
+  // ⚠️ ЗДЕСЬ БРОСАТЬ ЕЩЁ НЕКОМУ, И ЭТО НОРМАЛЬНО. Бой начинается, когда плита
+  //    ПУСТА — бойцов ставят позже, уже в кадрах, — значит и выбранного в этот
+  //    миг нет, и карточки честно запираются. Отпираются они на смену выбранного
+  //    (наблюдатель в bindBuffArena) и каждый кадр в buffTick. Ровно на этой
+  //    ловушке ряд карт клича однажды замер серым на весь бой.
   syncCards();
 }
 
@@ -177,11 +192,8 @@ export function buffEndFight() {
   botKit = [];
   clearEffects();
   buffFightState.active = false;
-  buffFightState.armedKey = null;
   buffFightState.cards = [];
   buffFightState.badges = [];
-  buffFightState.marks = [];
-  buffFightState.hint = '';
 }
 
 /** Снять все эффекты, не трогая запас. */
@@ -201,94 +213,45 @@ function syncCards() {
   const counts = new Map();
   for (const id of kitInitial) counts.set(id, 0);
   for (const id of kit) counts.set(id, (counts.get(id) || 0) + 1);
-  const anyTarget = eligibleTargets().length > 0;
+  const canThrow = !!targetUnit();
   buffFightState.cards = BUFF_IDS.filter((id) => counts.has(id)).map((id) => {
     const left = counts.get(id);
     let state = 'normal';
     if (left <= 0) state = 'empty';
-    else if (buffFightState.armedKey === id) state = 'selected';
-    else if (!anyTarget) state = 'locked'; // все свои уже под баффом — цели не будет
+    // «НЕЛЬЗЯ СЕЙЧАС». Выбранный уже под баффом (правило 2) или выбирать ещё
+    // некого. Причина видна состоянием карточки — приглушением, — а не словами:
+    // подсказки под панелью в новом порядке нет, её ждать было незачем.
+    else if (!canThrow) state = 'locked';
     return { key: id, id, name: BUFF_META[id].name, mono: BUFF_META[id].mono, left, state };
   });
   syncBadgesList();
 }
 
-/** Свои живые бойцы, на которых МОЖНО бросить (правила 2 и 7). */
-function eligibleTargets() {
-  if (!A || !buffFightState.active) return [];
-  return A.field.living().filter((u) => u.sideId === 'player' && !effects.has(u));
+/**
+ * Кому бросаем — ВЫБРАННЫЙ боец, если на него МОЖНО (правила 2 и 7). Своего
+ * списка целей у баффа больше нет: цель одна, её держит выбор.
+ */
+function targetUnit() {
+  if (!A || !buffFightState.active) return null;
+  const u = selectedUnit();
+  if (!u || effects.has(u)) return null;
+  return u;
 }
 
-// ── Выбор карточки и тап по бойцу ────────────────────────────────────────
+// ── Тап по карточке ──────────────────────────────────────────────────────
 
-/** Тап по карточке: выбрать или снять выбор (повторный тап — отмена). */
-export function armBuffCard(key) {
+/**
+ * Тап по карточке: бросить ВЫБРАННОМУ бойцу, немедленно. Второго шага нет,
+ * отменять нечего — поэтому и повторный тап больше не отмена.
+ */
+export function useBuffCard(key) {
   if (!buffFightState.active) return;
   const card = buffFightState.cards.find((c) => c.key === key);
-  if (!card || card.left <= 0) return; // потраченная карточка не выбирается
-  buffFightState.armedKey = buffFightState.armedKey === key ? null : key;
+  if (!card || card.left <= 0) return; // потраченная карточка не бросается
+  const unit = targetUnit();
+  if (!unit) return;                   // уже под баффом или выбирать некого
+  applyBuff(key, unit, true);
   syncCards();
-  updateHint();
-}
-
-/** Снять выбор. Ничего не тратится. */
-export function cancelBuffArm() {
-  if (!buffFightState.armedKey) return;
-  buffFightState.armedKey = null;
-  syncCards();
-  updateHint();
-}
-
-function updateHint() {
-  if (!buffFightState.active) { buffFightState.hint = ''; return; }
-  if (!buffFightState.armedKey) { buffFightState.hint = ''; return; }
-  // Отдаём КЛЮЧ, а не готовую строку: слова живут в локали, а этот файл про
-  // правила. Разбирает ключ панель — она одна умеет говорить.
-  buffFightState.hint = eligibleTargets().length ? 'tapFighter' : 'noTarget';
-}
-
-// Палец: тап, а не протяжка. Порог тот же, каким арена отличает тап от
-// вращения камеры, — иначе выбор срабатывал бы на каждом развороте.
-const TAP_SLOP_PX = 5;
-let downX = 0;
-let downY = 0;
-let downOn = false;
-const _ray = new THREE.Raycaster();
-const _ndc = new THREE.Vector2();
-
-function onPointerDown(e) {
-  downOn = true; downX = e.clientX; downY = e.clientY;
-}
-
-function onPointerUp(e) {
-  const wasTap = downOn && Math.hypot(e.clientX - downX, e.clientY - downY) <= TAP_SLOP_PX;
-  downOn = false;
-  if (!wasTap || !buffFightState.active || !buffFightState.armedKey) return;
-  const unit = pickUnitAt(e.clientX, e.clientY);
-  // Тап мимо бойца — отмена выбора, ничего не тратится (правило ТЗ).
-  if (!unit) { cancelBuffArm(); return; }
-  if (unit.sideId !== 'player' || effects.has(unit)) { cancelBuffArm(); return; }
-  applyBuff(buffFightState.armedKey, unit, true);
-  buffFightState.armedKey = null;
-  syncCards();
-  updateHint();
-}
-
-/** Кого накрыл палец. Луч из камеры по телам своих живых бойцов. */
-function pickUnitAt(clientX, clientY) {
-  if (!A) return null;
-  const r = A.canvas.getBoundingClientRect();
-  _ndc.x = ((clientX - r.left) / r.width) * 2 - 1;
-  _ndc.y = -((clientY - r.top) / r.height) * 2 + 1;
-  _ray.setFromCamera(_ndc, A.camera);
-  const live = A.field.living().filter((u) => u.sideId === 'player');
-  let best = null;
-  let bestD = Infinity;
-  for (const u of live) {
-    const hit = _ray.intersectObject(u.f.group, true);
-    if (hit.length && hit[0].distance < bestD) { bestD = hit[0].distance; best = u; }
-  }
-  return best;
 }
 
 // ── Применение баффа ─────────────────────────────────────────────────────
@@ -426,8 +389,13 @@ export function buffTick(dt, t) {
   }
 
   tickBot();
+  // МОЖНО ЛИ БРОСИТЬ — ПРОВЕРЯЕТСЯ КАЖДЫЙ КАДР. Оно меняется само по себе, без
+  // всякого события: бафф на выбранном бойце истёк — карточки ожили; выбранный
+  // пал и выбор перескочил на свободного — тоже. Пересобираем ТОЛЬКО когда
+  // изменилось: шестьдесят пересборок в секунду незачем.
+  const canThrow = !!targetUnit();
+  if (canThrow !== lastCanThrow) { lastCanThrow = canThrow; syncCards(); }
   syncBadges();
-  syncMarks();
 }
 
 // ── Значки над бойцами ───────────────────────────────────────────────────
@@ -510,34 +478,10 @@ function syncBadges() {
   }
 }
 
-/**
- * ПОДСВЕТКА ЦЕЛЕЙ. Пока карточка выбрана, свои бойцы, на которых МОЖНО бросить,
- * получают метку — кружок на их месте на экране.
- *
- * ⚠️ МЕТКА ПЛОСКАЯ, А НЕ В СЦЕНЕ. Подсветить тело значило бы завести на арене
- *    второе свечение рядом с ядром бойца — ровно то, что запрещено. Метка
- *    принадлежит интерфейсу, живёт поверх кадра и гаснет вместе с выбором.
- */
-function syncMarks() {
-  if (!buffFightState.armedKey) {
-    if (buffFightState.marks.length) buffFightState.marks = [];
-    return;
-  }
-  const r = A.canvas.getBoundingClientRect();
-  A.camera.getWorldDirection(_fwd);
-  const out = [];
-  for (const u of eligibleTargets()) {
-    _prj.copy(u.f.group.position); _prj.y += 1.1;
-    if (_fwd.dot(_off.copy(_prj).sub(A.camera.position)) <= 0) continue;
-    _prj.project(A.camera);
-    out.push({
-      key: `m${out.length}`,
-      x: r.left + (_prj.x * 0.5 + 0.5) * r.width,
-      y: r.top + (-_prj.y * 0.5 + 0.5) * r.height,
-    });
-  }
-  buffFightState.marks = out;
-}
+/* ПОДСВЕТКА ЦЕЛЕЙ СНЯТА (ТЗ 26.09.2026). Она показывала, на КОГО можно бросить,
+   пока карточка выбрана, — а выбирать карточку больше не нужно, и цель всегда
+   одна: выбранный боец. Её место и её приём (плоская метка поверх кадра, без
+   свечения) заняла метка выбранного в services/fighterSelect.js. */
 
 // ── Подача: брошенный предмет ────────────────────────────────────────────
 

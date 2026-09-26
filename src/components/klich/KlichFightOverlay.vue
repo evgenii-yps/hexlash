@@ -9,6 +9,12 @@
      кроме самих карт: иначе тап по бойцу уходил бы в пустоту поверх него, а не
      в сцену.
 
+     ⚠️ ПОДСВЕТКА ЦЕЛЕЙ И ПОДСКАЗКА СНЯТЫ (ТЗ 26.09.2026). Порядок развернулся:
+     боец выбран заранее и всегда, тап по карте кричит ему немедленно. Ждать
+     второго тапа больше нечего, значит и говорить «ткни в бойца» незачем, и
+     подсвечивать, кому можно, — тоже. Метку выбранного рисует свой слой
+     (components/select/FighterSelectOverlay.vue).
+
      ⚠️ РЯД СТОИТ НАД ПАНЕЛЬЮ БАФФОВ, И ВЫСОТА ПОДЪЁМА НЕ ЗАШИТА ЧИСЛОМ. Обе
      панели прижаты к низу экрана, каждая своим слоем, и зашитый отступ разошёлся
      бы с панелью баффов при первой же правке её размеров (а они меняются: на
@@ -17,14 +23,6 @@
      запасное число, и ряд всё равно не ляжет на бойцов. -->
 <template>
   <div v-if="s.active" class="kfo" aria-live="polite">
-    <!-- Подсветка целей: кому можно крикнуть. Появляется только с выбранной
-         картой и гаснет вместе с ней. -->
-    <div
-      v-for="m in s.marks" :key="m.key"
-      class="kfo-mark"
-      :style="{ left: `${m.x}px`, top: `${m.y}px` }"
-    />
-
     <!-- Значки над бойцами. Слева — правая сторона у своего бойца занята
          значком баффа (правило «клич и бафф работают одновременно»). -->
     <div
@@ -38,12 +36,11 @@
 
     <!-- Ряд карт. Поднят над панелью баффов на её измеренную высоту. -->
     <div class="kfo-bar" :style="{ bottom: `${lift}px` }">
-      <p v-if="s.hint" class="kfo-hint">{{ t.klich[s.hint] }}</p>
       <div class="kfo-cards">
         <KlichCard
           v-for="c in s.cards" :key="c.key"
           :item="c" :state="c.state" :count="c.left"
-          @pick="armKlichCard(c.key)"
+          @pick="useKlichCard(c.key)"
         />
       </div>
     </div>
@@ -54,8 +51,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import KlichCard from './KlichCard.vue';
 import KlichBadge from './KlichBadge.vue';
-import { t } from '@/locales/index.js';
-import { klichFightState as s, armKlichCard } from '@/services/klich.js';
+import { klichFightState as s, useKlichCard } from '@/services/klich.js';
 
 /** Запасная высота на случай, если панель баффов не нашлась. */
 const LIFT_FALLBACK = 118;
@@ -92,23 +88,6 @@ onBeforeUnmount(() => { if (ro) { ro.disconnect(); ro = null; } });
   pointer-events: none; /* слой сквозной: палец идёт в сцену, к бойцам */
 }
 
-/* --- Подсветка цели. Обводка, БЕЗ свечения: светится на арене один разлом.
-       Форма отличается от метки баффа (квадрат против круга) — чтобы при двух
-       выборах подряд было видно, чью цель подсвечивают. --- */
-.kfo-mark {
-  position: fixed;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
-  border: 1px solid var(--pink);
-  opacity: 0.85;
-  animation: kfo-mark-pulse 1.4s ease-in-out infinite;
-}
-@keyframes kfo-mark-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50%      { transform: scale(1.12); opacity: 0.45; }
-}
-
 .kfo-badge {
   position: fixed;
   margin: -22px 0 0 -22px; /* значок 44×44 — ставим по его середине */
@@ -125,13 +104,6 @@ onBeforeUnmount(() => { if (ro) { ro.disconnect(); ro = null; } });
   gap: var(--sp-1);
   padding: var(--sp-2) var(--sp-2) 0;
 }
-.kfo-hint {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta);
-  color: var(--ink-dim);
-}
 .kfo-cards {
   display: flex;
   gap: var(--sp-2);
@@ -147,12 +119,6 @@ onBeforeUnmount(() => { if (ro) { ro.disconnect(); ro = null; } });
      ужимается место. */
   .kfo-cards :deep(.kc-card) { width: 64px; padding: var(--sp-1); gap: 2px; }
   .kfo-cards :deep(.kc-icon) { width: 26px; height: 26px; }
-  .kfo-hint { display: none; }
 }
 
-/* С «уменьшить движение» петля не крутится — метка стоит в том же полном виде,
-   что и первый кадр петли. */
-@media (prefers-reduced-motion: reduce) {
-  .kfo-mark { animation: none; }
-}
 </style>

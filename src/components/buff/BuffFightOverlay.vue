@@ -1,5 +1,5 @@
-<!-- BuffFightOverlay — БАФФЫ ПОВЕРХ БОЯ: нижняя панель карточек, значки над
-     бойцами и подсветка целей.
+<!-- BuffFightOverlay — БАФФЫ ПОВЕРХ БОЯ: нижняя панель карточек и значки над
+     бойцами.
 
      ЖИВЁТ СНАРУЖИ СЦЕНЫ, рядом с итогом боя и панелями режимов (см. шапку
      PlayStubView.vue): защищённая арена про панель не знает, панель про арену —
@@ -9,17 +9,15 @@
      ⚠️ НИЧЕГО НЕ ПЕРЕКРЫВАЕТ. Слой не ловит палец вообще (pointer-events: none),
      кроме самих карточек: иначе тап по бойцу уходил бы в пустоту поверх него, а
      не в сцену. Панель прижата к низу и не залезает на плашки здоровья — они
-     живут над головами бойцов. -->
+     живут над головами бойцов.
+
+     ⚠️ ПОДСВЕТКА ЦЕЛЕЙ И ПОДСКАЗКА СНЯТЫ (ТЗ 26.09.2026). Порядок развернулся:
+     боец выбран заранее и всегда, тап по карточке бросает ему немедленно. Ждать
+     второго тапа больше нечего, значит и говорить «ткни в бойца» незачем, и
+     подсвечивать, на кого можно, — тоже. Метку выбранного рисует свой слой
+     (components/select/FighterSelectOverlay.vue). -->
 <template>
   <div v-if="s.active" class="bfo" aria-live="polite">
-    <!-- Подсветка целей: где можно бросить. Появляется только с выбранной
-         карточкой и гаснет вместе с ней. -->
-    <div
-      v-for="m in s.marks" :key="m.key"
-      class="bfo-mark"
-      :style="{ left: `${m.x}px`, top: `${m.y}px` }"
-    />
-
     <!-- Значки над бойцами. Свой и чужой различаются яркостью — чтобы игрок
          сразу отличал «моё» от «на меня бросили». -->
     <div
@@ -43,13 +41,12 @@
         >{{ n }}</button>
         <button type="button" class="bfo-dev-btn" :class="{ on: devFace === null }" @click="pickFace(null)">RND</button>
       </div>
-      <p v-if="s.hint" class="bfo-hint">{{ t.buffs[s.hint] }}</p>
       <div class="bfo-cards">
         <BuffCard
           v-for="c in s.cards" :key="c.key"
           :item="c" :icon="ICONS[c.id]" :state="c.state" :count="c.left"
           clickable
-          @pick="armBuffCard(c.key)"
+          @pick="useBuffCard(c.key)"
         />
       </div>
     </div>
@@ -59,10 +56,9 @@
 <script setup>
 import BuffCard from './BuffCard.vue';
 import BuffBadge from './BuffBadge.vue';
-import { t } from '@/locales/index.js';
 import { ref } from 'vue';
 import { DEV_MODE } from '@/services/devMode.js';
-import { buffFightState as s, armBuffCard, setDevDiceFace } from '@/services/buffs.js';
+import { buffFightState as s, useBuffCard, setDevDiceFace } from '@/services/buffs.js';
 // Те же три снимка, что владелец принял на странице-макете. Своих иконок у боя
 // нет намеренно: вторая копия разошлась бы с принятой.
 import towel from '@/assets/images/buff_towel.png';
@@ -83,23 +79,6 @@ function pickFace(n) { devFace.value = n; setDevDiceFace(n); }
   inset: 0;
   z-index: 40;          /* над сценой, под итогом боя и панелями режимов */
   pointer-events: none; /* слой сквозной: палец идёт в сцену, к бойцам */
-}
-
-/* --- Подсветка цели. Обводка, БЕЗ свечения: светится на арене один разлом, и
-       второго источника здесь не заводится. --- */
-.bfo-mark {
-  position: fixed;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
-  border: 1px solid var(--pink);
-  border-radius: var(--r-round);
-  opacity: 0.85;
-  animation: bfo-mark-pulse 1.4s ease-in-out infinite;
-}
-@keyframes bfo-mark-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50%      { transform: scale(1.12); opacity: 0.45; }
 }
 
 .bfo-badge {
@@ -130,13 +109,6 @@ function pickFace(n) { devFace.value = n; setDevDiceFace(n); }
 }
 .bfo-dev-btn.on { color: var(--ink); border-color: var(--ink-dim); }
 
-.bfo-hint {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta);
-  color: var(--ink-dim);
-}
 .bfo-cards {
   display: flex;
   gap: var(--sp-2);
@@ -153,12 +125,5 @@ function pickFace(n) { devFace.value = n; setDevDiceFace(n); }
      оттуда. Здесь не переписывается вид, только ужимается место. */
   .bfo-cards :deep(.bc-card) { width: 64px; padding: var(--sp-1); gap: 2px; }
   .bfo-cards :deep(.bc-icon) { width: 26px; height: 26px; }
-  .bfo-hint { display: none; }
-}
-
-/* Правило движения: с «уменьшить движение» петля не крутится — метка просто
-   стоит на месте, в том же полном виде, что и первый кадр петли. */
-@media (prefers-reduced-motion: reduce) {
-  .bfo-mark { animation: none; }
 }
 </style>

@@ -1,5 +1,7 @@
 <!-- BuffCard — карточка нижней панели боя, 4 состояния:
-     normal / selected / empty / locked. Отдельный SFC-файл (не defineComponent
+     normal / empty / locked (состояния «выбрана» больше нет — карточка не
+     выбирается, тап по ней бросает выбранному бойцу немедленно, ТЗ 26.09.2026).
+     Отдельный SFC-файл (не defineComponent
      внутри родительского <script setup>) — скоуп стилей Vue проставляет
      data-v-атрибут только корню такого компонента, поэтому вложенным узлам он
      не достаётся; собственный <style scoped> у SFC это чинит.
@@ -15,7 +17,6 @@
     :class="[`is-${state}`, { 'is-live': clickable }]"
     :type="clickable ? 'button' : undefined"
     :disabled="clickable && state === 'empty' ? true : undefined"
-    :aria-pressed="clickable ? state === 'selected' : undefined"
     @click="clickable && state !== 'empty' && $emit('pick')"
   >
     <div class="bc-icon">
@@ -74,11 +75,6 @@ defineEmits(['pick']);
 .bc-name { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta); color: var(--ink-dim); }
 .bc-count { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
-.bc-card.is-selected {
-  color: var(--pink);
-  border-color: var(--pink);
-  box-shadow: var(--glow-select);
-}
 .bc-card.is-live { cursor: pointer; }
 .bc-card.is-live:disabled { cursor: default; }
 .bc-card.is-empty { opacity: var(--o-dim); }

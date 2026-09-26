@@ -28,43 +28,44 @@
 //   7. боец пал — сдвиг гаснет с ним, заряд НЕ возвращается;
 //   8. бой кончился — ничего не переносится в следующий;
 //   9. заряды кончились — карта гаснет и не нажимается (причина — счётчик ×0);
-//  10. клич адресный: применяется одному бойцу, выбранному пальцем.
+//  10. клич адресный: применяется ВЫБРАННОМУ бойцу.
+//
+// ⚠️ ПОРЯДОК ДЕЙСТВИЙ РАЗВЁРНУТ (ТЗ 26.09.2026). Было: тап по карте → подсветка
+//    своих → тап по бойцу. Стало: боец выбран заранее и всегда, тап по карте
+//    применяет клич НЕМЕДЛЕННО. Поэтому отсюда ушло всё, что ждало второго тапа:
+//    выбранная карта, подсветка целей, подсказка под рядом, ловля пальца и луч
+//    по телам. Палец теперь ловит один файл на всех — services/fighterSelect.js,
+//    — и клич только спрашивает у него, кто выбран.
 //
 // ⚠️ НИГДЕ НЕ СОХРАНЯЕТСЯ. Обновление страницы = новый бой с полным запасом.
 //    Это ТЗ дословно, а не недоделка: заряды живут ровно один бой.
 //
 // Экспортирует: klichFightState, bindKlichArena, unbindKlichArena,
-//               klichStartFight, klichEndFight, klichTick,
-//               armKlichCard, cancelKlichArm.
-import { reactive, watch } from 'vue';
+//               klichStartFight, klichEndFight, klichTick, useKlichCard.
+import { reactive } from 'vue';
 import * as THREE from 'three';
 import { KLICH_IDS, KLICH_META, KLICH_BALANCE } from '@/data/klichBalance.js';
-// Взаимное исключение с баффами — см. ниже, у watch.
-import { buffFightState, cancelBuffArm } from './buffs.js';
+import { selectedUnit } from './fighterSelect.js';
 
 /**
  * ЧТО ВИДИТ ЭКРАН. Ряд карт и значки читают отсюда и больше ниоткуда.
  *   active   — бой идёт, ряд на экране
  *   cards    — карты: { key, id, name, mono, glyph, left, state }
- *   armedKey — какая карта выбрана (ждёт тапа по бойцу) или null
  *   badges   — значки над бойцами: { key, id, glyph, ring, x, y, on }
- *   marks    — подсветка целей: места своих бойцов, которым можно крикнуть
- *   hint     — ключ подсказки под рядом ('tapFighter' | 'noTarget' | '')
+ *
+ * Выбранной карты здесь больше нет: карта не выбирается, она применяется.
  */
 export const klichFightState = reactive({
   active: false,
   cards: [],
-  armedKey: null,
   badges: [],
-  marks: [],
-  hint: '',
 });
 
 // ── Привязка к арене ─────────────────────────────────────────────────────
-// Арена отдаёт три вещи и больше ничего: чем считать экранные координаты, по
-// чему ловить палец и где брать живых бойцов. Сцена кличу не нужна вовсе — он
-// ничего не кладёт в трёхмерный мир (у баффов там летящие предметы, у клича
-// предметов нет).
+// Арена отдаёт три вещи и больше ничего: чем считать экранные координаты места
+// значка, по чему мерить холст и где брать живых бойцов. Сцена кличу не нужна
+// вовсе — он ничего не кладёт в трёхмерный мир (у баффов там летящие предметы,
+// у клича предметов нет). Палец здесь больше не ловится: его ловит выбор бойца.
 let A = null; // { camera, canvas, field }
 
 /** Сколько применений каждого клича осталось В ЭТОМ БОЮ. */
@@ -76,17 +77,17 @@ let badgeSeq = 0;
 /** Время боя, которое отдаёт арена. */
 let nowT = 0;
 /**
- * Были ли цели на прошлом кадре.
+ * Был ли выбранный боец на прошлом кадре.
  *
- * ⚠️ БЕЗ ЭТОГО КАРТЫ ЗАМИРАЮТ В «ЦЕЛЕЙ НЕТ». На старте боя плита ПУСТА: бойцов
- *    на неё ставят позже, уже в кадрах. Состояние карт считается один раз, в
- *    klichStartFight, и там целей честно ноль — а пересчитать потом было нечему,
- *    и весь бой карты стояли запертыми (поймано снимком экрана). Поэтому
- *    доступность целей проверяется каждый кадр, а карты пересобираются ТОЛЬКО
- *    когда она изменилась: пересобирать их шестьдесят раз в секунду незачем.
+ * ⚠️ БЕЗ ЭТОГО КАРТЫ ЗАМИРАЮТ ЗАПЕРТЫМИ. На старте боя плита ПУСТА: бойцов на
+ *    неё ставят позже, уже в кадрах, значит и выбрать в тот момент некого.
+ *    Состояние карт считается один раз, в klichStartFight, и там выбранного
+ *    честно нет — а пересчитать потом было нечему, и весь бой карты стояли
+ *    серыми (поймано снимком экрана). Поэтому наличие выбранного проверяется
+ *    каждый кадр, а карты пересобираются ТОЛЬКО когда оно изменилось:
+ *    пересобирать их шестьдесят раз в секунду незачем.
  */
-let lastAnyTarget = null;
-let stopBuffWatch = null;
+let lastHadPick = null;
 
 // ── Привязка / отвязка ───────────────────────────────────────────────────
 
@@ -96,29 +97,24 @@ let stopBuffWatch = null;
  */
 export function bindKlichArena({ camera, canvas, field }) {
   A = { camera, canvas, field };
-  canvas.addEventListener('pointerdown', onPointerDown);
-  canvas.addEventListener('pointerup', onPointerUp);
   /**
-   * ⚠️ ВЗАИМНОЕ ИСКЛЮЧЕНИЕ С БАФФАМИ, И ПОЧЕМУ ОНО ЦЕЛИКОМ ЗДЕСЬ. Оба слоя
-   *    слушают один и тот же палец на одном и том же холсте. Если бы выбранными
-   *    оказались разом карта баффа и карта клича, ОДИН тап по бойцу применил бы
-   *    сразу оба — игрок потерял бы заряд, которого не тратил.
+   * ⚠️ СТОРОЖ ВЗАИМНОГО ИСКЛЮЧЕНИЯ С БАФФАМИ СНЯТ, И ВОТ ПОЧЕМУ. Он стоял тут
+   *    потому, что оба слоя ждали ОДНОГО И ТОГО ЖЕ тапа по бойцу: если бы
+   *    выбранными оказались разом карта баффа и карта клича, один тап применил
+   *    бы сразу оба, и игрок потерял бы заряд, которого не тратил.
    *
-   *    Обе стороны развязаны отсюда, из младшего слоя: выбор клича снимает выбор
-   *    баффа (в armKlichCard), а выбор баффа снимает выбор клича (этот
-   *    наблюдатель). В файл баффов при этом не добавлено ни строки — он про клич
-   *    по-прежнему не знает.
+   *    В новом порядке общего тапа не существует: тап по карте клича применяет
+   *    ровно клич, тап по карте баффа — ровно бафф, а тап по бойцу не тратит
+   *    ничего. Сторож был собран ЦЕЛИКОМ из выбранной карты (`armedKey`), а её
+   *    убрало само ТЗ, — сохранить его было нечем. Случай, от которого он
+   *    защищал, теперь невозможен по устройству, а не по присмотру.
    */
-  stopBuffWatch = watch(() => buffFightState.armedKey, (k) => { if (k) cancelKlichArm(); });
   return unbindKlichArena;
 }
 
 /** Уход с арены. Всё снимается, чтобы следующий бой начался с чистого. */
 export function unbindKlichArena() {
   if (!A) return;
-  A.canvas.removeEventListener('pointerdown', onPointerDown);
-  A.canvas.removeEventListener('pointerup', onPointerUp);
-  if (stopBuffWatch) { stopBuffWatch(); stopBuffWatch = null; }
   klichEndFight();
   A = null;
 }
@@ -136,11 +132,9 @@ export function klichStartFight() {
   //    «цели были», карты остались бы запертыми со старта и не отперлись бы
   //    никогда: пересчёт ждёт ИЗМЕНЕНИЯ, а изменения уже не будет. Поймано
   //    снимком экрана — весь бой ряд стоял серым.
-  lastAnyTarget = null;
+  lastHadPick = null;
   for (const id of KLICH_IDS) charges[id] = KLICH_BALANCE.chargesPerKlich;
   klichFightState.active = true;
-  klichFightState.armedKey = null;
-  klichFightState.hint = '';
   syncCards();
 }
 
@@ -148,13 +142,10 @@ export function klichStartFight() {
 export function klichEndFight() {
   clearEffects();
   charges = {};
-  lastAnyTarget = null;
+  lastHadPick = null;
   klichFightState.active = false;
-  klichFightState.armedKey = null;
   klichFightState.cards = [];
   klichFightState.badges = [];
-  klichFightState.marks = [];
-  klichFightState.hint = '';
 }
 
 /** Снять все сдвиги, не трогая запас. */
@@ -172,102 +163,39 @@ function endEffect(unit) {
 // ── Карты ряда ───────────────────────────────────────────────────────────
 
 function syncCards() {
-  const anyTarget = eligibleTargets().length > 0;
+  const hasPick = !!selectedUnit();
   klichFightState.cards = KLICH_IDS.map((id) => {
     const left = charges[id] || 0;
     let state = 'normal';
     if (left <= 0) state = 'empty';                       // правило 9
-    else if (klichFightState.armedKey === id) state = 'selected';
-    else if (!anyTarget) state = 'locked';                // кричать некому
+    else if (!hasPick) state = 'locked';                  // кричать некому
     return { key: id, id, name: KLICH_META[id].name, mono: KLICH_META[id].mono, glyph: KLICH_META[id].glyph, left, state };
   });
   syncBadgesList();
 }
 
+// ── Тап по карте ─────────────────────────────────────────────────────────
+
 /**
- * Свои живые бойцы. В отличие от баффов, боец УЖЕ ПОД КЛИЧЕМ остаётся целью:
- * новый клич заменяет предыдущий (правило 4), а не отбивается.
+ * Тап по карте: крикнуть ВЫБРАННОМУ бойцу, немедленно. Второго шага нет,
+ * отменять нечего — поэтому и повторный тап больше не отмена, а второй крик
+ * (если заряды остались).
+ *
+ * Боец УЖЕ ПОД КЛИЧЕМ остаётся годным: новый клич заменяет предыдущий
+ * (правило 4), а не отбивается. Этим клич и отличается от баффа.
  */
-function eligibleTargets() {
-  if (!A || !klichFightState.active) return [];
-  return A.field.living().filter((u) => u.sideId === 'player');
-}
-
-// ── Выбор карты и тап по бойцу ───────────────────────────────────────────
-
-/** Тап по карте: выбрать или снять выбор (повторный тап — отмена). */
-export function armKlichCard(key) {
+export function useKlichCard(key) {
   if (!klichFightState.active) return;
   const card = klichFightState.cards.find((c) => c.key === key);
   if (!card) return;
   // Правило 9: карта с нулём зарядов погашена и ОТКЛЮЧЕНА разметкой, поэтому
   // тап по ней сюда не доходит вовсе. Видимая причина — сам счётчик ×0 и
-  // приглушение, как у баффов. Подсказки на этот случай нет намеренно: её
-  // нельзя было бы вызвать, и она осталась бы мёртвым кодом.
+  // приглушение, как у баффов.
   if (card.left <= 0) return;
-  klichFightState.armedKey = klichFightState.armedKey === key ? null : key;
-  if (klichFightState.armedKey) cancelBuffArm(); // см. шапку bindKlichArena
+  const unit = selectedUnit();
+  if (!unit) return;            // выбрать ещё некого: плита пуста
+  applyKlich(key, unit);
   syncCards();
-  updateHint();
-}
-
-/** Снять выбор. Ничего не тратится. */
-export function cancelKlichArm() {
-  if (!klichFightState.armedKey) return;
-  klichFightState.armedKey = null;
-  syncCards();
-  updateHint();
-}
-
-function updateHint() {
-  if (!klichFightState.active) { klichFightState.hint = ''; return; }
-  if (!klichFightState.armedKey) { klichFightState.hint = ''; return; }
-  // Отдаём КЛЮЧ, а не готовую строку: слова живут в локали, а этот файл про
-  // правила. Разбирает ключ ряд — он один умеет говорить.
-  klichFightState.hint = eligibleTargets().length ? 'tapFighter' : 'noTarget';
-}
-
-// Палец: тап, а не протяжка. Порог тот же, каким арена отличает тап от
-// вращения камеры, и тот же, что у баффов.
-const TAP_SLOP_PX = 5;
-let downX = 0;
-let downY = 0;
-let downOn = false;
-const _ray = new THREE.Raycaster();
-const _ndc = new THREE.Vector2();
-
-function onPointerDown(e) {
-  downOn = true; downX = e.clientX; downY = e.clientY;
-}
-
-function onPointerUp(e) {
-  const wasTap = downOn && Math.hypot(e.clientX - downX, e.clientY - downY) <= TAP_SLOP_PX;
-  downOn = false;
-  if (!wasTap || !klichFightState.active || !klichFightState.armedKey) return;
-  const unit = pickUnitAt(e.clientX, e.clientY);
-  // Тап мимо бойца — отмена выбора, ничего не тратится (ТЗ).
-  if (!unit || unit.sideId !== 'player') { cancelKlichArm(); return; }
-  applyKlich(klichFightState.armedKey, unit);
-  klichFightState.armedKey = null;
-  syncCards();
-  updateHint();
-}
-
-/** Кого накрыл палец. Луч из камеры по телам своих живых бойцов. */
-function pickUnitAt(clientX, clientY) {
-  if (!A) return null;
-  const r = A.canvas.getBoundingClientRect();
-  _ndc.x = ((clientX - r.left) / r.width) * 2 - 1;
-  _ndc.y = -((clientY - r.top) / r.height) * 2 + 1;
-  _ray.setFromCamera(_ndc, A.camera);
-  const live = A.field.living().filter((u) => u.sideId === 'player');
-  let best = null;
-  let bestD = Infinity;
-  for (const u of live) {
-    const hit = _ray.intersectObject(u.f.group, true);
-    if (hit.length && hit[0].distance < bestD) { bestD = hit[0].distance; best = u; }
-  }
-  return best;
 }
 
 // ── Применение клича ─────────────────────────────────────────────────────
@@ -304,8 +232,8 @@ export function klichTick(dt, t) {
   nowT = t;
   if (!A || !klichFightState.active) return;
 
-  const anyTarget = eligibleTargets().length > 0;
-  if (anyTarget !== lastAnyTarget) { lastAnyTarget = anyTarget; syncCards(); }
+  const hasPick = !!selectedUnit();
+  if (hasPick !== lastHadPick) { lastHadPick = hasPick; syncCards(); }
 
   for (const [unit, e] of [...effects]) {
     const f = unit.f;
@@ -315,7 +243,6 @@ export function klichTick(dt, t) {
   }
 
   syncBadges();
-  syncMarks();
 }
 
 // ── Значки над бойцами ───────────────────────────────────────────────────
@@ -378,31 +305,7 @@ function syncBadges() {
   }
 }
 
-/**
- * ПОДСВЕТКА ЦЕЛЕЙ. Пока карта выбрана, свои бойцы получают метку — кружок на их
- * месте на экране.
- *
- * ⚠️ МЕТКА ПЛОСКАЯ, А НЕ В СЦЕНЕ. Подсветить тело значило бы завести на арене
- *    второе свечение рядом с ядром бойца — ровно то, что запрещено. Метка
- *    принадлежит интерфейсу, живёт поверх кадра и гаснет вместе с выбором.
- */
-function syncMarks() {
-  if (!klichFightState.armedKey) {
-    if (klichFightState.marks.length) klichFightState.marks = [];
-    return;
-  }
-  const r = A.canvas.getBoundingClientRect();
-  A.camera.getWorldDirection(_fwd);
-  const out = [];
-  for (const u of eligibleTargets()) {
-    _prj.copy(u.f.group.position); _prj.y += 1.1;
-    if (_fwd.dot(_off.copy(_prj).sub(A.camera.position)) <= 0) continue;
-    _prj.project(A.camera);
-    out.push({
-      key: `m${out.length}`,
-      x: r.left + (_prj.x * 0.5 + 0.5) * r.width,
-      y: r.top + (-_prj.y * 0.5 + 0.5) * r.height,
-    });
-  }
-  klichFightState.marks = out;
-}
+/* ПОДСВЕТКА ЦЕЛЕЙ СНЯТА (ТЗ 26.09.2026). Она показывала, КОМУ можно крикнуть,
+   пока карта выбрана, — а выбирать карту больше не нужно, и кричать всегда есть
+   кому: выбранный боец есть всегда. Её место и её приём (плоская метка поверх
+   кадра, без свечения) заняла метка выбранного в services/fighterSelect.js. */
