@@ -5,7 +5,7 @@
         <span class="eyebrow-line"></span>
         <span>THE CODE</span>
       </div>
-      <h2 class="big-title code-title" data-reveal data-d="1">
+      <h2 class="big-title glow-title code-title" data-reveal data-d="1">
         <span class="ghost">NEVER GIVE UP</span>
         <span class="solid">NEVER GIVE UP</span>
       </h2>

@@ -361,12 +361,23 @@
 .lp [data-reveal][data-d="5"][data-inview] { animation-delay: var(--d-panel); }
 .lp [data-reveal][data-d="6"][data-inview] { animation-delay: var(--d-panel); }
 
+/* Заголовок с ореолом — ОБЩИЙ ВИД, не принадлежит ни одному блоку.
+   Белые буквы, розовое свечение вокруг них и розовый двойник той же надписи
+   позади, сдвинутый вверх. Двойник лежит слоем (position: absolute), поэтому
+   высоту строки не меняет — размер заголовка считается по одной строке.
+
+   ⚠️ ОПИСАНИЕ ЗДЕСЬ ОДНО. Им пользуются NEVER GIVE UP в THE CODE и THE WORLD
+   в GAMEPLAY. Появится второе — блоки разойдутся по виду при первой же
+   правке. Размер шрифта СЮДА НЕ ПИШЕТСЯ: он у каждого блока свой и стоит
+   рядом с самим блоком. */
+.lp .glow-title { position: relative; display: inline-block; }
+.lp .glow-title .ghost { position: absolute; left: 0; right: 0; top: 0; color: transparent;
+  -webkit-text-stroke: 1.4px rgba(var(--pink-rgb), .45); transform: translateY(-12px) scale(1.015); opacity: .55; }
+.lp .glow-title .solid { position: relative; color: var(--ink); text-shadow: 0 0 44px rgba(var(--pink-rgb), .35); }
+
 /* ============ THE CODE / NEVER GIVE UP ============ */
 .lp .sec-code { text-align: center; }
-.lp .code-title { position: relative; display: inline-block; font-size: clamp(46px, 9.5vw, 148px); }
-.lp .code-title .ghost { position: absolute; left: 0; right: 0; top: 0; color: transparent;
-  -webkit-text-stroke: 1.4px rgba(var(--pink-rgb), .45); transform: translateY(-12px) scale(1.015); opacity: .55; }
-.lp .code-title .solid { position: relative; color: var(--ink); text-shadow: 0 0 44px rgba(var(--pink-rgb), .35); }
+.lp .code-title { font-size: clamp(46px, 9.5vw, 148px); }
 .lp .code-sub { font-family: var(--font-mono); font-weight: 500; letter-spacing: .5em; font-size: clamp(11px, 1.1vw, 15px); color: var(--ink-dim); margin-top: 24px; padding-left: .5em; }
 .lp .code-sub i { color: var(--pink); font-style: normal; }
 .lp .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(18px, 2.4vw, 32px);
@@ -401,11 +412,12 @@
    Заодно из icons.js убран PlayIcon: он рисовал треугольник только в этой
    рамке и остался бы висеть без единого потребителя. */
 
-/* Заголовок блока — СВОЙ, сдержаннее общего .big-title витрины.
+/* Заголовок блока — СВОЙ размер, сдержаннее и THE CODE, и общего .big-title.
    ⚠️ Общая ступень (до 108 точек) занимала половину высоты экрана, и на неё же
-   приходилась основная высота блока. Здесь потолок ниже почти вдвое:
-   заголовок остаётся ударным, но место под текст остаётся тоже. */
-.lp .gameplay-title { font-size: clamp(36px, 4.4vw, 60px); }
+   приходилась основная высота блока. Здесь потолок ниже: заголовок остаётся
+   главным словом блока, но место под абзац и кнопку остаётся тоже. Вид
+   (ореол и двойник) берётся у общего .glow-title — второго описания нет. */
+.lp .gameplay-title { font-size: clamp(40px, 5.2vw, 76px); }
 
 /* Кегль и ширина колонки правятся ТОЛЬКО ПАРОЙ.
    ⚠️ Ширина задана В ТОЧКАХ, не в ch: 1ch у Saira Condensed — ширина НОЛЯ, а
