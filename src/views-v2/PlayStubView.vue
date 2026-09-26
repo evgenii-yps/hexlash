@@ -13,11 +13,15 @@
        BuffFightOverlay — баффы поверх боя: нижняя панель карточек, значки над
                      бойцами и подсветка целей. Сама сцена про панель не знает,
                      панель про сцену — тоже; между ними services/buffs.js.
+       KlichFightOverlay — кличи поверх боя: ряд карт над панелью баффов, значки
+                     над бойцами и подсветка целей. Устроен так же и по той же
+                     причине; между ним и сценой — services/klich.js.
        RunInterrupted — сюда НЕ ставится: брошенный забег или турнир уводит игрока в
                      ворота, и сообщение показывают там (см. сам компонент). -->
 <template>
   <ArenaScene />
   <BuffFightOverlay />
+  <KlichFightOverlay />
   <FightResultPanel />
   <ChainPanels />
   <CollapsePanels />
@@ -27,6 +31,7 @@
 <script setup>
 import ArenaScene from '@/scene/ArenaScene.vue';
 import BuffFightOverlay from '@/components/buff/BuffFightOverlay.vue';
+import KlichFightOverlay from '@/components/klich/KlichFightOverlay.vue';
 import FightResultPanel from '@/components/panel/FightResultPanel.vue';
 import ChainPanels from '@/components/chain/ChainPanels.vue';
 import CollapsePanels from '@/components/collapse/CollapsePanels.vue';

@@ -235,6 +235,11 @@ export default {
     tapFighter: "TAP YOUR FIGHTER",
     noTarget: "NO TARGET — A BUFF IS ALREADY RUNNING",
   },
+  // Клич — второй рычаг игрока в бою. Подсказки под рядом карт.
+  klich: {
+    tapFighter: "TAP YOUR FIGHTER",
+    noTarget: "NO TARGET — NO FIGHTER STANDING",
+  },
   gate: {
     soon: "SOON",
     // Баффы — три слота «В бой» на шаге выбора бойца (ТЗ 22.09.2026, работа 2).

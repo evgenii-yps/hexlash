@@ -90,6 +90,7 @@ import { resolveBehavior } from '@/data/behavior.js';
 // живые бойцы» и «бой начался / кончился / прошёл кадр». Всё остальное —
 // services/buffs.js. Пять строк ниже — это весь след баффов в защищённой сцене.
 import { bindBuffArena, unbindBuffArena, buffStartFight, buffEndFight, buffTick } from '@/services/buffs.js';
+import { bindKlichArena, unbindKlichArena, klichStartFight, klichEndFight, klichTick } from '@/services/klich.js';
 import { countLit } from '@/data/upgradeTree.js';
 import { composeChainFoe, composeSquadFoes, composeRaid } from '@/data/foeCompose.js';
 import { facetPhrase } from '@/data/facetReadout.js';
@@ -1157,6 +1158,7 @@ onMounted(() => {
   const freezeBout = () => {
     fightActive = false;
     buffEndFight(); // эффекты прекращаются, неиспользованные баффы — обратно в запас
+    klichEndFight(); // и кличи: сдвиги манеры прекращаются, заряды не переносятся
     aiPlayer = false;
     aiOpponent = false;
     // Бой кончился — граница уходит вместе с ним. Оставить её значило бы держать
@@ -1787,6 +1789,7 @@ onMounted(() => {
 
   // БАФФЫ — привязка. На деке их нет: там окно показа, а не игрок с набором.
   if (!showcase) bindBuffArena({ scene, camera, canvas: canvasEl.value, field, reduced: reducedMotion });
+  if (!showcase) bindKlichArena({ camera, canvas: canvasEl.value, field }); // кличу сцена не нужна — он ничего в неё не кладёт
 
   // FIGHT (key F / button): clean re-run — dispose both, respawn fresh at full
   // HP + neutral, then both fight autonomously until one is eliminated.
@@ -1801,6 +1804,7 @@ onMounted(() => {
     fightActive = true;
     clocks.startBout(); // arm the stalemate safeguard (gate) — оба отсчёта с нуля
     if (!showcase) buffStartFight(); // новый бой — новый набор баффов у игрока и у бота
+    if (!showcase) klichStartFight(); // и новый запас кличей: по три на каждый, только на этот бой
     // ОТСЧЁТ СТОРОН — НА КАЖДЫЙ БОЙ, И ИМЕННО ЗДЕСЬ.
     //
     // ⚠️ Сначала он стоял рядом со сбором новых соперников («драться снова»), и
@@ -2413,6 +2417,7 @@ onMounted(() => {
     // за кадром» считается здесь, а не в надписях.
     if (leaderBeams) noteLeaderFrame(onPlate, frameMs / 1000);
     buffTick(frameMs / 1000, t); // баффы: срок эффектов, лечение, бот, подача, места значков
+    klichTick(frameMs / 1000, t); // кличи: срок сдвигов и места значков
     // КАДР. На открытом поле камера СТОИТ и наводится по случаю (aimTick), в пяти
     // прежних режимах — подъезжает к живым каждый кадр, как было принято глазами.
     // ⚠️ ПОКА КАМЕРА В ПОЛЁТЕ, СЛЕЖЕНИЕ МОЛЧИТ — ОБА ЕГО ВИДА. Иначе сцена
@@ -2567,6 +2572,7 @@ onBeforeUnmount(() => {
   unbindSpectateLeave?.(); // и способ уйти с досмотра: боя, который он останавливал, больше нет
   unbindFightAgain?.(); // и способ начать бой: сцены, которая его умеет, больше нет
   unbindBuffArena();   // и баффы: палец ловить нечем, класть предметы некуда
+  unbindKlichArena();  // и кличи: палец ловить нечем, кричать некому
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
