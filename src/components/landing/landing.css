@@ -3,7 +3,7 @@
  *
  * Two faithful, behaviour-preserving transforms vs the reference:
  *   1. Every selector is namespaced under `.lp` so the landing's generic class
- *      names (.nav, .hero, .sec, .wrap, .footer, .chip, .player, ...) and the
+ *      names (.nav, .hero, .sec, .wrap, .footer, .chip, ...) and the
  *      :root/body/html globals never leak into the rest of the SPA. The
  *      reference's `:root` tokens live on `.lp`; the reference's `body` rules
  *      live on `.lp`. `html { scroll-behavior; scroll-padding-top }` is handled
@@ -208,29 +208,6 @@
    ему не нужны и только делают его выше экрана. */
 .lp .lp-world .sec { padding: 0; }
 
-/* Меню доступно всю дорогу: шапка прилипает к верху экрана. */
-.lp .nav { position: sticky; top: 0; }
-
-/* PLAY в шапке — только на время полёта.
-   ⚠️ Оформление НЕ рисуется заново: элемент несёт класс .btn-play и берёт у
-   него заливку, свечение, срез угла и блик. Здесь меняется ТОЛЬКО размер —
-   кнопка первого экрана (17×78, кегль 18) в строку шапки не влезает.
-   ⚠️ Вес селекторов с .nav обязателен: правила .btn-play стоят ниже по файлу
-   и при равном весе выиграли бы по порядку. */
-.lp .nav .nav-play { display: none; margin-left: clamp(14px, 1.8vw, 24px); padding: 10px 26px; }
-.lp.is-flying .nav .nav-play { display: inline-flex; }
-.lp .nav .nav-play .btn-play-label { font-size: 12px; letter-spacing: .16em; }
-.lp .nav .nav-play .btn-play-arrow svg { width: 13px; height: 13px; }
-/* На узком экране в строку шапки PLAY и значки соцсетей вместе не помещаются.
-   На время полёта значки уступают место: меню — пункты и главное действие —
-   остаётся, а соцсети ждут обычной части страницы. Стрелка тоже снимается. */
-@media (max-width: 680px) {
-  .lp.is-flying .nav-social { display: none; }
-  .lp .nav .nav-play { padding: 8px 18px; margin-left: 10px; }
-  .lp .nav .nav-play .btn-play-arrow { display: none; }
-  .lp .nav .nav-play .btn-play-label { font-size: 11px; letter-spacing: .12em; }
-}
-
 /* ============ PAGE ============ */
 .lp .page { position: relative; z-index: var(--z-topbar); }
 .lp .wrap { width: min(1180px, 92vw); margin: 0 auto; }
@@ -409,56 +386,41 @@
 /* ============ GAMEPLAY ============ */
 .lp .sec-gameplay { text-align: center; }
 
-/* ── Лор: метка, затравка, кнопка ───────────────────────────────────────
-   Стоят ПО ЦЕНТРУ, как остальные элементы блока. Механика та же, что у
-   соседей: центрирование даёт `text-align: center` у .sec-gameplay, а метке —
-   `justify-content: center` у .eyebrow. Второго способа выравнивания не
-   заведено: модификаторы метки и кнопки, прижимавшие их влево, СНЯТЫ (правка
-   11.09.2026 — формулировка «по левому краю» в первом ТЗ была ошибочной).
-   Метка — та же деталь .eyebrow, что у FIRST LOOK; второго набора чисел нет.
+/* ── Лор: затравка и кнопка ─────────────────────────────────────────────
+   Стоят ПО ЦЕНТРУ, как остальные элементы блока: центрирование даёт
+   `text-align: center` у .sec-gameplay.
    Кнопка — вторичная .btn-ghost (семья JOIN DISCORD): матовая, без розовой
-   заливки и без свечения. Розовая кнопка на витрине одна — PLAY. */
-.lp .world-eyebrow { margin-top: clamp(44px, 6.5vh, 72px); }
-/* Кегль, шрифт и цвет — ступень основного текста витрины (как .lead-sub).
+   заливки и без свечения. Розовая кнопка на витрине одна — PLAY.
+
+   ⚠️ 26.09.2026 ОТСЮДА УДАЛЕНЫ: метка .world-eyebrow (THE WORLD) и вся
+   рамка-заглушка видео (.player, .play-hex, .hud-c, .player-cap и две петли к
+   ним — lpk-loadbar и lpk-blink). Блок был выше экрана и ужимался целиком,
+   из-за чего текст становился нечитаемо мелким. Одна рамка 16:9 шириной до
+   920 точек — это больше половины высоты блока. Возвращать их нельзя, не
+   пересчитав высоту блока заново.
+   Заодно из icons.js убран PlayIcon: он рисовал треугольник только в этой
+   рамке и остался бы висеть без единого потребителя. */
+
+/* Заголовок блока — СВОЙ, сдержаннее общего .big-title витрины.
+   ⚠️ Общая ступень (до 108 точек) занимала половину высоты экрана, и на неё же
+   приходилась основная высота блока. Здесь потолок ниже почти вдвое:
+   заголовок остаётся ударным, но место под текст остаётся тоже. */
+.lp .gameplay-title { font-size: clamp(36px, 4.4vw, 60px); }
+
+/* Кегль и ширина колонки правятся ТОЛЬКО ПАРОЙ.
    ⚠️ Ширина задана В ТОЧКАХ, не в ch: 1ch у Saira Condensed — ширина НОЛЯ, а
    он заметно шире её строчных букв, и 66ch давали 87–88 знаков в строке вместо
-   66 (замерено на 1920 с настоящим шрифтом). 400 точек при кегле 18 — это
-   измеренные ~65 знаков, середина вилки 60–68. Пара «кегль ↔ ширина» правится
-   вместе. Колонка центрируется, строки внутри неё — тоже по центру. */
-.lp .world-lead { max-width: 400px; margin: var(--sp-4) auto 0;
-  font-family: var(--font-display); font-weight: 400; font-size: var(--t-lg); line-height: 1.5; color: var(--ink-dim); }
-.lp .world-cta-row { margin-top: var(--sp-5); }
+   66 (замерено на 1920 с настоящим шрифтом). Правило прежнее: знак занимает
+   примерно 0.34 кегля, в строке должно выходить 60–68 знаков.
+   ⚠️ 26.09.2026 пара поднята с 18/400 на 24/540 — владелец просил вернуть
+   абзац к читаемому размеру и расширить колонку. Счёт сохранён:
+   540 / (24 × 0.34) ≈ 66 знаков, середина вилки. Менять одно число из пары
+   нельзя. */
+.lp .world-lead { max-width: 540px; margin: var(--sp-6) auto 0;
+  font-family: var(--font-display); font-weight: 400; font-size: var(--t-xl); line-height: 1.5; color: var(--ink-dim); }
+.lp .world-cta-row { margin-top: var(--sp-6); }
 /* <button> сам по себе курсор не меняет — в отличие от <a href> у JOIN DISCORD. */
 .lp .world-cta { cursor: pointer; }
-.lp .player { position: relative; aspect-ratio: 16/9; width: 100%; max-width: 920px; margin: clamp(40px, 6vh, 64px) auto 0;
-  border: 1px solid rgba(var(--pink-rgb), .4); background: var(--carbon); overflow: hidden;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
-  box-shadow: 0 0 54px rgba(var(--pink-rgb), .12), inset 0 0 90px color-mix(in srgb, var(--void) 60%, transparent); }
-.lp .player-hex-bg { position: absolute; inset: 0; opacity: .55;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cg fill='none' stroke='%23ff0069' stroke-opacity='0.16' stroke-width='1'%3E%3Cpath d='M30 1l29 16.5v33L30 67 1 50.5v-33z'/%3E%3Cpath d='M0 86l29-16.5 30 17.5'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 60px; }
-.lp .player-scan { position: absolute; left: 0; right: 0; height: 90px; top: -90px;
-  background: linear-gradient(to bottom, transparent, rgba(var(--pink-rgb), .13), transparent); animation: lpk-vscan 4.2s linear infinite; }
-@keyframes lpk-vscan { to { top: 100%; } }
-.lp .player .hud-c { position: absolute; width: 24px; height: 24px; border: 2px solid var(--pink); opacity: .8; }
-.lp .player .hud-c.tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; }
-.lp .player .hud-c.tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; }
-.lp .player .hud-c.bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; }
-.lp .player .hud-c.br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; }
-.lp .play-hex { position: relative; z-index: var(--z-ui); background: none; border: 0; cursor: pointer; padding: 0; }
-.lp .play-hex-shape { display: flex; align-items: center; justify-content: center; width: 84px; height: 84px; color: var(--ink);
-  background: var(--pink); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  box-shadow: 0 0 30px rgba(var(--pink-rgb), .6); animation: lpk-playpulse 2.4s ease-in-out infinite; transition: transform var(--d-hover); }
-.lp .play-hex:hover .play-hex-shape { transform: scale(1.08); }
-@keyframes lpk-playpulse { 0%, 100% { box-shadow: 0 0 22px rgba(var(--pink-rgb), .5); } 50% { box-shadow: 0 0 48px rgba(var(--pink-rgb), .85); } }
-.lp .player-label { position: relative; z-index: var(--z-ui); font-family: var(--font-mono); font-weight: 700; letter-spacing: .42em; font-size: 14px; color: var(--ink); }
-.lp .player-bar { position: relative; z-index: var(--z-ui); width: 180px; height: 3px; background: var(--line); overflow: hidden; }
-.lp .player-bar i { position: absolute; left: 0; top: 0; height: 100%; width: 40%; background: var(--pink); box-shadow: 0 0 10px var(--pink); animation: lpk-loadbar 2.2s ease-in-out infinite; }
-@keyframes lpk-loadbar { 0% { left: -42%; } 100% { left: 100%; } }
-.lp .player-rec { position: absolute; top: 16px; left: 46px; z-index: var(--z-ui); font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; color: var(--ink-soft); display: flex; align-items: center; gap: 7px; }
-.lp .player-rec b { width: 8px; height: 8px; border-radius: var(--r-round); background: var(--pink); animation: lpk-blink 1.4s steps(1) infinite; }
-@keyframes lpk-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: .2; } }
-.lp .player-cap { text-align: center; margin-top: 26px; font-family: var(--font-mono); font-size: 13px; letter-spacing: .04em; color: var(--ink-dim); }
 
 /* ============ $HEX ============ */
 .lp .sec-hex { text-align: center; }
@@ -588,6 +550,11 @@
   .lp .nav-links a { font-size: 11px; letter-spacing: .14em; }
   .lp .nav-social { gap: 14px; margin-left: 16px; }
   .lp .scrollcue { display: none; }
+  /* Затравка лора: на узком экране колонка упирается в ширину экрана, а не в
+     свои 540 точек, и при кегле 24 в строке остаётся около 44 знаков вместо
+     положенных 60–68. Ступенью ниже по общей шкале счёт возвращается в вилку
+     (359 / (18 × 0.34) ≈ 59). Нового числа не заведено — это соседний токен. */
+  .lp .world-lead { font-size: var(--t-lg); }
 }
 @media (max-width: 560px) {
   .lp .phases { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
@@ -621,6 +588,4 @@
   }
   .lp .lp-world .lp-station > * { position: static; transform: none; width: auto; }
   .lp .lp-world .sec { padding: clamp(96px, 15vh, 180px) 0; }
-  /* Шапка прилипает ради меню в полёте; полёта нет — незачем и прилипать. */
-  .lp .nav { position: relative; }
 }

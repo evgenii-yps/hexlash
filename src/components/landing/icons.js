@@ -81,12 +81,6 @@ export const ArrowIcon = () =>
     [h('path', { d: 'M5 12h14M13 6l6 6-6 6' })]
   );
 
-export const PlayIcon = () =>
-  svg(
-    { viewBox: '0 0 24 24', width: '26', height: '26', fill: 'currentColor' },
-    [h('path', { d: 'M8 5.5v13l11-6.5L8 5.5Z' })]
-  );
-
 export const CopyIcon = () =>
   svg(
     {
