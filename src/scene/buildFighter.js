@@ -767,6 +767,7 @@ export function buildFighter(
   const baseAx = ax;
   let stickEff = stick01; // live stick (base + intention delta), refreshed each frame
   const refreshAxes = () => {
+    tickKlich(); // сдвиг от клича: пересчитать силу по существующим часам (lastT)
     // накал (stalemate safeguard): a GLOBAL forward + aggression pull, rising with
     // escalation01 (0..1, time WITHOUT a clean exchange — see combatBalance escalate*),
     // laid on top of base + intention the SAME way the temperament is. 0 in normal,
@@ -779,10 +780,10 @@ export function buildFighter(
     // Effective axes = BASE + INTENTION delta (distance / initiative / stick /
     // tempo) + накал pull. Composing here means range / aggression / stick / cadence
     // are the single derived knobs the body reads; the base axes stay untouched.
-    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance - escFwd, 0, 100);
-    const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative, 0, 100);
-    stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick) / 100, 0, 1);
-    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo) / 100, 0, 1);
+    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance + klichDelta.distance - escFwd, 0, 100);
+    const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative + klichDelta.initiative, 0, 100);
+    stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick + klichDelta.stick) / 100, 0, 1);
+    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo + klichDelta.tempo) / 100, 0, 1);
     character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
     character.aggression = THREE.MathUtils.clamp(effInit / 100 + escAggr + character.aggrJit, 0, 1);
   };
@@ -799,6 +800,48 @@ export function buildFighter(
   //     'model' and only chooseIntention changes. The spinal cord is deterministic
   //     (no random), so replay is stable.
   const intentionDelta = { distance: 0, initiative: 0, tempo: 0, stick: 0 };
+
+  // --- Слой КЛИЧА (голос тренера). ВТОРОЕ слагаемое к осям, рядом с дельтой
+  //     намерения и независимо от неё.
+  //
+  //     ⚠️ ПОЧЕМУ НЕ ПИШЕМ В intentionDelta, ХОТЯ ЭТО И НАПРАШИВАЕТСЯ. Её раз в
+  //     секунду переписывает applyIntention ЦЕЛИКОМ (не складывает — присваивает).
+  //     Клич, положенный туда, пропал бы молча меньше чем за тик.
+  //
+  //     ⚠️ ПОКА КЛИЧ НЕ БРОШЕН, ВСЕ ЧЕТЫРЕ НУЛЯ, и это обещание, а не совпадение:
+  //     прибавление нуля в IEEE754 точное, поэтому бой без клича идёт ровно теми
+  //     же числами, что до появления этого слоя.
+  //
+  //     Затухание считается по УЖЕ СУЩЕСТВУЮЩИМ часам бойца (lastT) — своих
+  //     часов слой не заводит. Пересчёт зовёт refreshAxes, раз в кадр.
+  const klichDelta = { distance: 0, initiative: 0, tempo: 0, stick: 0 };
+  const klichPeak = { distance: 0, initiative: 0, tempo: 0, stick: 0 }; // сдвиг на полную силу
+  let klichUntil = 0; // когда сдвиг окончательно сойдёт на нет (0 = клича нет)
+  let klichFade = 0;  // сколько секунд длится сход на нет в конце
+  const clearKlich = () => {
+    klichUntil = 0; klichFade = 0;
+    klichDelta.distance = 0; klichDelta.initiative = 0; klichDelta.tempo = 0; klichDelta.stick = 0;
+  };
+  const tickKlich = () => {
+    if (!klichUntil) return; // клича нет — ни одного действия на кадр
+    const left = klichUntil - lastT;
+    if (left <= 0) { clearKlich(); return; }
+    const k = klichFade > 0 ? Math.min(1, left / klichFade) : 1; // полная сила, потом линейно в ноль
+    klichDelta.distance = klichPeak.distance * k;
+    klichDelta.initiative = klichPeak.initiative * k;
+    klichDelta.tempo = klichPeak.tempo * k;
+    klichDelta.stick = klichPeak.stick * k;
+  };
+  // Наложить клич. Новый ЗАМЕНЯЕТ предыдущий, а не складывается с ним (ТЗ).
+  const applyKlich = (axes = {}, holdSec = 0, fadeSec = 0) => {
+    klichPeak.distance = axes.distance || 0;
+    klichPeak.initiative = axes.initiative || 0;
+    klichPeak.tempo = axes.tempo || 0;
+    klichPeak.stick = axes.stick || 0;
+    klichFade = Math.max(0, fadeSec);
+    klichUntil = lastT + Math.max(0, holdSec) + klichFade;
+    tickKlich();
+  };
   const intentionFlags = { attack: 'free', guard: 0, charge: 'free' };
   let intentionId = INTENTIONS.HOLD;
   let intentionNextAt = 0; // loop time the next pick fires (INTENTION_TICK_SEC apart)
@@ -1904,6 +1947,7 @@ export function buildFighter(
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
     riposteUntil = 0; riposteBonus = 0; // riposte window leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
+    clearKlich(); // сдвиг от клича уходит с бойцом
     gatherUntil = 0; readPendingAt = -1; readPendingPhase = null; perceivedPhase = 'neutral'; truePhaseSeen = 'neutral'; // read/gather state leaves with the fighter
     charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
     modelReqSeq += 1; lastModelAnswer = null; // any in-flight model request resolves into a dead fighter → ignored
@@ -2791,6 +2835,9 @@ export function buildFighter(
     heal,             // ПОЛОТЕНЦЕ: подлечить на долю полного здоровья
     shortenStagger,   // ПОЛОТЕНЦЕ: укоротить остаток сбива (звать раз на сбив)
     setBuffPace,      // ВЕДРО: множитель хода (1 = баффа нет)
+    // КЛИЧ — два рычага. Выключены, пока их никто не зовёт.
+    applyKlich,       // наложить временный сдвиг манеры (оси, сколько держать, сколько гаснуть)
+    clearKlich,       // снять сдвиг досрочно
     wasLastHitBlocked: () => lastHitBlocked, // КУБИК: последний прилетевший удар ушёл в блок
     getHp: () => hp,
     maxHp,
