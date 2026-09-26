@@ -203,7 +203,41 @@ function layout() {
   });
 }
 
-function camTick() {
+/* ДОГОН КАМЕРЫ.
+
+   Камера идёт за прокруткой не мгновенно, а подтягивается к ней. Нужно это
+   потому, что прокрутка приходит рывками: палец за кадр сдвигает страницу на
+   разное число точек, а посередине перегона картинка движется примерно вдвое
+   быстрее прокрутки (замер: 26 точек картинки на 10 точек пальца). Мелкая
+   дрожь пальца попадала прямо в движение камеры — это и читалось как
+   «дёргается».
+
+   Постоянная — ВРЕМЯ, а не доля кадра: доля дала бы разную мягкость на разной
+   частоте экрана. За CAM_LAG_MS камера съедает примерно две трети отставания.
+
+   ⚠️ CAM_LAG_MAX — предел отставания, и он обязателен. Без него после
+   быстрого броска камера ещё долго едет сама по себе, а это читается уже не
+   как мягкость, а как «тормозит». С пределом бросок камера отрабатывает
+   вровень, а фильтруется только мелочь. Мерить обе величины сдвигом картинки
+   за кадр и запаздыванием после остановки, а не на глаз. */
+const CAM_LAG_MS = 70;
+const CAM_LAG_MAX = 0.0025;
+
+let uCam = 0;
+let camPrimed = false;
+let camLast = 0;
+
+/** Доля маршрута, на которой стоит ПРОКРУТКА (без догона). */
+function readU() {
+  const flight = flightRef.value;
+  if (!flight) return 0;
+  const vh = window.innerHeight || 1;
+  const r = flight.getBoundingClientRect();
+  const travel = Math.max(1, r.height - vh);
+  return clamp01(-r.top / travel);
+}
+
+function camTick(now) {
   camQueued = false;
   const root = rootRef.value;
   const flight = flightRef.value;
@@ -212,9 +246,35 @@ function camTick() {
   const vh = window.innerHeight || 1;
 
   /* Где мы по маршруту. До полёта — 0, после — 1. */
-  const r = flight.getBoundingClientRect();
-  const travel = Math.max(1, r.height - vh);
-  const u = Math.min(1, Math.max(0, -r.top / travel));
+  const target = readU();
+  const t = typeof now === 'number' ? now : 0;
+  /* Шаг времени ограничен сверху: после паузы (вкладка в фоне, первый кадр
+     после остановки) он был бы огромным и догон схлопнулся бы в прыжок. */
+  const dt = camLast ? Math.min(64, Math.max(1, t - camLast)) : 16.7;
+  camLast = t;
+
+  if (!camPrimed) {
+    uCam = target;
+    camPrimed = true;
+  } else {
+    /* Чем больше отставание, тем быстрее догон: на мелкой дрожи камера мягкая,
+       на броске — жёсткая и идёт вровень. Переход плавный, без скачка: резкое
+       «подтянуть до предела» само даёт толчок на кадре, где сработало (замер:
+       максимум за кадр рос с 215 до 269 точек). */
+    const gap = Math.abs(target - uCam);
+    const tau = CAM_LAG_MS / (1 + gap / CAM_LAG_MAX);
+    uCam += (target - uCam) * (1 - Math.exp(-dt / tau));
+    /* Доводим вплотную, иначе кадры продолжают идти на неразличимой разнице. */
+    if (Math.abs(target - uCam) < 1e-5) uCam = target;
+  }
+  const u = uCam;
+  /* Пока отставание не съедено, следующий кадр нужен и без новой прокрутки —
+     иначе камера замрёт, не доехав. Назад работает ровно так же: догон
+     симметричен, знака не различает. */
+  if (uCam !== target && !camQueued) {
+    camQueued = true;
+    requestAnimationFrame(camTick);
+  }
 
   /* ⚠️ ДВЕ РАЗНЫЕ ДОЛИ. Камера сначала ДОЕЗЖАЕТ до станции (tp), и только
      потом доприближается (tz). Если делать то и другое разом, блок всю дорогу
@@ -294,6 +354,8 @@ function onCamScroll() {
 
 function onCamResize() {
   layout();
+  /* Перестроение — не движение: догон тут не нужен, камера встаёт сразу. */
+  camPrimed = false;
   onCamScroll();
 }
 
