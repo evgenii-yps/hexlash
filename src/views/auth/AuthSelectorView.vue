@@ -49,7 +49,7 @@
                это продолжение временной меры 11.09.2026 (вход в аккаунт чинится
                отдельной задачей, до тех пор главный путь — гость).
                Снимается ЦЕЛИКОМ: убрать is-gated, все четыре disabled, строку
-               .hx-soon-diag и одноимённый блок в стилях. -->
+               .soon-stamp и блок .hx-soon-group в стилях. -->
           <div v-if="screen === 'provider'" class="hx-list is-gated">
             <button type="button" class="hx-btn" disabled @click="onProviderSelect('google')">
               <span class="hx-ic"><IconGoogle :s="18" /></span><span class="hx-lbl">Google</span>
@@ -65,7 +65,7 @@
               <span class="hx-lbl">More Options</span>
               <span class="hx-chev"><IconChevron :s="15" /></span>
             </button>
-            <span class="hx-soon-diag" aria-hidden="true">SOON</span>
+            <span class="soon-stamp hx-soon-group" aria-hidden="true">SOON</span>
           </div>
 
           <!-- Stage: more options -->
@@ -195,8 +195,14 @@
             @click="onGuestStart"
           >Play as Guest</button>
 
-          <button type="button" class="hx-referral" @click="onReferralOpen">
+          <!-- ЧЕСТНАЯ ЗАГЛУШКА (ТЗ 27.09.2026, дополнение): реферальная кнопка
+               помечена той же диагональной печатью и выключена.
+               ⚠️ Сам ввод кода РАБОТАЛ (оверлей + сохранение в localStorage) —
+               закрыты, потому что награды за приглашения ещё не начисляются.
+               Снимается: убрать disabled и строку .soon-stamp. -->
+          <button type="button" class="hx-referral" disabled @click="onReferralOpen">
             <span class="hx-ic"><IconTicket :s="15" /></span> I have a referral code
+            <span class="soon-stamp" aria-hidden="true">SOON</span>
           </button>
         </template>
       </div>
@@ -514,30 +520,26 @@ async function onForgotSubmit(payload) {
 /* наведение и нажатие молчат — элемент не притворяется живым */
 .hx-list.is-gated .hx-btn:hover { border-color: var(--line); background: var(--fill-1); }
 .hx-list.is-gated .hx-btn:active { transform: none; }
-/* Угол считается из размеров самой группы, а не подобран на глаз:
-   высота = 4 кнопки по 52 + 3 зазора по 11 = 241;
+/* Печать — общий приём .soon-stamp (assets/main.css). Здесь только её угол и
+   кегль под эту группу: высота = 4 кнопки по 52 + 3 зазора по 11 = 241;
    ширина внутри полей карточки ≈ 311 и на телефоне (354 − 44), и на десктопе
-   (372 − 60) — она у обеих ширин почти одна, поэтому угол тоже один:
-   atan(241 / 311) ≈ 38°. Кегль задан шириной группы, а не ступенью шкалы:
-   слово должно дойти до углов и не выйти за них (шкала таких размеров не знает).
-   Петель и переходов у надписи нет вовсе — она статична при любых настройках
-   движения, отдельного prefers-reduced-motion ей не нужно. */
-.hx-soon-diag {
-  position: absolute; left: 50%; top: 50%;
-  /* translateX в конце — компенсация трекинга: --ls-title добавляет пустоту
-     ПОСЛЕ последней буквы, из-за чего чернила слова стоят левее центра коробки.
-     Сдвиг на половину трекинга возвращает их на середину группы. */
-  transform: translate(-50%, -50%) rotate(38deg) translateX(0.07em);
-  font-family: var(--font-display); font-weight: 700;
-  /* 25% ширины группы — замер, а не round number. Слово SOON в Saira Condensed
-     700 с трекингом --ls-title шире кегля в 3.82 раза; повёрнутое на 38° оно
-     занимает по ширине 3.82·cos38 + 0.75·sin38 ≈ 3.47 кегля, по высоте ≈ 2.94.
-     При 25% ширины (308 → 77) обе стороны остаются внутри группы 308×241 с
-     запасом, и запас держится на всём диапазоне ширин карточки (240…312). */
-  font-size: 25cqw; line-height: 0.75; letter-spacing: var(--ls-title);
-  text-transform: uppercase; color: var(--ink-off); opacity: var(--o-dim);
-  pointer-events: none; white-space: nowrap; user-select: none; -webkit-user-select: none;
-}
+   (372 − 60), поэтому угол один — atan(241 / 311) ≈ 38°. Кегль задан ШИРИНОЙ
+   ГРУППЫ (25% от неё), а не ступенью шкалы: слово должно дойти до углов и не
+   выйти за них, а карточка на узком телефоне ужимается — значит, и слово
+   обязано ужаться вместе с ней. Шкала таких размеров не знает. */
+.hx-soon-group { --soon-a: 38deg; --soon-s: 25cqw; }
+
+/* ── реферальная кнопка: та же печать ──────────────────────────────────────
+   Замер: ширина 284…372 (карточка тянется), высота 46 → угол диагонали
+   гуляет 7…9°, берём середину 8°. Кегль ограничен высотой:
+   3.82·sin8 + 0.75·cos8 = 1.27 кегля ≤ 46 даёт предел 36. Берём 26 — у этой
+   кнопки под печатью лежит длинная подпись в 11px, и запас ей нужнее, чем
+   печати лишние миллиметры. */
+.hx-referral { position: relative; overflow: hidden; --soon-a: 8deg; --soon-s: 26px; }
+/* выключенное: рамка и подпись глохнут, наведение молчит */
+.hx-referral:disabled { cursor: default; color: var(--ink-dim); border-color: var(--line); }
+.hx-referral:disabled:hover { border-color: var(--line); color: var(--ink-dim); }
+.hx-referral:disabled .hx-ic { color: var(--ink-off); }
 
 /* email form — stacked field rows + full-width submit */
 .hx-form { display: flex; flex-direction: column; gap: 11px; }

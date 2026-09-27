@@ -46,18 +46,18 @@
              из него готов — иначе игрок, пришедший по старой ссылке ?view=shop,
              оказался бы заперт. -->
         <button type="button" class="hs-chrome hs-seg-shop"
-                :class="{ 'is-soon': view !== 'shop' }" :disabled="view !== 'shop'" @click="onShop"
+                :disabled="view !== 'shop'" @click="onShop"
                 :aria-label="view === 'shop' ? t.home.back : t.home.shop">
           <svg v-if="view === 'shop'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
           <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span class="n">{{ view === 'shop' ? t.home.back : t.home.shop }}</span>
-          <span v-if="view !== 'shop'" class="hs-soon">{{ t.home.soon }}</span>
+          <span v-if="view !== 'shop'" class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
         <!-- cabinet — chrome diamond avatar only (no handle/role text, no chevron) -->
-        <button type="button" class="hs-chrome hs-seg-cab is-soon" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+        <button type="button" class="hs-chrome hs-seg-cab" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
           <span class="av" aria-hidden="true"></span>
+          <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
-        <span class="hs-soon hs-soon-cab">{{ t.home.soon }}</span>
       </div>
     </div>
 
@@ -100,11 +100,11 @@
         <!-- ЧЕСТНАЯ ЗАГЛУШКА (ТЗ 27.09.2026): режим расстановки декора ещё не
              работает — метка SOON справа от подписи, кнопка выключена. Вид
              выключенного берётся из .hs-chrome:disabled (home.css). Снимается:
-             убрать disabled и строку .hs-soon. -->
+             убрать disabled и строку .soon-stamp. -->
         <button type="button" class="hs-chrome edit-space" disabled @click="onCustomize" :aria-label="t.home.editSpace">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3z" /><path d="M13.5 6.5l3 3" /></svg>
           <span class="n">{{ t.home.editSpace }}</span>
-          <span class="hs-soon">{{ t.home.soon }}</span>
+          <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
       </template>
 
@@ -186,16 +186,16 @@
         <div class="hs-cluster">
           <!-- SHOP — магазин принадлежит дому, поэтому ведём туда адресом: камера
                улетает домой, магазин накрывает пролёт собой (см. onModeShop). -->
-          <button type="button" class="hs-chrome hs-seg-shop is-soon" disabled @click="onModeShop" :aria-label="t.home.shop">
+          <button type="button" class="hs-chrome hs-seg-shop" disabled @click="onModeShop" :aria-label="t.home.shop">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
             <span class="n">{{ t.home.shop }}</span>
-            <span class="hs-soon">{{ t.home.soon }}</span>
+            <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
           </button>
           <!-- кабинет — тот же PlayerCabinet, он смонтирован в этом же компоненте -->
-          <button type="button" class="hs-chrome hs-seg-cab is-soon" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+          <button type="button" class="hs-chrome hs-seg-cab" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
             <span class="av" aria-hidden="true"></span>
+            <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
           </button>
-          <span class="hs-soon hs-soon-cab">{{ t.home.soon }}</span>
         </div>
       </div>
 

@@ -143,27 +143,25 @@
 }
 .hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--chrome-rim); }
 
-/* ── ЧЕСТНАЯ ЗАГЛУШКА: SOON на хроме (ТЗ 27.09.2026) ───────────────────────
-   Магазин и кабинет ещё не работают, поэтому оба чипа помечены словом SOON и
-   не нажимаются. Своё состояние НЕ заводим: выключенный вид уже описан выше
-   в .hs-chrome:disabled (рамка --line, заливка приглушена, чернила
-   --chrome-ink-off = тот же #5D5D66, что и --ink-off). Здесь только сама метка
-   и две дырки, которые disabled не закрывал: блик по наведению и подсветка
-   ромба. Снимается целиком: убрать disabled и строки .hs-soon в разметке
-   пяти экранов (дом, зал FORGE, пространство, ворота арены, выбор отряда)
-   и этот блок. */
+/* ── ЧЕСТНАЯ ЗАГЛУШКА: SOON на хроме (ТЗ 27.09.2026 + дополнение) ──────────
+   Магазин, кабинет и EDIT SPACE ещё не работают: на каждом стоит диагональная
+   печать .soon-stamp (общий приём, описан в assets/main.css) и нажатие снято.
+   Своего выключенного вида НЕ заводим — он уже описан выше в .hs-chrome:disabled
+   (рамка --line, заливка приглушена, чернила --chrome-ink-off = тот же #5D5D66,
+   что и --ink-off). Здесь только углы с кеглями печати и две дырки, которые
+   disabled не закрывал: блик по наведению и подсветка ромба.
+   Прежняя короткая подпись рядом с текстом (.hs-soon / .hs-soon-cab) отменена.
+   Снимается целиком: убрать disabled и строки .soon-stamp в разметке шести
+   полос (дом, экран режимов, зал FORGE, пространство, ворота арены, выбор
+   отряда) и этот блок. */
 .hs-chrome:disabled:hover::after { animation: none; }
 .hs-chrome:disabled:hover .av { filter: none; border-color: var(--chrome-line); }
-/* Метка — мельчайшая моно-подпись капителью: та же семья, что у SOON в кабинете
-   и в магазине. Ни рамки, ни плашки: слово, а не значок. */
-.hs-soon { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta);
-  text-transform: uppercase; color: var(--ink-off); line-height: 1; flex: 0 0 auto; }
-/* У кабинета подписи внутри чипа нет — ромб 28px, повёрнутый на 45°, занимает
-   почти всю его высоту (40 из 44). Поэтому метка выносится ПОД чип и держится
-   за кластер, а не за кнопку: у .hs-chrome стоит overflow:hidden, изнутри она
-   была бы срезана. */
-.hs-cluster { position: relative; }
-.hs-soon-cab { position: absolute; right: 0; top: calc(50% + 24px); pointer-events: none; }
+/* Углы и кегли — из замеров кнопок на собранной странице; у каждой свои
+   пропорции, поэтому общего числа нет. Ниже, в мобильном блоке, чип магазина
+   становится квадратом 44×44 и получает свою пару. */
+.hs-seg-shop  { --soon-a: 21deg; --soon-s: 19px; }   /* замер 115×44 → atan 21° */
+.hs-seg-cab   { --soon-a: 37deg; --soon-s: 14px; }   /* замер  58×44 → atan 37° */
+.edit-space   { --soon-a: 14deg; --soon-s: 22px; }   /* замер 173×44 → atan 14° */
 /* (mobile lives in one consolidated block at the end of the file, so it overrides
    every base rule above it.) */
 
@@ -402,10 +400,9 @@
   /* SHOP/back → icon-only 44×44 square (label hidden, glyph centred) */
   .hs-seg-shop { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .hs-seg-shop .n { display: none; }
-  /* Гейтнутый чип магазина остаётся с меткой: подпись на телефоне скрыта, и без
-     этого правила слово SOON не влезло бы в квадрат 44×44. */
-  .hs-seg-shop.is-soon { width: auto; padding: 0 var(--sp-3); gap: var(--sp-2); }
-  .hs-soon-cab { top: calc(50% + 23px); }
+  /* Оба чипа становятся квадратами 44×44 — диагональ идёт под 45°, и слово
+     садится по ней целиком. Своя пара на каждый: пропорции изменились. */
+  .hs-seg-shop, .hs-seg-cab { --soon-a: 45deg; --soon-s: 12px; }
   /* cabinet → 44×44 icon-only (the chrome diamond) */
   .hs-seg-cab { width: 44px; height: 44px; padding: 0; }
   /* FIGHT — full-width slab, lower, smaller word */
