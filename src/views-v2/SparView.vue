@@ -8,8 +8,18 @@
        обычный игровой экран не от чего.
 
        ЧТО ЭТО. Игрок берёт своего бойца и СОБИРАЕТ ему соперника — ядро и
-       кристаллы. Единственный способ увидеть глазами, что дала прокачка:
-       «Зеркало» против «Чистого».
+       кристаллы, после чего запускает НАСТОЯЩИЙ бой на общей арене. Единственный
+       способ увидеть глазами, что дала прокачка: «Зеркало» против «Чистого».
+
+       ⚠️ БОЙ ЗАПУСКАЕТСЯ (ТЗ 27.09.2026). Заглушка со составом словами снята: на
+       стоящих фигурах кристаллы не видны вовсе — они двигают оси, оси двигают
+       МАНЕРУ, а манера живёт только в движении. Без боя экран не показывал ровно
+       то, ради чего сделан.
+
+       ⚠️ SPAR ПО-ПРЕЖНЕМУ НЕ ДАЁТ ИГРОКУ НИЧЕГО. Бой оттуда не начисляет монет,
+       не выдаёт права зажечь кристалл, не двигает занятия и не пишет историю.
+       Баффы там бесплатные и бесконечные обеим сторонам. Сборка едет в бой
+       памятью страницы (services/spar.js), в сейф не попадает ни байтом.
 
        ═══ ЧТО ИЗМЕНИЛОСЬ ПРОТИВ ПЕРВОЙ РЕДАКЦИИ ═══════════════════════════
        Первая была плоской: три строки списка, подпись «пусто» и много пустой
@@ -259,10 +269,6 @@
           </div>
         </section>
 
-        <p class="sp-note">
-          В макете бой не запускается: нажатие показывает состав обеих сторон
-          словами — проверить, что собралось именно то, что собирали.
-        </p>
       </div>
 
       <!-- ── В БОЙ ────────────────────────────────────────────────────────
@@ -274,30 +280,9 @@
            сцене. Светящаяся кнопка встала бы с ним в спор, а на глубине карточки
            ядра рядом оказывается ещё и её собственная розовая «зажечь» — на
            снимке это читалось как два главных действия сразу. -->
-      <button v-if="fighters.length && !fatal" type="button" class="sp-go" @click="openStub">В БОЙ</button>
+      <button v-if="fighters.length && !fatal" type="button" class="sp-go" @click="toFight">FIGHT</button>
     </aside>
 
-    <!-- ── ЗАГЛУШКА БОЯ ───────────────────────────────────────────────── -->
-    <div v-if="stub" class="sp-stub" role="dialog" aria-modal="true" @click.self="stub = null">
-      <div class="sp-stub__box">
-        <p class="sp-stub__kick">БОЙ НЕ ЗАПУСКАЕТСЯ · МАКЕТ</p>
-        <div class="sp-stub__grid">
-          <div class="sp-stub__col" :style="{ '--core': myCore.hue }">
-            <p class="sp-stub__h"><i class="sw" aria-hidden="true"></i>{{ stub.myName }}</p>
-            <p class="sp-stub__l"><span class="k">ЯДРО</span><span class="v">{{ stub.myCore }}</span></p>
-            <p class="sp-stub__l"><span class="k">КРИСТАЛЛЫ</span><span class="v">{{ stub.myLit }}</span></p>
-            <p class="sp-stub__l"><span class="k">БАФФЫ</span><span class="v">{{ stub.myBuffs }}</span></p>
-          </div>
-          <div class="sp-stub__col" :style="{ '--core': foeCoreMeta.hue }">
-            <p class="sp-stub__h"><i class="sw" aria-hidden="true"></i>СОПЕРНИК</p>
-            <p class="sp-stub__l"><span class="k">ЯДРО</span><span class="v">{{ stub.foeCore }}</span></p>
-            <p class="sp-stub__l"><span class="k">КРИСТАЛЛЫ</span><span class="v">{{ stub.foeLit }}</span></p>
-            <p class="sp-stub__l"><span class="k">БАФФЫ</span><span class="v">{{ stub.foeBuffs }}</span></p>
-          </div>
-        </div>
-        <button type="button" class="sp-stub__btn" @click="stub = null">ЗАКРЫТЬ</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -311,6 +296,9 @@ import { CORES, RESOURCE, getCore } from '@/data/upgradeData.js';
 import { buildTree, litIdsOf, countLit } from '@/data/upgradeTree.js';
 import { crystalTitle } from '@/data/crystalTexts.js';
 import { BUFF_IDS, BUFF_META } from '@/data/buffBalance.js';
+// СБОРКА ЕДЕТ В БОЙ ПАМЯТЬЮ СТРАНИЦЫ, а не сейфом: SPAR ничего никуда не пишет,
+// а запись в сейф боя затёрла бы игроку состав и режим, выбранные в воротах.
+import { setSparBout, readSparBout } from '@/services/spar.js';
 import towel from '@/assets/images/buff_towel.png';
 import bucket from '@/assets/images/buff_bucket.png';
 import dice from '@/assets/images/buff_dice.png';
@@ -321,7 +309,6 @@ const router = useRouter();
 const ICONS = { towel, bucket, dice };
 const KIT_SLOTS = 3;
 
-const stub = ref(null);
 const fatal = ref('');
 const coreHost = ref(null);
 const sceneRef = ref(null);
@@ -338,7 +325,6 @@ const fighters = computed(() => store.getters['roster/fighters']);
 const myId = ref(null);
 const me = computed(() => fighters.value.find((f) => f.id === myId.value) || null);
 const coreOf = (f) => getCore(f.core);
-const myCore = computed(() => (me.value ? coreOf(me.value) : CORES[2]));
 
 /* Дерево своего бойца. В хранилище оно строится лениво, и у нетронутого бойца
    его просто нет — но достраивать его ОТСЮДА нельзя: ensureTree пишет в сейф.
@@ -369,7 +355,6 @@ const foeCore = ref(CORES[0].id);
 const foeTree = ref(null);
 const foeCoreMeta = computed(() => getCore(foeCore.value));
 const foeSpent = computed(() => countLit(foeTree.value));
-const foeLit = computed(() => litNamesOf(foeTree.value));
 
 /* Дерево с обработкой отказа: нераспознанное ядро — это ошибка страницы, а не
    молчаливо пустая сборка. */
@@ -461,25 +446,28 @@ function cycle(side, i) {
   const order = [...BUFF_IDS, null];
   kit.value[i] = order[(order.indexOf(kit.value[i]) + 1) % order.length];
 }
-const kitWords = (kit) => {
-  const on = kit.filter(Boolean).map((id) => BUFF_META[id].name);
-  return on.length ? on.join(' · ') : 'нет';
-};
 
-/* ── заглушка боя ─────────────────────────────────────────────────────
-   Составом СЛОВАМИ и без единой цифры: проверить, что собралось то, что
-   собирали. Бой в макете не запускается. */
-const buildLine = (names) => (names.length ? names.join(' · ') : 'без кристаллов');
-function openStub() {
-  stub.value = {
-    myName: me.value ? me.value.callsign : '—',
-    myCore: myCore.value.name,
-    myLit: buildLine(myLit.value),
-    myBuffs: kitWords(myKit.value),
-    foeCore: foeCoreMeta.value.name,
-    foeLit: buildLine(foeLit.value),
-    foeBuffs: kitWords(foeKit.value),
-  };
+/* ── В БОЙ ─────────────────────────────────────────────────────────────
+   Сборка кладётся в память страницы, и экран уходит на ОБЩУЮ арену — ту же, что
+   во всех прочих режимах, не копию. Метка `spar=1` в адресе нужна не арене (она
+   читает саму сборку), а сторожу: по ней он понимает, куда вернуть игрока, если
+   страницу обновили посреди боя и сборка умерла вместе с вкладкой.
+
+   ⚠️ НЕПОЛНАЯ СБОРКА НЕ УВОЗИТ НИКУДА. Бой без одной из сторон — это не бой, и
+      честнее остаться на экране с понятной строкой, чем показать половину плиты. */
+function toFight() {
+  const ok = setSparBout({
+    fighterId: myId.value,
+    foeCoreId: foeCore.value,
+    foeTree: foeTree.value,
+    myKit: myKit.value,
+    foeKit: foeKit.value,
+  });
+  if (!ok) {
+    fatal.value = 'Сборка не собралась целиком, и вести в бой некого. Выберите бойца заново.';
+    return;
+  }
+  router.push({ path: '/play/arena', query: { spar: '1' } });
 }
 
 function pickMine(id) {
@@ -504,7 +492,6 @@ function openPanel() { panelOpen.value = true; scrollPanelTop(); }
 function closePanel() { panelOpen.value = false; }
 function onKeydown(e) {
   if (e.key !== 'Escape') return;
-  if (stub.value) { stub.value = null; return; }
   if (panelOpen.value) closePanel();
 }
 
@@ -535,11 +522,30 @@ function killLate(e) {
 function toHall() { router.push('/play/pve'); }
 
 onMounted(() => {
-  /* Кого открыть первым: того, кого открыл зал, иначе первого по списку.
-     Читаем — не выбираем: roster/pick писал бы в сейф. */
-  const picked = store.getters['roster/pickedId'];
   const list = fighters.value;
-  if (list.length) {
+
+  /* ── ВЕРНУЛИСЬ ИЗ БОЯ — СБОРКА НА МЕСТЕ ──────────────────────────────
+     Экран размонтируется на время боя, и все его ref'ы умирают вместе с ним.
+     Без этого возврат из боя встречал бы игрока «Чистым» его же ядра — то есть
+     стёртой сборкой, — а весь смысл возврата в том, чтобы поправить ОДИН
+     кристалл и запустить снова.
+
+     Сборка при этом та же самая запись, которая ездила в бой: второго места, где
+     живёт «что мы собрали», не появляется. Боец мог быть распущен из другой
+     вкладки — тогда запись не годится, и дальше идёт обычный первый вход. */
+  const back = readSparBout();
+  if (back && list.some((f) => f.id === back.fighterId)) {
+    myId.value = back.fighterId;
+    foeCore.value = back.foeCoreId;
+    /* Копия, а не ссылка: зажигание правит дерево на месте, и правка не должна
+       менять запись, с которой шёл прошлый бой. */
+    foeTree.value = back.foeTree.map((b) => ({ ...b, faces: b.faces.map((f) => ({ ...f })) }));
+    myKit.value = [...back.myKit];
+    foeKit.value = [...back.foeKit];
+  } else if (list.length) {
+    /* Кого открыть первым: того, кого открыл зал, иначе первого по списку.
+       Читаем — не выбираем: roster/pick писал бы в сейф. */
+    const picked = store.getters['roster/pickedId'];
     myId.value = list.some((f) => f.id === picked) ? picked : list[0].id;
     presetClean();
   }
@@ -797,40 +803,6 @@ onBeforeUnmount(() => {
 .sp-go:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
 
 /* ── заглушка боя ─────────────────────────────────────────────────── */
-.sp-stub {
-  position: absolute; inset: 0; z-index: var(--z-modal);
-  display: grid; place-items: center; padding: var(--sp-4);
-  background: color-mix(in srgb, var(--void) 88%, transparent);
-}
-.sp-stub__box {
-  width: min(100%, 560px); max-height: 100%; overflow-y: auto;
-  display: flex; flex-direction: column; gap: var(--sp-3);
-  padding: var(--sp-4); background: var(--panel); border: 1px solid var(--line-strong);
-}
-.sp-stub__kick {
-  font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
-}
-.sp-stub__grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-3); }
-.sp-stub__col {
-  display: flex; flex-direction: column; gap: var(--sp-1);
-  padding: var(--sp-3); background: var(--carbon); border: 1px solid var(--line);
-}
-.sp-stub__h {
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--t-md); letter-spacing: var(--ls-title); text-transform: uppercase;
-}
-.sp-stub__l { display: flex; gap: var(--sp-2); font-family: var(--font-mono); font-size: var(--t-micro); }
-.sp-stub__l .k { flex: none; min-width: 9ch; letter-spacing: var(--ls-meta); color: var(--ink-off); }
-.sp-stub__l .v { letter-spacing: var(--ls-meta); color: var(--ink-dim); }
-.sp-stub__btn {
-  min-height: 44px; cursor: pointer; font-family: var(--font-mono);
-  font-size: var(--t-xs); letter-spacing: var(--ls-title); color: var(--ink);
-  background: none; border: 1px solid var(--line-strong);
-}
-.sp-stub__btn:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
-
-@media (min-width: 560px) { .sp-stub__grid { grid-template-columns: 1fr 1fr; } }
 
 /* ══ ШИРОКО: ПАНЕЛЬ ПРИКОЛОЧЕНА КОЛОНКОЙ СЛЕВА ═══════════════════════
    ⚠️ ОДНА ПАНЕЛЬ, ДВА ПОВЕДЕНИЯ, а не два экрана: та же разметка, тот же
