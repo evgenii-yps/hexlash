@@ -97,4 +97,22 @@ apiClient.requestFighterIntention = function (payload) {
     }).then((resp) => resp.data);
 };
 
+/**
+ * РЕШЕНИЕ ЛЕГЕНДЫ — рычаг, цель и реплика ОДНИМ ответом (COMMAND часть B).
+ *
+ * ⚠️ ТОТ ЖЕ СРОК ОЖИДАНИЯ, ЧТО У НАМЕРЕНИЯ БОЙЦА, И ПО ТОЙ ЖЕ ПРИЧИНЕ: бой не
+ *    ждёт модель. Не успели — правила остаются на табличке порогов, а отказ
+ *    здесь нормальное, ожидаемое событие, а не происшествие.
+ */
+apiClient.requestLegendCommand = function (payload) {
+    const token = store.getters['master/getJwtToken'];
+    if (!token || !validateJwtToken(token)) {
+        return Promise.reject(new Error('legend-command: no valid token (staying on the table)'));
+    }
+    return axios.post(`${__API_SERVER_URL__}/v1/ai/legend-command`, payload, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        timeout: 1500,
+    }).then((resp) => resp.data);
+};
+
 export default apiClient;
