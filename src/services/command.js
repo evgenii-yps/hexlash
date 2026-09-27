@@ -42,6 +42,7 @@
 //    что честно.
 //
 // Экспортирует: commandState, setLegend, toggleCommand, takeOver.
+import { isSparBout } from './spar.js';
 import { reactive } from 'vue';
 import { COMMAND_BALANCE as C } from '@/data/commandBalance.js';
 import { KLICH_BALANCE, KLICH_META } from '@/data/klichBalance.js';
@@ -271,7 +272,18 @@ function frame(t, fld, live) {
   if (own.length > squadSeen) squadSeen = own.length;
 
   // Тумблер возможен? Легенда есть И состав не одиночный.
-  commandState.active = !!legendRec && squadSeen > 1;
+  //
+  // ⚠️ БОЙ-НАСТРОЙКА SPAR — ИМЕНОВАННОЕ ИСКЛЮЧЕНИЕ (решение владельца 27.09.2026).
+  //    Там состав всегда одиночный, а посмотреть, как легенда ведёт бой, нужно
+  //    именно вблизи — за этим SPAR и сделан. Условие для него одно: легенда есть.
+  //
+  //    ⚠️ ЭТО ИСКЛЮЧЕНИЕ СТОИТ ДЕНЕГ, И ЦЕНА ИЗВЕСТНА. Правило «легенда и тела
+  //       НИКОГДА не думают в одном бою» здесь перестаёт держаться: бой в SPAR
+  //       один на один, значит оба тела думают моделью (по 12 обращений), и
+  //       легенда добавляет сверху свои 5 — 29 обращений за бой вместо 24.
+  //       Владелец принял этот рост осознанно. Подробный разбор — в
+  //       data/commandBalance.js, у потолка обращений легенды.
+  commandState.active = !!legendRec && (squadSeen > 1 || isSparBout());
   if (!commandState.active) { commandState.legendLeads = false; commandState.line = ''; return; }
 
   // Строка решений гаснет сама, по своим часам.
