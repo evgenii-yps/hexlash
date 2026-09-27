@@ -716,6 +716,15 @@ function buildForgeProps(topY) {
     //    обе раскладки снимком, а не на глаз: камера зала диагональная, и
     //    разъехавшиеся по миру предметы на экране сходятся.
     { key: 'spar', make: buildSparStand, x: compose.slab.width * 0.33, z: z + 0.3 },
+    // ГРУША — дверь на остров тренировки (ТЗ 27.09.2026). Стоит на ТОЙ ЖЕ
+    // передней линии, что постамент SPAR, и рядом с ним: два предмета, которые
+    // уводят с плиты, стоят вместе, и правило «нажал предмет — улетел на его
+    // остров» читается с одного взгляда.
+    //
+    // ⚠️ МЕСТО ПРОВЕРЯТЬ СНИМКОМ, а не на глаз, — как и у двух соседей. Камера
+    //    зала диагональная: предметы, разъехавшиеся по миру, на экране сходятся,
+    //    и наковальня стоит на той же долготе, только глубже.
+    { key: 'bags', make: buildBagStand, x: compose.slab.width * 0.22, z: z + 0.3 },
     // ASCENSION — вход в обряд. Стоит в открытой середине плиты, между
     // планшетом и наковальней, ближе к игроку, чем они.
     //
@@ -769,6 +778,56 @@ function trainingFrame() {
   return trainHalfW > 0 ? poseOver(trainCx, 0, trainHalfW * 2) : frameFor();
 }
 
+/** Кадр острова SPAR — тем же рецептом и от той же ширины, что у острова груш. */
+function sparFrame() {
+  return sparHalfW > 0 ? poseOver(sparCx, 0, sparHalfW * 2) : frameFor();
+}
+
+// ── ГДЕ СТОИТ КАМЕРА. Одно слово на всю сцену: 'hall' | 'train' | 'spar'.
+//
+//    ⚠️ ЗАЧЕМ ОТДЕЛЬНАЯ ЗАПИСЬ, КОГДА ЕСТЬ САМА КАМЕРА. По положению камеры
+//       место не прочитать: игрок волен крутить и приближать её как угодно, и
+//       «рядом с островом груш» перестало бы быть ответом сразу после первого
+//       поворота. А от места зависит, куда ведёт BACK, — и ошибиться здесь
+//       значит увести человека с экрана вместо возврата в зал.
+//
+//    ⚠️ МЕСТО МЕНЯЕТСЯ ТОЛЬКО ЧЕРЕЗ goPlace. Второй двери нет нарочно: кадр и
+//       запись о месте обязаны меняться одной операцией, иначе они разойдутся —
+//       ровно тот случай, когда камера стоит на острове, а BACK думает, что мы
+//       в зале.
+let place = 'hall';
+
+function frameOf(name) {
+  if (name === 'train') return trainingFrame();
+  if (name === 'spar') return sparFrame();
+  return frameFor();
+}
+
+/** Увести камеру на место и запомнить, что мы там. */
+function goPlace(name, snap) {
+  place = name;
+  applyCamera(frameOf(name), snap);
+}
+
+/**
+ * СТУПЕНЬ НАЗАД. Возвращает true, если зал сам разобрался с нажатием.
+ *
+ * Приём тот же, каким экран уже обрабатывает Esc: спроси нижний слой, не он ли
+ * съел нажатие, и только потом делай своё. Второй кнопки BACK не появляется —
+ * появляется ступень у той, что есть.
+ *
+ * ⚠️ ВО ВРЕМЯ ПЕРЕЛЁТА НАЖАТИЕ СЪЕДАЕТСЯ, А НЕ ПРОПУСКАЕТСЯ ДАЛЬШЕ. Иначе
+ *    второе быстрое нажатие пришлось бы на уже переписанное место и унесло бы
+ *    игрока с экрана — то есть через зал он бы проскочил. Одно нажатие — одна
+ *    ступень (ТЗ, крайний случай 2).
+ */
+function stepBack() {
+  if (camMoving) return true;
+  if (place === 'hall') return false;
+  goPlace('hall', reduced);
+  return true;
+}
+
 // Set (or ease toward) one of the two framings. `snap` places the camera at once
 // — used on build and whenever motion is reduced.
 function applyCamera(frame, snap) {
@@ -813,6 +872,10 @@ function saveCamMemo() {
     pos: [camera.position.x, camera.position.y, camera.position.z],
     look: [controls.target.x, controls.target.y, controls.target.z],
     slabW: compose.slab.width,
+    // ⚠️ МЕСТО ЗАПОМИНАЕТСЯ ВМЕСТЕ С ПОЗОЙ. Без этого игрок, ушедший с экрана
+    //    стоя на острове, возвращался бы туда камерой — а запись о месте была бы
+    //    «зал», и первое же нажатие BACK унесло бы его с экрана вместо возврата.
+    place,
   };
 }
 
@@ -820,6 +883,7 @@ function saveCamMemo() {
 function restoreCamMemo() {
   if (!camMemo || !camera || !controls || !compose) return;
   if (camMemo.slabW !== compose.slab.width) { camMemo = null; return; }
+  place = camMemo.place || 'hall';
   camPos.set(camMemo.pos[0], camMemo.pos[1], camMemo.pos[2]); camPosTo.copy(camPos);
   camLook.set(camMemo.look[0], camMemo.look[1], camMemo.look[2]); camLookTo.copy(camLook);
   camera.position.copy(camPos);
@@ -1262,7 +1326,7 @@ onMounted(() => {
   // не нужна, а зал и без неё читается.
   controls.enabled = !reduced;
 
-  applyCamera(frameFor(), true);
+  goPlace('hall', true);
   // …и если игрок уже был здесь в этой сессии — вернуть его туда, где он стоял.
   // Повторяется ещё раз в первом проходе наблюдателя размера — см. там же.
   restoreCamMemo();
@@ -1677,7 +1741,9 @@ onMounted(() => {
     // в обеих раскладках. Плита тоже не трогается — её размер решён один раз,
     // когда зал открылся. Значит, поворот не двигает никого, и пересобрать надо
     // только кадр. Ставим сразу, а не подводим плавно: это новый экран, а не ход.
-    applyCamera(frameFor(), true);
+    // Поворот пересобирает кадр ТОГО МЕСТА, где игрок стоит, а не всегда зала:
+    // повернуть телефон, стоя на острове, не должно уносить с острова.
+    goPlace(place, true);
     // ⚠️ ПЕРВЫЙ ВЫЗОВ НАБЛЮДАТЕЛЯ РАЗМЕРА — НЕ ПОВОРОТ ЭКРАНА. ResizeObserver
     //    дёргает обработчик один раз сразу, как только начал смотреть, и этот
     //    первый раз приходит ПОСЛЕ монтажа. Восстановленная поза камеры им
@@ -1854,12 +1920,18 @@ function flashProp(key) {
 // Перелёт — ТОТ ЖЕ, которым зал уводит камеру к занимающемуся (applyCamera по
 // trainingFrame / frameFor), второго здесь не пишется. Во время перелёта
 // нажатие не делает ничего: camMoving стоит ровно на это время.
+// ОДНО ПРАВИЛО ПЕРЕМЕЩЕНИЯ (ТЗ 27.09.2026): нажал предмет — улетел на его остров.
+// Второго способа в зале не осталось; надписи на торцах островов сняты.
+const PLACE_OF = {
+  spar: 'spar',    // постамент с силуэтом → остров SPAR
+  bags: 'train',   // груша → остров тренировки
+};
+
 function crossTo(key) {
-  if (key !== 'toTrain' && key !== 'toHall') return;
-  const c = crossings.find((x) => x.key === key);
-  if (c) { c.setPressed(true); c.pressUntil = clock.getElapsedTime() + CROSS.flash; }
-  if (camMoving) return;
-  applyCamera(key === 'toTrain' ? trainingFrame() : frameFor(), reduced);
+  const to = PLACE_OF[key];
+  if (!to) return;
+  if (camMoving) return;   // летим — нажатия не слушаем, очередь не копится
+  goPlace(to, reduced);
 }
 
 function select(id) {
@@ -1874,12 +1946,12 @@ function select(id) {
   //
   // Обратный переход НЕ трогаем: камера возвращается в зал тем же, чем и всегда —
   // нажатием по пустому месту (exitWork) или выбором того, кто в зале.
-  applyCamera(atBags.has(idx) ? trainingFrame() : frameFor(), reduced);
+  goPlace(atBags.has(idx) ? 'train' : 'hall', reduced);
 }
 
 function exitWork() {
   workingId = null;
-  applyCamera(frameFor(), reduced);
+  goPlace('hall', reduced);
 }
 
 // growTo(count) — take the hall up to the plate a bigger roster needs, WITHOUT
@@ -1932,11 +2004,11 @@ function growTo(count) {
   }
 
   buildHallLamps();                        // the lamps go with the plate
-  applyCamera(frameFor(), reduced);   // …and the camera moves, never cuts
+  goPlace(place, reduced);   // …and the camera moves, never cuts
   return true;
 }
 
-defineExpose({ select, exitWork, growTo });
+defineExpose({ select, exitWork, growTo, stepBack });
 
 onBeforeUnmount(() => {
   saveCamMemo();     // куда смотрели — туда и вернёмся (см. camMemo)
