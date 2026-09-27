@@ -38,6 +38,12 @@
 import { CORES } from '@/data/upgradeData.js';
 import { MODE_IDS, DEFAULT_MODE_ID, squadSizeOf, sizesOf, clampSize } from '@/data/arenaModes.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
+// БОЙ ИЗ SPAR. Сборка живёт в памяти страницы (services/spar.js) и НЕ пишется в
+// сейф — иначе SPAR затёр бы игроку состав и режим, выбранные в воротах. Здесь
+// она только ЧИТАЕТСЯ, чтобы бою досталась та сторона игрока, которую выбрали на
+// экране настройки: арена спрашивает сторону игрока геттерами ниже и больше
+// ниоткуда, поэтому второй двери для SPAR заводить не пришлось.
+import { readSparBout } from '@/services/spar.js';
 
 const SECTION = 'prefight';
 
@@ -164,9 +170,16 @@ const state = {
 // fighter was sent, when the stored id no longer matches anybody (dismissed
 // since), or in showcase mode.
 function sentFighter(s, rootState) {
-    if (s.showcase || !s.squad.length) return null;
+    if (s.showcase) return null;
     const list = rootState && rootState.roster && rootState.roster.fighters;
     if (!Array.isArray(list)) return null;
+    // БОЙ ИЗ SPAR сильнее состава: там дерётся тот, кого выбрали на экране
+    // настройки, а состав из ворот к этому бою отношения не имеет. Боец мог быть
+    // распущен, пока страница стояла открытой, — тогда стороны игрока нет, и
+    // сцена честно соберёт бой по запасному пути, как при пустом составе.
+    const spar = readSparBout();
+    if (spar) return list.find((f) => f.id === spar.fighterId) || null;
+    if (!s.squad.length) return null;
     // Дерётся первый в составе: движок умеет одного. Когда появится командный
     // бой, читателей у списка станет больше — сам список менять не придётся.
     return list.find((f) => f.id === s.squad[0]) || null;
@@ -196,7 +209,9 @@ const getters = {
     // своими гранями. Порядок — тот, в котором игрок их выбирал. Призраки
     // (распустили, пока состав лежал в сейфе) отсеиваются здесь же.
     squadFighters: (s, g, rootState) => {
-        if (s.showcase) return [];
+        // SPAR — всегда бой один на один: список состава там пуст, как в режиме
+        // показа, и командный бой с турниром по нему не включатся.
+        if (s.showcase || readSparBout()) return [];
         const list = (rootState && rootState.roster && rootState.roster.fighters) || [];
         return s.squad.map((id) => list.find((f) => f.id === id)).filter(Boolean);
     },
@@ -209,8 +224,12 @@ const getters = {
     squadLeft: (s) => Math.max(0, sizeOf(s) - s.squad.length),
     // Режим боя: ключ и сколько бойцов он просит. Экран выбора состава говорит
     // это игроку словами, поэтому размер спрашивают здесь, а не считают заново.
-    modeId: (s) => s.modeId || DEFAULT_MODE_ID,
-    squadSize: (s) => sizeOf(s),
+    // РЕЖИМ. В бою из SPAR он всегда дуэль, что бы ни лежало в сейфе: SPAR — это
+    // ровно один свой боец против ровно одного собранного соперника. Без этого
+    // сохранённый в сейфе командный бой или турнир включился бы поверх SPAR, и на
+    // плиту вышел бы не тот состав, который собирали.
+    modeId: (s) => (readSparBout() ? 'duel' : (s.modeId || DEFAULT_MODE_ID)),
+    squadSize: (s) => (readSparBout() ? 1 : sizeOf(s)),
     // Из чего игрок выбирает размер. Пустой список — переключателя нет.
     squadSizes: (s) => sizesOf(s.modeId),
 };

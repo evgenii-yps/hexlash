@@ -11,9 +11,16 @@
 // services/command.js, по тому же образцу: правила посередине, между защищённой
 // ареной и экранами. Ни арена, ни экран не знают друг о друге.
 //
-// ⚠️ ЭТОТ ФАЙЛ НЕ ТЯНЕТ НИ ХРАНИЛИЩЕ, НИ РОУТЕР, НИ VUE. Он только держит
-//    запись. Кто её кладёт и кто читает — решают те, кто его зовёт; иначе он бы
-//    оказался вторым местом, знающим устройство боя.
+// ⚠️ ЭТОТ ФАЙЛ НЕ ТЯНЕТ НИ ХРАНИЛИЩЕ, НИ РОУТЕР. Он только держит запись. Кто её
+//    кладёт и кто читает — решают те, кто его зовёт; иначе он бы оказался вторым
+//    местом, знающим устройство боя.
+//
+// ⚠️ ЗАПИСЬ НАБЛЮДАЕМАЯ, И ЭТО НЕ УКРАШЕНИЕ. Её читают геттеры состояния боя, а
+//    геттеры Vuex кешируются: обычную переменную модуля они бы не заметили и
+//    отдали бы арене сторону игрока, посчитанную ДО ухода в SPAR. Поймано до
+//    первого прогона, разбором устройства геттеров. Ссылка поверхностная
+//    (shallowRef): внутрь дерева соперника никто не смотрит по частям, его меняют
+//    целиком, и глубокое наблюдение стоило бы обхода пятнадцати кристаллов даром.
 //
 // ⚠️ УМИРАЕТ ВМЕСТЕ СО СТРАНИЦЕЙ, И ЭТО НАРОЧНО. Обновление страницы посреди боя
 //    в SPAR теряет сборку — как обычный бой теряет свой ход. Сторож арены на
@@ -25,6 +32,7 @@
 //    бой пишет в прогресс, в игре нет — проверено поиском (см. отчёт разведки).
 //
 // Экспортирует: setSparBout, readSparBout, isSparBout, clearSparBout.
+import { shallowRef } from 'vue';
 
 /**
  * @typedef {object} SparBout
@@ -35,8 +43,8 @@
  * @property {Array<string|null>} foeKit баффы соперника, три слота
  */
 
-/** @type {SparBout|null} */
-let bout = null;
+/** @type {import('vue').ShallowRef<SparBout|null>} */
+const bout = shallowRef(null);
 
 /**
  * Дерево копируется, а не берётся ссылкой. Экран SPAR остаётся живым, пока идёт
@@ -66,10 +74,10 @@ const copyKit = (kit) => {
  */
 export function setSparBout(rec) {
   if (!rec || !rec.fighterId || !rec.foeCoreId || !Array.isArray(rec.foeTree)) {
-    bout = null;
+    bout.value = null;
     return false;
   }
-  bout = {
+  bout.value = {
     fighterId: rec.fighterId,
     foeCoreId: rec.foeCoreId,
     foeTree: copyTree(rec.foeTree),
@@ -81,12 +89,12 @@ export function setSparBout(rec) {
 
 /** Сборка или null. */
 export function readSparBout() {
-  return bout;
+  return bout.value;
 }
 
 /** Идёт ли бой из SPAR. Короткий вопрос для тех, кому нужен только признак. */
 export function isSparBout() {
-  return !!bout;
+  return !!bout.value;
 }
 
 /**
@@ -96,5 +104,5 @@ export function isSparBout() {
  * подменит соперника в обычном бою.
  */
 export function clearSparBout() {
-  bout = null;
+  bout.value = null;
 }
