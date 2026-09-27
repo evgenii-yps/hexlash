@@ -18,10 +18,18 @@ export const BUFF_IDS = ['towel', 'bucket', 'dice'];
  * Имя и однобуквенная метка. Имена — собственные, английскими буквами, как
  * «iPhone»: проект только на английском, и переводить их некуда.
  */
+/**
+ * `does` — что предмет делает, одной английской строкой. Не подпись для экрана,
+ * а объяснение для думающего мозга легенды: см. ту же оговорку у KLICH_META.
+ * Пересказывает числа ниже — держать в согласии с ними.
+ */
 export const BUFF_META = {
-  towel: { id: 'towel', name: 'TOWEL', mono: 'T' },
-  bucket: { id: 'bucket', name: 'BUCKET', mono: 'B' },
-  dice: { id: 'dice', name: 'DICE', mono: 'D' },
+  towel: { id: 'towel', name: 'TOWEL', mono: 'T',
+           does: 'patches him up over a few seconds and shakes off a stagger' },
+  bucket: { id: 'bucket', name: 'BUCKET', mono: 'B',
+            does: 'puts speed in his legs for a while' },
+  dice: { id: 'dice', name: 'DICE', mono: 'D',
+          does: 'a gamble: it can swing his next exchange either way' },
 };
 
 export const BUFF_BALANCE = {

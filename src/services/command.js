@@ -44,8 +44,12 @@
 // Экспортирует: commandState, setLegend, toggleCommand, takeOver.
 import { reactive } from 'vue';
 import { COMMAND_BALANCE as C } from '@/data/commandBalance.js';
-import { KLICH_BALANCE } from '@/data/klichBalance.js';
+import { KLICH_BALANCE, KLICH_META } from '@/data/klichBalance.js';
+import { BUFF_META } from '@/data/buffBalance.js';
 import { getCore } from '@/data/upgradeData.js';
+import { buildTree } from '@/data/upgradeTree.js';
+import { facetPhrase } from '@/data/facetReadout.js';
+import { brainAlive, brainStartFight, brainTick, takeBrainAdvice } from './commandBrain.js';
 import { klichFightState, useKlichCard } from './klich.js';
 import { buffFightState, useBuffCard, hasBuffOn } from './buffs.js';
 import { selectUnit, onSelectFrame, onSelectTap } from './fighterSelect.js';
@@ -57,6 +61,10 @@ import { selectUnit, onSelectFrame, onSelectTap } from './fighterSelect.js';
  *                 (ТЗ: не выключенного, не серого, а отсутствующего).
  *   legendLeads — позиция тумблера. Ложь = «ВЕДУ Я».
  *   line        — строка решений или пустая строка. Пустая = молчит.
+ *   reply       — ЧТО ЛЕГЕНДА СКАЗАЛА. Пустая строка = сказать нечего, и тогда
+ *                 накладка показывает одну служебную расшифровку. Заготовленных
+ *                 фраз на этот случай нет НАРОЧНО: выдуманная реплика от
+ *                 неответившей модели — имитация, а мы показываем настоящее.
  *   who         — ЧЬИМ ИМЕНЕМ подписана строка. Позывной бойца, из которого
  *                 легенда взошла; нет позывного — имя её ядра; нет ничего —
  *                 пустая строка, и тогда накладка ставит служебное LEGEND.
@@ -65,6 +73,7 @@ export const commandState = reactive({
   active: false,
   legendLeads: false,
   line: '',
+  reply: '',
   who: '',
 });
 
@@ -180,10 +189,12 @@ function legendName(rec) {
 function startFight() {
   commandState.legendLeads = false;
   commandState.line = '';
+  commandState.reply = '';
   lastActAt = -Infinity;
   lineUntil = 0;
   squadSeen = 0;
   mine.clear();
+  brainStartFight();
 }
 
 /** БОЙ КОНЧИЛСЯ. Тумблер уходит с экрана, ничего не переносится дальше. */
@@ -191,11 +202,13 @@ function endFight() {
   commandState.active = false;
   commandState.legendLeads = false;
   commandState.line = '';
+  commandState.reply = '';
   lastActAt = -Infinity;
   lineUntil = 0;
   squadSeen = 0;
   mine.clear();
   field = null;
+  brainStartFight();
 }
 
 // ── Тумблер и перехват ───────────────────────────────────────────────────
@@ -262,7 +275,7 @@ function frame(t, fld, live) {
   if (!commandState.active) { commandState.legendLeads = false; commandState.line = ''; return; }
 
   // Строка решений гаснет сама, по своим часам.
-  if (commandState.line && nowT >= lineUntil) commandState.line = '';
+  if (commandState.line && nowT >= lineUntil) { commandState.line = ''; commandState.reply = ''; }
 
   if (!commandState.legendLeads) return;
 
@@ -272,12 +285,174 @@ function frame(t, fld, live) {
 
   // Правило 4: первые секунды боя не делается ВООБЩЕ ничего.
   if (nowT < C.quietStartSec) return;
+
+  // ДУМАЮЩИЙ МОЗГ. Будится на переломах, ответ приходит когда придёт; пока его
+  // нет — работает табличка, ровно как до части B. Мозга может не быть вовсе
+  // (нет накладки, нет сети, нет ключа) — тогда весь этот кусок стоит ноль.
+  //
+  // ⚠️ СТОИТ ПОСЛЕ ТИХИХ ПЕРВЫХ СЕКУНД, А НЕ ПЕРЕД НИМИ, И ЭТО НЕ МЕЛОЧЬ.
+  //    Первая побудка — «бой начался», общий настрой на состав. Если будить в
+  //    нулевой кадр, ответ придёт секунды через полторы, а взять его легенда
+  //    сможет только на пятой — и он к тому моменту протух по своему же сроку
+  //    годности. Обращение сгорело бы впустую КАЖДЫЙ бой, ровно одно из пяти.
+  //    Поэтому «старт боя» для легенды — это первый миг, когда ей вообще
+  //    позволено действовать, а не первый кадр на часах.
+  //
+  // ⚠️ ПАУЗА МЕЖДУ ДЕЙСТВИЯМИ БУДИТЬ НЕ МЕШАЕТ, И ТОЖЕ НАРОЧНО. Перелом может
+  //    случиться в середине паузы, и не заметить его значило бы пропустить
+  //    именно тот момент, ради которого модель и нужна.
+  if (brainAlive()) brainTick(nowT, buildBrainPayload, own, foeSide());
+
   // Своя пауза между действиями, поверх откатов рычагов.
   if (nowT - lastActAt < C.minGapSec) return;
+
+  // Совет модели, если он есть и не протух. Потребляется один раз.
+  const advice = brainAlive() ? takeBrainAdvice(nowT) : null;
+  if (advice) {
+    // «Ничего не тратить» — это РЕШЕНИЕ, а не отказ отвечать. Табличку на этот
+    // раз не спрашиваем: иначе она молча переиграла бы легенду, которая только
+    // что решила беречь заряд. Реплику при этом показываем — легенда сказала,
+    // почему молчит рычагами.
+    if (advice.lever === 'none') { sayOnly(advice.line); return; }
+    const plan = planFromAdvice(advice, own);
+    if (plan) { act(plan, advice.line); return; }
+    // Совет оказался неисполним (боец умер, пока ответ летел; заряд кончился) —
+    // тихо падаем на табличку, как при любом другом отказе.
+  }
 
   const plan = decide(own);
   if (!plan) return;
   act(plan);
+}
+
+// ── Посылка для мозга ────────────────────────────────────────────────────
+
+/** Здоровье словами. Сырых чисел в модель не уходит — только то, что видит глаз. */
+function hpWord(f01) {
+  if (f01 > 0.66) return 'on his feet';
+  if (f01 > 0.35) return 'hurt';
+  return 'about to fall';
+}
+
+/**
+ * ПОРТРЕТ ЛЕГЕНДЫ СЛОВАМИ — её ядро и зажжённые грани.
+ *
+ * ⚠️ СОБИРАЕТСЯ ТЕМ ЖЕ СПОСОБОМ, ЧТО И ПОРТРЕТ БОЙЦА (ТЗ §2), из тех же двух
+ *    источников: манера ядра плюс фраза каждой зажжённой грани. Сейф хранит у
+ *    легенды только СПИСОК зажжённых, поэтому дерево восстанавливается —
+ *    ровно так же, как это делает зал, когда поднимает легенду над плитой.
+ */
+function legendPortrait() {
+  const out = [];
+  if (!legendRec) return out;
+  const core = legendRec.core ? getCore(legendRec.core) : null;
+  if (core && core.id === legendRec.core) out.push(`${core.name} — ${core.manner}`);
+  try {
+    const tree = buildTree(legendRec.core, legendRec.lit || null);
+    const seen = new Set();
+    for (const branch of tree || []) {
+      for (const f of branch.faces || []) {
+        if (f.state !== 'lit') continue;
+        const ph = facetPhrase(f);
+        if (ph && !seen.has(ph)) { seen.add(ph); out.push(ph); }
+      }
+    }
+  } catch (_) {
+    // Дерево не собралось — портрет останется из одной манеры ядра. Это хуже,
+    // но честно: выдумывать грани, которых мы не прочли, нельзя.
+  }
+  return out;
+}
+
+/**
+ * РЫЧАГИ, ДО КОТОРЫХ ЛЕГЕНДА ДОТЯНЕТСЯ ПРЯМО СЕЙЧАС.
+ *
+ * ⚠️ СПИСОК СЧИТАЕТСЯ ТЕМИ ЖЕ ПРОВЕРКАМИ, ЧТО И У ПАЛЬЦА, и это главное здесь.
+ *    Отправить модели рычаг в откате значило бы предложить ей то, чего игрок не
+ *    может; она бы его выбрала, дверь бы отказала, и легенда молча пропустила
+ *    бы ход, потратив обращение впустую.
+ *
+ * ⚠️ БАФФЫ ОТДАЮТСЯ ВСЕ КУПЛЕННЫЕ, А НЕ ОДНО ПОЛОТЕНЦЕ. Табличка порогов берёт
+ *    только полотенце и только на спасение — это её осторожность, записанная в
+ *    decide(). Думающая легенда выбирает из всего, что игрок взял в бой: в этом
+ *    и разница между табличкой и мозгом.
+ */
+function leversNow() {
+  const out = [];
+  for (const c of klichFightState.cards) {
+    if (!klichFree(c.id)) continue;
+    const meta = KLICH_META[c.id];
+    out.push({ id: c.id, name: c.name, does: meta && meta.does, left: c.left });
+  }
+  for (const c of buffFightState.cards) {
+    if (!buffFree(c.id)) continue;
+    const meta = BUFF_META[c.id];
+    out.push({ id: c.id, name: c.name, does: meta && meta.does, left: c.left });
+  }
+  return out;
+}
+
+/**
+ * Собрать посылку. Зовётся ЛЕНИВО — только когда повод уже нашёлся: это обход
+ * всех живых тел, и делать его каждый кадр впустую незачем.
+ *
+ * ⚠️ ПОРЯДОК БОЙЦОВ ЗДЕСЬ И ЕСТЬ АДРЕСА. Модель отвечает номером из этого
+ *    списка, и номер превращается обратно в бойца в planFromAdvice. Поэтому
+ *    список собирается ОДИН раз на запрос и никуда больше не переупорядочивается.
+ */
+function buildBrainPayload() {
+  const own = ourSide();
+  const foes = foeSide();
+  brainUnits = own;
+  return {
+    portrait: legendPortrait(),
+    units: own.map((u) => ({ name: nameOf(u), hp: hpWord(hp01(u)) })),
+    foes: {
+      count: foes.length > own.length ? `${foes.length} against your ${own.length} — more than you`
+        : foes.length < own.length ? `${foes.length} against your ${own.length} — fewer than you`
+        : `${foes.length} against your ${own.length} — even`,
+      state: foes.some((u) => hp01(u) < C.foeWeakHp01) ? 'one of them is nearly finished'
+        : foes.every((u) => hp01(u) > 0.66) ? 'all of them still fresh' : 'worn but standing',
+    },
+    levers: leversNow(),
+    phase: nowT < 15 ? 'early' : nowT < 45 ? 'the thick of it' : 'late, both sides tiring',
+  };
+}
+
+/**
+ * Свои в том порядке, в каком они ушли в последнюю посылку.
+ *
+ * ⚠️ БЕЗ ЭТОГО НОМЕР ИЗ ОТВЕТА УКАЗАЛ БЫ НЕ НА ТОГО. Ответ летит полторы
+ *    секунды, за это время кто-то мог пасть и список живых стать короче —
+ *    третий номер поехал бы на другого бойца. Поэтому цель ищется в том самом
+ *    списке, который модель и видела.
+ */
+let brainUnits = [];
+
+/** Превратить совет в план действия, если он ещё исполним. */
+function planFromAdvice(advice, own) {
+  const unit = brainUnits[advice.target - 1];
+  if (!unit || unit.dead || !own.includes(unit)) return null; // пал, пока ответ летел
+  const isKlich = !!KLICH_META[advice.lever];
+  const isBuff = !!BUFF_META[advice.lever];
+  if (!isKlich && !isBuff) return null;
+  // Рычаг мог освободиться и снова уйти в откат, пока ответ летел.
+  if (isKlich && !klichFree(advice.lever)) return null;
+  if (isBuff && (!buffFree(advice.lever) || hasBuffOn(unit))) return null;
+  return { kind: isKlich ? 'klich' : 'buff', lever: advice.lever, unit };
+}
+
+/**
+ * ЛЕГЕНДА СКАЗАЛА, НО НИЧЕГО НЕ НАЖАЛА. Строка тогда несёт одну реплику: рычаг
+ * не тронут, называть нечего, а молчать после «решила беречь заряд» — значит
+ * скрыть от игрока решение, которое было принято.
+ */
+function sayOnly(reply) {
+  if (!reply) return;
+  lastActAt = nowT;
+  commandState.reply = reply;
+  commandState.line = '';
+  lineUntil = nowT + C.lineHoldSec;
 }
 
 // ── Правила ──────────────────────────────────────────────────────────────
@@ -412,12 +587,16 @@ function decide(own) {
  *    обещание ТЗ «видно, куда она бьёт»: кружок под ногами переезжает не ради
  *    показа, а потому что это и есть её цель.
  *
+ * ⚠️ РЕПЛИКА ТОЖЕ ПИШЕТСЯ ТОЛЬКО ПО ФАКТУ, И ЭТО ВАЖНЕЕ, ЧЕМ КАЖЕТСЯ. Она
+ *    описывает СОВЕРШЁННОЕ действие; если дверь отказала, действия не было, и
+ *    показать слова легенды о нём — соврать красиво.
+ *
  * ⚠️ СТРОКА ПИШЕТСЯ ТОЛЬКО ПО ФАКТУ. Карта может отказать (боец погиб в этот
  *    самый кадр, запас опустел во второй вкладке) — тогда заряд не списан, и
  *    сказать «легенда крикнула» было бы враньём. Поэтому обе двери возвращают
  *    «получилось или нет», и молчание здесь честнее сообщения.
  */
-function act(plan) {
+function act(plan, reply = '') {
   const { kind, lever, unit } = plan;
   if (!unit || unit.dead) return;
 
@@ -428,6 +607,7 @@ function act(plan) {
   lastActAt = nowT;
   mine.set(unit, { lever, until: nowT + holdOf(kind) });
   commandState.line = lineFor(lever, unit);
+  commandState.reply = reply || '';
   lineUntil = nowT + C.lineHoldSec;
 
   // Павшие из записи вычищаются здесь: своего кадра у неё нет, а бойцов на плите
@@ -480,9 +660,21 @@ function lineFor(lever, unit) {
   const k = klichFightState.cards.find((c) => c.id === lever);
   const b = buffFightState.cards.find((c) => c.id === lever);
   const name = (k && k.name) || (b && b.name) || lever.toUpperCase();
-  const spec = unit.spec || {};
-  const nick = spec.name || (spec.coreId ? getCore(spec.coreId).name : '');
+  const nick = nameOf(unit);
   return nick ? `${name} → ${nick}` : name;
+}
+
+/**
+ * КАК ЗОВУТ БОЙЦА. Позывной, а нет его — имя ядра (правило от 26.09).
+ *
+ * ⚠️ ВЫНЕСЕНО ИЗ lineFor, ПОТОМУ ЧТО ЧИТАТЕЛЕЙ СТАЛО ДВА: строка решений и
+ *    посылка думающему мозгу. Два места, называющих одного бойца по-разному, —
+ *    это ровно тот случай, когда модель советует «второму», а строка показывает
+ *    «третьего».
+ */
+function nameOf(unit) {
+  const spec = (unit && unit.spec) || {};
+  return spec.name || (spec.coreId ? getCore(spec.coreId).name : '');
 }
 
 // ── Подписки ─────────────────────────────────────────────────────────────

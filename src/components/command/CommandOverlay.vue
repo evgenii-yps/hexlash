@@ -48,11 +48,24 @@
       <!-- СТРОКА РЕШЕНИЙ. Появляется в момент действия легенды и гаснет сама.
            Место под неё НЕ держится: пустая строка занимала бы место постоянно и
            тумблер прыгал бы на каждое решение. -->
-      <p v-if="c.line" class="cmd-line">
-        <span class="cmd-line-who">{{ c.who || t.command.legend }}</span>
-        <span class="cmd-line-dot">·</span>
-        <span class="cmd-line-act">{{ c.line }}</span>
-      </p>
+      <div v-if="c.line || c.reply" class="cmd-line">
+        <!-- ГОЛОС. Есть реплика — она идёт первой и уносит с собой имя: кто
+             говорит, читается из самой фразы. Нет реплики — этой строки нет
+             вовсе, и имя возвращается вниз, к расшифровке. -->
+        <p v-if="c.reply" class="cmd-reply">
+          <span class="cmd-who">{{ c.who || t.command.legend }}:</span>
+          {{ c.reply }}
+        </p>
+
+        <!-- ФАКТ. Рычаг и цель. Не убирается никогда, пока рычаг был нажат:
+             реплика передаёт характер, а на вопрос «что сейчас случилось с моими
+             зарядами» отвечает только она. -->
+        <p v-if="c.line" class="cmd-fact">
+          <span v-if="!c.reply" class="cmd-who">{{ c.who || t.command.legend }}</span>
+          <span v-if="!c.reply" class="cmd-dot">·</span>
+          <span class="cmd-act">{{ c.line }}</span>
+        </p>
+      </div>
 
       <button
         type="button"
@@ -78,6 +91,8 @@ import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 import { commandState as c, toggleCommand, takeOver, setLegend } from '@/services/command.js';
+import { setBrainRequest } from '@/services/commandBrain.js';
+import apiClient from '@/core/api/apiClient.js';
 
 const store = useStore();
 
@@ -94,6 +109,18 @@ const store = useStore();
 const legendRec = computed(() => store.getters['roster/legend'] || null);
 watch(legendRec, (v) => setLegend(v), { immediate: true });
 
+/**
+ * ДВЕРЬ В МОДЕЛЬ. Правила в сеть не ходят: ни один файл в services/ не тянет ни
+ * Vuex, ни apiClient, и заводить первый такой незачем. Функцию запроса подаёт
+ * накладка — ровно тем же приёмом, каким арена подаёт запрос бойцу.
+ *
+ * ⚠️ ОТСЮДА ЖЕ СЛЕДУЕТ ВЫКЛЮЧАТЕЛЬ. Нет накладки — нет и мозга: на размонтаже
+ *    дверь закрывается, и легенда возвращается на табличку порогов. Это не
+ *    страховка, а устройство: командование без своего тумблера бессмысленно, а
+ *    думающая легенда без командования — тем более.
+ */
+setBrainRequest((payload) => apiClient.requestLegendCommand(payload));
+
 // ── Место блока: над панелью рычагов ─────────────────────────────────────
 
 /** Панель не нашлась — встаём по запасному числу, никого не накрыв. */
@@ -105,6 +132,13 @@ const box = ref({ ...FALLBACK });
 const blockStyle = computed(() => ({
   right: `${box.value.right}px`,
   bottom: `${box.value.bottom}px`,
+  // ⚠️ ШИРИНА СТРОКИ СЧИТАЕТСЯ ОТ ИЗМЕРЕННОГО ОТСТУПА, А НЕ ЗАШИТА ДОЛЕЙ ЭКРАНА.
+  //    Здесь стояло `max-width: 62vw`, и на телефоне это 242 точки — реплика в
+  //    28 знаков с именем туда не влезала и рвалась на три строки. Доля экрана
+  //    вообще неверная мера: блок прижат к панели рычагов, а она ездит, и при
+  //    любом её сдвиге доля разошлась бы с местом. Отступ уже измерен — отдаём
+  //    его в разметку, а боковое поле остаётся токеном (см. .cmd-line).
+  '--cmd-right': `${box.value.right}px`,
 }));
 
 /** Прозрачные накладки по месту рядов карт. Пусто, пока ведёт игрок. */
@@ -236,6 +270,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', measure);
   // Легенды для правил больше нет: накладка ушла, командовать некому.
   setLegend(null);
+  setBrainRequest(null);
 });
 </script>
 
@@ -256,14 +291,23 @@ onBeforeUnmount(() => {
   gap: var(--sp-1);
 }
 
-/* --- СТРОКА РЕШЕНИЙ. Служебная и прямая (ТЗ): кто и что сделал. Голос ядра и
-       человеческая формулировка — часть B, выдумывать её здесь нельзя. --- */
+/* --- СТРОКА РЕШЕНИЙ: ГОЛОС СВЕРХУ, ФАКТ СНИЗУ (ТЗ части B, работа 2).
+       Верхняя — что легенда сказала, нижняя — что при этом случилось с
+       зарядами. Нижняя мельче и тусклее.
+
+       ⚠️ ВЕРХНЮЮ ПРИШЛОСЬ ПОДНЯТЬ НА СТУПЕНЬ, А НЕ ОПУСТИТЬ НИЖНЮЮ. Строка уже
+       стояла на --t-micro, а это САМЫЙ МЕЛКИЙ шаг шкалы — ниже ничего нет.
+       «Нижняя мельче верхней» при запрете новых размеров выполнимо ровно одним
+       способом: верхняя идёт на соседний --t-xs, нижняя остаётся на месте.
+
+       ⚠️ БОКОВОЕ ПОЛЕ — ТОКЕН, ОТСТУП — ЗАМЕР. Ширина выведена из измеренного
+       положения блока (--cmd-right подаёт разметка) минус боковое поле из
+       шкалы отступов. Так строка сама тянется до края экрана, куда бы ни
+       переехала панель рычагов, и ни одного нового числа здесь нет. --- */
 .cmd-line {
-  margin: 0;
-  max-width: 62vw;
+  max-width: calc(100vw - var(--sp-4) - var(--cmd-right, 8px));
   padding: 3px var(--sp-1);
   font-family: var(--font-mono);
-  font-size: var(--t-micro);
   letter-spacing: var(--ls-meta);
   line-height: 1.2;
   text-align: right;
@@ -271,14 +315,42 @@ onBeforeUnmount(() => {
   background: var(--chrome-glass);
   -webkit-backdrop-filter: blur(var(--blur-glass));
   backdrop-filter: blur(var(--blur-glass));
-  color: var(--ink-soft);
 }
-/* Кто сказал — тише того, что сказано: важен рычаг и боец, а не подпись. Имя
-   легенды здесь намеренно НЕ выделено: строку читают ради рычага и цели, а не
-   ради того, чтобы в третий раз узнать, кто в клубе легенда. */
-.cmd-line-who { color: var(--ink-dim); }
-.cmd-line-dot { color: var(--ink-off); margin: 0 3px; }
-.cmd-line-act { color: var(--ink); }
+.cmd-line p { margin: 0; }
+
+/* ГОЛОС. Полная яркость: это единственное на экране, что сказал человек.
+   ⚠️ ДВЕ СТРОКИ — ПОТОЛОК, ТРЕТЬЕЙ БЫТЬ НЕ МОЖЕТ (ТЗ). При 28 знаках и этой
+   ширине даже самое длинное имя укладывается в одну, так что второй строки на
+   телефоне не видно вовсе — она страховка, а не раскладка. */
+.cmd-reply {
+  font-size: var(--t-xs);
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* ФАКТ. Мельче и тусклее голоса — его читают, только когда нужно свериться с
+   зарядами.
+   ⚠️ РЕЖЕТСЯ ИМЯ ЦЕЛИ, И ТОЛЬКО ОНО (ТЗ §4). Обрезка идёт справа, а справа
+   стоит именно цель: рычаг остаётся целым. Реплика и имя легенды не режутся
+   никогда — они в других узлах и обрезки на них нет. */
+.cmd-fact {
+  font-size: var(--t-micro);
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Кто сказал — тише того, что сказано. Имя намеренно НЕ выделено: строку читают
+   ради рычага и цели, а не ради того, чтобы узнать, кто в клубе легенда. */
+.cmd-who { color: var(--ink-dim); }
+.cmd-dot { color: var(--ink-off); margin: 0 3px; }
+.cmd-act { color: var(--ink); }
+/* В паре с репликой имя уже сказано сверху — факт тогда весь тусклый. */
+.cmd-reply .cmd-who { color: var(--ink-dim); }
 
 /* --- ТУМБЛЕР. Две позиции различаются формой и яркостью, не цветом (см. шапку).
        «ВЕДУ Я» — обычная матовая плитка; «ВЕДЁТ ЛЕГЕНДА» — залита и обведена

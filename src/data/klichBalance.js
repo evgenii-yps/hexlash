@@ -29,10 +29,23 @@ export const KLICH_IDS = ['push', 'fallback', 'hold'];
  *    рисунок стрелки (`glyph`), и ни у одного нет своего цвета: цвет на арене
  *    уже занят — розовый держит интерфейс, цвета ядер держат бойцов.
  */
+/**
+ * `does` — что рычаг делает, одной английской строкой.
+ *
+ * ⚠️ ЭТО НЕ ПОДПИСЬ ДЛЯ ЭКРАНА, а объяснение для думающего мозга легенды
+ *    (COMMAND часть B): ему надо выбрать рычаг, и по одному имени «HOLD» он
+ *    выбирал бы наугад. Живёт здесь, рядом с самим рычагом, а не в правилах
+ *    командования: второй список однажды разошёлся бы с первым, и легенда
+ *    начала бы выбирать по описанию, которого рычаг уже не выполняет.
+ *    Пересказывает сдвиг осей ниже — держать в согласии с ним.
+ */
 export const KLICH_META = {
-  push:     { id: 'push',     name: 'PUSH',     mono: 'P', glyph: 'forward' },
-  fallback: { id: 'fallback', name: 'FALL BACK', mono: 'F', glyph: 'back' },
-  hold:     { id: 'hold',     name: 'HOLD',     mono: 'H', glyph: 'anchor' },
+  push:     { id: 'push',     name: 'PUSH',     mono: 'P', glyph: 'forward',
+              does: 'drives him forward into the exchange, no backing off' },
+  fallback: { id: 'fallback', name: 'FALL BACK', mono: 'F', glyph: 'back',
+              does: 'breaks contact, buys him room and time' },
+  hold:     { id: 'hold',     name: 'HOLD',     mono: 'H', glyph: 'anchor',
+              does: 'digs him in, guard up, rides out the series' },
 };
 
 /**
