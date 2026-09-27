@@ -21,6 +21,10 @@
 // Экспортирует: fightResultState, showFightResult, hideFightResult, bindFightAgain.
 import { reactive } from 'vue';
 import { awardBoutLash } from './lash.js';
+// БОЙ-НАСТРОЙКА SPAR НЕ ДАЁТ ИГРОКУ НИЧЕГО. Монеты там не начисляются ни за
+// победу, ни за поражение: SPAR — это проверка сборки, а не заработок, и платить
+// за бесконечную бесплатную проверку значило бы завести печатный станок.
+import { isSparBout } from './spar.js';
 
 /**
  * Что показывает панель итога.
@@ -76,7 +80,12 @@ export function showFightResult(won, kind = null, over = null) {
   //    Обновление страницы вторых монет тоже не даёт: счётчик живёт в памяти, и
   //    после перезагрузки панели итога на экране нет — арена собирает новый бой.
   //    Уход из боя на полпути не даёт вовсе ничего: сюда просто не приходят.
-  if (!fightResultState.visible) fightResultState.lashGain = awardBoutLash(won);
+  //    БОЙ ИЗ SPAR не начисляет ничего. Ноль здесь не «забыли посчитать», а
+  //    единственное место, где заработок отключается: строка про монеты в панели
+  //    сама гаснет на нуле, и говорить об этом словами не нужно.
+  if (!fightResultState.visible) {
+    fightResultState.lashGain = isSparBout() ? 0 : awardBoutLash(won);
+  }
   fightResultState.outcome = won ? 'victory' : 'defeat';
   fightResultState.kind = kind || null;
   fightResultState.titleOver = (over && over.title) || null;

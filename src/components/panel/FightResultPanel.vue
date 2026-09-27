@@ -17,7 +17,7 @@
     <template #actions>
       <div class="fr-actions">
         <button type="button" class="ap-go" @click="onAgain">{{ t.fight.again }}</button>
-        <button type="button" class="ap-back" @click="onGate">{{ t.fight.toGate }}</button>
+        <button type="button" class="ap-back" @click="onGate">{{ backWord }}</button>
       </div>
     </template>
   </ArenaPanel>
@@ -28,6 +28,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { t } from '@/locales/index.js';
 import { fightResultState as state, fightAgainNow, hideFightResult } from '@/services/fightResult.js';
+import { isSparBout } from '@/services/spar.js';
 import ArenaPanel from '@/components/panel/ArenaPanel.vue';
 import '@/components/panel/panel.css';
 
@@ -53,8 +54,19 @@ function onAgain() {
   fightAgainNow();
 }
 
+/**
+ * Куда ведёт дверь. Бой из SPAR возвращает В SPAR: игрок пришёл сравнивать
+ * сборки и уходит их править, а не выбирать режим заново. Спрашиваем ОДИН раз на
+ * показ панели — за время показа бой уже кончился, и признак смениться не может.
+ */
+const toSpar = computed(() => isSparBout());
+const backWord = computed(() => (toSpar.value ? t.value.fight.toSpar : t.value.fight.toGate));
+
 function onGate() {
   hideFightResult();
+  // БОЙ ИЗ SPAR — назад к своей сборке. Она жива в памяти страницы, поэтому
+  // восстанавливать на экране нечего: соперник и боец там ровно те же.
+  if (toSpar.value) { router.push({ name: 'V2Spar' }); return; }
   // НА ВТОРОЙ ШАГ ворот, а не на первый. Режим игрок уже выбрал, и показывать
   // ему выбор режима заново — значит просить сделать тот же шаг дважды ради
   // того же боя. Раскладка и состав лежат в сейфе, так что следующий бой
