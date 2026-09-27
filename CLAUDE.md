@@ -659,11 +659,14 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 > **Changed 04.06.2026 (owner decision).** Supersedes the prior rule: _"Do NOT merge to `main`. Owner merges manually. Claude Code never merges a working branch into `main` and never pushes `main`… the owner merges to `main` (and deploys to prod via Vercel) by hand after reviewing the Vercel preview… Claude Code no longer touches `main` at all."_ Claude-driven merge (gated on explicit per-merge confirmation) is now the standard workflow, not an exception. The "left on `main` after merge" concern is handled by pushing via refspec (e.g. `git push origin <sha>:main`) without checking out `main` locally.
 
 - **Frontend:** Vite 7 + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console). Compile-time defines `__API_SERVER_URL__`, `__WEB_SOCKET_URL__`, `__IS_PROD__`, `__MOCK_MODE__`, `__APP_VERSION__` (NOT `import.meta.env`).
-- **Deploy frontend:** Vercel (`vercel.json` SPA rewrites) **or** Docker+Nginx (`Dockerfile` multi-stage Node→Nginx, `nginx.prod.conf`, `nginx.test.conf`). Nginx serves static only (NOT reverse proxy) — backend runs separately at `api.hexlash.com` / `apitest.hexlash.com`.
-- **Deploy backend:** `backend/Dockerfile` (Node 20 + Prisma). Railway or VPS.
+- **Deploy frontend — путь ОДИН: Vercel**, авто-деплой с `main` (`vercel.json` — переписывание путей одностраничного приложения + исключение для деки). Ничего другого прод не обслуживает.
+- **Deploy backend:** `backend/Dockerfile` (Node 20 + Prisma) → Railway, `api.hexlash.com`. Это живой путь, его не трогали.
 - **WebSocket:** Authenticated via JWT protocol header, same HTTP server as Express (shared port)
-- **CI/CD:** GitHub Actions GitOps (`.github/workflows/gitops.yaml`) — push to `test`/`main` → Docker build → push Docker Hub → update K8s deployment YAML in DevOps repo
-- **Nginx ports:** 8080 (HTTP→HTTPS redirect), 8443 (SSL). Certs at `/etc/certs/hexlash.com.*`
+- **CI/CD фронта нет.** ⚠️ Прежде здесь было написано «Vercel **или** Docker+Nginx» и «CI/CD: GitHub Actions GitOps» — как два равнозначных пути. Это было неверно и вводило в заблуждение.
+  Разбор 27.09.2026: `.github/workflows/gitops.yaml` (сборка образа → Docker Hub → правка K8s-манифеста в репозитории DevOps) падал **637 прогонов из 637** — с самого первого, 20.02.2026, на шаге входа в Docker Hub: секретов `DOCKER_USERNAME` / `DOCKER_PASSWORD` в репозитории нет, и `docker login -u "" --password-stdin` отвечает «Must provide --username». То есть путь не «запасной» — он не собрал ни одного образа НИ РАЗУ, и прод по нему ехать не мог.
+  Файл удалён 27.09.2026 по решению владельца: постоянная красная галка на каждом коммите приучала не смотреть на проверки.
+  ⚠️ **Остались лежать без дела:** `Dockerfile`, `nginx.prod.conf`, `nginx.test.conf` (фронтовые, порты 8080/8443, сертификаты `/etc/certs/hexlash.com.*`). Их не удаляли: вернуть контейнерный путь — отдельное решение. Пока прод их не читает.
+  Зелёный прогон `pages build and deployment` в списке проверок — это GitHub Pages, он к `hexlash.com` отношения не имеет (в репозитории нет `CNAME`).
 
 ---
 
