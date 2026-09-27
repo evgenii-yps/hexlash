@@ -9,6 +9,12 @@
      строчка импорта. Нет накладки — нет ни тумблера, ни легенды в бою: ровно так,
      как и должно быть, потому что командование без своего тумблера бессмысленно.
 
+     ⚠️ СТРОКА ПОДПИСЫВАЕТСЯ ИМЕНЕМ ЛЕГЕНДЫ, А НЕ СЛОВОМ LEGEND. Легенда — это
+     конкретный боец, дошедший до вознесения, и зовут её его позывным; нет
+     позывного — именем её ядра. Служебное слово осталось ровно на один случай:
+     в записи легенды нет ни того, ни другого, то есть запись битая. Само имя
+     считают правила (services/command.js), накладка только показывает.
+
      ⚠️ ТУМБЛЕРА НЕ СУЩЕСТВУЕТ, А НЕ «ОН СЕРЫЙ» (ТЗ). В бою один на один, в забеге
      и в любом одиночном составе его на экране нет вовсе. Условие считает
      services/command.js по числу бойцов на стороне игрока — режимы нигде не
@@ -43,7 +49,7 @@
            Место под неё НЕ держится: пустая строка занимала бы место постоянно и
            тумблер прыгал бы на каждое решение. -->
       <p v-if="c.line" class="cmd-line">
-        <span class="cmd-line-who">{{ t.command.legend }}</span>
+        <span class="cmd-line-who">{{ c.who || t.command.legend }}</span>
         <span class="cmd-line-dot">·</span>
         <span class="cmd-line-act">{{ c.line }}</span>
       </p>
@@ -71,17 +77,22 @@
 import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
-import { commandState as c, toggleCommand, takeOver, setLegendPresent } from '@/services/command.js';
+import { commandState as c, toggleCommand, takeOver, setLegend } from '@/services/command.js';
 
 const store = useStore();
 
 /**
- * ЕСТЬ ЛИ ЛЕГЕНДА — единственное, что эта накладка приносит правилам. Ни один
+ * ЗАПИСЬ ЛЕГЕНДЫ — единственное, что эта накладка приносит правилам. Ни один
  * файл в services/ не тянет Vuex, и заводить первый такой незачем: у накладки
- * доступ к хранилищу есть по праву, а правилам нужен один-единственный факт.
+ * доступ к хранилищу есть по праву.
+ *
+ * ⚠️ ОТДАЁМ ЗАПИСЬ, А НЕ «ДА/НЕТ». Строка решений подписывается ИМЕНЕМ легенды,
+ *    а имя лежит в самой записи (позывной бойца, из которого она взошла). Ходить
+ *    за именем вторым геттером значило бы завести вторую дверь туда же, откуда
+ *    уже пришёл факт наличия, — и однажды их рассинхронить.
  */
-const hasLegend = computed(() => !!store.getters['roster/hasLegend']);
-watch(hasLegend, (v) => setLegendPresent(v), { immediate: true });
+const legendRec = computed(() => store.getters['roster/legend'] || null);
+watch(legendRec, (v) => setLegend(v), { immediate: true });
 
 // ── Место блока: над панелью рычагов ─────────────────────────────────────
 
@@ -224,7 +235,7 @@ onBeforeUnmount(() => {
   watched = [];
   window.removeEventListener('resize', measure);
   // Легенды для правил больше нет: накладка ушла, командовать некому.
-  setLegendPresent(false);
+  setLegend(null);
 });
 </script>
 
@@ -262,7 +273,9 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(var(--blur-glass));
   color: var(--ink-soft);
 }
-/* Кто сказал — тише того, что сказано: важен рычаг и боец, а не подпись. */
+/* Кто сказал — тише того, что сказано: важен рычаг и боец, а не подпись. Имя
+   легенды здесь намеренно НЕ выделено: строку читают ради рычага и цели, а не
+   ради того, чтобы в третий раз узнать, кто в клубе легенда. */
 .cmd-line-who { color: var(--ink-dim); }
 .cmd-line-dot { color: var(--ink-off); margin: 0 3px; }
 .cmd-line-act { color: var(--ink); }

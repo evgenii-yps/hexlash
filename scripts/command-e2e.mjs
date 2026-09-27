@@ -7,6 +7,9 @@
 //   1. тумблера НЕТ ВОВСЕ в одиночном составе (дуэль) и он ЕСТЬ в рейде;
 //   2. тумблера нет, пока нет легенды, — даже в рейде;
 //   3. легенда действует: строка решений появляется и называет рычаг и бойца;
+//   3б. строка подписана ИМЕНЕМ легенды — позывным бойца, из которого она
+//       взошла, а нет позывного — именем её ядра; служебного LEGEND в здоровом
+//       бою не видно ни разу;
 //   4. легенда тратит ТОТ ЖЕ запас и встаёт в ТОТ ЖЕ откат, что палец игрока;
 //   5. перехват работает всеми тремя способами (тумблер, карта, боец);
 //   6. перехват не откатывает уже применённое и не возвращает заряды.
@@ -37,17 +40,21 @@ page.on('pageerror', (e) => errors.push(e.message));
 /**
  * Посадить режим, состав и — по желанию — легенду. Легенда лежит в сейфе
  * ростера разделом `lg`, ровно как её пишет само восхождение.
+ *
+ * `legendCall` — позывной легенды. ПУСТАЯ СТРОКА ЗДЕСЬ ОСМЫСЛЕННА: это
+ * единственный способ добраться до второй ступени имени (имя ядра), потому что
+ * запись БЕЗ поля позывного восстановление отбрасывает целиком — см. проверку 3б.
  */
-const seed = (mode, n, withLegend) => page.evaluate(({ mode, n, withLegend }) => {
+const seed = (mode, n, withLegend, legendCall = 'ELDER') => page.evaluate(({ mode, n, withLegend, legendCall }) => {
   const raw = JSON.parse(sessionStorage.getItem('hexlash_progress') || '{}');
   const list = raw?.roster?.fighters || [];
   raw.prefight = { core: list[0].core, squad: list.slice(0, n).map((f) => f.id), mode, n };
   raw.buffs = { stock: { towel: 3, bucket: 0, dice: 0 }, kit: ['towel', 'towel', 'towel'], gifted: true };
-  if (withLegend) raw.roster.lg = { id: list[0].id, callsign: 'ELDER', core: list[0].core, at: 1 };
+  if (withLegend) raw.roster.lg = { id: list[0].id, callsign: legendCall, core: list[0].core, at: 1 };
   else if (raw.roster) delete raw.roster.lg;
   sessionStorage.setItem('hexlash_progress', JSON.stringify(raw));
   return list.length;
-}, { mode, n, withLegend });
+}, { mode, n, withLegend, legendCall });
 
 const enter = async (ms = 8000) => {
   await page.goto(`${BASE}/play/arena`, { waitUntil: 'networkidle' });
@@ -106,7 +113,14 @@ let lineText = '';
   ok(seen === 1, 'строка решений появилась');
   if (seen) {
     lineText = await page.locator('.cmd-line').innerText();
-    ok(/LEGEND/.test(lineText), 'строка называет, кто решил', `«${lineText.replace(/\n/g, ' ')}»`);
+    // ⚠️ ПОДПИСЬ — ПОЗЫВНОЙ ЛЕГЕНДЫ, А НЕ СЛОВО LEGEND (правка к ТЗ части B).
+    //    Посев кладёт в сейф позывной ELDER, и строка обязана назвать именно его:
+    //    легенда — это конкретный боец, дошедший до вознесения. Служебное слово
+    //    остаётся ровно на один случай — битую запись, — и в здоровом бою его
+    //    быть не должно НИ РАЗУ, поэтому второе утверждение здесь отрицательное.
+    ok(/^ELDER\b/.test(lineText.trim()), 'строка подписана позывным легенды',
+       `«${lineText.replace(/\n/g, ' ')}»`);
+    ok(!/LEGEND/.test(lineText), '    и служебного слова LEGEND в ней нет вовсе');
     ok(/HOLD|PUSH|FALL BACK|TOWEL/.test(lineText), 'и называет рычаг явно — включая бафф');
     // ⚠️ ЦЕЛЬ НАЗВАНА ВСЕГДА, И ИМЕННО ЭТО ЗДЕСЬ ВАЖНО. Прогон идёт в РЕЙДЕ, а
     //    там трое из четверых своих — союзные боты, и позывного у них нет. До
@@ -123,6 +137,31 @@ let lineText = '';
   const after = await charges();
   ok(before !== after, 'легенда списала заряд из ТОГО ЖЕ запаса, что и палец',
      `(было ${before} → стало ${after})`);
+  ok(errors.length === 0, 'ни одной ошибки на странице', errors[0] || '');
+}
+
+console.log('\n── 3б. ПОЗЫВНОГО НЕТ — ЗОВЁМ ИМЕНЕМ ЯДРА ─────────────────');
+{
+  // Вторая ступень имени, то же правило от 26.09, по которому строка зовёт
+  // безымянного союзного бота именем его ядра. Пустой позывной в сейфе —
+  // единственный достижимый путь сюда: запись без самого поля восстановление
+  // ростера отбрасывает целиком, а значит легенды не будет вовсе.
+  errors.length = 0;
+  await seed('raid', 1, true, '');
+  await enter();
+  const n = await page.locator('.cmd-toggle').count();
+  ok(n === 1, 'легенда с пустым позывным всё равно есть, тумблер на месте', `(найдено ${n})`);
+  await page.locator('.cmd-toggle').click();
+  await page.waitForSelector('.cmd-line', { timeout: 40000 }).catch(() => {});
+  if (await page.locator('.cmd-line').count()) {
+    const txt = (await page.locator('.cmd-line').innerText()).replace(/\n/g, ' ');
+    ok(/^(ONSLAUGHT|RAIDER|BULWARK|AMBUSH)\b/.test(txt.trim()),
+       'строка подписана именем ядра легенды', `«${txt}»`);
+    ok(!/LEGEND/.test(txt), '    и служебного слова LEGEND в ней всё ещё нет');
+    await page.screenshot({ path: `${OUT}/05b-legend-core-name.png` });
+  } else {
+    ok(false, 'строка решений появилась', '(не дождались)');
+  }
   ok(errors.length === 0, 'ни одной ошибки на странице', errors[0] || '');
 }
 
