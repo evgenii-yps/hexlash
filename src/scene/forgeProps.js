@@ -61,6 +61,36 @@ export const FORGE_PROPS = {
   // сравнивать их на одном кадре бессмысленно.
   deskY: 0.78,
 
+  // ── ПОДПИСЬ ПРЕДМЕТА — ОДНО ПРАВИЛО НА ВСЕХ ─────────────────────────────────
+  // Раньше каждый предмет считал ширину и вынос подписи от СВОИХ габаритов
+  // (R.w * 1.25, B.w * 0.78, S.pedR * 2.2 …). Предметы разного размера — значит
+  // и слова разного кегля, и на разном отдалении от своего предмета. Замер
+  // 27.09.2026 на телефоне: ширина слов гуляла 0.836…0.903, вынос 0.41…0.72,
+  // и подпись SPAR вылезала ЗА ПЕРЕДНИЙ КРАЙ плиты, ложась на табличку VIEW.
+  //
+  // Теперь кегль и вынос общие: слово — это подпись к ряду, а не к предмету, и
+  // сравнивать слова ряда между собой можно только если они одного роста.
+  //
+  // ⚠️ `lift` ЗАЛОЖЕН В ГЛУБИНУ РЯДА. Ряд стоит так, чтобы передний край САМОГО
+  //    ДАЛЬНЕГО от предмета края подписи не доставал до рёбра плиты (см. PROP_ROW
+  //    в PveScene). Меняешь lift или em — пересчитывай PROP_ROW.front.
+  label: {
+    // ⚠️ КЕГЕЛЬ УМЕНЬШЕН ПОД ШЕСТОЙ ПРЕДМЕТ. При прежнем (0.23, как у одиночных
+    //    подписей до ряда) шесть слов на телефоне вставали нос в хвост: замер
+    //    28.09.2026 — между соседними словами оставалось 1–2 точки экрана, и
+    //    «ROSTER ASCENSION FORGE TRAINING SPAR» читалось одной строкой. При 0.185
+    //    между словами 11–14 точек на телефоне и 13–14 на десктопе. Добавится
+    //    седьмой предмет — кегль придётся ужать снова ИЛИ развести ряд; первое
+    //    упрётся в читаемость раньше, чем второе.
+    em: 0.185,     // ВЫСОТА строки слова в мире — она же и есть кегль. Ширина
+                   // плоскости у каждого слова своя, по самому слову (режим
+                   // `fit` в buildLabel): так короткое слово не занимает места
+                   // длинного и не давит соседа по ряду.
+    lift: 0.58,    // вынос вперёд от начала предмета — больше полуглубины самого
+                   // глубокого из пятерых (наковальня, 0.36), с зазором
+    y: 0.02,       // над полом — ровно настолько, чтобы не мерцать с плитой
+  },
+
   roster:  { w: 0.72, d: 0.52, label: 'ROSTER' },
   upgrade: { w: 0.86, d: 0.72, label: 'FORGE' },
 
@@ -168,6 +198,9 @@ export const FORGE_PROPS = {
   },
 };
 
+/** Общее правило подписи — короткий псевдоним для всех пяти предметов. */
+const LBL = FORGE_PROPS.label;
+
 // ───────────────────────────── Материалы ─────────────────────────────
 /** Матовое тело предмета — тон декора из токенов, без своего цвета. */
 function bodyMat(kind = 'decor') {
@@ -222,16 +255,38 @@ function labelFont() {
 
 /**
  * Плоскость с ВЫГРАВИРОВАННЫМ словом. Не светится — это гравировка на матовом
- * теле, а не вывеска. Ширина плоскости задаётся, высота выводится из пропорций
- * холста, чтобы буквы никогда не растягивались.
+ * теле, а не вывеска. Буквы не растягиваются никогда: холст и плоскость всегда
+ * одних пропорций.
+ *
+ * `width` читается по-разному в зависимости от `fit`:
+ *   без `fit` — это ШИРИНА плоскости, высота выводится из пропорций холста;
+ *   с `fit`   — это ВЫСОТА строки, а ширину диктует само слово (см. ниже).
  */
-function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
+function buildLabel(text, width, { align = 'center', dim = 1, fit = false } = {}) {
   // ⚠️ 512×128 и анизотропия ниже — НЕ запас «на всякий случай», а измеренный
   // минимум. Пробовали вчетверо дешевле (256×64, anisotropy 1): кадров это не
   // вернуло НИ ОДНОГО (горизонталь 10.7–11.0 до и после), а слова на планшете и
   // наковальне размазались в пунктир. Снимки — в отчёте. Не удешевлять снова.
-  const PX = 512;
   const H = 128;
+  // ── РЕЖИМ `fit`: ХОЛСТ РЕЖЕТСЯ ПО САМОМУ СЛОВУ ────────────────────────────
+  // Без него плоскость у всех слов одной ширины, а слово внутри — своей: BUFFS
+  // занимает чуть больше половины, ASCENSION — всю. Пустые поля по краям
+  // коротких слов съедали промежуток между соседями по ряду (замер 27.09.2026 на
+  // малой плите: плоскости FORGE и SPAR налезали друг на друга на 0.015 доли
+  // кадра, а плоскость BUFFS свешивалась за левый край на 0.019 — при том, что
+  // сами слова не касались ни рамки, ни друг друга).
+  //
+  // ⚠️ КЕГЕЛЬ ОТ ЭТОГО НЕ МЕНЯЕТСЯ. Размер буквы задаёт `em` — высота строки в
+  //    мире, одна на все слова; по ширине холст и плоскость растут ВМЕСТЕ, один
+  //    к одному, поэтому буква везде одного роста. Меняется только то, сколько
+  //    пустоты слово вокруг себя занимает.
+  const probe = document.createElement('canvas').getContext('2d');
+  probe.font = `600 ${Math.round(H * 0.52)}px ${labelFont()}`;
+  const spProbe = Math.round(H * 0.10);
+  const inkPx = fit
+    ? [...text].reduce((a, ch) => a + probe.measureText(ch).width, 0) + spProbe * (text.length - 1)
+    : 0;
+  const PX = fit ? Math.max(H, Math.ceil(inkPx + H * 0.22)) : 512;
   const cv = document.createElement('canvas');
   cv.width = PX; cv.height = H;
   const c = cv.getContext('2d');
@@ -259,7 +314,9 @@ function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
   // Подписи лежат плашмя, камера смотрит на них под скользящим углом — без
   // анизотропии буквы слипаются. См. предупреждение выше.
   tex.anisotropy = 4;
-  const geo = new THREE.PlaneGeometry(width, width * (H / PX));
+  // В режиме `fit` ширину диктует слово, а задаваемая величина — высота строки.
+  const planeH = fit ? width : width * (H / PX);
+  const geo = new THREE.PlaneGeometry(planeH * (PX / H), planeH);
   const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, fog: true });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = 2;
@@ -273,7 +330,7 @@ function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
 // `upright` — предмет стоит на ВЕРТИКАЛЬНОЙ грани (торец острова), а не на полу.
 // Лужица нажатия тогда тоже встаёт вертикально: лёжа под торцом она светила бы
 // в пол под плитой, где её не видно вовсе.
-function propShell(label, labelWidth, labelY, labelZ,
+function propShell(label, labelEm, labelY, labelZ,
   { upright = false, puddleZ = 0.012, puddleW = 0, puddleH = 0 } = {}) {
   const group = new THREE.Group();
   const disposers = [];
@@ -297,7 +354,7 @@ function propShell(label, labelWidth, labelY, labelZ,
 
   let lbl = null;
   if (label) {
-    lbl = buildLabel(label, labelWidth);
+    lbl = buildLabel(label, labelEm, { fit: true });   // у предметов слово режется по себе
     lbl.mesh.position.set(0, labelY, labelZ);
     group.add(lbl.mesh);
     disposers.push(lbl.dispose);
@@ -350,7 +407,7 @@ function ownBox(api, mesh) {
 //       выгравирована на передней грани тумбы.
 export function buildRoster() {
   const R = FORGE_PROPS.roster;
-  const api = propShell(R.label, R.w * 1.25, 0.02, R.d * 0.72 + 0.20);
+  const api = propShell(R.label, LBL.em, LBL.y, LBL.lift);
   // Подпись лежит на полу перед предметом — читается с фронтальной камеры зала.
   if (api.label) api.label.rotation.x = -Math.PI / 2;
 
@@ -403,7 +460,7 @@ function buildPencil() {
 //    прокачки, а их в этой работе нет (ТЗ §3.4).
 export function buildUpgrade() {
   const U = FORGE_PROPS.upgrade;
-  const api = propShell(U.label, U.w * 1.05, 0.02, U.d * 0.7 + 0.22);
+  const api = propShell(U.label, LBL.em, LBL.y, LBL.lift);
   if (api.label) api.label.rotation.x = -Math.PI / 2;
   const D = FORGE_PROPS.deskY;
 
@@ -611,7 +668,7 @@ export function buildLegendAnchor() {
 // тремя нишами, помеченная как задел: ничего в неё не кладётся.
 export function buildBuffShelf() {
   const B = FORGE_PROPS.shelf;
-  const api = propShell(B.label, B.w * 0.78, 0.02, B.d * 0.7 + 0.20);
+  const api = propShell(B.label, LBL.em, LBL.y, LBL.lift);
   if (api.label) api.label.rotation.x = -Math.PI / 2;
   const D = FORGE_PROPS.deskY;
 
@@ -644,7 +701,7 @@ export function buildBuffShelf() {
 //    гексарха на экране режимов, и та же самая приходит сюда.
 export function buildSparStand() {
   const S = FORGE_PROPS.spar;
-  const api = propShell(S.label, S.pedR * 2.2, 0.02, S.pedR + 0.30, {
+  const api = propShell(S.label, LBL.em, LBL.y, LBL.lift, {
     puddleW: S.pedR * 2.6, puddleH: S.pedR * 2.6,
   });
   if (api.label) api.label.rotation.x = -Math.PI / 2;
@@ -684,7 +741,7 @@ export function buildSparStand() {
 //    полон движения: по нему ходят бойцы.
 export function buildBagStand() {
   const S = FORGE_PROPS.bagStand;
-  const api = propShell(S.label, S.pedR * 2.4, 0.02, S.pedR + 0.30, {
+  const api = propShell(S.label, LBL.em, LBL.y, LBL.lift, {
     puddleW: S.pedR * 2.6, puddleH: S.pedR * 2.6,
   });
   if (api.label) api.label.rotation.x = -Math.PI / 2;
@@ -735,7 +792,7 @@ export function buildBagStand() {
 //    делать; заслон на «второй раз нельзя» стоит в хранилище, а не в форме.
 export function buildAscensionStand() {
   const A = FORGE_PROPS.ascension;
-  const api = propShell(A.label, A.pedR * 2.2, 0.02, A.pedR + 0.30, {
+  const api = propShell(A.label, LBL.em, LBL.y, LBL.lift, {
     puddleW: A.pedR * 2.6, puddleH: A.pedR * 2.6,
   });
   if (api.label) api.label.rotation.x = -Math.PI / 2;
@@ -743,9 +800,9 @@ export function buildAscensionStand() {
   // Вторая подпись — своя плоскость на том же месте. Перерисовывать холст на
   // лету дороже и рискованнее, чем держать две готовых и гасить лишнюю: тот же
   // приём, что у якоря легенды.
-  const doneLbl = buildLabel(A.labelDone, A.pedR * 2.2, { dim: 0.55 });
+  const doneLbl = buildLabel(A.labelDone, LBL.em, { dim: 0.55, fit: true });
   doneLbl.mesh.rotation.x = -Math.PI / 2;
-  doneLbl.mesh.position.set(0, 0.02, A.pedR + 0.30);
+  doneLbl.mesh.position.set(0, LBL.y, LBL.lift);
   doneLbl.mesh.visible = false;
   api.group.add(doneLbl.mesh);
   api.own(doneLbl.dispose);
