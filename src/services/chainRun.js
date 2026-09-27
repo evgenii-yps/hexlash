@@ -1,4 +1,9 @@
 // chainRun.js — ЗАБЕГ (CHAIN). Один боец проходит три боя подряд: между боями он
+//
+// ⚠️ LASH УШЁЛ С БОЕВЫХ ЭКРАНОВ ЦЕЛИКОМ (ТЗ 27.09.2026). Решение 22.09
+//    «награда за раунд и за забег в LASH» отменено владельцем до балансировки
+//    всех систем после демо 30.09: ни начисления, ни счёта, ни слова на экране.
+//    Валюта жива и обслуживает магазин — этот файл в неё больше не заглядывает.
 // почти не лечится, а соперники становятся сильнее. Дошёл до конца — забег
 // пройден. Проиграл на любом раунде — забег сгорел целиком.
 //
@@ -15,17 +20,11 @@
 // половина сохранённого забега хуже, чем никакого — следующий читатель примет
 // её за настоящий забег. Обновил страницу — забег прерван, и это честно.
 //
-// ЗАРАБОТОК. Забег платит за КАЖДЫЙ пройденный раунд и сверх того один раз за
-// итог. Числа — в data/lashBalance.js, своего счёта здесь нет: этот файл только
-// говорит «раунд пройден» и «забег кончился так-то». Сгоревший забег заработок
-// за пройденные раунды НЕ отбирает.
-//
 // Экспортирует: chainState, startRun, winRound, loseRound, advanceRound,
 //               clearRunState, endRun, hasStaleRun, takeStaleRun, stakeOf.
 import { reactive } from 'vue';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
-import { awardRoundLash, awardBoutLash } from '@/services/lash.js';
 
 const CH = COMBAT_BALANCE.chain;
 const SECTION = 'chain';
@@ -41,8 +40,6 @@ export const ROUNDS = CH.roundBonus.length;
  *   outcome  — null пока идёт · 'complete' пройден · 'broken' сгорел
  *   hpBefore / hpAfter — здоровье бойца до и после восстановления (для панели)
  *   nextName — позывной следующего соперника (его показывает панель)
- *   lashGain — сколько монет забег принёс К ЭТОЙ МИНУТЕ (нарастающим итогом)
- *   lashLast — сколько начислено последним действием (для строки на панели)
  */
 export const chainState = reactive({
   active: false,
@@ -52,8 +49,6 @@ export const chainState = reactive({
   hpBefore: 0,
   hpAfter: 0,
   nextName: '',
-  lashGain: 0,
-  lashLast: 0,
 });
 
 // ─── Отметка во вкладке ──────────────────────────────────────────────────────
@@ -82,15 +77,6 @@ export function takeStaleRun(skip = false) {
   return true;
 }
 
-/**
- * Запомнить начисление, чтобы панель могла о нём сказать. Считать монеты второй
- * раз здесь нельзя: `lashGain` — это эхо того, что уже начислено, а не источник.
- */
-function note(gain) {
-  chainState.lashLast = gain;
-  chainState.lashGain += gain;
-}
-
 // ─── Ход забега ──────────────────────────────────────────────────────────────
 
 /** Начать забег. Первый раунд дерётся сразу — панели перед ним нет. */
@@ -102,8 +88,6 @@ export function startRun() {
   chainState.hpBefore = 0;
   chainState.hpAfter = 0;
   chainState.nextName = '';
-  chainState.lashGain = 0;
-  chainState.lashLast = 0;
   mark(true);
 }
 
@@ -116,11 +100,9 @@ export function winRound(hpLeft01, next = {}) {
   // ⚠️ ВТОРОЙ ВЫЗОВ НЕ ПЛАТИТ ДВАЖДЫ. Проверка на outcome стоит именно здесь:
   //    без неё повторный вызов на уже кончившемся забеге начислил бы ещё раз.
   if (!chainState.active || chainState.outcome) return false;
-  note(awardRoundLash()); // раунд пройден — платится всегда, и на последнем тоже
   if (chainState.round >= ROUNDS) {
     chainState.phase = 'done';
     chainState.outcome = 'complete';
-    note(awardBoutLash(true)); // забег пройден целиком
     mark(false);
     return false;
   }
@@ -140,7 +122,6 @@ export function loseRound() {
   chainState.outcome = 'broken';
   // Этот раунд НЕ пройден — за него не платят. Платят только за итог, и
   // заработанное за прошлые раунды остаётся у игрока.
-  note(awardBoutLash(false));
   mark(false);
 }
 
