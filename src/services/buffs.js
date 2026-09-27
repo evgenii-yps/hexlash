@@ -46,6 +46,10 @@ import {
 import {
   readStock, readKit, defaultKitFrom, spendFromStock, ensureStarterStock, writeKit,
 } from './buffStock.js';
+// БОЙ-НАСТРОЙКА SPAR. Там баффы БЕСПЛАТНЫЕ И БЕСКОНЕЧНЫЕ обеим сторонам (решение
+// владельца 24.09.2026): LASH не тратится, запас не убывает, предметы не кончаются.
+// Иначе проверка была бы нечестной — а SPAR ровно для проверки и существует.
+import { readSparBout } from './spar.js';
 
 /**
  * ЧТО ВИДИТ ЭКРАН. Панель и значки читают отсюда и больше ниоткуда.
@@ -174,6 +178,30 @@ export function unbindBuffArena() {
 export function buffStartFight() {
   if (!A) return;
   clearEffects();
+
+  // ── БОЙ ИЗ SPAR ──
+  // Набор берётся прямо со слотов экрана настройки, обеим сторонам, и запасом НЕ
+  // ограничивается. Ни одной записи в прогресс: стартовый запас не выдаётся
+  // (ensureStarterStock ПИШЕТ в сейф), из запаса ничего не списывается.
+  //
+  // ⚠️ ПУСТЫЕ СЛОТЫ ЗНАЧАТ «БЕЗ БАФФОВ», а не «собери за меня». На экране SPAR
+  //    слоты видны и честно подписаны «ПУСТО» — игрок их либо заполнил, либо нет,
+  //    и додумывать за него нельзя. Поэтому запасного набора здесь нет: правило
+  //    defaultKitFrom существует для ворот, где слотов на экране может и не быть.
+  const spar = readSparBout();
+  if (spar) {
+    kit = spar.myKit.filter(Boolean);
+    kitInitial = [...kit];
+    botKit = spar.foeKit.filter(Boolean);
+    botLastThrowAt = -1e9;
+    coolUntil = {};
+    lastCooling = '';
+    buffFightState.cool = {};
+    buffFightState.active = true;
+    syncCards();
+    return;
+  }
+
   ensureStarterStock();
   const stock = readStock();
   const saved = readKit();
@@ -240,8 +268,13 @@ function syncCards() {
   for (const id of kitInitial) counts.set(id, 0);
   for (const id of kit) counts.set(id, (counts.get(id) || 0) + 1);
   const canThrow = !!targetUnit();
+  // БОЙ ИЗ SPAR: предметы не кончаются, значит и остатка у них нет. Отдаём
+  // бесконечность, и карточка ПРОСТО НЕ РИСУЕТ счётчик — застывшее число
+  // читалось бы как сломанный счёт («бросил, а не убыло»), да и правило самого
+  // SPAR цифр на экране не держит.
+  const endless = !!readSparBout();
   buffFightState.cards = BUFF_IDS.filter((id) => counts.has(id)).map((id) => {
-    const left = counts.get(id);
+    const left = endless ? Infinity : counts.get(id);
     let state = 'normal';
     if (left <= 0) state = 'empty';
     // «НЕЛЬЗЯ СЕЙЧАС». Три причины, состояние одно, и четвёртого заводить
@@ -322,21 +355,27 @@ export function hasBuffOn(unit) {
 function applyBuff(id, unit, own) {
   if (!A || !unit || !unit.f || unit.dead) return false;       // правило 7
   if (effects.has(unit)) return false;                          // правило 2
+  // БОЙ ИЗ SPAR: бросок ничего не тратит — ни монет, ни запаса, ни самой карточки.
+  // ОТКАТ ПРИ ЭТОМ ОСТАЁТСЯ, и это не мелочь: без него бесконечные баффы можно
+  // было бы сыпать каждый кадр, и бой перестал бы быть похож на бой.
+  const freeBuffs = !!readSparBout();
   if (own) {
     const i = kit.indexOf(id);
     if (i < 0) return false;
     // СПИСАНИЕ РОВНО ЗДЕСЬ — в момент броска (правило 4). Запас мог опустеть
     // между воротами и боем (вторая вкладка, сброс прогресса): тогда бросок
     // просто не состоится, и карточка останется на месте.
-    if (!spendFromStock(id)) return false;
-    kit.splice(i, 1);
+    if (!freeBuffs) {
+      if (!spendFromStock(id)) return false;
+      kit.splice(i, 1);
+    }
     // ОТКАТ ставится в тот же миг, что списывается предмет (правило 9). Только
     // у игрока: у бота своя пауза между бросками, и она уже есть.
     coolUntil[id] = nowT + BUFF_BALANCE.cooldownSec;
   } else {
     const i = botKit.indexOf(id);
     if (i < 0) return false;
-    botKit.splice(i, 1);
+    if (!freeBuffs) botKit.splice(i, 1);
   }
 
   const f = unit.f;

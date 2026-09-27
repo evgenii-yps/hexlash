@@ -24,7 +24,9 @@
       <span v-else class="bc-ph">{{ item.mono }}</span>
     </div>
     <div class="bc-name">{{ item.name }}</div>
-    <div class="bc-count">×{{ count }}</div>
+    <!-- Счётчик — только когда он КОНЕЧЕН. В бою-настройке SPAR предметы не
+         кончаются, остатка у них нет, и число там было бы неправдой. -->
+    <div v-if="Number.isFinite(count)" class="bc-count">×{{ count }}</div>
     <div v-if="state === 'locked'" class="bc-lock">●</div>
   </component>
 </template>
