@@ -8,13 +8,15 @@ const rateLimit = require('express-rate-limit');
 const { ipKeyGenerator } = rateLimit; // IPv6-safe IP helper (v8) for the fallback key
 const { authMiddleware } = require('../middleware/auth');
 const { getFighterIntention } = require('../services/fighterIntentionService');
+const { getLegendCommand } = require('../services/legendCommandService');
 const { AI_TRAINER_ENABLED, ANTHROPIC_API_KEY } = require('../config');
 
 const router = express.Router();
 
-// Per-user wallet backstop. The client break-detector already caps ~12 model
-// calls per bout (cooldown + ceiling); this guards the server-side spend if many
-// bouts run. Keyed by authenticated userId (falls back to IP).
+// Per-user wallet backstop, shared by both endpoints below. The client
+// break-detectors already cap each bout (~12 for a fighter, 5 for the legend,
+// and the two never run in the same bout); this guards the server-side spend if
+// many bouts run. Keyed by authenticated userId (falls back to IP).
 const intentionLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 60,
@@ -35,6 +37,31 @@ router.post('/fighter-intention', authMiddleware, intentionLimiter, async (req, 
   } catch (err) {
     const status = err.code === 'BAD_OUTPUT' ? 422 : err.code === 'AI_DISABLED' ? 503 : 502;
     return res.status(status).json({ error: err.code || 'intention_failed' });
+  }
+});
+
+/* Legend command (COMMAND part B). Same shape and same guards as the fighter
+   endpoint above: auth, the same per-user wallet backstop, the key stays here.
+
+   ⚠️ THE SAME LIMITER ON PURPOSE, NOT A SECOND ONE. The two never run in the
+      same bout — the COMMAND toggle needs more than one fighter on the player's
+      side, and a field that big forces every body onto its reflexes — so one
+      shared budget cannot be overspent by adding the legend, and a second
+      limiter would only make the real ceiling twice today's without anyone
+      deciding that.
+
+   A non-200 here is normal: the client keeps the legend on her threshold table. */
+router.post('/legend-command', authMiddleware, intentionLimiter, async (req, res) => {
+  if (!AI_TRAINER_ENABLED || !ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'ai_legend_disabled' });
+  }
+  try {
+    const { portrait, units, foes, levers, phase, trigger } = req.body || {};
+    const result = await getLegendCommand({ portrait, units, foes, levers, phase, trigger });
+    return res.json(result); // { lever, target, line, lineWhy }
+  } catch (err) {
+    const status = err.code === 'BAD_OUTPUT' ? 422 : err.code === 'AI_DISABLED' ? 503 : 502;
+    return res.status(status).json({ error: err.code || 'legend_command_failed' });
   }
 });
 
