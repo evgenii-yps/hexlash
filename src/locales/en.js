@@ -80,6 +80,9 @@ export default {
     fight: "FIGHT",              // the hero action (the one pink + glow)
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode (single-label chip)
+    // Честная метка на том, чего ещё нет: магазин, кабинет, EDIT SPACE.
+    // Одно слово на все три — семья одна, и расходиться ей незачем.
+    soon: "SOON",
   },
   // Mode stage — the ARENA / FORGE fork. Not a screen any more: the home FIGHT
   // button flies the camera out to two plates standing in the same world, and these

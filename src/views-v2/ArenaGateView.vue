@@ -136,13 +136,15 @@
         <span class="n">{{ t.home.back }}</span>
       </button>
       <div class="hs-cluster">
-        <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
+        <button type="button" class="hs-chrome hs-seg-shop is-soon" disabled @click="goShop" :aria-label="t.home.shop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span class="n">{{ t.home.shop }}</span>
+          <span class="hs-soon">{{ t.home.soon }}</span>
         </button>
-        <button type="button" class="hs-chrome hs-seg-cab" @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+        <button type="button" class="hs-chrome hs-seg-cab is-soon" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
           <span class="av" aria-hidden="true"></span>
         </button>
+        <span class="hs-soon hs-soon-cab">{{ t.home.soon }}</span>
       </div>
     </div>
 

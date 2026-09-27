@@ -142,6 +142,28 @@
   transition: filter var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
 }
 .hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--chrome-rim); }
+
+/* ── ЧЕСТНАЯ ЗАГЛУШКА: SOON на хроме (ТЗ 27.09.2026) ───────────────────────
+   Магазин и кабинет ещё не работают, поэтому оба чипа помечены словом SOON и
+   не нажимаются. Своё состояние НЕ заводим: выключенный вид уже описан выше
+   в .hs-chrome:disabled (рамка --line, заливка приглушена, чернила
+   --chrome-ink-off = тот же #5D5D66, что и --ink-off). Здесь только сама метка
+   и две дырки, которые disabled не закрывал: блик по наведению и подсветка
+   ромба. Снимается целиком: убрать disabled и строки .hs-soon в разметке
+   пяти экранов (дом, зал FORGE, пространство, ворота арены, выбор отряда)
+   и этот блок. */
+.hs-chrome:disabled:hover::after { animation: none; }
+.hs-chrome:disabled:hover .av { filter: none; border-color: var(--chrome-line); }
+/* Метка — мельчайшая моно-подпись капителью: та же семья, что у SOON в кабинете
+   и в магазине. Ни рамки, ни плашки: слово, а не значок. */
+.hs-soon { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-off); line-height: 1; flex: 0 0 auto; }
+/* У кабинета подписи внутри чипа нет — ромб 28px, повёрнутый на 45°, занимает
+   почти всю его высоту (40 из 44). Поэтому метка выносится ПОД чип и держится
+   за кластер, а не за кнопку: у .hs-chrome стоит overflow:hidden, изнутри она
+   была бы срезана. */
+.hs-cluster { position: relative; }
+.hs-soon-cab { position: absolute; right: 0; top: calc(50% + 24px); pointer-events: none; }
 /* (mobile lives in one consolidated block at the end of the file, so it overrides
    every base rule above it.) */
 
@@ -380,6 +402,10 @@
   /* SHOP/back → icon-only 44×44 square (label hidden, glyph centred) */
   .hs-seg-shop { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .hs-seg-shop .n { display: none; }
+  /* Гейтнутый чип магазина остаётся с меткой: подпись на телефоне скрыта, и без
+     этого правила слово SOON не влезло бы в квадрат 44×44. */
+  .hs-seg-shop.is-soon { width: auto; padding: 0 var(--sp-3); gap: var(--sp-2); }
+  .hs-soon-cab { top: calc(50% + 23px); }
   /* cabinet → 44×44 icon-only (the chrome diamond) */
   .hs-seg-cab { width: 44px; height: 44px; padding: 0; }
   /* FIGHT — full-width slab, lower, smaller word */

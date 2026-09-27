@@ -40,22 +40,32 @@
             <div class="hx-sub">{{ subtitle }}</div>
           </div>
 
-          <!-- Stage: provider selector (default) -->
-          <div v-if="screen === 'provider'" class="hx-list">
-            <button type="button" class="hx-btn" @click="onProviderSelect('google')">
+          <!-- Stage: provider selector (default)
+               ЧЕСТНАЯ ЗАГЛУШКА (ТЗ 27.09.2026). Ни один из четырёх способов входа
+               не работает, поэтому группа помечена диагональным SOON и не
+               нажимается (disabled снимает и клик, и фокус с клавиатуры).
+               Кнопки НЕ прячутся — игрок должен видеть, что именно скрыто.
+               ⚠️ MORE OPTIONS вёл к рабочему входу по паролю. Он закрыт заодно —
+               это продолжение временной меры 11.09.2026 (вход в аккаунт чинится
+               отдельной задачей, до тех пор главный путь — гость).
+               Снимается ЦЕЛИКОМ: убрать is-gated, все четыре disabled, строку
+               .hx-soon-diag и одноимённый блок в стилях. -->
+          <div v-if="screen === 'provider'" class="hx-list is-gated">
+            <button type="button" class="hx-btn" disabled @click="onProviderSelect('google')">
               <span class="hx-ic"><IconGoogle :s="18" /></span><span class="hx-lbl">Google</span>
             </button>
-            <button type="button" class="hx-btn" @click="onProviderSelect('x')">
+            <button type="button" class="hx-btn" disabled @click="onProviderSelect('x')">
               <span class="hx-ic"><IconX :s="16" /></span><span class="hx-lbl">X</span>
             </button>
-            <button type="button" class="hx-btn" @click="onProviderSelect('web3')">
+            <button type="button" class="hx-btn" disabled @click="onProviderSelect('web3')">
               <span class="hx-ic"><IconWallet :s="19" /></span><span class="hx-lbl">Web3 Wallet</span>
             </button>
-            <button type="button" class="hx-btn" @click="onProviderSelect('more')">
+            <button type="button" class="hx-btn" disabled @click="onProviderSelect('more')">
               <span class="hx-ic"><IconUser :s="18" /></span>
               <span class="hx-lbl">More Options</span>
               <span class="hx-chev"><IconChevron :s="15" /></span>
             </button>
+            <span class="hx-soon-diag" aria-hidden="true">SOON</span>
           </div>
 
           <!-- Stage: more options -->
@@ -484,6 +494,50 @@ async function onForgotSubmit(payload) {
 .hx-btn .hx-chev { color: var(--ink-dim); display: flex; }
 .hx-btn:hover { border-color: var(--line-strong); background: var(--fill-2); }
 .hx-btn:active { transform: translateY(1px); }
+
+/* ── ЧЕСТНАЯ ЗАГЛУШКА: диагональный SOON поверх группы (ТЗ 27.09.2026) ──────
+   Правило дизайн-системы: «SOON — матовый, приглушённый, без свечения, и он не
+   притворяется кнопкой». Поэтому здесь нет ни розового, ни ореола, ни плашки —
+   только слово цвета --ink-off (в tokens.css он и подписан «выключенное, SOON»).
+   Группа приглушена, но НЕ спрятана: подписи и значки читаются сквозь надпись,
+   иначе игрок не поймёт, что именно закрыто. */
+/* container-type — чтобы кегль надписи считался от ШИРИНЫ ГРУППЫ (cqw ниже), а
+   не от экрана: карточка на узком телефоне ужимается, и слово обязано ужаться
+   вместе с ней. Размер группы от этого не меняется — она и так во всю ширину. */
+.hx-list.is-gated { position: relative; container-type: inline-size; }
+/* Приглушение без пропажи: подписи уходят на ступень тише основного текста,
+   значки — ещё тише. Рамка и заливка остаются, чтобы кнопки читались кнопками. */
+.hx-list.is-gated .hx-btn { cursor: default; }
+.hx-list.is-gated .hx-btn .hx-lbl { color: var(--ink-dim); }
+.hx-list.is-gated .hx-btn .hx-ic { color: var(--ink-off); }
+.hx-list.is-gated .hx-btn .hx-chev { color: var(--ink-off); }
+/* наведение и нажатие молчат — элемент не притворяется живым */
+.hx-list.is-gated .hx-btn:hover { border-color: var(--line); background: var(--fill-1); }
+.hx-list.is-gated .hx-btn:active { transform: none; }
+/* Угол считается из размеров самой группы, а не подобран на глаз:
+   высота = 4 кнопки по 52 + 3 зазора по 11 = 241;
+   ширина внутри полей карточки ≈ 311 и на телефоне (354 − 44), и на десктопе
+   (372 − 60) — она у обеих ширин почти одна, поэтому угол тоже один:
+   atan(241 / 311) ≈ 38°. Кегль задан шириной группы, а не ступенью шкалы:
+   слово должно дойти до углов и не выйти за них (шкала таких размеров не знает).
+   Петель и переходов у надписи нет вовсе — она статична при любых настройках
+   движения, отдельного prefers-reduced-motion ей не нужно. */
+.hx-soon-diag {
+  position: absolute; left: 50%; top: 50%;
+  /* translateX в конце — компенсация трекинга: --ls-title добавляет пустоту
+     ПОСЛЕ последней буквы, из-за чего чернила слова стоят левее центра коробки.
+     Сдвиг на половину трекинга возвращает их на середину группы. */
+  transform: translate(-50%, -50%) rotate(38deg) translateX(0.07em);
+  font-family: var(--font-display); font-weight: 700;
+  /* 25% ширины группы — замер, а не round number. Слово SOON в Saira Condensed
+     700 с трекингом --ls-title шире кегля в 3.82 раза; повёрнутое на 38° оно
+     занимает по ширине 3.82·cos38 + 0.75·sin38 ≈ 3.47 кегля, по высоте ≈ 2.94.
+     При 25% ширины (308 → 77) обе стороны остаются внутри группы 308×241 с
+     запасом, и запас держится на всём диапазоне ширин карточки (240…312). */
+  font-size: 25cqw; line-height: 0.75; letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-off); opacity: var(--o-dim);
+  pointer-events: none; white-space: nowrap; user-select: none; -webkit-user-select: none;
+}
 
 /* email form — stacked field rows + full-width submit */
 .hx-form { display: flex; flex-direction: column; gap: 11px; }
