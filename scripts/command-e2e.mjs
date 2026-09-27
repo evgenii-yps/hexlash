@@ -108,6 +108,15 @@ let lineText = '';
     lineText = await page.locator('.cmd-line').innerText();
     ok(/LEGEND/.test(lineText), 'строка называет, кто решил', `«${lineText.replace(/\n/g, ' ')}»`);
     ok(/HOLD|PUSH|FALL BACK|TOWEL/.test(lineText), 'и называет рычаг явно — включая бафф');
+    // ⚠️ ЦЕЛЬ НАЗВАНА ВСЕГДА, И ИМЕННО ЭТО ЗДЕСЬ ВАЖНО. Прогон идёт в РЕЙДЕ, а
+    //    там трое из четверых своих — союзные боты, и позывного у них нет. До
+    //    правки строка на них обрывалась на рычаге («LEGEND · HOLD»), то есть
+    //    почти весь рейд шла без цели. Теперь бота зовут именем его ядра — по
+    //    тому же правилу, по какому его зовёт панель выбранного бойца.
+    ok(/→\s*\S/.test(lineText), 'строка НАЗЫВАЕТ ЦЕЛЬ — даже когда это безымянный бот',
+       `«${lineText.replace(/\n/g, ' ')}»`);
+    ok(/→\s*(ONSLAUGHT|RAIDER|BULWARK|AMBUSH|[A-Z]{2,})/.test(lineText),
+       '    и зовёт её позывным или именем ядра, а не заглушкой');
     await page.screenshot({ path: `${OUT}/05-decision-line.png` });
   }
 

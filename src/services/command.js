@@ -45,6 +45,7 @@
 import { reactive } from 'vue';
 import { COMMAND_BALANCE as C } from '@/data/commandBalance.js';
 import { KLICH_BALANCE } from '@/data/klichBalance.js';
+import { getCore } from '@/data/upgradeData.js';
 import { klichFightState, useKlichCard } from './klich.js';
 import { buffFightState, useBuffCard, hasBuffOn } from './buffs.js';
 import { selectUnit, onSelectFrame, onSelectTap } from './fighterSelect.js';
@@ -401,12 +402,24 @@ function holdOf(kind) {
  * ⚠️ ИМЕНА РЫЧАГОВ БЕРУТСЯ У САМИХ РЫЧАГОВ, А НЕ ПИШУТСЯ ЗДЕСЬ. Второй список
  *    названий разошёлся бы с первым при первой же правке, и строка начала бы
  *    называть рычаг иначе, чем карта под ним.
+ *
+ * ⚠️ У СОЮЗНОГО БОТА ПОЗЫВНОГО НЕТ — ТОГДА ЗОВЁМ ЕГО ИМЕНЕМ ЯДРА. Правило не
+ *    новое: так уже решено для панели выбранного бойца («заголовок — ник бойца,
+ *    а у союзного бота имя его ядра»), и здесь взято оттуда же вместе с
+ *    источником имени. Без этого строка обрывалась бы на рычаге — а в рейде
+ *    своих бойцов у игрока один из четырёх, и цели не было бы почти никогда.
+ *
+ * ⚠️ ЯДРО СПРАШИВАЕТСЯ, ТОЛЬКО ЕСЛИ ОНО ЕСТЬ. getCore на незнакомом ядре
+ *    возвращает не пустоту, а BULWARK — это разумно там, где нужно хоть
+ *    что-нибудь нарисовать, но здесь дало бы прямую ложь: строка назвала бы
+ *    цель ядром, которого у неё нет. Лучше без имени, чем с чужим.
  */
 function lineFor(lever, unit) {
   const k = klichFightState.cards.find((c) => c.id === lever);
   const b = buffFightState.cards.find((c) => c.id === lever);
   const name = (k && k.name) || (b && b.name) || lever.toUpperCase();
-  const nick = (unit.spec && unit.spec.name) || '';
+  const spec = unit.spec || {};
+  const nick = spec.name || (spec.coreId ? getCore(spec.coreId).name : '');
   return nick ? `${name} → ${nick}` : name;
 }
 
