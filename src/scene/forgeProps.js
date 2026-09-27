@@ -163,6 +163,27 @@ export const FORGE_PROPS = {
     labelDone: 'SOON',
   },
 
+  // ГРУША В ЗАЛЕ — настольная, на таком же постаменте, что и SPAR. Уводит на
+  // остров тренировки (ТЗ 27.09.2026: правило перемещения одно — нажал предмет,
+  // улетел на его остров).
+  //
+  // ⚠️ ТЕЛО ГРУШИ ТО ЖЕ САМОЕ, что висит на острове (общий кусок bagBody), только
+  //    уменьшенное. Своей геометрии, своей огранки и своего тона здесь нет —
+  //    иначе в игре завелась бы вторая боксёрская груша.
+  //
+  // ⚠️ НЕ КРУПНЕЕ ПОСТАМЕНТА SPAR (ТЗ). Считано: тело висящей груши высотой
+  //    0.86 + две полусферы ≈ 1.29; силуэт SPAR с постаментом ≈ 0.92. Доля 0.62
+  //    приводит грушу со стойкой и постаментом ровно к этой высоте — два предмета
+  //    стоят в ряду одного роста, и ни один не перетягивает взгляд.
+  bagStand: {
+    pedR: 0.34,        // чуть уже постамента SPAR: груша — вещь, а не место
+    pedThick: 0.10,
+    postR: 0.05,       // стойка от постамента к телу
+    postH: 0.30,
+    scale: 0.62,       // тело груши в долях от висящей
+    label: 'TRAINING',
+  },
+
   spar: {
     pedR: 0.38,        // радиус постамента
     pedThick: 0.12,    // его толщина
@@ -524,6 +545,52 @@ export function buildCrossing(label) {
 //
 // Качание — снаружи и по одной оси: удар толкает грушу от бойца, пружина
 // возвращает её в отвес. Тело бойца груша не трогает совсем.
+/**
+ * ТЕЛО ГРУШИ — один кусок на обе груши игры.
+ *
+ * ⚠️ ЗАЧЕМ ВЫНЕСЕНО. Груш стало две: висящая на острове тренировки и настольная
+ *    в зале (ТЗ 27.09.2026, предмет-груша). Огранка, тон и пропорции у них обязаны
+ *    быть ОДНИ — иначе в игре заведётся вторая боксёрская груша, а их и так ровно
+ *    одна вещь из реального мира на две с перчатками. Переписать тело вторым
+ *    местом значило бы развести их с первой же правки.
+ *
+ *    Числа НЕ ТРОНУТЫ ни одним: у висящей груши всё осталось как было, до буквы.
+ *
+ * @param {THREE.Object3D} host  куда класть тело (у висящей — подвес, у настольной — стойка)
+ * @param {number} bodyY         центр тела по высоте, в единицах host
+ * @param {object} mats          { mat, dark } — тон тела и тон тёмных деталей
+ * @param {Function} own         куда складывать уборщиков
+ */
+function bagBody(host, bodyY, { mat, dark }, own) {
+  const B = FORGE_PROPS.bag;
+  // Тело — цилиндр с гранями, сверху и снизу по полусфере того же счёта граней.
+  // Ровно та же логика, что у кулака перчатки: мало сегментов + плоская огранка.
+  const tubeGeo = new THREE.CylinderGeometry(B.r, B.r * 0.94, B.h, B.sides);
+  const capGeo = new THREE.SphereGeometry(B.r, B.sides, 4);
+  own(() => { tubeGeo.dispose(); capGeo.dispose(); });
+  const tube = new THREE.Mesh(tubeGeo, mat);
+  tube.position.y = bodyY;
+  host.add(tube);
+  const capTop = new THREE.Mesh(capGeo, mat);
+  capTop.position.y = bodyY + B.h / 2;
+  capTop.scale.set(1, 0.82, 1);
+  host.add(capTop);
+  const capBot = new THREE.Mesh(capGeo, mat);
+  capBot.position.y = bodyY - B.h / 2;
+  capBot.scale.set(0.94, 0.90, 0.94);
+  host.add(capBot);
+
+  // Два пояска — то же, что манжета у перчатки: деталь, которая держит форму.
+  const strapGeo = new THREE.CylinderGeometry(B.r * 1.04, B.r * 1.04, B.strapH, B.sides);
+  own(() => strapGeo.dispose());
+  for (const k of [0.30, -0.30]) {
+    const st = new THREE.Mesh(strapGeo, dark);
+    st.position.y = bodyY + B.h * k;
+    host.add(st);
+  }
+  return [tube, capTop, capBot];
+}
+
 export function buildPunchBag() {
   const B = FORGE_PROPS.bag;
   const group = new THREE.Group();   // стоит на полу; вся груша висит внутри
@@ -554,32 +621,8 @@ export function buildPunchBag() {
   }
   const chainDrop = 0.07 * B.chain;
 
-  // Тело — цилиндр с гранями, сверху и снизу по полусфере того же счёта граней.
-  // Ровно та же логика, что у кулака перчатки: мало сегментов + плоская огранка.
   const bodyY = -chainDrop - B.h / 2 - B.r * 0.6;
-  const tubeGeo = new THREE.CylinderGeometry(B.r, B.r * 0.94, B.h, B.sides);
-  const capGeo = new THREE.SphereGeometry(B.r, B.sides, 4);
-  disposers.push(() => { tubeGeo.dispose(); capGeo.dispose(); });
-  const tube = new THREE.Mesh(tubeGeo, mat);
-  tube.position.y = bodyY;
-  pivot.add(tube);
-  const capTop = new THREE.Mesh(capGeo, mat);
-  capTop.position.y = bodyY + B.h / 2;
-  capTop.scale.set(1, 0.82, 1);
-  pivot.add(capTop);
-  const capBot = new THREE.Mesh(capGeo, mat);
-  capBot.position.y = bodyY - B.h / 2;
-  capBot.scale.set(0.94, 0.90, 0.94);
-  pivot.add(capBot);
-
-  // Два пояска — то же, что манжета у перчатки: деталь, которая держит форму.
-  const strapGeo = new THREE.CylinderGeometry(B.r * 1.04, B.r * 1.04, B.strapH, B.sides);
-  disposers.push(() => strapGeo.dispose());
-  for (const k of [0.30, -0.30]) {
-    const st = new THREE.Mesh(strapGeo, dark);
-    st.position.y = bodyY + B.h * k;
-    pivot.add(st);
-  }
+  bagBody(pivot, bodyY, { mat, dark }, (fn) => disposers.push(fn));
 
   // Качание: угол и скорость по одной оси. Удар задаёт скорость, пружина тянет
   // обратно в отвес, затухание гасит. Ни физики, ни столкновений здесь нет —
@@ -713,6 +756,55 @@ export function buildSparStand() {
   fig.rotation.y = Math.PI;
   api.add(fig);
   api.own(() => { figGeo.dispose(); figMat.dispose(); });
+
+  return api;
+}
+
+// ═══════════════════ ГРУША В ЗАЛЕ — ДВЕРЬ НА ОСТРОВ ТРЕНИРОВКИ ═══════════════════
+// Постамент SPAR плюс короткая стойка, на ней — ТО ЖЕ тело груши, что висит на
+// острове, только уменьшенное (см. FORGE_PROPS.bagStand).
+//
+// ⚠️ ЭТА ГРУША НЕ КАЧАЕТСЯ. Качание висящей — это ответ на удар бойца; здесь бить
+//    некому, и предмет, который шевелится сам по себе, читался бы живым. Зал и так
+//    полон движения: по нему ходят бойцы.
+export function buildBagStand() {
+  const S = FORGE_PROPS.bagStand;
+  const api = propShell(S.label, S.pedR * 2.4, 0.02, S.pedR + 0.30, {
+    puddleW: S.pedR * 2.6, puddleH: S.pedR * 2.6,
+  });
+  if (api.label) api.label.rotation.x = -Math.PI / 2;
+
+  // Постамент — тот же шестигранник, что под силуэтом SPAR: предметы одного ряда
+  // стоят на одном основании, и это их и связывает в ряд.
+  const pedGeo = new THREE.CylinderGeometry(S.pedR, S.pedR * 0.88, S.pedThick, 6, 1);
+  const pedMat = bodyMat('pedestal');
+  const ped = new THREE.Mesh(pedGeo, pedMat);
+  ped.position.y = S.pedThick / 2;
+  api.add(ped);
+  api.own(() => { pedGeo.dispose(); pedMat.dispose(); });
+
+  const mat = bodyMat('decorDark2');
+  const dark = bodyMat('dark');
+  api.own(() => { mat.dispose(); dark.dispose(); });
+
+  // Стойка от постамента к телу — тот же тёмный тон, что у цепи висящей груши:
+  // у обеих груш держатель темнее тела.
+  const postGeo = new THREE.CylinderGeometry(S.postR, S.postR * 1.15, S.postH, 6);
+  const post = new THREE.Mesh(postGeo, dark);
+  post.position.y = S.pedThick + S.postH / 2;
+  api.add(post);
+  api.own(() => postGeo.dispose());
+
+  // Тело — общий кусок, уменьшенный целиком. Масштаб на группе, а не на числах
+  // геометрии: так пропорции висящей груши переносятся один в один.
+  const B = FORGE_PROPS.bag;
+  const body = new THREE.Group();
+  body.scale.setScalar(S.scale);
+  body.position.y = S.pedThick + S.postH;
+  const parts = bagBody(body, B.h / 2 + B.r * 0.55, { mat, dark }, (fn) => api.own(fn));
+  api.group.add(body);
+  // Луч ловится по телу: постамент мелкий, и палец целится в грушу.
+  for (const m of parts) api.hit.push(m);
 
   return api;
 }
