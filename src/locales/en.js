@@ -251,6 +251,15 @@ export default {
     tapFighter: "TAP YOUR FIGHTER",
     noTarget: "NO TARGET — NO FIGHTER STANDING",
   },
+  // КОМАНДОВАНИЕ. Строка решений служебная и прямая — это ТЗ дословно: голос
+  // ядра и человеческая формулировка придут частью B, выдумывать их нельзя.
+  // Названия рычагов сюда НЕ дублируются: их знают сами рычаги (klichBalance,
+  // buffBalance), и второй список разошёлся бы с первым.
+  command: {
+    iLead: "I LEAD",
+    legendLeads: "LEGEND LEADS",
+    legend: "LEGEND",
+  },
   gate: {
     soon: "SOON",
     // Баффы — три слота «В бой» на шаге выбора бойца (ТЗ 22.09.2026, работа 2).

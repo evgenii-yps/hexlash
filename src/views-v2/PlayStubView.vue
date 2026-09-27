@@ -20,6 +20,12 @@
                      рычагов у правого края. Палец не ловит вовсе — это показания;
                      нажимаются по-прежнему карты внизу. Между ним и сценой —
                      services/fighterSelect.js.
+       CommandOverlay — командование: тумблер «ВЕДУ Я / ВЕДЁТ ЛЕГЕНДА» над панелью
+                     рычагов, строка решений легенды и перехват по картам. Стоит
+                     ПОСЛЕ панели рычагов нарочно: он меряет её место, чтобы встать
+                     над ней. Эта строка — выключатель всего командования: правила
+                     (services/command.js) подписываются на кадр боя, когда их
+                     подтягивает эта накладка, и больше ниоткуда.
        RunInterrupted — сюда НЕ ставится: брошенный забег или турнир уводит игрока в
                      ворота, и сообщение показывают там (см. сам компонент). -->
 <template>
@@ -27,6 +33,7 @@
   <BuffFightOverlay />
   <KlichFightOverlay />
   <FighterSelectOverlay />
+  <CommandOverlay />
   <FightResultPanel />
   <ChainPanels />
   <CollapsePanels />
@@ -38,6 +45,7 @@ import ArenaScene from '@/scene/ArenaScene.vue';
 import BuffFightOverlay from '@/components/buff/BuffFightOverlay.vue';
 import KlichFightOverlay from '@/components/klich/KlichFightOverlay.vue';
 import FighterSelectOverlay from '@/components/select/FighterSelectOverlay.vue';
+import CommandOverlay from '@/components/command/CommandOverlay.vue';
 import FightResultPanel from '@/components/panel/FightResultPanel.vue';
 import ChainPanels from '@/components/chain/ChainPanels.vue';
 import CollapsePanels from '@/components/collapse/CollapsePanels.vue';

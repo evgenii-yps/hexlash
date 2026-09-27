@@ -32,7 +32,7 @@
 //    ловля пальца и луч по телам. Палец теперь ловит один файл на всех —
 //    services/fighterSelect.js, — и бафф только спрашивает у него, кто выбран.
 //
-// Экспортирует: buffFightState, bindBuffArena, unbindBuffArena, buffStartFight,
+// Экспортирует: buffFightState, hasBuffOn, bindBuffArena, unbindBuffArena, buffStartFight,
 //               buffEndFight, buffTick, useBuffCard.
 import { reactive, watch } from 'vue';
 import * as THREE from 'three';
@@ -276,16 +276,37 @@ function targetUnit() {
 /**
  * Тап по карточке: бросить ВЫБРАННОМУ бойцу, немедленно. Второго шага нет,
  * отменять нечего — поэтому и повторный тап больше не отмена.
+ *
+ * ⚠️ ВОЗВРАЩАЕТ «ПОЛУЧИЛОСЬ ИЛИ НЕТ» — по той же причине, что и клич: в эту же
+ *    дверь входит легенда, и строка решений не имеет права объявить бросок,
+ *    которого не было. Карточке ответ не нужен, она его не читает.
+ *
+ * @returns {boolean} true — бафф брошен и предмет списан
  */
 export function useBuffCard(key) {
-  if (!buffFightState.active) return;
+  if (!buffFightState.active) return false;
   const card = buffFightState.cards.find((c) => c.key === key);
-  if (!card || card.left <= 0) return; // потраченная карточка не бросается
-  if (isCooling(key)) return;          // откат: карточка погашена разметкой
+  if (!card || card.left <= 0) return false; // потраченная карточка не бросается
+  if (isCooling(key)) return false;          // откат: карточка погашена разметкой
   const unit = targetUnit();
-  if (!unit) return;                   // уже под баффом или выбирать некого
-  applyBuff(key, unit, true);
+  if (!unit) return false;                   // уже под баффом или выбирать некого
+  const ok = applyBuff(key, unit, true);
   syncCards();
+  return ok;
+}
+
+/**
+ * ЕСТЬ ЛИ НА ЭТОМ БОЙЦЕ БАФФ ПРЯМО СЕЙЧАС.
+ *
+ * ⚠️ СПРАШИВАЕТ КОМАНДОВАНИЕ, И ТОЛЬКО ОНО (services/command.js). Бросить
+ *    второй бафф на того, кто уже под баффом, нельзя (правило 2), и карточка
+ *    игрока об этом честно гаснет сама. У легенды карточки нет — она решает до
+ *    броска, и без этого вопроса она раз в три секунды упиралась бы в отказ,
+ *    ничего не тратя, но и никого не спасая: правило 1 не пошло бы дальше и
+ *    израненный боец остался бы без помощи, которая была под рукой.
+ */
+export function hasBuffOn(unit) {
+  return !!unit && effects.has(unit);
 }
 
 // ── Применение баффа ─────────────────────────────────────────────────────

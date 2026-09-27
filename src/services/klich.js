@@ -220,20 +220,28 @@ function isCooling(id) {
  *
  * Боец УЖЕ ПОД КЛИЧЕМ остаётся годным: новый клич заменяет предыдущий
  * (правило 4), а не отбивается. Этим клич и отличается от баффа.
+ *
+ * ⚠️ ВОЗВРАЩАЕТ «ПОЛУЧИЛОСЬ ИЛИ НЕТ». Карте это не нужно и она ответ не читает —
+ *    нужно КОМАНДОВАНИЮ (services/command.js): легенда входит в эту же дверь и
+ *    обязана знать, списался ли заряд, иначе строка решений объявит крик, которого
+ *    не было. Второй двери для легенды нет нарочно — см. шапку command.js.
+ *
+ * @returns {boolean} true — клич применён и заряд списан
  */
 export function useKlichCard(key) {
-  if (!klichFightState.active) return;
+  if (!klichFightState.active) return false;
   const card = klichFightState.cards.find((c) => c.key === key);
-  if (!card) return;
+  if (!card) return false;
   // Правило 9: карта с нулём зарядов погашена и ОТКЛЮЧЕНА разметкой, поэтому
   // тап по ней сюда не доходит вовсе. Видимая причина — сам счётчик ×0 и
   // приглушение, как у баффов.
-  if (card.left <= 0) return;
-  if (isCooling(key)) return;   // откат: карта погашена разметкой, сюда не дойдёт
+  if (card.left <= 0) return false;
+  if (isCooling(key)) return false;   // откат: карта погашена разметкой, сюда не дойдёт
   const unit = selectedUnit();
-  if (!unit) return;            // выбрать ещё некого: плита пуста
-  applyKlich(key, unit);
+  if (!unit) return false;            // выбрать ещё некого: плита пуста
+  const ok = applyKlich(key, unit);
   syncCards();
+  return ok;
 }
 
 // ── Применение клича ─────────────────────────────────────────────────────
