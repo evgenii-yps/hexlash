@@ -178,7 +178,7 @@ function onPress(key) {
   //    одно: нажал предмет — улетел на его остров. Сам экран /play/spar из игры
   //    НЕ УДАЛЁН и остаётся по своему адресу: бой-настройка переедет на остров
   //    отдельной работой.
-  if (key === 'spar' || key === 'bags' || key === 'toTrain' || key === 'toHall') {
+  if (key === 'spar' || key === 'bags') {
     statsOpen.value = false;
     openSection.value = null;
     return;

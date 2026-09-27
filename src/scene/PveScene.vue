@@ -55,7 +55,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBagStand, buildBuffShelf, buildCrossing, buildSparStand, buildAscensionStand, buildFloorMark } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBagStand, buildBuffShelf, buildSparStand, buildAscensionStand, buildFloorMark } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -224,10 +224,14 @@ const SPAR_ISLE = {
   // превратился бы во второе.
   markWidth: 0.34,
 };
-// Переход между островами: насколько надпись на торце сдвинута от середины к
-// тому краю, в сторону которого она ведёт. Доля полуширины острова.
+// ОТКЛИК НА НАЖАТИЕ у предметов зала.
+//
+// ⚠️ БЛОК ОСТАЛСЯ ОТ НАДПИСЕЙ НА ТОРЦАХ ОСТРОВОВ, которые сняты 27.09.2026
+//    (правило перемещения стало одно: нажал предмет — улетел на его остров).
+//    Вместе с ними ушёл `offset` — сдвиг надписи к тому краю, в сторону которого
+//    она вела. А вот `flash` никуда не делся: на нём стоит вспышка лужицы у ВСЕХ
+//    предметов зала, а не только у бывших переходов.
 const CROSS = {
-  offset: 0.52,
   // Сколько горит розовым после нажатия. Не «пока палец на стекле»: у нажатия
   // пальцем между down и up бывает десяток миллисекунд, и разгорание, которое
   // идёт плавно, просто не успело бы начаться. Поэтому вспышка с фиксированным
@@ -671,31 +675,6 @@ function syncBags(busy) {
   }
 }
 
-// ── ПЕРЕХОД МЕЖДУ ОСТРОВАМИ. По надписи на торце каждого: с главного — к
-//    грушам, с тренировочного — обратно в зал.
-//
-//    ПОЧЕМУ НА ТОРЦЕ. Верх плиты занят: по нему бродят бойцы, на нём стоят
-//    планшет, наковальня и полка. Торец — единственная поверхность зала, которую
-//    ничто не может заслонить, и он смотрит ровно на камеру (подъём 26.2°).
-//    Кнопка едет вместе с островом при свободном повороте камеры, потому что
-//    она и есть часть острова, а не наклейка на экране.
-function buildCrossings() {
-  const face = (cx, halfW, halfD, key, label, side) => {
-    const c = buildCrossing(label);
-    // Торец — плоскость z = halfD; табличка выступает из неё вперёд сама.
-    // По ширине она сдвинута к тому краю, в сторону которого ведёт: это
-    // единственная подсказка направления, которая у надписи есть.
-    c.group.position.set(cx + side * halfW * CROSS.offset, 0, halfD);
-    c.key = key;
-    c.pressUntil = 0;
-    scene.add(c.group);
-    propList.push({ key, obj: c });
-    crossings.push(c);
-  };
-  face(0, compose.slab.width / 2, compose.slab.depth / 2, 'toTrain', t.value.forge.crossView, +1);
-  if (trainHalfW > 0) face(trainCx, trainHalfW, trainHalfD, 'toHall', t.value.forge.crossHall, -1);
-}
-
 function buildForgeProps(topY) {
   const z = compose.slab.depth / 2 - 0.9;
   const spots = [
@@ -992,7 +971,6 @@ let bagTopY = 0;
 const propList = [];
 // Надписи-переходы на торцах островов. Держим отдельно от propList: их надо
 // тикать (лужица нажатия гаснет сама) и убирать при разборке зала.
-const crossings = [];
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
 let viewW = 0, viewH = 0;   // canvas CSS size — the framing is measured in these
@@ -1152,7 +1130,6 @@ onMounted(() => {
   // ГЕОМЕТРИЯ ТОЛЬКО. Ни нажатий, ни перелёта, ни переноса занятия сюда — это
   // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
   buildForgeProps(topY);
-  buildCrossings();
 
   // Имена осей берутся из САМОГО набора осей бойца, а не переписываются списком:
   // второй список рано или поздно разошёлся бы с первым.
@@ -1504,12 +1481,10 @@ onMounted(() => {
     //    наковальня и полка молчали на нажатие. Со встраиванием SPAR это стало
     //    видно: ему положена та же манера, что остальным, а остальные молчат.
     //    Ведём всех одним списком — новой манеры для одного предмета не заводим.
-    for (const c of crossings) {
-      if (c.pressUntil && t > c.pressUntil) { c.setPressed(false); c.pressUntil = 0; }
-      c.tick(dt);
-    }
+    //    Списков было два — отдельно надписи на торцах, отдельно всё остальное.
+    //    Надписи сняты 27.09.2026, и список остался один: своей манеры ни у
+    //    одного предмета нет.
     for (const pr of propList) {
-      if (crossings.includes(pr.obj)) continue;   // их уже провели выше
       if (pr.obj.pressUntil && t > pr.obj.pressUntil) { pr.obj.setPressed(false); pr.obj.pressUntil = 0; }
       pr.obj.tick(dt);
     }
@@ -2042,8 +2017,13 @@ onBeforeUnmount(() => {
   // быть вовсе (их строят по мере назначения занятия), поэтому просто обходим
   // то, что есть.
   for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
-  for (const c of crossings) { scene.remove(c.group); c.dispose(); }
-  crossings.length = 0;
+  // ⚠️ УБИРАЮТСЯ ВСЕ ПРЕДМЕТЫ, А НЕ ТОЛЬКО БЫВШИЕ ПЕРЕХОДЫ. Здесь стояли только
+  //    надписи на торцах, а планшет, наковальня, полка, SPAR и ASCENSION не
+  //    убирались вовсе — их геометрия и материалы оставались висеть после ухода
+  //    с экрана. Правка попала сюда потому, что этой работой в зал добавлен ещё
+  //    один предмет: кто создал, тот и убирает.
+  for (const pr of propList) { scene.remove(pr.obj.group); pr.obj.dispose(); }
+  propList.length = 0;
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();
   if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
