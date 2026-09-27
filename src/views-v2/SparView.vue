@@ -124,7 +124,7 @@
       <!-- ОШИБКА. Одной строкой и с работающим возвратом. Молчаливый чёрный
            экран — брак. Сюда приходит несобравшееся дерево соперника. -->
       <div v-else-if="fatal" class="sp-hole">
-        <p class="sp-hole__t">ЯДРО НЕ СОБРАЛОСЬ</p>
+        <p class="sp-hole__t">{{ fatalTitle }}</p>
         <p class="sp-hole__b">{{ fatal }}</p>
         <button type="button" class="sp-hole__btn" @click="toHall">В ЗАЛ</button>
       </div>
@@ -310,6 +310,10 @@ const ICONS = { towel, bucket, dice };
 const KIT_SLOTS = 3;
 
 const fatal = ref('');
+/* Заголовок сообщения о поломке. Раньше он был вшит словами «ЯДРО НЕ СОБРАЛОСЬ»,
+   и это годилось, пока поломка была одна. Случаев стало два, и вшитый заголовок
+   начал врать про второй. */
+const fatalTitle = ref('ЯДРО НЕ СОБРАЛОСЬ');
 const coreHost = ref(null);
 const sceneRef = ref(null);
 /* Открыта ли выезжающая панель. Широко она приколочена и этот признак на неё
@@ -464,7 +468,8 @@ function toFight() {
     foeKit: foeKit.value,
   });
   if (!ok) {
-    fatal.value = 'Сборка не собралась целиком, и вести в бой некого. Выберите бойца заново.';
+    fatalTitle.value = 'СБОРКА НЕ ПОЛНА';
+    fatal.value = 'В бою должны быть двое, а собрался один. Выберите бойца и соперника заново.';
     return;
   }
   router.push({ path: '/play/arena', query: { spar: '1' } });
