@@ -55,7 +55,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing, buildSparStand, buildAscensionStand } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBagStand, buildBuffShelf, buildCrossing, buildSparStand, buildAscensionStand, buildFloorMark } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -215,6 +215,14 @@ const TRAIN = {
   // оставляет самому крайнему запас в десятую кадра. Вышло почти как у плиты —
   // значит, у обоих островов проверенная форма, а не одно и то же число дважды.
   aspect: 1.45,
+};
+// ОСТРОВ SPAR. Своих размеров у него нет НАРОЧНО: ширину он берёт у острова груш
+// (см. buildSparIsland). Здесь только то, чего там взять неоткуда.
+const SPAR_ISLE = {
+  // Доля ширины острова под слово SOON. Треть: слово должно читаться стоя на
+  // телефоне, но остров — это место, а не вывеска, и словом во всю плиту он
+  // превратился бы во второе.
+  markWidth: 0.34,
 };
 // Переход между островами: насколько надпись на торце сдвинута от середины к
 // тому краю, в сторону которого она ведёт. Доля полуширины острова.
@@ -613,6 +621,34 @@ function buildNeighbourIsland(topY, count) {
 }
 
 /**
+ * ОСТРОВ SPAR — слева от зала, зеркально острову груш.
+ *
+ * ⚠️ ШИРИНА БЕРЁТСЯ У ОСТРОВА ГРУШ, а не назначается своя. Удаление камеры
+ *    считается от ширины острова (домашнее правило, см. CAM): дай этому острову
+ *    свою ширину — и камера встала бы к нему ближе или дальше, чем к соседнему,
+ *    хотя оба острова про одно и то же. Один масштаб — одно удаление.
+ *
+ * ⚠️ ПЛИТА ПУСТАЯ, И ЭТО ВЕСЬ ОСТРОВ. Ни предметов, ни бойцов, ни нажатий —
+ *    бой-настройка сюда переедет отдельной работой. Пока честное слово SOON,
+ *    выгравированное на полу: тот же приём, каким подписан предмет ASCENSION,
+ *    когда второго вознесения уже нет.
+ */
+function buildSparIsland(topY) {
+  if (trainHalfW <= 0) return;          // не у чего взять масштаб — острова не будет
+  const width = trainHalfW * 2;
+  sparSlab = buildForgeSlab({ width, depth: trainHalfD * 2, height: SLAB.height });
+  sparCx = -(compose.slab.width / 2 + TRAIN.gap + width / 2);
+  sparSlab.group.position.x = sparCx;
+  scene.add(sparSlab.group);
+  sparHalfW = width / 2;
+
+  // Слово лежит в середине острова, чуть выше пола — иначе спорит с ним за глубину.
+  sparMark = buildFloorMark(t.value.home.soon, width * SPAR_ISLE.markWidth);
+  sparMark.mesh.position.set(sparCx, topY + 0.012, 0);
+  scene.add(sparMark.mesh);
+}
+
+/**
  * Груши по числу ЗАНИМАЮЩИХСЯ, а не по числу мест.
  *
  * Вызывается оттуда же, откуда зал узнаёт о смене занятия (applyTraining), то
@@ -872,6 +908,9 @@ let renderer, scene, camera, slab, resizeObserver, clock;
 // Встраивание v1, шаг 1 — соседний остров, груши и два предмета на плите.
 let trainSlab = null;
 let trainCx = 0, trainHalfW = 0, trainHalfD = 0;
+// ── Остров SPAR: зеркало острова груш, слева от главной плиты ──
+let sparSlab = null, sparMark = null;
+let sparCx = 0, sparHalfW = 0;
 const bags = new Map();          // номер места → груша; пустых не держим
 // КТО СЕЙЧАС НА ТРЕНИРОВОЧНОМ ОСТРОВЕ. Два набора, а не один, потому что груша
 // нужна дольше, чем идёт занятие: боец ещё возвращается с острова, и убрать её
@@ -1030,6 +1069,8 @@ onMounted(() => {
   // ⚠️ Соседний остров строится ДО ламп: одна из четырёх висит над ним, и её
   //    место берётся из него (см. lampPositions).
   buildNeighbourIsland(topY, members.length);
+  // Остров SPAR — ПОСЛЕ острова груш: масштаб он берёт у него.
+  buildSparIsland(topY);
   buildHallLamps();
   backdrop = buildBackdrop({ radius: 45, centerY: 1.6 });
   scene.add(backdrop.mesh);
@@ -1934,6 +1975,8 @@ onBeforeUnmount(() => {
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();
   if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
+  if (sparMark) { scene.remove(sparMark.mesh); sparMark.dispose(); sparMark = null; }
+  if (sparSlab) { scene.remove(sparSlab.group); sparSlab.dispose(); sparSlab = null; }
   if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
   if (renderer) renderer.dispose();
 });
