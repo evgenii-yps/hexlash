@@ -96,6 +96,12 @@ import { countLit } from '@/data/upgradeTree.js';
 import { composeChainFoe, composeSquadFoes, composeRaid } from '@/data/foeCompose.js';
 import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
+// БОЙ ИЗ SPAR. Экран настройки СОБИРАЕТ сопернику ядро и кристаллы, и на плиту
+// обязан выйти именно он, а не случайный боец. Сторона игрока приходит сюда
+// геттерами состояния боя, как всегда, и ничего для неё править не пришлось;
+// соперник же рождается здесь, внутри сцены, — поэтому это ЕДИНСТВЕННОЕ место, где
+// след SPAR в защищённом файле есть. Две ветки ниже, и обе выключены вне SPAR.
+import { readSparBout } from '@/services/spar.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
@@ -695,8 +701,15 @@ onMounted(() => {
   //    ядру в двух местах (характер и портрет), и оба всегда получали заготовку
   //    БЕЗ ЕДИНОЙ ЗАЖЖЁННОЙ ГРАНИ. В забеге у соперника грани есть, и оба места
   //    обязаны видеть одно и то же дерево — поэтому оно теперь одно.
-  let opponentCoreId = showcase ? 'zasada' : CORES[Math.floor(Math.random() * CORES.length)].id;
-  let opponentTree = CRYSTALS[opponentCoreId];
+  //
+  //    БОЙ ИЗ SPAR — СОПЕРНИК ЗАДАН, А НЕ ВЫБРАН. Ядро и кристаллы собраны игроком
+  //    на экране настройки; весь смысл SPAR в том, что на плиту выходит именно эта
+  //    сборка. Характер считается ТОЙ ЖЕ строкой, что у всех: дерево подаётся
+  //    готовым, а `resolveBehavior` не спрашивает, откуда оно пришло.
+  const sparBout = readSparBout();
+  let opponentCoreId = sparBout ? sparBout.foeCoreId
+    : (showcase ? 'zasada' : CORES[Math.floor(Math.random() * CORES.length)].id);
+  let opponentTree = sparBout ? sparBout.foeTree : CRYSTALS[opponentCoreId];
   let opponentBehavior = resolveBehavior(opponentCoreId, collectLit(opponentTree));
 
   // Behaviour for a side: during a SIG dev bout the chosen signature preset
@@ -849,6 +862,11 @@ onMounted(() => {
   // плиту ТОГО ЖЕ бойца, что и в прошлый раз. Правила те же, по которым он
   // рождается при входе на арену: случайное ядро, без граней.
   const rollDuelFoe = () => {
+    // БОЙ ИЗ SPAR — СОПЕРНИК ТОТ ЖЕ. «Драться снова» здесь означает «прогнать ту
+    // же пару ещё раз»: игрок сравнивает сборки, и подмена соперника случайным
+    // отняла бы у сравнения смысл. Новую сборку он собирает на экране настройки,
+    // а не получает от кнопки.
+    if (sparBout) return;
     if (raidMode) { rollRaid(); return; }         // рейд — новые союзники, новый босс и охрана
     if (squadMode) { rollSquadFoes(); return; }   // командный бой — новая чужая команда
     // Открытое поле — новые девятнадцать соперников. ТЗ просит именно этого:
