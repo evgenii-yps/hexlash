@@ -1,6 +1,7 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
 import {cancelLoading, curtainUp, dropCurtain, loadingState, openLoading} from "@/services/sceneLoading.js";
+import {clearSparBout, isSparBout} from "@/services/spar.js";
 
 
 export const authRoutes = [
@@ -85,6 +86,18 @@ const requireSquad = (to, from, next) => {
     // Сам признак ставится и СНИМАЕТСЯ выше, в общей проверке на каждый переход
     // (см. beforeEach) — здесь он только читается.
     if (store.state.prefight?.showcase) return next();
+
+    // БОЙ ИЗ SPAR. Состава в сейфе для него нет и быть не должно: SPAR ничего
+    // никуда не записывает, а сборка живёт в памяти страницы (services/spar.js).
+    // Сборка на месте — пускаем, ровно как пускаем режим показа.
+    if (isSparBout()) return next();
+
+    // ⚠️ ОБНОВЛЕНИЕ СТРАНИЦЫ ПОСРЕДИ БОЯ В SPAR. Сборка умерла вместе с
+    //    вкладкой, а метка в адресе осталась — по ней и видно, откуда игрок
+    //    пришёл. Возвращаем его В SPAR, а не выбрасываем на выбор состава: ход
+    //    боя мы не обещаем восстанавливать, но и уводить человека в чужую дверь
+    //    незачем — на экране настройки его сборка соберётся заново.
+    if (to.query.spar === '1') return next({ name: 'V2Spar' });
 
     // ⚠️ Спрашиваем СЛОЙ СОХРАНЕНИЯ, а не живой экран, и не полагаемся на то,
     // что модуль состояния успел подняться раньше. Этот сторож — единственное
@@ -346,6 +359,16 @@ router.beforeEach((to, from, next) => {
     // модели и ничего платного — его подставит кто угодно из адресной строки.
     // Полное правило — рядом с самим признаком в src/scene/ArenaScene.vue.
     store.commit('prefight/SET_SHOWCASE', to.name === 'V2Arena' && to.query.showcase === '1');
+
+    // ── Сборка боя из SPAR ──
+    // Живёт ровно на паре адресов: сам экран SPAR и арена с меткой ?spar=1. Ушли
+    // куда-то ещё — забываем. Признак, который никто не снимает, однажды
+    // переживёт свой экран и молча подменит соперника в обычном бою: та же
+    // ловушка, что у признака показа, и лечение то же — снимать на каждом
+    // переходе, а не только при входе.
+    if (!(to.name === 'V2Spar' || (to.name === 'V2Arena' && to.query.spar === '1'))) {
+        clearSparBout();
+    }
 
     if (window.__hexBootstrapped && !isHomeStageHop(to, from)) {
         if (to.meta?.arena || to.meta?.scene3d) {
