@@ -771,11 +771,11 @@ const PROP_ROW = {
   //    нуля, левым концом уходил за рамку (замер: −0.046).
   //
   // Ставятся только КОНЦЫ. Три предмета между ними расставляются сами — см.
-  // propRowSpot. Числа сняты замером на 390×844: это самый узкий кадр из тех, что
+  // solvePropRow. Числа сняты замером на 390×844: это самый узкий кадр из тех, что
   // мы обслуживаем, и он же связывающий — на десктопе плита и так стоит в
   // середине экрана с большим запасом по бокам.
-  leftEdge: -0.114,
-  rightEdge: 0.129,
+  leftEdge: -0.153,
+  rightEdge: 0.159,
 
   // ── ГЛУБИНА. Ряд стоит у ПЕРЕДНЕГО ребра плиты, лицом к игроку.
   //
@@ -794,70 +794,200 @@ const PROP_ROW = {
   // Дуга: середина ряда чуть ближе к игроку, чем концы. Ровно настолько, чтобы
   // ряд читался дугой, а не забором, и не настолько, чтобы съесть промежутки.
   bow: 0.20,
+
+  // ── ПРОСВЕТ ЗАДАЁТСЯ, РАЗМЕР ВЫВОДИТСЯ. Порядок именно такой и он несущий:
+  //    просвет — то, ради чего всё делается, и резать его нельзя; значит,
+  //    подчиняться должен размер предмета.
+  //
+  // Доля ПРОЛЁТА РЯДА на один просвет, а не точки экрана: точка экрана значит
+  // разное на 390×844 и на 1920×1080 (разные пропорции кадра), а доля пролёта —
+  // одно и то же везде. Шесть предметов и пять просветов: 0.055 × 5 = 27% пролёта
+  // уходит на воздух, остальное — на сами предметы.
+  gapShare: 0.040,
+
+  // ⚠️ ВО СКОЛЬКО РАЗ УМЕНЬШАТЬ, ЗДЕСЬ НЕ НАПИСАНО — оно СЧИТАЕТСЯ из просвета
+  //    (см. solvePropRow). Собственная ширина шести предметов в кадре
+  //    складывается в две ширины пролёта ряда (замер 28.09.2026), то есть при
+  //    любой расстановке они налезают. Множитель общий на всех: ужать только
+  //    широкие значило бы поменять вид предметов друг относительно друга, а вид
+  //    предметов — вне этой работы.
+  scaleMin: 0.30,   // ниже не опускаемся молча: см. предупреждение в solvePropRow
 };
 
+/** Разложенное направление камеры — считается один раз, нужно везде ниже. */
+function camBasis(slabWidth, topY) {
+  const d = CAM.dir;
+  const len = Math.hypot(d[0], d[1], d[2]);
+  const nx = d[0] / len, ny = d[1] / len, nz = d[2] / len;
+  const h = Math.hypot(nx, nz);
+  return {
+    nx, ny, nz,
+    rx: nz / h, rz: -nx / h,                       // «вправо по кадру» в мире
+    // Глубина точки вдоль взгляда = deep0 − x·nx − y·ny − z·nz.
+    deep0: CAM.distPerWidth * slabWidth + (topY + CAM.lookLift) * ny,
+  };
+}
+
 /**
- * На какой x встать, чтобы с глубины z попасть в заданную долю кадра — без самой
- * камеры: к моменту расстановки предметов она ещё не поставлена, а нужны только
- * её направление и удаление, и то и другое известно из CAM.
+ * Доля кадра, в которую садится точка мира — БЕЗ САМОЙ КАМЕРЫ: к моменту
+ * расстановки предметов она ещё не поставлена, а нужны только её направление и
+ * удаление, и то и другое известно из CAM.
  *
  * «Доля кадра» здесь — отношение «вбок / вглубь» от оси взгляда, а не доля
  * ширины экрана: вторая зависит ещё и от пропорций экрана, а первая — нет.
  * Равные промежутки по этому отношению дают равные промежутки на экране ЛЮБОЙ
  * формы, и телефон с десктопом больше не надо мирить между собой.
  *
- * Вывод короткий: камера стоит в look + n·D и смотрит вдоль −n, look лежит на
- * lookLift выше плиты, «вправо по кадру» в мире — это (n.z, 0, −n.x). Тогда
- * отношение равно (r·P) / (D + lookLift·n.y − P·n), и оно разворачивается в x.
+ * ⚠️ ВЫСОТА УЧИТЫВАЕТСЯ. Камера смотрит сверху и с плеча, поэтому верх высокого
+ *    предмета садится в кадр не туда, где его подошва.
  */
-function camSolveX(ratio, z, slabWidth) {
-  const d = CAM.dir;
-  const len = Math.hypot(d[0], d[1], d[2]);
-  const nx = d[0] / len, ny = d[1] / len, nz = d[2] / len;
-  const h = Math.hypot(nx, nz);
-  const rx = nz / h, rz = -nx / h;                 // «вправо по кадру» в мире
-  const deep0 = CAM.distPerWidth * slabWidth + CAM.lookLift * ny - z * nz;
-  return (ratio * deep0 - rz * z) / (rx + ratio * nx);
+function camRatio(b, x, y, z) {
+  return (b.rx * x + b.rz * z) / (b.deep0 - x * b.nx - y * b.ny - z * b.nz);
+}
+
+/** Обратный ход: на каком x встать, чтобы с высоты y и глубины z попасть в долю кадра. */
+function camSolveX(b, ratio, y, z) {
+  return (ratio * (b.deep0 - y * b.ny - z * b.nz) - b.rz * z) / (b.rx + ratio * b.nx);
 }
 
 /**
- * Где стоит предмет №i из n.
+ * Насколько широко предмет ложится в кадр: левая и правая доли кадра по всем
+ * его частям.
  *
- * ⚠️ ПРОМЕЖУТКИ РАВНЫ НА ЭКРАНЕ, А НЕ В МИРЕ, и это главное в этой функции.
- *    Первая попытка развела предметы равным шагом по миру — и на телефоне шаги
- *    по кадру вышли 0.169, 0.226, 0.293, 0.359: правый конец ряда вдвое ближе к
- *    камере, поэтому там всё разъезжается, а на дальнем конце слипается.
+ * ⚠️ КАЖДАЯ ЧАСТЬ МЕРЯЕТСЯ ОТДЕЛЬНО, и это не педантизм. Сперва здесь все части
+ *    складывались в ОДНУ коробку, и мерились её восемь углов — а у такой коробки
+ *    есть углы, где ничего нет: подпись вынесена вперёд, тело предмета широкое, и
+ *    угол «край тела + глубина подписи» пустой, но в кадр ложится дальше всего.
+ *    Замер 28.09.2026: габарит выходил шире настоящего на 19…36 точек слева и
+ *    10…42 справа, и ряд от этого сжимался к середине кадра.
  *
- *    Поэтому равным шагом делится не мир, а САМ КАДР: берём долю кадра левого
- *    конца ряда и правого, режем отрезок между ними на равные части и для
- *    каждой части считаем, на каком x надо стоять, чтобы в неё попасть. Тогда
- *    предметы встают ровно при любом размере плиты и на любом экране —
- *    подбирать заново ничего не нужно.
- *
- * Высота основания у всех одна — сам верх плиты (topY); место считается только
- * в плане.
+ * ⚠️ СВЕЧЕНИЕ НАЖАТИЯ ПРОПУСКАЕТСЯ. Лужица вдвое шире предмета и в покое
+ *    невидима; попав в габарит, она врала втрое.
  */
-function propRowSpot(i, n, slab) {
-  const u = n > 1 ? i / (n - 1) : 0.5;             // 0 … 1 слева направо по КАДРУ
+const _pc = new THREE.Vector3();
+function propRatioSpan(group, b) {
+  let lo = Infinity, hi = -Infinity;
+  group.updateMatrixWorld(true);
+  group.traverse((m) => {
+    if (!m.isMesh || !m.visible || !m.geometry || m.userData.pressGlow) return;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    const bb = m.geometry.boundingBox;
+    for (let k = 0; k < 8; k++) {
+      _pc.set(k & 1 ? bb.max.x : bb.min.x, k & 2 ? bb.max.y : bb.min.y, k & 4 ? bb.max.z : bb.min.z);
+      _pc.applyMatrix4(m.matrixWorld);
+      const r = camRatio(b, _pc.x, _pc.y, _pc.z);
+      if (r < lo) lo = r;
+      if (r > hi) hi = r;
+    }
+  });
+  return { lo, hi };
+}
+
+/**
+ * ПОДПИСЬ СТОИТ ПОД СВОИМ ПРЕДМЕТОМ.
+ *
+ * ⚠️ САМА ПО СЕБЕ ОНА ТУДА НЕ ВСТАЁТ. Слово вынесено ВПЕРЁД от предмета (ближе
+ *    к игроку), а «вперёд» с этой камеры означает ещё и «влево по кадру»: замер
+ *    28.09.2026 — слово уезжало от своего предмета на 9…23 точки влево и лезло
+ *    на соседа. Сдвигаем его вбок ровно настолько, чтобы его середина села в ту
+ *    же долю кадра, что и середина предмета.
+ */
+function nestLabel(obj, b, anchor, gx, gz, topY) {
+  const m = obj.label;
+  if (!m) return;
+  const sc = obj.group.scale.x || 1;
+  const zAbs = gz + m.position.z * sc;
+  const yAbs = topY + m.position.y * sc;
+  m.position.x = (camSolveX(b, anchor, yAbs, zAbs) - gx) / sc;
+}
+
+/**
+ * РАССТАНОВКА РЯДА ПО КРОМКАМ.
+ *
+ * ⚠️ ПРОМЕЖУТКИ МЕРЯЮТСЯ МЕЖДУ КРОМКАМИ, А НЕ МЕЖДУ СЕРЕДИНАМИ, и это главное
+ *    в этой функции. Прежняя версия разводила середины равными долями кадра —
+ *    по числам ряд выходил идеальным (разброс ×1.04), а глазами слипшимся.
+ *    Замер 28.09.2026 на 390×844: между кромками соседей было −29…−64 точки,
+ *    то есть все шесть предметов налезали друг на друга. Причина простая:
+ *    предметы разной ширины, и равный шаг между серединами даёт РАЗНЫЙ просвет.
+ *
+ * ⚠️ ПРОМЕЖУТКИ РАВНЫ ПО КАДРУ, А НЕ ПО МИРУ. Камера смотрит с плеча, ближний
+ *    конец ряда вдвое ближе к ней; равный шаг по миру даёт на экране 0.169 и
+ *    0.359 (замер). Поэтому равными долями делится сам КАДР.
+ *
+ * Как считается. Ширина предмета в кадре зависит от того, где он стоит, а где он
+ * стоит — от ширины соседей. Круг разрывается повторением: ставим по грубой
+ * прикидке, меряем получившиеся кромки, переставляем по ним, и так трижды —
+ * дальше числа не меняются.
+ */
+function solvePropRow(built, slab, topY) {
+  const n = built.length;
+  if (!n) return;
+  const b = camBasis(slab.width, topY);
+  const L = PROP_ROW.leftEdge, R = PROP_ROW.rightEdge;
   // Глубина: наклонная от левого конца к правому, с прогибом дуги посередине.
   const zAt = (t) => {
     const w = 2 * t - 1;
     return slab.depth / 2 - PROP_ROW.front - PROP_ROW.tilt * t - w * w * PROP_ROW.bow;
   };
-  const r = PROP_ROW.leftEdge + (PROP_ROW.rightEdge - PROP_ROW.leftEdge) * u;
-  const z = zAt(u);
-  return { x: camSolveX(r, z, slab.width), z };
+  const zs = built.map((_, i) => zAt(n > 1 ? i / (n - 1) : 0.5));
+  // Грубая прикидка: середины поровну. Дальше она уточняется по кромкам.
+  let anchors = built.map((_, i) => L + (R - L) * (n > 1 ? i / (n - 1) : 0.5));
+
+  const place = (i) => {
+    const x = camSolveX(b, anchors[i], topY, zs[i]);
+    built[i].obj.group.position.set(x, topY, zs[i]);
+    nestLabel(built[i].obj, b, anchors[i], x, zs[i], topY);
+  };
+
+  const spanOf = () => built.reduce((acc, it, i) => {
+    place(i);
+    const { lo, hi } = propRatioSpan(it.obj.group, b);
+    return acc + (hi - lo);
+  }, 0);
+
+  // ── ШАГ 1: ВО СКОЛЬКО РАЗ УМЕНЬШИТЬ. Считается, а не пишется руками: сколько
+  //    пролёта остаётся предметам после вычета просветов — во столько раз они и
+  //    должны стать. Два прохода: габарит в кадре зависит и от самого размера,
+  //    и от того, куда предмет при этом переедет.
+  const room = (R - L) * (1 - (n - 1) * PROP_ROW.gapShare);
+  let scale = 1;
+  for (let pass = 0; pass < 2; pass++) {
+    const wide = spanOf();
+    if (!(wide > 0)) break;
+    scale = Math.max(PROP_ROW.scaleMin, scale * (room / wide));
+    for (const it of built) it.obj.group.scale.setScalar(scale);
+  }
+  rowScale = scale;
+
+  // ── ШАГ 2: КУДА ВСТАТЬ. Равный просвет между кромками.
+  for (let pass = 0; pass < 3; pass++) {
+    const half = built.map((it, i) => {
+      place(i);
+      const { lo, hi } = propRatioSpan(it.obj.group, b);
+      it._half = { l: anchors[i] - lo, r: hi - anchors[i] };
+      return it._half;
+    });
+    // Равный просвет: свободное место делится поровну между соседями.
+    const taken = half.reduce((a, h) => a + h.l + h.r, 0);
+    const gap = n > 1 ? (R - L - taken) / (n - 1) : 0;
+    const next = [L + half[0].l];
+    for (let i = 1; i < n; i++) next[i] = next[i - 1] + half[i - 1].r + gap + half[i].l;
+    anchors = next;
+  }
+  for (let i = 0; i < n; i++) place(i);
+  if (DEV_MODE) window.__rowDebug = { scale: rowScale, L, R, anchors: anchors.slice(), zs: zs.slice(), half: built.map((it) => it._half),
+    pos: built.map((it) => [+it.obj.group.position.x.toFixed(3), +it.obj.group.position.z.toFixed(3)]) };
 }
 
 function buildForgeProps(topY) {
-  const n = PROP_ROW.order.length;
-  PROP_ROW.order.forEach((sp, i) => {
-    const at = propRowSpot(i, n, compose.slab);
+  const built = PROP_ROW.order.map((sp) => {
     const obj = sp.make();
-    obj.group.position.set(at.x, topY, at.z);
     scene.add(obj.group);
-    propList.push({ key: sp.key, obj });
+    return { key: sp.key, obj };
   });
+  solvePropRow(built, compose.slab, topY);
+  for (const it of built) propList.push(it);
 }
 
 // ── ПОЗА КАМЕРЫ. Одна на зал, одна на каждый остров, все по домашнему правилу:
@@ -1229,6 +1359,7 @@ let stopTrainingWatch = null; // наблюдатель за состояния�
 //    на повороте экрана (см. applyPresence).
 let applyTraining = null;
 let mark = { x: 0, z: 0 };   // where the current fighter stands
+let rowScale = 1;          // во сколько раз уменьшены предметы ряда — считается, см. solvePropRow
 let compose = null;          // which plate step, how big, where the arc stands on it
 let rosterCount = 0;         // read once, at the moment the hall opens
 const camPos = new THREE.Vector3();      // where the camera IS
@@ -1895,23 +2026,72 @@ onMounted(() => {
           roster.forEach((x, i) => { if (x.fighter?.group.parent) out['f' + i] = at(x.fighter.group.position, 1.0); });
           return out;
         })(),
-        // ГДЕ ЛЕЖАТ САМИ СЛОВА, в долях кадра: левый и правый край плоскости
-        // подписи. Нужно отдельно от `taps` — слово вынесено ВПЕРЁД от предмета,
-        // а «вперёд» с этой камеры означает ещё и «влево по кадру», и на глаз
-        // это не видно. Ровно на этом попалась подпись SPAR, свесившаяся с плиты.
-        labels: (() => {
+        // ── КРОМКИ В КАДРЕ. Главный замер этой работы.
+        //
+        // ⚠️ ЦЕНТРОВ НЕ ХВАТАЕТ, И ЭТО ПРОВЕРЕНО. Пока промежутки считались между
+        //    центрами, ряд по числам выходил ровным, а глазами — слипшимся:
+        //    предметы разной ширины, и равный шаг между серединами даёт РАЗНЫЙ
+        //    просвет между кромками. Здесь каждый предмет обводится целиком —
+        //    все его меши плюс подпись, — и отдаётся прямоугольник в долях кадра.
+        //    Просветы меряются по нему.
+        box: (() => {
           const out = {};
           const c = new THREE.Vector3();
+          // Обвод одного меша: восемь углов его коробки, спроецированных в кадр.
+          const eat = (m, acc) => {
+            if (!m.geometry) return;
+            if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+            const bb = m.geometry.boundingBox;
+            for (let i = 0; i < 8; i++) {
+              c.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+              m.localToWorld(c); c.project(camera);
+              const sx = c.x * 0.5 + 0.5, sy = -c.y * 0.5 + 0.5;
+              if (sx < acc.l) acc.l = sx; if (sx > acc.r) acc.r = sx;
+              if (sy < acc.t) acc.t = sy; if (sy > acc.b) acc.b = sy;
+            }
+          };
           for (const pr of propList) {
-            const m = pr.obj.label;
-            if (!m || !m.visible) continue;
-            const w = m.geometry.parameters.width / 2;
-            const ends = [-w, w].map((dx) => {
-              c.set(dx, 0, 0); m.localToWorld(c); c.project(camera);
-              return c.x * 0.5 + 0.5;
+            const acc = { l: 9, r: -9, t: 9, b: -9 };
+            const own = { l: 9, r: -9, t: 9, b: -9 };   // без подписи — сам предмет
+            pr.obj.group.traverse((m) => {
+              if (!m.isMesh || !m.visible) return;
+              if (m === pr.obj.label) return;            // подпись считаем отдельно
+              if (m.userData.pressGlow) return;          // свечение нажатия — не габарит
+              eat(m, acc); eat(m, own);
             });
-            out[pr.key] = { l: +Math.min(...ends).toFixed(3), r: +Math.max(...ends).toFixed(3) };
+            const lbl = { l: 9, r: -9, t: 9, b: -9 };
+            if (pr.obj.label && pr.obj.label.visible) { eat(pr.obj.label, acc); eat(pr.obj.label, lbl); }
+            if (acc.r < acc.l) continue;
+            const f3 = (o) => (o.r < o.l ? null : { l: +o.l.toFixed(4), r: +o.r.toFixed(4), t: +o.t.toFixed(4), b: +o.b.toFixed(4) });
+            out[pr.key] = { ...f3(acc), own: f3(own), label: f3(lbl) };
           }
+          return out;
+        })(),
+        // Экранные коробки ТЕЛ — чтобы видеть замером, а не глазами, стоит ли
+        // кто-то на ряду и не закрывает ли подпись.
+        bodies: (() => {
+          const out = [];
+          const c = new THREE.Vector3();
+          roster.forEach((x, i) => {
+            if (!x.fighter?.group.parent) return;
+            const acc = { l: 9, r: -9, t: 9, b: -9 };
+            x.fighter.group.traverse((m) => {
+              if (!m.isMesh || !m.visible || !m.geometry) return;
+              if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+              const bb = m.geometry.boundingBox;
+              for (let k = 0; k < 8; k++) {
+                c.set(k & 1 ? bb.max.x : bb.min.x, k & 2 ? bb.max.y : bb.min.y, k & 4 ? bb.max.z : bb.min.z);
+                m.localToWorld(c); c.project(camera);
+                const sx = c.x * 0.5 + 0.5, sy = -c.y * 0.5 + 0.5;
+                if (sx < acc.l) acc.l = sx; if (sx > acc.r) acc.r = sx;
+                if (sy < acc.t) acc.t = sy; if (sy > acc.b) acc.b = sy;
+              }
+            });
+            if (acc.r < acc.l) return;
+            out.push({ i,
+              x: +x.fighter.group.position.x.toFixed(2), z: +x.fighter.group.position.z.toFixed(2),
+              l: +acc.l.toFixed(4), r: +acc.r.toFixed(4), t: +acc.t.toFixed(4), b: +acc.b.toFixed(4) });
+          });
           return out;
         })(),
       };

@@ -349,6 +349,10 @@ function propShell(label, labelEm, labelY, labelZ,
   if (upright) puddle.position.z = puddleZ;
   else { puddle.rotation.x = -Math.PI / 2; puddle.position.y = 0.012; }
   puddle.renderOrder = 1;
+  // Метка для замера: лужица — это СВЕЧЕНИЕ НАЖАТИЯ, а не часть предмета. Она
+  // вдвое шире самого предмета и в покое невидима; попав в габарит, она врала
+  // на замере просветов втрое (замер 28.09.2026).
+  puddle.userData.pressGlow = true;
   group.add(puddle);
   disposers.push(() => { pgeo.dispose(); pmat.dispose(); pmap.dispose(); });
 
