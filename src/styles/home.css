@@ -132,16 +132,39 @@
    the BACK arrow + label while the shop is open — see HomeView.) */
 .hs-seg-shop { padding: 0 var(--sp-4); }
 
-/* cabinet chip — a single 28×28 chrome diamond as the avatar (no handle/role text,
-   no chevron). Neutral chrome, never pink/glow (that stays on FIGHT + the core). */
+/* cabinet chip — значок игрока: силуэт человека (голова, шея, плечи) вместо
+   ромба (ТЗ 30.09.2026). Ни кругов, ни дуг: голова — шестиугольник остриём вверх,
+   тот же наклон, что у шестиугольника знака; шея — короткий прямой мост; плечи —
+   трапеция со срезанными углами, гранями, как у фигур бойцов. Матовый хром той же
+   заливки и той же 1px рамки, что были у ромба; не розовый и без свечения (оно
+   остаётся за FIGHT и ядром).
+   Разметка не тронута: значок по-прежнему пустой <span class="av"> на шести
+   экранах. Он держит прежнюю коробку 28×28 (--icon-lg), поэтому чип, полоса и
+   соседи не сдвигаются ни на точку; сам рисунок (36×36) чуть шире коробки — так
+   же, как повёрнутый ромб (диагональ 39.6) выступал за неё, — и ложится внутрь
+   чипа 44px. Заливка — ::before, рамка — ::after кольцом между внешним контуром и
+   тем же контуром, сжатым на 1px. Координаты в px этой сетки 36×36; контур и
+   кольцо обязаны меняться вместе. */
 .hs-seg-cab { padding: 0 var(--sp-4) 0 var(--sp-3); justify-content: center; }
 .hs-seg-cab .av {
-  width: var(--icon-lg); height: var(--icon-lg); flex: 0 0 auto; transform: rotate(45deg);
-  background: linear-gradient(150deg, var(--chrome-hi), var(--chrome-lo));
-  border: 1px solid var(--chrome-line);
-  transition: filter var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
+  --av-ring: var(--chrome-line);
+  position: relative; width: var(--icon-lg); height: var(--icon-lg); flex: 0 0 auto;
+  transition: filter var(--d-hover) var(--e-weight);
 }
-.hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--chrome-rim); }
+.hs-seg-cab .av::before, .hs-seg-cab .av::after { content: ""; position: absolute; inset: -4px; }
+.hs-seg-cab .av::before {
+  /* 195° = прежние 150° ромба, повёрнутые вместе с ним на 45° */
+  background: linear-gradient(195deg, var(--chrome-hi), var(--chrome-lo));
+  clip-path: polygon(50% 7.64%, 68.06% 18.06%, 68.06% 38.89%, 56.94% 45.31%, 56.94% 59.03%, 75% 59.03%,
+                     88.89% 72.92%, 88.89% 92.36%, 11.11% 92.36%, 11.11% 72.92%, 25% 59.03%, 43.06% 59.03%,
+                     43.06% 45.31%, 31.94% 38.89%, 31.94% 18.06%);
+}
+.hs-seg-cab .av::after {
+  background: var(--av-ring);
+  clip-path: path(evenodd, 'M18 2.75 L24.5 6.5 L24.5 14 L20.5 16.31 L20.5 21.25 L27 21.25 L32 26.25 L32 33.25 L4 33.25 L4 26.25 L9 21.25 L15.5 21.25 L15.5 16.31 L11.5 14 L11.5 6.5 Z M18 3.9 L23.5 7.08 L23.5 13.42 L19.5 15.73 L19.5 22.25 L26.59 22.25 L31 26.66 L31 32.25 L5 32.25 L5 26.66 L9.41 22.25 L16.5 22.25 L16.5 15.73 L12.5 13.42 L12.5 7.08 Z');
+  transition: background-color var(--d-hover) var(--e-weight);
+}
+.hs-seg-cab:hover .av { filter: brightness(1.12); --av-ring: var(--chrome-rim); }
 
 /* ── ЧЕСТНАЯ ЗАГЛУШКА: SOON на хроме (ТЗ 27.09.2026 + дополнение) ──────────
    Магазин, кабинет и EDIT SPACE ещё не работают: на каждом стоит диагональная
@@ -149,13 +172,13 @@
    Своего выключенного вида НЕ заводим — он уже описан выше в .hs-chrome:disabled
    (рамка --line, заливка приглушена, чернила --chrome-ink-off = тот же #5D5D66,
    что и --ink-off). Здесь только углы с кеглями печати и две дырки, которые
-   disabled не закрывал: блик по наведению и подсветка ромба.
+   disabled не закрывал: блик по наведению и подсветка значка кабинета.
    Прежняя короткая подпись рядом с текстом (.hs-soon / .hs-soon-cab) отменена.
    Снимается целиком: убрать disabled и строки .soon-stamp в разметке шести
    полос (дом, экран режимов, зал FORGE, пространство, ворота арены, выбор
    отряда) и этот блок. */
 .hs-chrome:disabled:hover::after { animation: none; }
-.hs-chrome:disabled:hover .av { filter: none; border-color: var(--chrome-line); }
+.hs-chrome:disabled:hover .av { filter: none; --av-ring: var(--chrome-line); }
 /* Углы и кегли — из замеров кнопок на собранной странице; у каждой свои
    пропорции, поэтому общего числа нет. Ниже, в мобильном блоке, чип магазина
    становится квадратом 44×44 и получает свою пару. */
