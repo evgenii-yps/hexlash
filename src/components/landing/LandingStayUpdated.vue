@@ -19,16 +19,27 @@
         data-reveal
         data-d="3"
       >
+        <!-- ⚠️ ЧЕСТНАЯ ЗАГЛУШКА (ТЗ 29.09.2026): форма закрыта косой печатью SOON.
+             Поле не принимает ввод (disabled — ни курсора, ни клавиатуры на
+             телефоне; autocomplete="off" — чтобы браузер его не заполнял), кнопка
+             не нажимается. Проверка адреса и «YOU'RE ON THE LIST» ниже в скрипте
+             НЕ удалены, а отключены флагом FORM_OPEN.
+             Снимается: FORM_OPEN = true в скрипте — печать уйдёт, поле и кнопка
+             оживут сами. Сначала нужен настоящий приём адресов: сейчас форма
+             никуда ничего не отправляет. -->
         <input
           type="email"
           class="join-input"
           placeholder="enter your email"
+          autocomplete="off"
           v-model="email"
+          :disabled="!FORM_OPEN"
           @input="onInput"
         />
-        <button type="submit" class="join-btn">
+        <button type="submit" class="join-btn" :disabled="!FORM_OPEN">
           <span class="join-btn-bg"></span>
           <span>SUBSCRIBE</span>
+          <span v-if="!FORM_OPEN" class="soon-stamp" aria-hidden="true">SOON</span>
         </button>
       </form>
       <p v-if="status === 'error'" class="join-err" data-reveal>Enter a valid email to join.</p>
@@ -39,10 +50,15 @@
 <script setup>
 import { ref } from 'vue';
 
+/* Главный выключатель формы. false — форма закрыта заглушкой SOON (сейчас так:
+   адреса некуда отправлять). true — прежнее поведение целиком. */
+const FORM_OPEN = false;
+
 const email = ref('');
 const status = ref('idle'); // idle | error | done
 
 function submit() {
+  if (!FORM_OPEN) return; // закрыто: даже Enter ничего не показывает и не отправляет
   const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
   status.value = ok ? 'done' : 'error';
 }

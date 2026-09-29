@@ -505,9 +505,24 @@
 .lp .join-btn-bg { position: absolute; inset: 0; z-index: var(--z-scene); background: var(--pink); box-shadow: 0 0 22px rgba(var(--pink-rgb), .5); transition: filter var(--d-hover), box-shadow var(--d-hover); }
 /* Содержимое кнопки — поверх заливки. Без этого .join-btn-bg (абсолютный слой
    с --z-scene) закрашивает подпись, как это было на .btn-play. Начертание не трогаем. */
-.lp .join-btn > span:not(.join-btn-bg) { position: relative; z-index: var(--z-ui); }
+.lp .join-btn > span:not(.join-btn-bg):not(.soon-stamp) { position: relative; z-index: var(--z-ui); }
 .lp .join-btn:hover .join-btn-bg { filter: brightness(1.08); box-shadow: 0 0 34px rgba(var(--pink-rgb), .75); }
 .lp .join-btn:active { transform: translateY(1px); }
+/* ── Закрытая форма (ТЗ 29.09.2026) ──────────────────────────────────────
+   Печать — общий приём .soon-stamp (assets/main.css), здесь только её угол и
+   кегль. Замер кнопки: ≈188×52 → диагональ atan(52/188) ≈ 15°; кегль 24 даёт
+   чернила внутри кнопки на телефоне и десктопе (см. отчёт).
+   Закрытое не светится: розовая заливка с ореолом на закрытой кнопке была бы
+   ровно тем, что печать отрицает, поэтому заливка глохнет до нейтральной, как у
+   соседних закрытых кнопок. Поле остаётся видимым, но приглушено. */
+.lp .join-btn { --soon-a: 15deg; --soon-s: 24px; }
+/* печать — в слое интерфейса, как подпись: заливка .join-btn-bg лежит выше нуля */
+.lp .join-btn .soon-stamp { z-index: var(--z-ui); }
+.lp .join-btn:disabled { cursor: default; color: var(--ink-dim); }
+.lp .join-btn:disabled .join-btn-bg { background: var(--fill-2); box-shadow: none; filter: none; }
+.lp .join-btn:disabled:hover .join-btn-bg { filter: none; box-shadow: none; }
+.lp .join-btn:disabled:active { transform: none; }
+.lp .join-input:disabled { cursor: default; opacity: var(--o-dim); }
 .lp .join-done { margin-top: clamp(34px, 5vh, 52px); font-family: var(--font-mono); font-size: 14px; letter-spacing: .1em; color: var(--ink);
   display: inline-flex; align-items: center; gap: 12px; padding: 16px 24px; border: 1px solid rgba(var(--pink-rgb), .4); background: rgba(var(--pink-rgb), .06); }
 .lp .join-check { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: var(--r-round); background: var(--pink); color: var(--ink); font-size: 13px; }
