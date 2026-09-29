@@ -19,12 +19,15 @@
         data-reveal
         data-d="3"
       >
-        <!-- ⚠️ ЧЕСТНАЯ ЗАГЛУШКА (ТЗ 29.09.2026): форма закрыта косой печатью SOON.
+        <!-- ⚠️ ЧЕСТНАЯ ЗАГЛУШКА (ТЗ 29.09.2026, v2): форма закрыта — вместо подписи
+             SUBSCRIBE на кнопке стоит слово SOON, ровно и цветом обычной подписи.
+             ⚠️ Косая печать .soon-stamp здесь ПРОБОВАЛАСЬ (v1) и снята: лежа поверх
+             подписи, две приглушённые надписи сливались и не читались.
              Поле не принимает ввод (disabled — ни курсора, ни клавиатуры на
              телефоне; autocomplete="off" — чтобы браузер его не заполнял), кнопка
              не нажимается. Проверка адреса и «YOU'RE ON THE LIST» ниже в скрипте
              НЕ удалены, а отключены флагом FORM_OPEN.
-             Снимается: FORM_OPEN = true в скрипте — печать уйдёт, поле и кнопка
+             Снимается: FORM_OPEN = true в скрипте — вернётся SUBSCRIBE, поле и кнопка
              оживут сами. Сначала нужен настоящий приём адресов: сейчас форма
              никуда ничего не отправляет. -->
         <input
@@ -38,8 +41,7 @@
         />
         <button type="submit" class="join-btn" :disabled="!FORM_OPEN">
           <span class="join-btn-bg"></span>
-          <span>SUBSCRIBE</span>
-          <span v-if="!FORM_OPEN" class="soon-stamp" aria-hidden="true">SOON</span>
+          <span>{{ FORM_OPEN ? 'SUBSCRIBE' : 'SOON' }}</span>
         </button>
       </form>
       <p v-if="status === 'error'" class="join-err" data-reveal>Enter a valid email to join.</p>
