@@ -230,11 +230,12 @@
 .fp-fights .k { color: var(--ink-dim); }
 .fp-state .v,
 .fp-fights .v { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
-/* Три слова различаются ТОЛЬКО ЯРКОСТЬЮ ЧЕРНИЛ, без новых цветов и без
-   свечения: розовый и свечение принадлежат действию, а не служебному состоянию. */
-.fp-state.is-free .v  { color: var(--ink-off); }
-.fp-state.is-busy .v  { color: var(--ink-dim); }
-.fp-state.is-ready .v { color: var(--ink); font-weight: 700; }
+/* ОДИН ЦВЕТ НА ВСЕ ТРИ СОСТОЯНИЯ (правка 2 к ТЗ 29.09.2026). Раньше их различала
+   яркость чернил — свободен глуше всех, готов ярче всех, — но яркость здесь
+   ничего не должна говорить: --ink-off по канону значит «выключено», а «свободен»
+   не выключено. Теперь состояние читается по самому слову. Цвет один — --ink-dim
+   (он уже задан правилом выше); жирность у «готов» оставлена как была. */
+.fp-state.is-ready .v { font-weight: 700; }
 
 /* ── the scrolling middle ────────────────────────────────────────────────── */
 .fp-scroll {
@@ -573,7 +574,6 @@
   flex: none; font-size: var(--t-micro); letter-spacing: var(--ls-wide);
   color: var(--ink-dim); white-space: nowrap;
 }
-.fp-row .st.is-ready { color: var(--ink); }
 .fp-row:hover { background: var(--fill-2); color: var(--ink); }
 .fp-row:active { transform: translateY(1px); transition-duration: var(--d-press); }
 .fp-row:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }
