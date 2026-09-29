@@ -182,11 +182,13 @@
 /* ── 1 · head ────────────────────────────────────────────────────────────── */
 .fp-head {
   flex: none; padding: var(--sp-4);
-  border-bottom: 1px solid var(--line);
+  /* Линии под шапкой нет (ТЗ 29.09.2026, правка): она обрывалась ровно по ширине
+     панели и рисовала её границу. Блоки разделены отступом — padding шапки плюс
+     padding прокрутки под ней. */
 }
 .fp-kicker {
   font-size: var(--t-micro); letter-spacing: var(--ls-wide);
-  text-transform: uppercase; color: var(--ink-off);
+  text-transform: uppercase; color: var(--ink-dim);
 }
 .fp-name {
   margin-top: var(--sp-2);
@@ -201,7 +203,7 @@
 .fp-sub {
   margin-top: var(--sp-1);
   font-size: var(--t-micro); letter-spacing: var(--ls-title);
-  text-transform: uppercase; color: var(--ink-off);
+  text-transform: uppercase; color: var(--ink-dim);
 }
 .fp-core {
   display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2);
@@ -225,7 +227,7 @@
   font-size: var(--t-micro); letter-spacing: var(--ls-title); text-transform: uppercase;
 }
 .fp-state .k,
-.fp-fights .k { color: var(--ink-off); }
+.fp-fights .k { color: var(--ink-dim); }
 .fp-state .v,
 .fp-fights .v { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 /* Три слова различаются ТОЛЬКО ЯРКОСТЬЮ ЧЕРНИЛ, без новых цветов и без
@@ -244,7 +246,7 @@
 .fp-label {
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
   font-size: var(--t-micro); letter-spacing: var(--ls-wide);
-  text-transform: uppercase; color: var(--ink-off);
+  text-transform: uppercase; color: var(--ink-dim);
 }
 .fp-label .c { letter-spacing: var(--ls-title); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 
@@ -275,7 +277,7 @@
 .fp-train-note {
   margin-top: var(--sp-2);
   font-size: var(--t-micro); line-height: 1.35; letter-spacing: var(--ls-tight);
-  text-transform: uppercase; color: var(--ink-off); text-wrap: balance;
+  text-transform: uppercase; color: var(--ink-dim); text-wrap: balance;
 }
 
 /* ── 3 · ЯДРО КАК ИНТЕРФЕЙС ПРОКАЧКИ ─────────────────────────────────────
@@ -481,6 +483,13 @@
 .fc-back:hover { border-color: var(--line-strong); color: var(--ink); }
 .fc-back:active { opacity: var(--o-dim); }
 
+/* ПОДПИСИ КАРТОЧКИ ЯДРА В ПАНЕЛИ ЗАЛА — --ink-dim, а не --ink-off (ТЗ 29.09.2026,
+   правка). --ink-off по канону означает «выключено / SOON»; эти подписи никогда
+   выключенными не были. Селектор с .fp нарочно: правила .fc-* выше делит с залом
+   экран SPAR (SparView подключает этот файл ради ядра), и его подписи здесь не
+   перекрашиваются. */
+.fp .fc-kicker, .fp .fc-hint, .fp .fc-char__label, .fp .fc-why { color: var(--ink-dim); }
+
 /* «Уменьшить движение»: переходов нет, конечные состояния те же. Отклик на
    выбор остаётся — он не украшение. */
 @media (prefers-reduced-motion: reduce) {
@@ -492,7 +501,7 @@
 .fp-hint {
   margin-top: var(--sp-2);
   font-size: var(--t-micro); letter-spacing: var(--ls-title);
-  text-transform: uppercase; color: var(--ink-off); text-align: center;
+  text-transform: uppercase; color: var(--ink-dim); text-align: center;
 }
 
 /* a block that has nothing to show, and says why. Used by the tree's four
@@ -509,7 +518,7 @@
 .fp-note.is-error .t { color: var(--danger); }
 .fp-note .b {
   font-size: var(--t-micro); line-height: 1.5; letter-spacing: var(--ls-tight);
-  color: var(--ink-off); text-transform: uppercase; max-width: 24rem;
+  color: var(--ink-dim); text-transform: uppercase; max-width: 24rem;
 }
 /* the waiting indicator — it keeps turning even under "reduce motion": a stopped
    one reads as a frozen game (Документ А 2.15). */
@@ -540,7 +549,7 @@
   font-size: var(--t-xs); letter-spacing: var(--ls-title); text-transform: uppercase;
 }
 .fp-style-v .b { color: var(--ink); font-weight: 700; white-space: nowrap; }
-.fp-style-v .ph { color: var(--ink-off); }
+.fp-style-v .ph { color: var(--ink-dim); }
 
 /* ── 5 · roster ──────────────────────────────────────────────────────────── */
 .fp-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0;
@@ -562,7 +571,7 @@
    а два сжимающихся элемента в одной строке дерутся за место. */
 .fp-row .st {
   flex: none; font-size: var(--t-micro); letter-spacing: var(--ls-wide);
-  color: var(--ink-off); white-space: nowrap;
+  color: var(--ink-dim); white-space: nowrap;
 }
 .fp-row .st.is-ready { color: var(--ink); }
 .fp-row:hover { background: var(--fill-2); color: var(--ink); }
@@ -577,14 +586,13 @@
    рисуется только вместе с ней (см. ForgePanel.vue), иначе под списком висел
    бы пустой отчёркнутый поясок ровно на месте снятой кнопки. */
 .fp-foot {
-  flex: none; padding: var(--sp-4);
-  border-top: 1px solid var(--line);
+  flex: none; padding: var(--sp-4);   /* без линии сверху — см. .fp-head */
   display: flex; flex-direction: column; gap: var(--sp-2);
 }
 
 .fp-guest {
   font-size: var(--t-micro); line-height: 1.3; letter-spacing: var(--ls-tight);
-  color: var(--ink-off); text-transform: uppercase; text-align: center;
+  color: var(--ink-dim); text-transform: uppercase; text-align: center;
   text-wrap: balance;
 }
 
@@ -734,7 +742,7 @@
 .fp-axis .nm {
   flex: none; min-width: 6.5rem;
   font-size: var(--t-micro); letter-spacing: var(--ls-title);
-  text-transform: uppercase; color: var(--ink-off);
+  text-transform: uppercase; color: var(--ink-dim);
 }
 /* ЖЁЛОБ ПУСТ НАРОЧНО. Цифр в зале нет ни одной — ни здесь, ни где-либо ещё;
    жёлоб оставлен видимым, чтобы было понятно, где значение однажды встанет. */
