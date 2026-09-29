@@ -185,7 +185,6 @@
     <footer class="cab-foot">
       <div class="cf-legal">
         <a @click="goPrivacy">{{ t.cabinet.footPrivacy }}</a>
-        <a>{{ t.cabinet.footTerms }}</a>
       </div>
       <div class="cf-soc">
         <a :aria-label="t.cabinet.socialX"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2H21l-6.5 7.4L22 22h-6l-4.7-6.1L5.8 22H3l7-8L2 2h6.2l4.2 5.6zM16 20h1.6L8.1 4H6.4z" /></svg></a>

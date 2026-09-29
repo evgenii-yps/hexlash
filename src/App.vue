@@ -73,8 +73,10 @@ const isPlayRoute = computed(() => route.path.startsWith('/play'));
 // Sub-epic 1a: landing at / has its own centered logo — hide App.vue header chrome.
 // Sub-epic 1b interrupt fix: extend to /auth/* — auth views have own logo via
 // AuthLayoutView header, App.vue text Logo would duplicate in top-left corner.
+// /privacy joins them: the page paints its own header (mark + back button), and
+// the shell's fixed Logo used to sit on top of the text.
 const isMarketingRoute = computed(() =>
-  route.path === '/' || route.path.startsWith('/auth')
+  route.path === '/' || route.path.startsWith('/auth') || route.path === '/privacy'
 );
 
 const isScrollableComponent = computed(() => {

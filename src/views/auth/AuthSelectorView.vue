@@ -211,7 +211,6 @@
     <footer class="hx-foot">
       <div class="hx-foot-l">
         <router-link to="/privacy">Privacy Policy</router-link>
-        <router-link to="/rules">Terms of Use</router-link>
       </div>
       <div class="hx-foot-r">
         <button type="button" class="hx-soc" aria-label="X" @click="showComingSoon('x')"><IconX :s="14" /></button>

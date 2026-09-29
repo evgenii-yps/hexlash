@@ -378,7 +378,6 @@ export default {
     settingReducedMotion: "Reduced motion",
     // Footer (every section)
     footPrivacy: "Privacy Policy",
-    footTerms: "Terms of Use",
     socialX: "X",
     socialDiscord: "Discord",
   },
@@ -636,6 +635,112 @@ export default {
     needMany: "Need {n} more fighters",
     shortNote: "This layout needs a bigger roster. Recruit in the shop, then come back.",
     toGate: "Back to the gate",
+  },
+  // /privacy — written 29.09.2026. Plain language on purpose. Each section is
+  // { h, blocks }, a block is { p } (paragraph) or { ul } (list). Keep the text in
+  // step with what the game really does: the section on analytics, the AI opponent
+  // and wallets were checked against the code, not against the old generator text.
+  privacy: {
+    back: "Back",
+    title: "PRIVACY",
+    updated: "Last updated: 29 September 2026",
+    intro: "Hexlash is a browser game. This page explains what the game stores, what leaves your browser, and who else sees it. It is written in plain language on purpose.",
+    sections: [
+      {
+        h: "1. PLAYING WITHOUT AN ACCOUNT",
+        blocks: [
+          { p: "You can play as a guest. A guest is not registered and has no account. Your progress is kept inside your own browser and never reaches us:" },
+          { ul: [
+            "your current run, held until you close the tab;",
+            "a local copy of your roster and fights, held in your browser's database;",
+            "small technical flags, such as a referral code you arrived with and whether you have dismissed a notice.",
+          ] },
+          { p: "Clearing your browser data removes all of it. We cannot restore it, because we never had it." },
+        ],
+      },
+      {
+        h: "2. PLAYING WITH AN ACCOUNT",
+        blocks: [
+          { p: "Account registration is currently closed. When it is open again, an account stores:" },
+          { ul: [
+            "a login name and a password, kept as an irreversible hash, never as text;",
+            "an email address, if you choose to give one, and whether it has been confirmed;",
+            "a display name and an avatar, including an image if you upload one;",
+            "short-lived tokens used to confirm an email or reset a password;",
+            "a wallet address, only if you connect a wallet yourself;",
+            "referral data: who invited you, and how many players you invited;",
+            "everything you do in the game: fighters, fights, clubs, friends, tasks.",
+          ] },
+        ],
+      },
+      {
+        h: "3. WALLETS",
+        blocks: [
+          { p: "Nothing happens until you press Connect. When you do, your browser talks to the wallet you chose — WalletConnect, Coinbase Wallet, or a wallet extension. We receive the public address and nothing else. We never see your seed phrase, your private keys, or your balances, and we cannot move anything on your behalf." },
+        ],
+      },
+      {
+        h: "4. WHAT WE MEASURE",
+        blocks: [
+          { p: "Two analytics services run on every page: Google Analytics and Amplitude. They record which pages you open, what you click, your approximate location from your network address, and your device and browser. Amplitude also records text typed into fields on the site." },
+          { p: "We do not yet offer a consent control for this, and these services start as soon as the page loads. A consent control is planned. Until then, a browser-level tracker blocker will stop them, and the game will work normally without them." },
+        ],
+      },
+      {
+        h: "5. FIGHTS AND THE AI OPPONENT",
+        blocks: [
+          { p: "Fighters in Hexlash are driven by an AI model. During a fight the game may send a short description of the fight to Anthropic, the company behind the model: how much health and stamina each side has left, how far apart they are, how the opponent is behaving, and a fighter's callsign. Callsigns come from a fixed list inside the game — you do not type them." },
+          { p: "No account data goes with it. Your login, your email, your wallet address and your account number are not part of these messages. Anthropic receives the fight, not the player." },
+        ],
+      },
+      {
+        h: "6. WHO ELSE SEES SOMETHING",
+        blocks: [
+          { ul: [
+            "Google Fonts serves the typefaces. Your browser contacts Google on every visit, which reveals your network address.",
+            "Resend sends confirmation and password-reset emails, and receives the address the email goes to.",
+            "Our hosting providers carry every request to the site and to our server, and keep their own access records.",
+            "Our server writes error records when something breaks. They contain the failed address and the error, not your data. Your network address is used to limit how often requests can be made, and is not kept as a profile.",
+          ] },
+        ],
+      },
+      {
+        h: "7. WHAT WE DO NOT DO",
+        blocks: [
+          { p: "We do not sell your data. We do not share it with advertisers. There is no advertising in Hexlash and no ad network on this site. The game itself sets no cookies; the analytics services above set their own." },
+        ],
+      },
+      {
+        h: "8. HOW LONG THINGS ARE KEPT",
+        blocks: [
+          { p: "Guest progress lives in your browser until you clear it. Account data lives as long as the account does. Confirmation and reset tokens expire within hours. Error records and hosting access records are kept for a short period and then rotate away." },
+        ],
+      },
+      {
+        h: "9. YOUR CHOICES",
+        blocks: [
+          { p: "You can play as a guest and leave nothing with us at all. You can clear your browser data at any time and start fresh. When accounts are open, you can delete yours, and the game data attached to it is deleted with it. Records already held by the analytics services are not removed by that deletion and must be requested from them directly." },
+        ],
+      },
+      {
+        h: "10. AGE",
+        blocks: [
+          { p: "Hexlash is intended for players aged 18 and over. We do not verify age at sign-up." },
+        ],
+      },
+      {
+        h: "11. CHANGES",
+        blocks: [
+          { p: "When this page changes, the date at the top changes with it. We do not notify you separately." },
+        ],
+      },
+      {
+        h: "12. CONTACT",
+        blocks: [
+          { p: "We are setting up a contact channel for privacy questions and will publish it here. Until it exists, there is no address on this page — we would rather say so than print one nobody reads." },
+        ],
+      },
+    ],
   },
   errors: {
     pageNotFound: "Page not found",
