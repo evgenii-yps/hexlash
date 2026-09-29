@@ -32,7 +32,17 @@
      ноль смещения против 6 и 13.9 при ведении по залу).
 
      НИЧЕМ НЕ ВЛАДЕЕТ. Дерево, отказы и набор очков приходят свойствами, всякая
-     перемена уходит событием. Чьё это дерево и где оно лежит — дело зала. -->
+     перемена уходит событием. Чьё это дерево и где оно лежит — дело зала.
+
+     ДВА РАЗМЕРА, ОДНА ЛОГИКА (ТЗ 29.09.2026, разворот ядра). Фигура стоит в двух
+     местах: маленькой карточкой в панели зала и на весь экран в развороте
+     (ForgeCoreOverlay). Это ОДИН и тот же компонент, а не копия: второй экземпляр
+     получает те же свойства и шлёт то же событие toggle, поэтому правила
+     зажигания живут ровно в одном месте.
+
+     `preview` — режим маленькой карточки: работает ТОЛЬКО нажатие, оно шлёт
+     expand и больше ничего. Ведения нет и грань не выбирается — два жеста на
+     одном объекте на телефоне путаются. Зажигание живёт только в развороте. -->
 <template>
   <div class="fc" ref="rootEl" :data-level="level">
 
@@ -43,7 +53,13 @@
     <p class="fc-who"><span class="nm">{{ fighterName }}</span><span class="cr">{{ coreName }}</span></p>
 
     <!-- ── сцена ────────────────────────────────────────────────────────── -->
-    <div class="fc-stage">
+    <div
+      class="fc-stage" :class="{ 'is-preview': preview }"
+      :role="preview ? 'button' : undefined" :tabindex="preview ? 0 : undefined"
+      :aria-label="preview ? t.forge.coreOpenHint : undefined"
+      @keydown.enter.prevent="preview && expand()"
+      @keydown.space.prevent="preview && expand()"
+    >
       <svg class="fc-svg" :viewBox="`0 0 ${box} ${box}`">
         <defs>
           <!-- Налив грани. Растущий круг обрезает её горящую часть: сколько
@@ -83,11 +99,7 @@
                берётся по ближайшей середине, зазоров между зонами нет.
                Слушаем и pointerdown, а не только pointermove: на телефоне при
                касании ведения не приходит вовсе. -->
-          <polygon
-            class="fc-pad" :points="plate"
-            @pointerdown="onCoreDown" @pointermove="onCoreMove"
-            @pointerup="onCoreUp" @pointercancel="clearGuide" @pointerleave="clearGuide"
-          />
+          <polygon class="fc-pad" :points="plate" v-on="padHandlers" />
         </g>
 
         <!-- ТРИ ГРАНИ. На ядре у грани нет своего рисунка — только подсветка
@@ -125,6 +137,7 @@
           </template>
 
           <polygon
+            v-if="!preview"
             class="fc-facet__key" :points="f.points"
             role="button" tabindex="0" :aria-label="facetName(f)"
             @keydown.enter.prevent="chooseFacet(f)"
@@ -189,7 +202,7 @@
     <!-- ── что сейчас открыто ───────────────────────────────────────────── -->
     <div class="fc-read">
       <template v-if="level === 'core'">
-        <p class="fc-hint">{{ t.forge.coreHint }}</p>
+        <p class="fc-hint">{{ preview ? t.forge.coreOpenHint : t.forge.coreHint }}</p>
       </template>
 
       <template v-else>
@@ -255,8 +268,10 @@ const props = defineProps({
   // просто показывается, чтобы над ядром не стояла её четырёхстрочная шапка.
   fighterName: { type: String, default: '' },
   coreName: { type: String, default: '' },
+  // Маленькая карточка: только нажатие, оно разворачивает ядро (см. шапку файла).
+  preview: { type: Boolean, default: false },
 });
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(['toggle', 'expand']);
 
 const uid = useId();
 const id = (n) => `fc-${n}-${uid}`;
@@ -463,6 +478,23 @@ function guideFacet(e) {
   guide.value = f ? { kind: 'facet', key: f.id } : null;
   return f;
 }
+/* В превью у полотна один обработчик — нажатие. Ведения, захвата пальца и подсветки
+   нет: грань здесь не выбирается никогда. Остальные — прежние, без изменений. */
+function expand() { emit('expand'); }
+/* Нажатие, а не ведение: если палец (или мышь) ушёл дальше нескольких точек между
+   опусканием и отпусканием, это была попытка прокрутить панель или провести по
+   ядру, и разворачивать ничего не нужно. Открываем по click, а не по pointerup:
+   отпускание, которое открыло бы слой, не должно потом сработать как касание по
+   самому слою. */
+const TAP_SLOP = 10;
+let padDown = null;
+function padPress(e) { padDown = [e.clientX, e.clientY]; }
+function padClick(e) {
+  const d = padDown;
+  padDown = null;
+  if (d && Math.hypot(e.clientX - d[0], e.clientY - d[1]) > TAP_SLOP) return;
+  expand();
+}
 function onCoreDown(e) { grab(e); guideFacet(e); }
 function onCoreMove(e) { guideFacet(e); }
 function onCoreUp(e) {
@@ -471,6 +503,13 @@ function onCoreUp(e) {
   clearGuide();
   if (f) chooseFacet(f);
 }
+
+const padHandlers = computed(() => (props.preview
+  ? { pointerdown: padPress, click: padClick }
+  : {
+    pointerdown: onCoreDown, pointermove: onCoreMove, pointerup: onCoreUp,
+    pointercancel: clearGuide, pointerleave: clearGuide,
+  }));
 
 function guideCrystal(e) {
   if (level.value !== 'facet') { clearGuide(); return null; }

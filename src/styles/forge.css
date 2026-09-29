@@ -104,7 +104,7 @@
 }
 .fp * { box-sizing: border-box; }
 
-.fp::before {
+.fp::before, .fco::before {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
   top: calc(var(--f-t) * -1); right: calc(var(--f-r) * -1);
   bottom: calc(var(--f-b) * -1); left: calc(var(--f-l) * -1);
@@ -784,3 +784,91 @@
   .fp--stats .fp-train   { order: 2; }
   .fp--stats .fp-to-tree { order: 3; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   РАЗВОРОТ ЯДРА — слой на весь экран (ТЗ 29.09.2026, работа 2).
+   Компонент — ForgeCoreOverlay; фигура в нём — тот же ForgeCore, что в карточке.
+
+   СТЕКЛО ТО ЖЕ, ЧТО У ПАНЕЛЕЙ: слой ::before выше делят .fp и .fco — размытие,
+   вуаль, зерно. Отличий два: краёв нет (слой во весь экран, затухать некуда) и
+   вуаль плотнее — под слоем ничего читать не нужно. Число вуали — здесь, одно.
+
+   ⚠️ ЦЕНА. Размытие на весь экран — самое дорогое во всём слое: на программном
+   отрисовщике сервера разворот стоил +45 мс к кадру, а без размытия (вуаль и
+   зерно остаются) +3 мс. На телефоне цифры другие, решает взгляд владельца. Если
+   тяжело — одна строка: `.fco::before { backdrop-filter: none; }` (вуаль уже
+   82%, на вид почти не изменится).
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fco {
+  --fp-veil: color-mix(in srgb, var(--void) 82%, transparent);   /* плотнее панелей: 50% */
+  --f-t: 0px; --f-r: 0px; --f-b: 0px; --f-l: 0px;
+  /* Что резервируем под остальное на слое: подпись, описание, кнопки, BACK, поля.
+     От этого зависит, насколько крупной встанет фигура. */
+  --fco-reserve: 300px;
+
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; flex-direction: column;
+  font-family: var(--font-mono); color: var(--ink);
+  overscroll-behavior: contain;
+}
+.fco * { box-sizing: border-box; }
+
+/* Тело слоя: карточка по центру, и если высоты не хватает — прокручивается, а не
+   режется (низкий телефон боком). */
+.fco-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: var(--sp-4) var(--sp-3) 0;
+}
+.fco .fc { width: min(100%, 720px); margin: auto 0; }
+
+/* ФИГУРА — максимально крупная, какая влезает с полями: меньшая из ширины экрана
+   и высоты за вычетом резерва. Фон убран: зал позади виден сквозь стекло, а не
+   через чёрный квадрат (в карточке фон явно тёмный, здесь стекло уже тёмное). */
+.fco .fc-stage {
+  --fco-s: min(calc(100vw - var(--sp-3) * 2), calc(100dvh - var(--fco-reserve)), 720px);
+  width: var(--fco-s); height: var(--fco-s); min-height: 150px;
+  margin: 0 auto; background: transparent;
+}
+.fco .fc-who { justify-content: center; }
+
+/* BACK — внизу, под большим пальцем. Отступ считает системную полосу (env), а
+   запасной --sp-4 держит кнопку от края там, где полосы нет. */
+.fco-bar {
+  flex: none; display: flex; justify-content: center;
+  padding: var(--sp-3) var(--sp-4) max(var(--sp-4), env(safe-area-inset-bottom));
+}
+
+/* Низкий экран боком: фигура слева, всё остальное колонкой справа. Порядок
+   блоков в ForgeCore не меняется — только их раскладка. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .fco { --fco-reserve: 96px; }
+  .fco-body { padding-top: var(--sp-2); }
+  .fco .fc {
+    width: min(100%, 860px); display: grid; align-items: center;
+    grid-template-columns: auto minmax(0, 1fr); column-gap: var(--sp-5);
+    grid-template-areas: "stage who" "stage read" "stage foot";
+  }
+  .fco .fc-stage { grid-area: stage; }
+  .fco .fc-who { grid-area: who; justify-content: flex-start; }
+  .fco .fc-read { grid-area: read; }
+  .fco .fc-foot { grid-area: foot; }
+  .fco-bar { padding-top: var(--sp-2); padding-bottom: max(var(--sp-2), env(safe-area-inset-bottom)); }
+}
+
+/* ПОЯВЛЕНИЕ — не прозрачностью самого слоя (см. .fp-fade выше: предок с opacity < 1
+   слепит размытие), а прозрачностью содержимого и стекла. */
+.fco-enter-active::before, .fco-leave-active::before,
+.fco-enter-active > *, .fco-leave-active > * { transition: opacity var(--d-hover) var(--e-weight); }
+.fco-enter-from::before, .fco-leave-to::before,
+.fco-enter-from > *, .fco-leave-to > * { opacity: 0; }
+
+/* ОТКЛИК ФИГУРЫ В КАРТОЧКЕ (preview). Нажатие — единственный жест, поэтому фигура
+   ведёт себя как кнопка: рука, фокус с клавиатуры, отклик на касание. ⚠️ touch-action
+   тут обычный: у полотна в разворотe он запрещён (ведение — наш жест), а в карточке
+   ведения нет, и запрет не давал бы пальцем прокручивать панель. */
+.fc-stage.is-preview { cursor: pointer; }
+.fc-stage.is-preview .fc-svg { touch-action: manipulation; }
+.fc-stage.is-preview:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }
+.fc-stage.is-preview:active { opacity: var(--o-dim); transition: opacity var(--d-press); }
+@media (prefers-reduced-motion: reduce) { .fc-stage.is-preview:active { transition: none; } }

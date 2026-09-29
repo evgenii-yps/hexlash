@@ -90,6 +90,27 @@
         @retry="onRetry"
         @train="onTrain"
         @cancel-train="onCancelTrain"
+        @expand-core="openCoreOverlay"
+      />
+    </Transition>
+
+    <!-- РАЗВОРОТ ЯДРА (ТЗ 29.09.2026, работа 2). Слой на весь экран поверх зала и
+         панелей: по нажатию на фигуру в карточке. Зажигание граней живёт ТОЛЬКО
+         здесь. Зажжённое пишется тем же onToggle, что и раньше, — хранилище и
+         формат прежние. Пока слой открыт, зал нажатий не принимает вовсе. -->
+    <Transition name="fco" appear>
+      <ForgeCoreOverlay
+        v-if="coreOpen && picked"
+        ref="overlayRef"
+        :core-id="picked.core"
+        :tree="picked.upgrade || []"
+        :spent="spent"
+        :resource="resource"
+        :gates="{ light: lightWhy || null, quench: quenchWhy || null }"
+        :fighter-name="picked.callsign"
+        :core-name="pickedCore ? pickedCore.name : ''"
+        @toggle="onToggle"
+        @close="coreOpen = false"
       />
     </Transition>
 
@@ -141,6 +162,7 @@ import { stateOf, facetGate, anyLesson, startClock, stopClock } from '@/services
 import PveScene from '@/scene/PveScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import ForgePanel from '@/components/forge/ForgePanel.vue';
+import ForgeCoreOverlay from '@/components/forge/ForgeCoreOverlay.vue';
 
 // Что сейчас открыто предметом: null — ничего, в экране только зал.
 // 'roster' — планшет, 'tree' — наковальня.
@@ -231,6 +253,13 @@ const router = useRouter();
 const cabinetOpen = ref(false);
 const sceneRef = ref(null);
 const panelRef = ref(null);
+// Разворот ядра: открыт ли он и ссылка на него (Esc спрашивает, не в глубине ли ядро).
+const coreOpen = ref(false);
+const overlayRef = ref(null);
+function openCoreOverlay() {
+  tag.value = null;          // подпись бойца, висевшая под пальцем, под слоем не нужна
+  coreOpen.value = true;
+}
 
 // ── the roster, and who is being worked on ────────────────────────────────
 const fighters = computed(() => store.getters['roster/fighters']);
@@ -426,11 +455,19 @@ function onNewFighter() {
 // the id is already null and comparing ids would never fire. What the store
 // cannot do is put the hall's 3D back into the overview — that is this job.
 watch(picked, (now, was) => {
+  if (!now) coreOpen.value = false;     // бойца не стало — разворачивать нечего
   if (was && !now) { tag.value = null; statsOpen.value = false; sceneRef.value?.exitWork(); }
 });
 
 // Esc walks back: first up the tree, then out of the work state.
 function onKeydown(e) {
+  // Разворот открыт — Esc принадлежит ему: вверх по уровням ядра, потом закрыть.
+  // Зал при этом не трогаем: он под слоем и ничего не принимает.
+  if (e.key === 'Escape' && coreOpen.value) {
+    e.preventDefault();
+    if (!overlayRef.value?.stepBack()) coreOpen.value = false;
+    return;
+  }
   if (e.key !== 'Escape' || !pickedId.value) return;
   e.preventDefault();
   if (panelRef.value?.stepBack()) return;
