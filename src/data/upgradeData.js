@@ -222,7 +222,7 @@ export const CRYSTALS = {
       // Builds the charge while spacing / circling out (charge-gain seam).
       { name: 'Charged Run', shifts: [s('distance', 6)], bonuses: [b('chargeGain', COMBAT_BALANCE.huntChargedGain)] },
       // The ONLY counter in RAIDER — the more the foe presses, the more it pays.
-      { name: 'Punish Aggression', shifts: [s('counter', 10)], conditionals: ['punish_aggression'] },
+      { name: 'Punish Aggression', shifts: [s('counter', 10)], conditionals: ['hunt_reply'] },
       // VERTEX — one loaded, devastating run: a full charge releases at max power.
       { name: 'Killing Run', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.huntKillingPower)], effects: ['lethal_entry'] },
     ], 'strikePower'),

@@ -19,6 +19,9 @@
      BREATHE — дышать    : retreat, recover wind (stamina).
      CATCH   — ловить    : wait out the foe's swing and punish it. */
 
+import { COMBAT_BALANCE } from './combatBalance.js';
+const GR = COMBAT_BALANCE.grani;
+
 export const INTENTIONS = {
   PRESS: 'press',
   STRIKE: 'strike',
@@ -173,6 +176,24 @@ export function spinalScore(self, foe, memory, fight) {
         case 'foeOpen': on = foe.phase === 'recovery' || foe.phase === 'stagger'; break;
         case 'foeSwing': on = foeThreat || foe.phase === 'windup' || foe.phase === 'commit'; break;
         case 'charged': on = self.charge01 >= 0.5; break;
+        // НОВЫЕ условия (TZ_tags_semantics_v2): читают состояние, что уже есть у бойца; пороги — combatBalance.grani.
+        case 'selfHpLow': on = self.hp01 < GR.selfHpLow; break;
+        case 'foeHpLow': on = foe.hp01 != null && foe.hp01 < GR.foeHpLow; break;
+        case 'selfWindLow': on = self.stamina01 < GR.selfWindLow; break;
+        case 'foeWindLow': on = foe.stamina01 != null && foe.stamina01 < GR.foeWindLow; break;
+        case 'longFight': on = (fight.elapsed || 0) > GR.longFightSec; break;
+        case 'foeQuiet': { // враг не бил дольше N с: последний 'attack' в памяти, нет его — с начала боя
+          let last = -Infinity;
+          for (const e of memory) if (e.type === 'attack' && e.t > last) last = e.t;
+          on = (last === -Infinity ? (fight.elapsed || 0) : fight.t - last) > GR.foeQuietSec;
+          break;
+        }
+        case 'hpDropped': { // своё HP упало на N% максимума за последние M с (пик в окне − сейчас)
+          let peak = self.hp01;
+          for (const h of self.hpHist || []) if (fight.t - h.t <= GR.hpDropWindSec && h.hp01 > peak) peak = h.hp01;
+          on = peak - self.hp01 >= GR.hpDropFrac;
+          break;
+        }
         default: on = true;
       }
       if (on) s[l.i] += l.w;

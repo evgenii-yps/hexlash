@@ -864,6 +864,7 @@ export function buildFighter(
   // the picker reads. The model leans on it; the spinal cord uses it lightly.
   const FOE_MEMORY_MAX = 8;
   const foeMemory = [];
+  const hpHist = []; // {t, hp01} — своё здоровье по тикам выбора (читает условие «HP упало»)
   const rememberFoe = (type) => {
     foeMemory.push({ t: lastT, type });
     if (foeMemory.length > FOE_MEMORY_MAX) foeMemory.shift();
@@ -898,6 +899,7 @@ export function buildFighter(
     intentionNextAt = t + INTENTION_TICK_SEC;
     const f = getFoePos && getFoePos();
     const dist = f ? Math.hypot(f.x - group.position.x, f.z - group.position.z) : Infinity;
+    hpHist.push({ t, hp01: hp / maxHp }); if (hpHist.length > 10) hpHist.shift();
     const self = {
       ax01: {
         distance: n01(baseAx.distance), initiative: n01(baseAx.initiative),
@@ -906,6 +908,7 @@ export function buildFighter(
       },
       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
       hp01: hp / maxHp,
+      hpHist,
       stamina01: stamina01(),
       charge01: charge / stats.chargeMax,
       blocking,
@@ -922,10 +925,11 @@ export function buildFighter(
       dist,
       inStrike: dist <= STRIKE,
       reacting: !!(getFoeReacting && getFoeReacting()),
+      hp01: getFoeHp01 ? getFoeHp01() : null, stamina01: getFoeStamina ? getFoeStamina() : null, // здоровье и запас сил врага (условия наклонов)
       phase: perceivedPhase, // PERCEIVED foe action phase (noised read, not ground truth) — picker leans CATCH on a read
     };
     const fc = getFightContext && getFightContext();
-    const fight = { t, escalation: (fc && fc.escalation) || 1, escalation01: (fc && fc.escalation01) || 0 };
+    const fight = { t, escalation: (fc && fc.escalation) || 1, escalation01: (fc && fc.escalation01) || 0, elapsed: (fc && fc.elapsed) || 0 };
     const picked = chooseIntention(self, foe, foeMemory, fight, brain);
     if (picked) applyIntention(picked); // model may return null → keep the held mode (no freeze)
   };
@@ -2522,6 +2526,7 @@ export function buildFighter(
       // so the two never re-pick in lock-step — no random, replay stays stable.
       intentionNextAt = lastT + (isOpp ? INTENTION_TICK_SEC * 0.5 : 0);
       foeMemory.length = 0; // fresh bout — forget the foe's earlier events
+      hpHist.length = 0;
       // Fresh bout — clear the read perception + any pending gather/cooldown.
       perceivedPhase = 'neutral'; truePhaseSeen = 'neutral'; readPendingAt = -1; readPendingPhase = null;
       gatherUntil = 0; readReactUntil = 0; lastReadAction = ''; lastReadActionAt = -1;

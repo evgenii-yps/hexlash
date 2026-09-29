@@ -20,40 +20,44 @@ const P = 'press', ST = 'strike', SG = 'sting', H = 'hold', BR = 'break', C = 'c
 
 /* Условия тега (считает intentions.js): always · close (враг в радиусе удара) · far (враг заметно дальше
    желаемой дистанции) · foeOpen (враг открыт: восстановление/сбив) · foeSwing (враг замахивается/недавно
-   бил) · charged (заряд хлёсткого удара ≥ 0.5). */
+   бил) · charged (заряд хлёсткого удара ≥ 0.5) · НОВЫЕ (TZ_tags_semantics_v2): selfHpLow · foeHpLow ·
+   selfWindLow · foeWindLow · longFight · foeQuiet (враг не бил дольше N с) · hpDropped (своё HP упало на N%
+   за M с). Условия «враг бил» (foeSwing) у BULWARK и AMBUSH мертвы по устройству — жёсткая потребность
+   CATCH решает тик до очков, — поэтому у их веток BREAKER и TRAP теги на новом словаре. */
 
 /* Тег → [намерение, условие, вершина?]. Черновые соответствия по смыслу тега (комментарии в upgradeData.js). */
 export const TAG_LEANS = {
   // ONSLAUGHT
   close_damage_ramp: [ST, 'close'],
-  overload_strike: [ST, 'charged', true],
-  chase_strike: [P, 'far'],
-  lockdown: [P, 'close', true],
-  hit_accel: [ST, 'always'],
-  no_breather: [P, 'always'],
-  rampage: [ST, 'always', true],
+  overload_strike: [ST, 'foeHpLow', true],     // вершина RAM: добивает раненого (было: заряд ≥ 0.5 — почти не наступал)
+  chase_strike: [P, 'foeQuiet'],               // CHASE: догоняет пассивного (было: враг далеко — 4%)
+  lockdown: [H, 'close', true],                // вершина CHASE: прижав вплотную — держит (было: PRESS вблизи, как шаг 2)
+  hit_accel: [ST, 'longFight'],                // FRENZY: разгоняется с длиной боя (было: всегда)
+  no_breather: [P, 'foeWindLow'],              // FRENZY: не даёт выдохшемуся врагу отдышаться (было: всегда)
+  rampage: [ST, 'selfHpLow', true],            // вершина FRENZY: вразнос, когда прижали (было: всегда)
   // RAIDER
   clean_chain: [SG, 'always'],
-  perfect_jab: [SG, 'far', true],
+  perfect_jab: [SG, 'foeQuiet', true],         // вершина JAB: свободные тычки по пассивному (было: враг далеко — 3%)
   rhythm_break: [BR, 'close'],
   feint_interrupt: [SG, 'foeSwing'],
   feint_combo: [ST, 'close', true],
-  punish_exhausted: [ST, 'foeOpen'],
-  punish_aggression: [C, 'foeSwing'],
-  lethal_entry: [P, 'far', true],
+  punish_exhausted: [ST, 'foeWindLow'],        // HUNT: карает выдохшегося (было: враг открыт)
+  hunt_reply: [ST, 'foeSwing'],                // HUNT·4, бывший punish_aggression: атакующая ветка отвечает ударом, а не ловит
+  lethal_entry: [P, 'foeHpLow', true],         // вершина HUNT: вход на добивание (было: враг далеко — 5%)
   // BULWARK
   dig_in: [H, 'close'],
-  fortress: [H, 'always', true],
-  retaliate_ramp: [C, 'foeSwing'],
-  counter_trap: [C, 'foeSwing', true],
+  fortress: [H, 'selfHpLow', true],            // вершина BASTION: несокрушим, когда прижали (было: всегда)
+  retaliate_ramp: [ST, 'hpDropped'],           // BREAKER: получил — отдаёт (было: CATCH по «враг бил» — мертво по устройству)
+  counter_trap: [C, 'foeWindLow', true],       // вершина BREAKER: стена, о которую враг выдыхается
   pin: [H, 'close'],
   clinch: [P, 'close', true],
   // AMBUSH
-  perfect_trap: [C, 'foeSwing', true],
-  exhaust: [SG, 'far'],
-  phantom: [BR, 'foeSwing', true],
+  punish_aggression: [C, 'hpDropped'],         // TRAP·3: осталось CATCH; условие из нового словаря
+  perfect_trap: [ST, 'foeQuiet', true],        // вершина TRAP: капкан захлопывается, когда враг затих (было: CATCH по «враг бил»)
+  exhaust: [SG, 'longFight'],                  // SHADOW: изматывает с длиной боя (было: враг далеко — 5%)
+  phantom: [BR, 'hpDropped', true],            // вершина SHADOW: уходит из-под удара после попадания
   vulnerable_strike: [ST, 'foeOpen'],
-  execute: [ST, 'foeOpen', true],
+  execute: [ST, 'foeHpLow', true],             // вершина STING: казнь раненого (было: враг открыт, как шаг 3)
 };
 
 /* Резонанс ветки: [главное намерение, второстепенное|null]. Ключ: ядро → id ветки (a/b/c). */
