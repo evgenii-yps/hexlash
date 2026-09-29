@@ -80,6 +80,9 @@ export default {
     fight: "FIGHT",              // the hero action (the one pink + glow)
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode (single-label chip)
+    // Честная метка на том, чего ещё нет: магазин, кабинет, EDIT SPACE.
+    // Одно слово на все три — семья одна, и расходиться ей незачем.
+    soon: "SOON",
   },
   // Mode stage — the ARENA / FORGE fork. Not a screen any more: the home FIGHT
   // button flies the camera out to two plates standing in the same world, and these
@@ -181,8 +184,6 @@ export default {
     // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ — надписи на торцах. Слово BACK здесь не годится:
     // плоская кнопка BACK в полосе наверху уже означает «выйти из зала», и два
     // BACK с разным смыслом на одном экране — ошибка, а не экономия.
-    crossView: "VIEW",
-    crossHall: "HALL",
     // ОСИ БОЙЦА в блоке статов. Имена самих осей приходят из набора осей
     // (data/behavior.js) и не переводятся — они внутренние имена механики.
     traitsLabel: "TRAITS",
@@ -265,10 +266,6 @@ export default {
   },
   gate: {
     soon: "SOON",
-    // Баффы — три слота «В бой» на шаге выбора бойца (ТЗ 22.09.2026, работа 2).
-    buffKit: "Take into the fight",
-    buffEmpty: "EMPTY",
-    buffNone: "No buffs in stock — the fight starts without them.",
     // Боец на тренировке: остров затемнён и не нажимается. До демо не
     // встречается — ставить бойца на тренировку пока некому.
     forge: "FORGE",

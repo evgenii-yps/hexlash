@@ -111,10 +111,16 @@
       >{{ sizeLabel(n) }}</button>
     </div>
 
-    <!-- БАФФЫ — три слота «В бой». Стоят там же, где выбор размера состава: это
-         второе и последнее, что игрок решает перед выходом на плиту. Пока
-         бойцов не набрано, ряд не показывается — решать нечего. -->
-    <BuffKitSlots v-if="!diving && stage === 'squad' && fighters.length" :stacked="sizes.length > 0" />
+    <!-- ⚠️ РЯДА БАФФОВ ЗДЕСЬ БОЛЬШЕ НЕТ (ТЗ 27.09.2026). Он стоял ровно тут —
+         под выбором размера состава, а в дуэли на его месте, — и показывал три
+         предмета, которые игрок берёт в бой. Показывать стало нечего: набор
+         полный всегда и у всех, выбирать и покупать нечего, а витрина
+         одного и того же каждый раз — это шум перед боем.
+         Сами предметы никуда не делись: их выдаёт services/buffs.js и видно их
+         в бою, на нижней панели. Место ряда НЕ переразмечали: и он, и соседний
+         выбор размера стоят накладными (position: fixed), каждый со своей
+         привязкой, — поэтому с его уходом ничто не съехало и пустой полосы не
+         осталось. -->
 
     <!-- Строка у кнопки: ПРАВИЛА выбранного режима — чем этот бой отличается от
          прочих. Пока бойцов не хватает, на её месте стоит нехватка: просить
@@ -136,12 +142,14 @@
         <span class="n">{{ t.home.back }}</span>
       </button>
       <div class="hs-cluster">
-        <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
+        <button type="button" class="hs-chrome hs-seg-shop" disabled @click="goShop" :aria-label="t.home.shop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span class="n">{{ t.home.shop }}</span>
+          <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
-        <button type="button" class="hs-chrome hs-seg-cab" @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+        <button type="button" class="hs-chrome hs-seg-cab" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
           <span class="av" aria-hidden="true"></span>
+          <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
       </div>
     </div>
@@ -164,7 +172,6 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import BuffKitSlots from '@/components/buff/BuffKitSlots.vue';
 import store from '@/core/state/store.js';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';

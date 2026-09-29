@@ -142,6 +142,26 @@
   transition: filter var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
 }
 .hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--chrome-rim); }
+
+/* ── ЧЕСТНАЯ ЗАГЛУШКА: SOON на хроме (ТЗ 27.09.2026 + дополнение) ──────────
+   Магазин, кабинет и EDIT SPACE ещё не работают: на каждом стоит диагональная
+   печать .soon-stamp (общий приём, описан в assets/main.css) и нажатие снято.
+   Своего выключенного вида НЕ заводим — он уже описан выше в .hs-chrome:disabled
+   (рамка --line, заливка приглушена, чернила --chrome-ink-off = тот же #5D5D66,
+   что и --ink-off). Здесь только углы с кеглями печати и две дырки, которые
+   disabled не закрывал: блик по наведению и подсветка ромба.
+   Прежняя короткая подпись рядом с текстом (.hs-soon / .hs-soon-cab) отменена.
+   Снимается целиком: убрать disabled и строки .soon-stamp в разметке шести
+   полос (дом, экран режимов, зал FORGE, пространство, ворота арены, выбор
+   отряда) и этот блок. */
+.hs-chrome:disabled:hover::after { animation: none; }
+.hs-chrome:disabled:hover .av { filter: none; border-color: var(--chrome-line); }
+/* Углы и кегли — из замеров кнопок на собранной странице; у каждой свои
+   пропорции, поэтому общего числа нет. Ниже, в мобильном блоке, чип магазина
+   становится квадратом 44×44 и получает свою пару. */
+.hs-seg-shop  { --soon-a: 21deg; --soon-s: 19px; }   /* замер 115×44 → atan 21° */
+.hs-seg-cab   { --soon-a: 37deg; --soon-s: 14px; }   /* замер  58×44 → atan 37° */
+.edit-space   { --soon-a: 14deg; --soon-s: 22px; }   /* замер 173×44 → atan 14° */
 /* (mobile lives in one consolidated block at the end of the file, so it overrides
    every base rule above it.) */
 
@@ -380,6 +400,9 @@
   /* SHOP/back → icon-only 44×44 square (label hidden, glyph centred) */
   .hs-seg-shop { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .hs-seg-shop .n { display: none; }
+  /* Оба чипа становятся квадратами 44×44 — диагональ идёт под 45°, и слово
+     садится по ней целиком. Своя пара на каждый: пропорции изменились. */
+  .hs-seg-shop, .hs-seg-cab { --soon-a: 45deg; --soon-s: 12px; }
   /* cabinet → 44×44 icon-only (the chrome diamond) */
   .hs-seg-cab { width: 44px; height: 44px; padding: 0; }
   /* FIGHT — full-width slab, lower, smaller word */

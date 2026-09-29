@@ -55,7 +55,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBuffShelf, buildCrossing, buildSparStand, buildAscensionStand } from './forgeProps.js';
+import { buildRoster, buildUpgrade, buildPunchBag, buildBagStand, buildBuffShelf, buildSparStand, buildAscensionStand, buildFloorMark } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -216,10 +216,37 @@ const TRAIN = {
   // значит, у обоих островов проверенная форма, а не одно и то же число дважды.
   aspect: 1.45,
 };
-// Переход между островами: насколько надпись на торце сдвинута от середины к
-// тому краю, в сторону которого она ведёт. Доля полуширины острова.
+// ОСТРОВ SPAR. Своих размеров у него нет НАРОЧНО: ширину он берёт у острова груш
+// (см. buildSparIsland). Здесь только то, чего там взять неоткуда.
+const SPAR_ISLE = {
+  // Доля ширины острова под слово SOON. Треть: слово должно читаться стоя на
+  // телефоне, но остров — это место, а не вывеска, и словом во всю плиту он
+  // превратился бы во второе.
+  markWidth: 0.34,
+  // ⚠️ СЛОВО СДВИНУТО С СЕРЕДИНЫ ОСТРОВА, И ЭТО НЕ ВКУСОВЩИНА. Плита расколота
+  //    разломом ровно посередине (forgeSlab: рваный шов вдоль z = 0, гуляющий на
+  //    ±0.42 плюс сама щель), и слово, положенное в центр, ложилось прямо на
+  //    трещину — поймано первым же снимком острова. Доля полуглубины, а не число:
+  //    остров берёт размеры у соседнего, и закреплённое число уехало бы с ним.
+  //    0.45 уводит слово на ближнюю половину, с запасом от гуляющего шва.
+  markZ: 0.45,
+  // Какую долю кадра занимает плита в самом широком месте. Меньше единицы —
+  // значит по краям остаётся полоска пустоты, и остров читается ПРЕДМЕТОМ, а не
+  // полом под ногами. 0.94 — примерно по три процента кадра с каждой стороны.
+  //
+  // ⚠️ ЭТО НЕ ПОДБОР РАКУРСА ПОД КОМПОЗИЦИЮ (правило 23.09.2026 см. в CAM), а
+  //    именованное исключение, разрешённое владельцем 28.09.2026 для ЭТОГО
+  //    острова: он новый и пустой, и смотреть на него в упор не на что.
+  fit: 0.94,
+};
+// ОТКЛИК НА НАЖАТИЕ у предметов зала.
+//
+// ⚠️ БЛОК ОСТАЛСЯ ОТ НАДПИСЕЙ НА ТОРЦАХ ОСТРОВОВ, которые сняты 27.09.2026
+//    (правило перемещения стало одно: нажал предмет — улетел на его остров).
+//    Вместе с ними ушёл `offset` — сдвиг надписи к тому краю, в сторону которого
+//    она вела. А вот `flash` никуда не делся: на нём стоит вспышка лужицы у ВСЕХ
+//    предметов зала, а не только у бывших переходов.
 const CROSS = {
-  offset: 0.52,
   // Сколько горит розовым после нажатия. Не «пока палец на стекле»: у нажатия
   // пальцем между down и up бывает десяток миллисекунд, и разгорание, которое
   // идёт плавно, просто не успело бы начаться. Поэтому вспышка с фиксированным
@@ -244,6 +271,13 @@ const CAM = {
   //    Сюда переносится НАПРАВЛЕНИЕ как есть (это чистые числа, угол один в
   //    один) и ПРОПОРЦИЯ удаления. Абсолютное домашнее число поставило бы
   //    камеру внутрь плиты: зал шире дома вдвое с лишним.
+  //
+  //    ⚠️ ОДНО ИМЕНОВАННОЕ ИСКЛЮЧЕНИЕ — ОСТРОВ SPAR (решение владельца
+  //    28.09.2026). Правило выше остаётся в силе и на зал, и на остров груш:
+  //    они приняты как есть. Острову SPAR разрешено отодвинуть камеру ровно
+  //    настолько, чтобы его пустая плита села в вертикальный экран целиком, —
+  //    см. fitDistance и sparFrame. Исключение именное: угол не трогается,
+  //    трогается только удаление, и только у одного острова.
   dir: [4.6, 3.6, 5.7],     // то же смещение, что дома; сюда важно только направление
   distPerWidth: 8.1615 / 6, // удаление = столько ширин острова, сколько дома
   lookLift: 1.1,            // на сколько выше плиты смотрит камера — тоже домашнее
@@ -613,6 +647,40 @@ function buildNeighbourIsland(topY, count) {
 }
 
 /**
+ * ОСТРОВ SPAR — слева от зала, зеркально острову груш.
+ *
+ * ⚠️ ШИРИНА БЕРЁТСЯ У ОСТРОВА ГРУШ, а не назначается своя: оба острова про одно
+ *    и то же, и разный масштаб у них читался бы как разная важность.
+ *
+ *    ⚠️ РАНЬШЕ ЗДЕСЬ БЫЛО СКАЗАНО, ЧТО ОБЩАЯ ШИРИНА ДАЁТ И ОБЩЕЕ УДАЛЕНИЕ
+ *    КАМЕРЫ. С 28.09.2026 это неверно: стоя на телефоне камера отходит от этого
+ *    острова дальше, чем от соседнего, — ровно настолько, чтобы пустая плита
+ *    села в кадр целиком (именованное исключение, см. sparFrame и CAM). Ширина
+ *    общая, удаление — уже нет.
+ *
+ * ⚠️ ПЛИТА ПУСТАЯ, И ЭТО ВЕСЬ ОСТРОВ. Ни предметов, ни бойцов, ни нажатий —
+ *    бой-настройка сюда переедет отдельной работой. Пока честное слово SOON,
+ *    выгравированное на полу: тот же приём, каким подписан предмет ASCENSION,
+ *    когда второго вознесения уже нет.
+ */
+function buildSparIsland(topY) {
+  if (trainHalfW <= 0) return;          // не у чего взять масштаб — острова не будет
+  const width = trainHalfW * 2;
+  sparSlab = buildForgeSlab({ width, depth: trainHalfD * 2, height: SLAB.height });
+  sparCx = -(compose.slab.width / 2 + TRAIN.gap + width / 2);
+  sparSlab.group.position.x = sparCx;
+  scene.add(sparSlab.group);
+  sparHalfW = width / 2;
+  sparHalfD = trainHalfD;       // глубина тоже соседская — держим её под рукой для кадра
+
+  // Слово лежит на ближней половине острова (см. markZ), чуть выше пола — иначе
+  // спорит с ним за глубину.
+  sparMark = buildFloorMark(t.value.home.soon, width * SPAR_ISLE.markWidth);
+  sparMark.mesh.position.set(sparCx, topY + 0.012, trainHalfD * SPAR_ISLE.markZ);
+  scene.add(sparMark.mesh);
+}
+
+/**
  * Груши по числу ЗАНИМАЮЩИХСЯ, а не по числу мест.
  *
  * Вызывается оттуда же, откуда зал узнаёт о смене занятия (applyTraining), то
@@ -635,31 +703,6 @@ function syncBags(busy) {
   }
 }
 
-// ── ПЕРЕХОД МЕЖДУ ОСТРОВАМИ. По надписи на торце каждого: с главного — к
-//    грушам, с тренировочного — обратно в зал.
-//
-//    ПОЧЕМУ НА ТОРЦЕ. Верх плиты занят: по нему бродят бойцы, на нём стоят
-//    планшет, наковальня и полка. Торец — единственная поверхность зала, которую
-//    ничто не может заслонить, и он смотрит ровно на камеру (подъём 26.2°).
-//    Кнопка едет вместе с островом при свободном повороте камеры, потому что
-//    она и есть часть острова, а не наклейка на экране.
-function buildCrossings() {
-  const face = (cx, halfW, halfD, key, label, side) => {
-    const c = buildCrossing(label);
-    // Торец — плоскость z = halfD; табличка выступает из неё вперёд сама.
-    // По ширине она сдвинута к тому краю, в сторону которого ведёт: это
-    // единственная подсказка направления, которая у надписи есть.
-    c.group.position.set(cx + side * halfW * CROSS.offset, 0, halfD);
-    c.key = key;
-    c.pressUntil = 0;
-    scene.add(c.group);
-    propList.push({ key, obj: c });
-    crossings.push(c);
-  };
-  face(0, compose.slab.width / 2, compose.slab.depth / 2, 'toTrain', t.value.forge.crossView, +1);
-  if (trainHalfW > 0) face(trainCx, trainHalfW, trainHalfD, 'toHall', t.value.forge.crossHall, -1);
-}
-
 function buildForgeProps(topY) {
   const z = compose.slab.depth / 2 - 0.9;
   const spots = [
@@ -680,6 +723,15 @@ function buildForgeProps(topY) {
     //    обе раскладки снимком, а не на глаз: камера зала диагональная, и
     //    разъехавшиеся по миру предметы на экране сходятся.
     { key: 'spar', make: buildSparStand, x: compose.slab.width * 0.33, z: z + 0.3 },
+    // ГРУША — дверь на остров тренировки (ТЗ 27.09.2026). Стоит на ТОЙ ЖЕ
+    // передней линии, что постамент SPAR, и рядом с ним: два предмета, которые
+    // уводят с плиты, стоят вместе, и правило «нажал предмет — улетел на его
+    // остров» читается с одного взгляда.
+    //
+    // ⚠️ МЕСТО ПРОВЕРЯТЬ СНИМКОМ, а не на глаз, — как и у двух соседей. Камера
+    //    зала диагональная: предметы, разъехавшиеся по миру, на экране сходятся,
+    //    и наковальня стоит на той же долготе, только глубже.
+    { key: 'bags', make: buildBagStand, x: compose.slab.width * 0.22, z: z + 0.3 },
     // ASCENSION — вход в обряд. Стоит в открытой середине плиты, между
     // планшетом и наковальней, ближе к игроку, чем они.
     //
@@ -702,16 +754,27 @@ function buildForgeProps(topY) {
   }
 }
 
-// ── ПОЗА КАМЕРЫ. Одна на зал, одна на соседний остров, обе по домашнему
-//    правилу: домашнее направление плюс удаление, пропорциональное ширине
-//    острова (см. CAM). Подбора под то, что лежит на полу, больше НЕТ — он и
-//    был причиной чужого ракурса.
+// ── ПОЗА КАМЕРЫ. Одна на зал, одна на каждый остров, все по домашнему правилу:
+//    домашнее направление плюс удаление, пропорциональное ширине острова (см.
+//    CAM). Подбора под то, ЧТО ЛЕЖИТ НА ПОЛУ, нет нигде — он и был причиной
+//    чужого ракурса.
+//
+//    ⚠️ У ОСТРОВА SPAR удаление снизу подпёрто (28.09.2026, см. sparFrame):
+//       камера отходит, пока сама плита не сядет в кадр целиком. Это по-прежнему
+//       не подбор под содержимое — на острове ничего и не лежит; это размер
+//       самого острова против размера кадра.
 const _dirU = new THREE.Vector3();
 
-/** Поза по домашнему рецепту: смотреть в (lookX, плита + lookLift, lookZ). */
-function poseOver(lookX, lookZ, islandWidth) {
+/**
+ * Поза по домашнему рецепту: смотреть в (lookX, плита + lookLift, lookZ).
+ *
+ * `minDist` — нижняя граница удаления. По умолчанию её нет: и зал, и остров груш
+ * стоят ровно на домашней пропорции, как решено 23.09.2026. Её передаёт ОДИН
+ * вызов — остров SPAR (см. sparFrame), и только он.
+ */
+function poseOver(lookX, lookZ, islandWidth, minDist = 0) {
   _dirU.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]).normalize();
-  const dist = CAM.distPerWidth * islandWidth;
+  const dist = Math.max(CAM.distPerWidth * islandWidth, minDist);
   const ly = (slab ? slab.refs.topY : 0) + CAM.lookLift;
   return {
     look: [lookX, ly, lookZ],
@@ -731,6 +794,137 @@ function frameFor() {
 /** Кадр соседнего острова — тем же домашним рецептом, от ЕГО ширины. */
 function trainingFrame() {
   return trainHalfW > 0 ? poseOver(trainCx, 0, trainHalfW * 2) : frameFor();
+}
+
+// Рабочие векторы для fitDistance — заводятся один раз, не на каждый кадр.
+const _fitP = new THREE.Vector3();
+const _fitR = new THREE.Vector3();
+const _fitU = new THREE.Vector3();
+const _fitZ = new THREE.Vector3();
+
+/**
+ * НАИМЕНЬШЕЕ УДАЛЕНИЕ, ПРИ КОТОРОМ КОРОБКА ОСТРОВА ЦЕЛИКОМ В КАДРЕ.
+ *
+ * Считается, а не подбирается на глаз, и вот почему подбор здесь не годится:
+ * плита растёт ступенями под размер ростера, а кадр меняет форму при повороте
+ * телефона. Закреплённое число пришлось бы переподбирать после каждого такого
+ * движения — а формула держит и то, и другое сама.
+ *
+ * Как это выходит одной строкой, без перебора. Камера смотрит ВДОЛЬ своего
+ * направления, значит её собственное удаление не двигает точку вбок и вверх по
+ * экрану: боковой и вертикальный размах угла от удаления НЕ ЗАВИСЯТ, от него
+ * зависит только глубина. Поэтому для каждого угла сразу известно, с какой
+ * глубины он влезает, — а глубина и удаление отличаются на проекцию угла на
+ * направление взгляда. Берём худший из восьми углов коробки (верх плиты и её
+ * низ: «целиком» — это вся коробка, а не только пол).
+ *
+ * @param {number} halfW  половина ширины плиты (X)
+ * @param {number} halfD  половина глубины плиты (Z)
+ * @param {number} fill   какую долю полукадра разрешено занять (1 — впритык)
+ */
+function fitDistance(halfW, halfD, fill) {
+  const aspect = camera ? camera.aspect : (viewH ? viewW / viewH : 1);
+  const tanY = Math.tan((FOV.forge / 2) * Math.PI / 180);
+  const tanX = tanY * aspect;
+  _fitZ.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]).normalize();   // «назад» камеры
+  _fitR.set(0, 1, 0).cross(_fitZ).normalize();                 // вправо по экрану
+  _fitU.copy(_fitZ).cross(_fitR);                              // вверх по экрану
+  let need = 0;
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      for (const dy of [0, -SLAB.height]) {
+        // Угол коробки ОТНОСИТЕЛЬНО ТОЧКИ ВЗГЛЯДА: она висит на lookLift выше
+        // верха плиты, поэтому верх плиты для неё — это −lookLift.
+        _fitP.set(sx * halfW, dy - CAM.lookLift, sz * halfD);
+        const wide = Math.abs(_fitP.dot(_fitR)) / (fill * tanX);
+        const tall = Math.abs(_fitP.dot(_fitU)) / (fill * tanY);
+        need = Math.max(need, _fitP.dot(_fitZ) + Math.max(wide, tall));
+      }
+    }
+  }
+  return need;
+}
+
+/**
+ * Кадр острова SPAR — ИМЕНОВАННОЕ ИСКЛЮЧЕНИЕ (решение владельца 28.09.2026).
+ *
+ * Ракурс домашний, как у всех: угол не трогается. Трогается только удаление —
+ * камера отходит ровно настолько, чтобы пустая плита села в кадр целиком.
+ *
+ * ⚠️ ПОЧЕМУ ЭТО НЕ РАСПОЛЗЁТСЯ НА ЗАЛ И ОСТРОВ ГРУШ. Формулу зовёт ровно этот
+ *    один кадр. Зал и остров груш её не видят вовсе и стоят там же, где стояли.
+ *
+ * ⚠️ ЛЁЖА КАМЕРА ТОЖЕ ОТХОДИТ, но заметно меньше. Кадр там шире, и вбок плита
+ *    помещалась и раньше; упиралась она нижним ближним ребром в низ экрана —
+ *    тот же изъян, только по другой стороне. Правило одно на обе раскладки:
+ *    «этот остров виден целиком», а не «целиком только стоя».
+ */
+function sparFrame() {
+  if (sparHalfW <= 0) return frameFor();
+  return poseOver(sparCx, 0, sparHalfW * 2, fitDistance(sparHalfW, sparHalfD, SPAR_ISLE.fit));
+}
+
+// ── ГДЕ СТОИТ КАМЕРА. Одно слово на всю сцену: 'hall' | 'train' | 'spar'.
+//
+//    ⚠️ ЗАЧЕМ ОТДЕЛЬНАЯ ЗАПИСЬ, КОГДА ЕСТЬ САМА КАМЕРА. По положению камеры
+//       место не прочитать: игрок волен крутить и приближать её как угодно, и
+//       «рядом с островом груш» перестало бы быть ответом сразу после первого
+//       поворота. А от места зависит, куда ведёт BACK, — и ошибиться здесь
+//       значит увести человека с экрана вместо возврата в зал.
+//
+//    ⚠️ МЕСТО МЕНЯЕТСЯ ТОЛЬКО ЧЕРЕЗ goPlace. Второй двери нет нарочно: кадр и
+//       запись о месте обязаны меняться одной операцией, иначе они разойдутся —
+//       ровно тот случай, когда камера стоит на острове, а BACK думает, что мы
+//       в зале.
+let place = 'hall';
+
+function frameOf(name) {
+  if (name === 'train') return trainingFrame();
+  if (name === 'spar') return sparFrame();
+  return frameFor();
+}
+
+/**
+ * Увести камеру на место и запомнить, что мы там.
+ *
+ * ⚠️ ВО ВРЕМЯ ПЕРЕЛЁТА НОВОЕ МЕСТО НЕ ПРИНИМАЕТСЯ (ТЗ, крайний случай 1:
+ *    «перелёт не прерывается»). Заслон стоит ЗДЕСЬ, а не у нажатия по предмету,
+ *    и вот почему. У предмета он уже был, и всё равно перелёт рвался: палец,
+ *    нажимая второй раз, попадал в ЛЕТЯЩИЙ кадр, там под точкой оказывался боец,
+ *    зал выбирал его — а выбор бойца ведёт камеру своей дорогой (см. select) и
+ *    уводил её обратно в зал на полпути. Поймано прогоном: пять быстрых нажатий
+ *    по груше не долетали до острова ни разу из трёх.
+ *
+ *    Дверь к смене кадра одна, значит и заслон нужен один — иначе каждую новую
+ *    дорогу к камере пришлось бы закрывать заново, и однажды её забыли бы.
+ *
+ * ⚠️ СТАВЯЩИЕ СРАЗУ (snap) ПРОХОДЯТ ВСЕГДА. Это не нажатия игрока: так встаёт
+ *    кадр при сборке зала и при повороте экрана, и запрещать их посреди перелёта
+ *    значило бы оставить повёрнутый телефон со старым кадром.
+ */
+function goPlace(name, snap) {
+  if (camMoving && !snap) return;
+  place = name;
+  applyCamera(frameOf(name), snap);
+}
+
+/**
+ * СТУПЕНЬ НАЗАД. Возвращает true, если зал сам разобрался с нажатием.
+ *
+ * Приём тот же, каким экран уже обрабатывает Esc: спроси нижний слой, не он ли
+ * съел нажатие, и только потом делай своё. Второй кнопки BACK не появляется —
+ * появляется ступень у той, что есть.
+ *
+ * ⚠️ ВО ВРЕМЯ ПЕРЕЛЁТА НАЖАТИЕ СЪЕДАЕТСЯ, А НЕ ПРОПУСКАЕТСЯ ДАЛЬШЕ. Иначе
+ *    второе быстрое нажатие пришлось бы на уже переписанное место и унесло бы
+ *    игрока с экрана — то есть через зал он бы проскочил. Одно нажатие — одна
+ *    ступень (ТЗ, крайний случай 2).
+ */
+function stepBack() {
+  if (camMoving) return true;
+  if (place === 'hall') return false;
+  goPlace('hall', reduced);
+  return true;
 }
 
 // Set (or ease toward) one of the two framings. `snap` places the camera at once
@@ -777,6 +971,10 @@ function saveCamMemo() {
     pos: [camera.position.x, camera.position.y, camera.position.z],
     look: [controls.target.x, controls.target.y, controls.target.z],
     slabW: compose.slab.width,
+    // ⚠️ МЕСТО ЗАПОМИНАЕТСЯ ВМЕСТЕ С ПОЗОЙ. Без этого игрок, ушедший с экрана
+    //    стоя на острове, возвращался бы туда камерой — а запись о месте была бы
+    //    «зал», и первое же нажатие BACK унесло бы его с экрана вместо возврата.
+    place,
   };
 }
 
@@ -784,6 +982,7 @@ function saveCamMemo() {
 function restoreCamMemo() {
   if (!camMemo || !camera || !controls || !compose) return;
   if (camMemo.slabW !== compose.slab.width) { camMemo = null; return; }
+  place = camMemo.place || 'hall';
   camPos.set(camMemo.pos[0], camMemo.pos[1], camMemo.pos[2]); camPosTo.copy(camPos);
   camLook.set(camMemo.look[0], camMemo.look[1], camMemo.look[2]); camLookTo.copy(camLook);
   camera.position.copy(camPos);
@@ -872,6 +1071,9 @@ let renderer, scene, camera, slab, resizeObserver, clock;
 // Встраивание v1, шаг 1 — соседний остров, груши и два предмета на плите.
 let trainSlab = null;
 let trainCx = 0, trainHalfW = 0, trainHalfD = 0;
+// ── Остров SPAR: зеркало острова груш, слева от главной плиты ──
+let sparSlab = null, sparMark = null;
+let sparCx = 0, sparHalfW = 0, sparHalfD = 0;
 const bags = new Map();          // номер места → груша; пустых не держим
 // КТО СЕЙЧАС НА ТРЕНИРОВОЧНОМ ОСТРОВЕ. Два набора, а не один, потому что груша
 // нужна дольше, чем идёт занятие: боец ещё возвращается с острова, и убрать её
@@ -886,10 +1088,10 @@ const homing = new Set();
 const hitPrev = new Map();
 let bagSpots = [];               // где груши СТОЯЛИ БЫ — считается сразу
 let bagTopY = 0;
+// ВСЕ предметы зала одним списком: по нему их тикают (лужица нажатия гаснет
+// сама), ищут по нажатию и убирают при разборке зала. Второго списка больше нет —
+// надписи-переходы на торцах островов держались отдельно и сняты 27.09.2026.
 const propList = [];
-// Надписи-переходы на торцах островов. Держим отдельно от propList: их надо
-// тикать (лужица нажатия гаснет сама) и убирать при разборке зала.
-const crossings = [];
 // Which shape of room we are in. Set from the canvas, never from the device: a
 // wide phone lying down is a wide screen, and that is all this has to know.
 let viewW = 0, viewH = 0;   // canvas CSS size — the framing is measured in these
@@ -1030,6 +1232,8 @@ onMounted(() => {
   // ⚠️ Соседний остров строится ДО ламп: одна из четырёх висит над ним, и её
   //    место берётся из него (см. lampPositions).
   buildNeighbourIsland(topY, members.length);
+  // Остров SPAR — ПОСЛЕ острова груш: масштаб он берёт у него.
+  buildSparIsland(topY);
   buildHallLamps();
   backdrop = buildBackdrop({ radius: 45, centerY: 1.6 });
   scene.add(backdrop.mesh);
@@ -1047,7 +1251,6 @@ onMounted(() => {
   // ГЕОМЕТРИЯ ТОЛЬКО. Ни нажатий, ни перелёта, ни переноса занятия сюда — это
   // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
   buildForgeProps(topY);
-  buildCrossings();
 
   // Имена осей берутся из САМОГО набора осей бойца, а не переписываются списком:
   // второй список рано или поздно разошёлся бы с первым.
@@ -1221,7 +1424,7 @@ onMounted(() => {
   // не нужна, а зал и без неё читается.
   controls.enabled = !reduced;
 
-  applyCamera(frameFor(), true);
+  goPlace('hall', true);
   // …и если игрок уже был здесь в этой сессии — вернуть его туда, где он стоял.
   // Повторяется ещё раз в первом проходе наблюдателя размера — см. там же.
   restoreCamMemo();
@@ -1399,12 +1602,10 @@ onMounted(() => {
     //    наковальня и полка молчали на нажатие. Со встраиванием SPAR это стало
     //    видно: ему положена та же манера, что остальным, а остальные молчат.
     //    Ведём всех одним списком — новой манеры для одного предмета не заводим.
-    for (const c of crossings) {
-      if (c.pressUntil && t > c.pressUntil) { c.setPressed(false); c.pressUntil = 0; }
-      c.tick(dt);
-    }
+    //    Списков было два — отдельно надписи на торцах, отдельно всё остальное.
+    //    Надписи сняты 27.09.2026, и список остался один: своей манеры ни у
+    //    одного предмета нет.
     for (const pr of propList) {
-      if (crossings.includes(pr.obj)) continue;   // их уже провели выше
       if (pr.obj.pressUntil && t > pr.obj.pressUntil) { pr.obj.setPressed(false); pr.obj.pressUntil = 0; }
       pr.obj.tick(dt);
     }
@@ -1636,7 +1837,9 @@ onMounted(() => {
     // в обеих раскладках. Плита тоже не трогается — её размер решён один раз,
     // когда зал открылся. Значит, поворот не двигает никого, и пересобрать надо
     // только кадр. Ставим сразу, а не подводим плавно: это новый экран, а не ход.
-    applyCamera(frameFor(), true);
+    // Поворот пересобирает кадр ТОГО МЕСТА, где игрок стоит, а не всегда зала:
+    // повернуть телефон, стоя на острове, не должно уносить с острова.
+    goPlace(place, true);
     // ⚠️ ПЕРВЫЙ ВЫЗОВ НАБЛЮДАТЕЛЯ РАЗМЕРА — НЕ ПОВОРОТ ЭКРАНА. ResizeObserver
     //    дёргает обработчик один раз сразу, как только начал смотреть, и этот
     //    первый раз приходит ПОСЛЕ монтажа. Восстановленная поза камеры им
@@ -1813,12 +2016,19 @@ function flashProp(key) {
 // Перелёт — ТОТ ЖЕ, которым зал уводит камеру к занимающемуся (applyCamera по
 // trainingFrame / frameFor), второго здесь не пишется. Во время перелёта
 // нажатие не делает ничего: camMoving стоит ровно на это время.
+// ОДНО ПРАВИЛО ПЕРЕМЕЩЕНИЯ (ТЗ 27.09.2026): нажал предмет — улетел на его остров.
+// Второго способа в зале не осталось; надписи на торцах островов сняты.
+const PLACE_OF = {
+  spar: 'spar',    // постамент с силуэтом → остров SPAR
+  bags: 'train',   // груша → остров тренировки
+};
+
 function crossTo(key) {
-  if (key !== 'toTrain' && key !== 'toHall') return;
-  const c = crossings.find((x) => x.key === key);
-  if (c) { c.setPressed(true); c.pressUntil = clock.getElapsedTime() + CROSS.flash; }
-  if (camMoving) return;
-  applyCamera(key === 'toTrain' ? trainingFrame() : frameFor(), reduced);
+  const to = PLACE_OF[key];
+  if (!to) return;
+  // Заслон «летим — не слушаем» стоит в самой воронке (goPlace), а не здесь:
+  // второй копии ему не нужно, и дорога к камере одна.
+  goPlace(to, reduced);
 }
 
 function select(id) {
@@ -1833,12 +2043,12 @@ function select(id) {
   //
   // Обратный переход НЕ трогаем: камера возвращается в зал тем же, чем и всегда —
   // нажатием по пустому месту (exitWork) или выбором того, кто в зале.
-  applyCamera(atBags.has(idx) ? trainingFrame() : frameFor(), reduced);
+  goPlace(atBags.has(idx) ? 'train' : 'hall', reduced);
 }
 
 function exitWork() {
   workingId = null;
-  applyCamera(frameFor(), reduced);
+  goPlace('hall', reduced);
 }
 
 // growTo(count) — take the hall up to the plate a bigger roster needs, WITHOUT
@@ -1891,11 +2101,11 @@ function growTo(count) {
   }
 
   buildHallLamps();                        // the lamps go with the plate
-  applyCamera(frameFor(), reduced);   // …and the camera moves, never cuts
+  goPlace(place, reduced);   // …and the camera moves, never cuts
   return true;
 }
 
-defineExpose({ select, exitWork, growTo });
+defineExpose({ select, exitWork, growTo, stepBack });
 
 onBeforeUnmount(() => {
   saveCamMemo();     // куда смотрели — туда и вернёмся (см. camMemo)
@@ -1929,11 +2139,18 @@ onBeforeUnmount(() => {
   // быть вовсе (их строят по мере назначения занятия), поэтому просто обходим
   // то, что есть.
   for (const [, bag] of bags) { scene.remove(bag.group); bag.dispose?.(); }
-  for (const c of crossings) { scene.remove(c.group); c.dispose(); }
-  crossings.length = 0;
+  // ⚠️ УБИРАЮТСЯ ВСЕ ПРЕДМЕТЫ, А НЕ ТОЛЬКО БЫВШИЕ ПЕРЕХОДЫ. Здесь стояли только
+  //    надписи на торцах, а планшет, наковальня, полка, SPAR и ASCENSION не
+  //    убирались вовсе — их геометрия и материалы оставались висеть после ухода
+  //    с экрана. Правка попала сюда потому, что этой работой в зал добавлен ещё
+  //    один предмет: кто создал, тот и убирает.
+  for (const pr of propList) { scene.remove(pr.obj.group); pr.obj.dispose(); }
+  propList.length = 0;
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();
   if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
+  if (sparMark) { scene.remove(sparMark.mesh); sparMark.dispose(); sparMark = null; }
+  if (sparSlab) { scene.remove(sparSlab.group); sparSlab.dispose(); sparSlab = null; }
   if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
   if (renderer) renderer.dispose();
 });

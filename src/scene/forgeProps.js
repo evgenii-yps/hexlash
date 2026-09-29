@@ -40,7 +40,7 @@
 //    в src/styles/home.css) — второй такой полосы здесь не заводится.
 //
 // Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade, buildPunchBag,
-//               buildLegendAnchor, buildBuffShelf, buildCrossing.
+//               buildLegendAnchor, buildBuffShelf, buildBagStand, buildFloorMark.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -89,34 +89,6 @@ export const FORGE_PROPS = {
     swingKick: 0.42,    // толчок от одного удара, радиан/с
     swingMax: 0.52,     // предел отклонения, радиан
   },
-
-  // ⚠️ НАСТРОЕК СТАТОВ ЗДЕСЬ БОЛЬШЕ НЕТ (решение владельца 24.09.2026). Статы
-  //    были надписью на поверхности плиты перед остановленным бойцом; теперь они
-  //    в экранном слое (блок слева, ForgePanel section="stats"). На полу их
-  //    закрывало собственное тело бойца, а половину — открытая панель.
-
-  // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ — надпись на ТОРЦЕ острова, на той вертикальной
-  // грани, что смотрит на камеру. Не плоская кнопка поверх сцены: плоскими в
-  // зале остаются только SHOP, кабинет и BACK, и смешение это намеренное
-  // (см. шапку файла). Табличка выступает из торца на свою толщину — ровно
-  // настолько, чтобы читалась как накладка, а не как пятно на грани.
-  //
-  // Высота торца — вся толщина плиты (SLAB.height = 1.0), и табличка занимает
-  // её половину: выше — и она спорит с самой плитой, ниже — в неё не попасть
-  // пальцем на телефоне. Ширина подобрана по замеру на превью: при 1.3 слово
-  // выходило около десяти точек на экране телефона и не читалось.
-  crossing: {
-    w: 2.30, h: 0.62, d: 0.08, labelW: 1.80,
-    // НЕВИДИМАЯ ПОДУШКА НАЖАТИЯ. Торец острова — полоса высотой в толщину плиты
-    // (1.0), и лёжа на телефоне это около тридцати точек экрана: меньше пальца.
-    // Расти самой табличке некуда — выше торца её уже не нарисовать. Поэтому
-    // ловит луч отдельная прозрачная коробка, которая свешивается ПОД остров, в
-    // пустоту: видно её нельзя, а попасть по ней пальцем можно.
-    padW: 2.70, padH: 1.25, padY: -0.16,
-    // Свет нажатия — шире и выше таблички, чтобы обвести её по краю.
-    glowW: 3.40, glowH: 1.30,
-  },
-
   // Полка баффов — только МЕСТО, задел (решение 22.09: предметы баффов позже).
   shelf: { w: 1.10, d: 0.30, niches: 3, label: 'BUFFS' },
 
@@ -161,6 +133,27 @@ export const FORGE_PROPS = {
     // Легенда поднята — второго вознесения в этой версии нет. Слово честное:
     // не «сделано», а «позже», потому что запрет временный, а не вечный.
     labelDone: 'SOON',
+  },
+
+  // ГРУША В ЗАЛЕ — настольная, на таком же постаменте, что и SPAR. Уводит на
+  // остров тренировки (ТЗ 27.09.2026: правило перемещения одно — нажал предмет,
+  // улетел на его остров).
+  //
+  // ⚠️ ТЕЛО ГРУШИ ТО ЖЕ САМОЕ, что висит на острове (общий кусок bagBody), только
+  //    уменьшенное. Своей геометрии, своей огранки и своего тона здесь нет —
+  //    иначе в игре завелась бы вторая боксёрская груша.
+  //
+  // ⚠️ НЕ КРУПНЕЕ ПОСТАМЕНТА SPAR (ТЗ). Считано: тело висящей груши высотой
+  //    0.86 + две полусферы ≈ 1.29; силуэт SPAR с постаментом ≈ 0.92. Доля 0.62
+  //    приводит грушу со стойкой и постаментом ровно к этой высоте — два предмета
+  //    стоят в ряду одного роста, и ни один не перетягивает взгляд.
+  bagStand: {
+    pedR: 0.34,        // чуть уже постамента SPAR: груша — вещь, а не место
+    pedThick: 0.10,
+    postR: 0.05,       // стойка от постамента к телу
+    postH: 0.30,
+    scale: 0.62,       // тело груши в долях от висящей
+    label: 'TRAINING',
   },
 
   spar: {
@@ -271,6 +264,25 @@ function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = 2;
   return { mesh, dispose: () => { tex.dispose(); geo.dispose(); mat.dispose(); } };
+}
+
+/**
+ * СЛОВО НА ПОЛУ ОСТРОВА. Та же гравировка, что на предметах, — матовая, цветом
+ * `--ink-dim`, без свечения и без плашки.
+ *
+ * ⚠️ ПОЧЕМУ НЕ ЭКРАННАЯ ПЕЧАТЬ `.soon-stamp`. Приёмов для SOON в игре два, и
+ *    каждый живёт в своём слое: в разметке — диагональная печать поверх кнопки
+ *    (assets/main.css, решение 27.09.2026), в трёхмерном мире — гравировка.
+ *    Печать поверх острова была бы наклейкой на стекле: она не едет вместе с
+ *    миром при повороте камеры, а остров — это место, а не кнопка. Тот же приём
+ *    уже стоит на предмете ASCENSION, когда легенда поднята.
+ *
+ * @param {number} width ширина слова в единицах мира
+ */
+export function buildFloorMark(text, width) {
+  const lbl = buildLabel(text, width, { dim: 0.55 });
+  lbl.mesh.rotation.x = -Math.PI / 2;
+  return lbl;
 }
 
 // ─────────────────── Общая обвязка предмета ───────────────────
@@ -453,63 +465,6 @@ export function buildUpgrade() {
 //
 // Форма — скобы по углам, а не сплошная рамка: сплошная на десяти местах
 // превращает пол в сетку, а сетка — это узор, которого в проекте быть не должно.
-// ═══════════════════ ПЕРЕХОД МЕЖДУ ОСТРОВАМИ ═══════════════════
-// Надпись на торце острова: с главного — к грушам, с тренировочного — обратно
-// в зал. По одной на каждом торце.
-//
-// ФОРМЫ СВОЕЙ НЕТ. Это та же огранённая матовая коробка, из которой сложены все
-// предметы зала, и та же гравировка, что лежит на плите под планшетом и
-// наковальней, — просто поставленная стоймя. Второй язык вещей здесь не
-// заводится: он разъехался бы с первым на первой же правке.
-//
-// РОЗОВОЕ — ТОЛЬКО В МОМЕНТ НАЖАТИЯ, и это та же лужица, что у остальных
-// предметов (propShell), поставленная вертикально. В покое её нет, так что
-// правило «одно геройское свечение на экран» не тронуто.
-//
-// Слово приходит СНАРУЖИ, из английских подписей: своих строк здесь нет.
-export function buildCrossing(label) {
-  const C = FORGE_PROPS.crossing;
-  // Лужица нажатия стоит ПЕРЕД табличкой, а не за ней: позади, на плоскости
-  // торца, её съедало бы само тело таблички и плита за ним (замер на превью —
-  // вспышки не было видно вовсе).
-  const api = propShell(null, 0, 0, 0, {
-    upright: true,
-    // ⚠️ СВЕТ СТОИТ ПЕРЕД ТАБЛИЧКОЙ, а не за ней. Позади — на самой плоскости
-    // торца — он спорит за глубину с гранью острова и пропадает целиком: 4 мм
-    // на таком удалении меньше пикселя (проверено на превью, вспышки не было
-    // видно ни в одном кадре). Поэтому свет впереди, но РАСТЯНУТ по табличке:
-    // круглым и мелким он читался наклейкой, вытянутым — свечением предмета.
-    puddleZ: C.d + 0.01,
-    puddleW: C.glowW,
-    puddleH: C.glowH,
-  });
-
-  // Тело таблички. Выступает вперёд ровно на свою толщину, поэтому её начало —
-  // плоскость торца, а не его середина.
-  // Тон — `decor`, светлее подставок: торец острова лампы почти не достают, и
-  // на тоне подставки табличка сливалась с самой гранью (замер на превью).
-  const plate = ownBox(api, slabBox(C.w, C.h, C.d, 'decor'));
-  plate.position.z = C.d / 2;
-  api.add(plate);
-
-  // Слово — на лицевой грани таблички, чуть впереди неё, чтобы не мерцало.
-  const lbl = buildLabel(label, C.labelW);
-  lbl.mesh.position.set(0, 0, C.d + 0.004);
-  api.group.add(lbl.mesh);
-  api.own(lbl.dispose);
-
-  // Подушка нажатия: ловит луч и не рисуется вовсе (colorWrite: false). Не
-  // `visible = false` — невидимые объекты луч пропускает, и подушки бы не было.
-  const padGeo = new THREE.BoxGeometry(C.padW, C.padH, C.d);
-  const padMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
-  const pad = new THREE.Mesh(padGeo, padMat);
-  pad.position.set(0, C.padY, C.d / 2);
-  api.add(pad);
-  api.own(() => { padGeo.dispose(); padMat.dispose(); });
-
-  return api;
-}
-
 // ═══════════════════ ГРУША ═══════════════════
 // Вторая — и последняя — вещь из реального мира в этом мире, после перчаток с
 // острова ARENA. Сделана ТЕМ ЖЕ ПРИЁМОМ, что и они (modePlates.js, «the gloves»):
@@ -524,6 +479,52 @@ export function buildCrossing(label) {
 //
 // Качание — снаружи и по одной оси: удар толкает грушу от бойца, пружина
 // возвращает её в отвес. Тело бойца груша не трогает совсем.
+/**
+ * ТЕЛО ГРУШИ — один кусок на обе груши игры.
+ *
+ * ⚠️ ЗАЧЕМ ВЫНЕСЕНО. Груш стало две: висящая на острове тренировки и настольная
+ *    в зале (ТЗ 27.09.2026, предмет-груша). Огранка, тон и пропорции у них обязаны
+ *    быть ОДНИ — иначе в игре заведётся вторая боксёрская груша, а их и так ровно
+ *    одна вещь из реального мира на две с перчатками. Переписать тело вторым
+ *    местом значило бы развести их с первой же правки.
+ *
+ *    Числа НЕ ТРОНУТЫ ни одним: у висящей груши всё осталось как было, до буквы.
+ *
+ * @param {THREE.Object3D} host  куда класть тело (у висящей — подвес, у настольной — стойка)
+ * @param {number} bodyY         центр тела по высоте, в единицах host
+ * @param {object} mats          { mat, dark } — тон тела и тон тёмных деталей
+ * @param {Function} own         куда складывать уборщиков
+ */
+function bagBody(host, bodyY, { mat, dark }, own) {
+  const B = FORGE_PROPS.bag;
+  // Тело — цилиндр с гранями, сверху и снизу по полусфере того же счёта граней.
+  // Ровно та же логика, что у кулака перчатки: мало сегментов + плоская огранка.
+  const tubeGeo = new THREE.CylinderGeometry(B.r, B.r * 0.94, B.h, B.sides);
+  const capGeo = new THREE.SphereGeometry(B.r, B.sides, 4);
+  own(() => { tubeGeo.dispose(); capGeo.dispose(); });
+  const tube = new THREE.Mesh(tubeGeo, mat);
+  tube.position.y = bodyY;
+  host.add(tube);
+  const capTop = new THREE.Mesh(capGeo, mat);
+  capTop.position.y = bodyY + B.h / 2;
+  capTop.scale.set(1, 0.82, 1);
+  host.add(capTop);
+  const capBot = new THREE.Mesh(capGeo, mat);
+  capBot.position.y = bodyY - B.h / 2;
+  capBot.scale.set(0.94, 0.90, 0.94);
+  host.add(capBot);
+
+  // Два пояска — то же, что манжета у перчатки: деталь, которая держит форму.
+  const strapGeo = new THREE.CylinderGeometry(B.r * 1.04, B.r * 1.04, B.strapH, B.sides);
+  own(() => strapGeo.dispose());
+  for (const k of [0.30, -0.30]) {
+    const st = new THREE.Mesh(strapGeo, dark);
+    st.position.y = bodyY + B.h * k;
+    host.add(st);
+  }
+  return [tube, capTop, capBot];
+}
+
 export function buildPunchBag() {
   const B = FORGE_PROPS.bag;
   const group = new THREE.Group();   // стоит на полу; вся груша висит внутри
@@ -554,32 +555,8 @@ export function buildPunchBag() {
   }
   const chainDrop = 0.07 * B.chain;
 
-  // Тело — цилиндр с гранями, сверху и снизу по полусфере того же счёта граней.
-  // Ровно та же логика, что у кулака перчатки: мало сегментов + плоская огранка.
   const bodyY = -chainDrop - B.h / 2 - B.r * 0.6;
-  const tubeGeo = new THREE.CylinderGeometry(B.r, B.r * 0.94, B.h, B.sides);
-  const capGeo = new THREE.SphereGeometry(B.r, B.sides, 4);
-  disposers.push(() => { tubeGeo.dispose(); capGeo.dispose(); });
-  const tube = new THREE.Mesh(tubeGeo, mat);
-  tube.position.y = bodyY;
-  pivot.add(tube);
-  const capTop = new THREE.Mesh(capGeo, mat);
-  capTop.position.y = bodyY + B.h / 2;
-  capTop.scale.set(1, 0.82, 1);
-  pivot.add(capTop);
-  const capBot = new THREE.Mesh(capGeo, mat);
-  capBot.position.y = bodyY - B.h / 2;
-  capBot.scale.set(0.94, 0.90, 0.94);
-  pivot.add(capBot);
-
-  // Два пояска — то же, что манжета у перчатки: деталь, которая держит форму.
-  const strapGeo = new THREE.CylinderGeometry(B.r * 1.04, B.r * 1.04, B.strapH, B.sides);
-  disposers.push(() => strapGeo.dispose());
-  for (const k of [0.30, -0.30]) {
-    const st = new THREE.Mesh(strapGeo, dark);
-    st.position.y = bodyY + B.h * k;
-    pivot.add(st);
-  }
+  bagBody(pivot, bodyY, { mat, dark }, (fn) => disposers.push(fn));
 
   // Качание: угол и скорость по одной оси. Удар задаёт скорость, пружина тянет
   // обратно в отвес, затухание гасит. Ни физики, ни столкновений здесь нет —
@@ -713,6 +690,55 @@ export function buildSparStand() {
   fig.rotation.y = Math.PI;
   api.add(fig);
   api.own(() => { figGeo.dispose(); figMat.dispose(); });
+
+  return api;
+}
+
+// ═══════════════════ ГРУША В ЗАЛЕ — ДВЕРЬ НА ОСТРОВ ТРЕНИРОВКИ ═══════════════════
+// Постамент SPAR плюс короткая стойка, на ней — ТО ЖЕ тело груши, что висит на
+// острове, только уменьшенное (см. FORGE_PROPS.bagStand).
+//
+// ⚠️ ЭТА ГРУША НЕ КАЧАЕТСЯ. Качание висящей — это ответ на удар бойца; здесь бить
+//    некому, и предмет, который шевелится сам по себе, читался бы живым. Зал и так
+//    полон движения: по нему ходят бойцы.
+export function buildBagStand() {
+  const S = FORGE_PROPS.bagStand;
+  const api = propShell(S.label, S.pedR * 2.4, 0.02, S.pedR + 0.30, {
+    puddleW: S.pedR * 2.6, puddleH: S.pedR * 2.6,
+  });
+  if (api.label) api.label.rotation.x = -Math.PI / 2;
+
+  // Постамент — тот же шестигранник, что под силуэтом SPAR: предметы одного ряда
+  // стоят на одном основании, и это их и связывает в ряд.
+  const pedGeo = new THREE.CylinderGeometry(S.pedR, S.pedR * 0.88, S.pedThick, 6, 1);
+  const pedMat = bodyMat('pedestal');
+  const ped = new THREE.Mesh(pedGeo, pedMat);
+  ped.position.y = S.pedThick / 2;
+  api.add(ped);
+  api.own(() => { pedGeo.dispose(); pedMat.dispose(); });
+
+  const mat = bodyMat('decorDark2');
+  const dark = bodyMat('dark');
+  api.own(() => { mat.dispose(); dark.dispose(); });
+
+  // Стойка от постамента к телу — тот же тёмный тон, что у цепи висящей груши:
+  // у обеих груш держатель темнее тела.
+  const postGeo = new THREE.CylinderGeometry(S.postR, S.postR * 1.15, S.postH, 6);
+  const post = new THREE.Mesh(postGeo, dark);
+  post.position.y = S.pedThick + S.postH / 2;
+  api.add(post);
+  api.own(() => postGeo.dispose());
+
+  // Тело — общий кусок, уменьшенный целиком. Масштаб на группе, а не на числах
+  // геометрии: так пропорции висящей груши переносятся один в один.
+  const B = FORGE_PROPS.bag;
+  const body = new THREE.Group();
+  body.scale.setScalar(S.scale);
+  body.position.y = S.pedThick + S.postH;
+  const parts = bagBody(body, B.h / 2 + B.r * 0.55, { mat, dark }, (fn) => api.own(fn));
+  api.group.add(body);
+  // Луч ловится по телу: постамент мелкий, и палец целится в грушу.
+  for (const m of parts) api.hit.push(m);
 
   return api;
 }

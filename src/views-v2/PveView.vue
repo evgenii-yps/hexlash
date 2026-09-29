@@ -102,13 +102,15 @@
     <div class="hs-strip">
       <div class="hs-cluster">
         <!-- SHOP — bag glyph + single label; ведёт в магазин (→ /play/home?view=shop) -->
-        <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
+        <button type="button" class="hs-chrome hs-seg-shop" disabled @click="goShop" :aria-label="t.home.shop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span class="n">{{ t.home.shop }}</span>
+          <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
         <!-- cabinet — chrome diamond avatar only (no handle/role text, no chevron) -->
-        <button type="button" class="hs-chrome hs-seg-cab" @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+        <button type="button" class="hs-chrome hs-seg-cab" disabled @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
           <span class="av" aria-hidden="true"></span>
+          <span class="soon-stamp" aria-hidden="true">{{ t.home.soon }}</span>
         </button>
       </div>
       <!-- BACK — matte-chrome family member, arrow glyph + label → /play/mode.
@@ -167,22 +169,18 @@ onBeforeUnmount(() => mq?.removeEventListener('change', readOrientation));
 function onPress(key) {
   // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ. Камеру двигает сам зал — он ею и владеет; странице
   // остаётся убрать со стекла то, что загородило бы новый кадр.
-  if (key === 'toTrain' || key === 'toHall') {
-    statsOpen.value = false;
-    openSection.value = null;
-    return;
-  }
-  // SPAR — единственный предмет зала, который УВОДИТ с экрана. Переход тот же,
-  // каким зал уходит на любой другой экран: обычная смена адреса, а тяжёлый
-  // вход прикрывает общий экран загрузки (meta.scene3d на маршруте). Своего
-  // вида перехода здесь не заводится.
+  // ПЕРЕЛЁТ НА ОСТРОВ. Камеру двигает сам зал — он ею и владеет; странице
+  // остаётся убрать со стекла то, что загородило бы новый кадр.
   //
-  // Открытые блоки закрываем перед уходом: вернёмся — зал должен встретить
-  // чистым, а не с панелью, открытой позапрошлым нажатием.
-  if (key === 'spar') {
+  // ⚠️ SPAR БОЛЬШЕ НЕ УВОДИТ С ЭКРАНА (ТЗ 27.09.2026). Раньше постамент открывал
+  //    /play/spar; теперь он уводит на остров SPAR — то есть работает ровно так
+  //    же, как груша и как любой другой предмет зала. Правило перемещения стало
+  //    одно: нажал предмет — улетел на его остров. Сам экран /play/spar из игры
+  //    НЕ УДАЛЁН и остаётся по своему адресу: бой-настройка переедет на остров
+  //    отдельной работой.
+  if (key === 'spar' || key === 'bags') {
     statsOpen.value = false;
     openSection.value = null;
-    router.push('/play/spar');
     return;
   }
   // ASCENSION — второй предмет зала, который уводит с экрана. Уходим тем же
@@ -471,7 +469,21 @@ function goHome() { router.push('/play/home'); }
 // магазина, хотя подписана «SHOP». Магазин живёт состоянием дома, поэтому
 // ведём туда адресом (см. setView в HomeView).
 function goShop() { router.push({ path: '/play/home', query: { view: 'shop' } }); }
-function goMode() { router.push('/play/mode'); }
+/**
+ * BACK — ЛЕСТНИЦА, А НЕ ОДНА ДВЕРЬ (ТЗ 27.09.2026).
+ *
+ * Сперва спрашиваем зал: не стоит ли игрок на острове, — и если стоит, зал сам
+ * возвращает камеру, а нажатие дальше не идёт. И только из самого зала кнопка
+ * уводит на острова режимов, как уводила всегда.
+ *
+ * Второй кнопки при этом не появилось: та же кнопка, то же место, тот же вид —
+ * меняется только то, куда она ведёт. Приём взят у соседней строки этого же
+ * файла: Esc точно так же спрашивает карточку бойца, не она ли съела нажатие.
+ */
+function goMode() {
+  if (sceneRef.value?.stepBack()) return;
+  router.push('/play/mode');
+}
 </script>
 
 <style scoped>
