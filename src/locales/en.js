@@ -129,6 +129,9 @@ export default {
     // зажжено — видно по наливу самого ядра.
     openCore: "OPEN HIS CORE",
     coreHint: "GUIDE OVER THE CORE · A FACET LIGHTS UP",
+    // Подпись под ядром в маленькой карточке: по фигуре там работает только нажатие,
+    // ведение пальцем и зажигание живут в развороте (coreHint выше).
+    coreOpenHint: "TAP THE CORE TO OPEN IT",
     facetHint: "GUIDE OVER THE FACET · A CRYSTAL LIGHTS UP",
     lightUp: "LIGHT IT",
     // Подпись второй строки описания кристалла: как он меняет манеру бойца.

@@ -32,7 +32,22 @@
      ноль смещения против 6 и 13.9 при ведении по залу).
 
      НИЧЕМ НЕ ВЛАДЕЕТ. Дерево, отказы и набор очков приходят свойствами, всякая
-     перемена уходит событием. Чьё это дерево и где оно лежит — дело зала. -->
+     перемена уходит событием. Чьё это дерево и где оно лежит — дело зала.
+
+     ДВА РАЗМЕРА, ОДНА ЛОГИКА (ТЗ 29.09.2026, разворот ядра). Фигура стоит в двух
+     местах: маленькой карточкой в панели зала и на весь экран в развороте
+     (ForgeCoreOverlay). Это ОДИН и тот же компонент, а не копия: второй экземпляр
+     получает те же свойства и шлёт то же событие toggle, поэтому правила
+     зажигания живут ровно в одном месте.
+
+     `expanded` — режим разворота на весь экран (правка 1 к ТЗ 29.09.2026): свои
+     числа композиции уровней «грань» и «кристалл» (см. EXP ниже) и НИ ОДНОЙ
+     внутренней кнопки «назад» — шаг назад делает единый BACK слоя через stepBack.
+     У SPAR, который делит этот компонент, режим не включён: там всё как было.
+
+     `preview` — режим маленькой карточки: работает ТОЛЬКО нажатие, оно шлёт
+     expand и больше ничего. Ведения нет и грань не выбирается — два жеста на
+     одном объекте на телефоне путаются. Зажигание живёт только в развороте. -->
 <template>
   <div class="fc" ref="rootEl" :data-level="level">
 
@@ -43,7 +58,13 @@
     <p class="fc-who"><span class="nm">{{ fighterName }}</span><span class="cr">{{ coreName }}</span></p>
 
     <!-- ── сцена ────────────────────────────────────────────────────────── -->
-    <div class="fc-stage">
+    <div
+      class="fc-stage" :class="{ 'is-preview': preview }"
+      :role="preview ? 'button' : undefined" :tabindex="preview ? 0 : undefined"
+      :aria-label="preview ? t.forge.coreOpenHint : undefined"
+      @keydown.enter.prevent="preview && expand()"
+      @keydown.space.prevent="preview && expand()"
+    >
       <svg class="fc-svg" :viewBox="`0 0 ${box} ${box}`">
         <defs>
           <!-- Налив грани. Растущий круг обрезает её горящую часть: сколько
@@ -83,11 +104,7 @@
                берётся по ближайшей середине, зазоров между зонами нет.
                Слушаем и pointerdown, а не только pointermove: на телефоне при
                касании ведения не приходит вовсе. -->
-          <polygon
-            class="fc-pad" :points="plate"
-            @pointerdown="onCoreDown" @pointermove="onCoreMove"
-            @pointerup="onCoreUp" @pointercancel="clearGuide" @pointerleave="clearGuide"
-          />
+          <polygon class="fc-pad" :points="plate" v-on="padHandlers" />
         </g>
 
         <!-- ТРИ ГРАНИ. На ядре у грани нет своего рисунка — только подсветка
@@ -125,6 +142,7 @@
           </template>
 
           <polygon
+            v-if="!preview"
             class="fc-facet__key" :points="f.points"
             role="button" tabindex="0" :aria-label="facetName(f)"
             @keydown.enter.prevent="chooseFacet(f)"
@@ -189,7 +207,7 @@
     <!-- ── что сейчас открыто ───────────────────────────────────────────── -->
     <div class="fc-read">
       <template v-if="level === 'core'">
-        <p class="fc-hint">{{ t.forge.coreHint }}</p>
+        <p class="fc-hint">{{ preview ? t.forge.coreOpenHint : t.forge.coreHint }}</p>
       </template>
 
       <template v-else>
@@ -223,7 +241,7 @@
         type="button" class="fc-light" @click="lightUp"
       >{{ t.forge.lightUp }}</button>
       <p v-else-if="level === 'crystal'" class="fc-why">{{ whySel }}</p>
-      <button v-if="level !== 'core'" type="button" class="fc-back" @click="goBack">
+      <button v-if="level !== 'core' && !expanded" type="button" class="fc-back" @click="goBack">
         {{ level === 'crystal' ? t.forge.backToFacet : t.forge.backToCore }}
       </button>
     </div>
@@ -255,8 +273,12 @@ const props = defineProps({
   // просто показывается, чтобы над ядром не стояла её четырёхстрочная шапка.
   fighterName: { type: String, default: '' },
   coreName: { type: String, default: '' },
+  // Маленькая карточка: только нажатие, оно разворачивает ядро (см. шапку файла).
+  preview: { type: Boolean, default: false },
+  // Разворот на весь экран: композиция крупнее и по центру, «назад» снаружи.
+  expanded: { type: Boolean, default: false },
 });
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(['toggle', 'expand']);
 
 const uid = useId();
 const id = (n) => `fc-${n}-${uid}`;
@@ -364,6 +386,7 @@ const flowStyle = (f) => ({
 
 /* ── подписи кристаллов ────────────────────────────────────────────────── */
 const labFont = (c) => {
+  if (props.expanded) return c.labSize;    // в развороте место считает EXP, а не LABEL_ROOM
   const n = crystalName(c).length || 1;
   return +Math.min(c.labSize, (LABEL_ROOM / L.facet.k) / (GLYPH_W * n)).toFixed(3);
 };
@@ -386,18 +409,87 @@ const coreStyle = computed(() => {
   if (level.value === 'facet') return { transform: hold(c, c + L.facet.coreLift, 0, L.facet.coreK, c, c) };
   return { transform: hold(c, c, 0, 1, c, c) };
 });
+/* ── композиция РАЗВОРОТА (expanded) ───────────────────────────────────
+   Правка 1 к ТЗ 29.09.2026. Раньше на уровне грани связка «грань + столбец
+   кристаллов» стояла мелкой и не по центру, а подпись уровня жила отдельно внизу
+   слева. Теперь блок считается ПО ГЕОМЕТРИИ, а не числами на глаз: берём границы
+   поставленной ровно грани и её подписей и вписываем блок в экран по высоте, а
+   центрируем по его настоящей ширине (у BODY / MIND / WILL подписи разной длины,
+   и один общий x сдвигал бы блок то влево, то вправо).
+
+   Числа — в единицах холста (0…600), крутить здесь:
+     blockH    — какой высоты блок «грань + подписи» на уровне грани
+     blockMaxW — сколько по ширине ему можно, если подписи вдруг длиннее
+     centerY   — высота центра блока (над ним остаётся место под ядро-метку)
+     colK      — масштаб столбца на уровне кристалла
+     cryK      — масштаб выбранного кристалла
+     gap       — зазор между столбцом с подписями и большим кристаллом */
+const EXP = { blockH: 430, blockMaxW: 540, centerY: 335, colK: 2.0, cryK: 12, gap: 22 };
+/* Точка холста после поворота на deg вокруг (ox, oy) — как её ставит transform. */
+const rotAbout = (p, ox, oy, deg) => {
+  const a = (deg * Math.PI) / 180;
+  const dx = p[0] - ox; const dy = p[1] - oy;
+  return [dx * Math.cos(a) - dy * Math.sin(a), dx * Math.sin(a) + dy * Math.cos(a)];
+};
+const ptsOf = (str) => str.trim().split(/\s+/).map((q) => q.split(',').map(Number));
+/* Границы поставленной ровно грани вместе с подписями кристаллов, относительно её
+   центра. Ширина подписи — по знаку моноширинного шрифта плюс разрядка. */
+function facetBlock(f) {
+  const turn = facetTurn(f);
+  const q = ptsOf(f.points).map((p) => rotAbout(p, f.cx, f.cy, turn));
+  let x0 = Math.min(...q.map((p) => p[0])); let x1 = Math.max(...q.map((p) => p[0]));
+  let y0 = Math.min(...q.map((p) => p[1])); let y1 = Math.max(...q.map((p) => p[1]));
+  for (const c of f.crystals) {
+    const lp = rotAbout([c.labX, c.labY], f.cx, f.cy, turn);
+    const w = c.labSize * (GLYPH_W + 0.16) * (crystalName(c).length || 1);
+    x1 = Math.max(x1, lp[0] + w);
+    y0 = Math.min(y0, lp[1] - c.labSize / 2); y1 = Math.max(y1, lp[1] + c.labSize / 2);
+  }
+  return { x0, x1, y0, y1 };
+}
+/* Выбранный кристалл поставленной грани: его ширина по x (для центровки связки). */
+function crystalWidth(c, f) {
+  const q = ptsOf(c.points).map((p) => rotAbout(p, c.cx, c.cy, facetTurn(f)));
+  return Math.max(...q.map((p) => p[0])) - Math.min(...q.map((p) => p[0]));
+}
+/* Поза грани в развороте на уровне «грань»: блок по центру. */
+function expFacetPose(f) {
+  const b = facetBlock(f);
+  const k = Math.min(EXP.blockH / (b.y1 - b.y0), EXP.blockMaxW / (b.x1 - b.x0));
+  return { x: box / 2 - k * (b.x0 + b.x1) / 2, y: EXP.centerY - k * (b.y0 + b.y1) / 2, k };
+}
+/* На уровне «кристалл»: столбец с подписями слева и большой кристалл справа —
+   вместе, по центру экрана. */
+function expCrystalPose(f, c) {
+  const b = facetBlock(f);
+  const kc = EXP.colK;
+  const colW = (b.x1 - b.x0) * kc;
+  const cryW = crystalWidth(c, f) * EXP.cryK;
+  const left = (box - (colW + EXP.gap + cryW)) / 2;
+  return {
+    facet: { x: left - b.x0 * kc, y: box / 2 - kc * (b.y0 + b.y1) / 2, k: kc },
+    cryX: left + colW + EXP.gap + cryW / 2,
+  };
+}
+
 const facetStyle = computed(() => {
   const f = selFacet.value;
   const c = box / 2;
   if (!f) return coreStyle.value;
   const turn = facetTurn(f);
+  if (props.expanded) {
+    const P = level.value === 'crystal' && selCrystal.value
+      ? expCrystalPose(f, selCrystal.value).facet
+      : expFacetPose(f);
+    return { transform: hold(P.x, P.y, turn, P.k, f.cx, f.cy) };
+  }
   return level.value === 'crystal'
     ? { transform: hold(L.crystal.facetX, L.crystal.facetY, turn, L.crystal.facetK, f.cx, f.cy) }
     : { transform: hold(L.facet.x, L.facet.y, turn, L.facet.k, f.cx, f.cy) };
 });
-const crystalStyle = (c) => ({
-  transform: hold(L.crystal.x, L.crystal.y, facetTurn(selFacet.value), L.crystal.k, c.cx, c.cy),
-});
+const crystalStyle = (c) => (props.expanded
+  ? { transform: hold(expCrystalPose(selFacet.value, c).cryX, box / 2, facetTurn(selFacet.value), EXP.cryK, c.cx, c.cy) }
+  : { transform: hold(L.crystal.x, L.crystal.y, facetTurn(selFacet.value), L.crystal.k, c.cx, c.cy) });
 
 /* Розовое — только на миг выбора, там, где отпустили. Единственное на сцене. */
 const flash = ref(null);
@@ -463,6 +555,23 @@ function guideFacet(e) {
   guide.value = f ? { kind: 'facet', key: f.id } : null;
   return f;
 }
+/* В превью у полотна один обработчик — нажатие. Ведения, захвата пальца и подсветки
+   нет: грань здесь не выбирается никогда. Остальные — прежние, без изменений. */
+function expand() { emit('expand'); }
+/* Нажатие, а не ведение: если палец (или мышь) ушёл дальше нескольких точек между
+   опусканием и отпусканием, это была попытка прокрутить панель или провести по
+   ядру, и разворачивать ничего не нужно. Открываем по click, а не по pointerup:
+   отпускание, которое открыло бы слой, не должно потом сработать как касание по
+   самому слою. */
+const TAP_SLOP = 10;
+let padDown = null;
+function padPress(e) { padDown = [e.clientX, e.clientY]; }
+function padClick(e) {
+  const d = padDown;
+  padDown = null;
+  if (d && Math.hypot(e.clientX - d[0], e.clientY - d[1]) > TAP_SLOP) return;
+  expand();
+}
 function onCoreDown(e) { grab(e); guideFacet(e); }
 function onCoreMove(e) { guideFacet(e); }
 function onCoreUp(e) {
@@ -471,6 +580,13 @@ function onCoreUp(e) {
   clearGuide();
   if (f) chooseFacet(f);
 }
+
+const padHandlers = computed(() => (props.preview
+  ? { pointerdown: padPress, click: padClick }
+  : {
+    pointerdown: onCoreDown, pointermove: onCoreMove, pointerup: onCoreUp,
+    pointercancel: clearGuide, pointerleave: clearGuide,
+  }));
 
 function guideCrystal(e) {
   if (level.value !== 'facet') { clearGuide(); return null; }

@@ -138,6 +138,10 @@
            игрок по самой фигуре «Печать»: ForgeCore, перенос принятого макета
            /dev/facets. Вместе с карточкой ушли две её беды: цифры в зале и
            перевёрнутый словарь, где лучом звали шаг, а шагом луч. -->
+      <!-- КАРТОЧКА ЯДРА — ТОЛЬКО ПРЕВЬЮ (ТЗ 29.09.2026). Здесь по фигуре работает лишь
+           нажатие: оно открывает разворот на весь экран, где и зажигают грани
+           (ForgeCoreOverlay, его держит зал). Зажигание из карточки убрано, а не
+           продублировано: два жеста на одном объекте на телефоне путаются. -->
       <section v-if="showTree" class="fp-tree">
         <ForgeCore
           v-if="treeState === 'live'"
@@ -149,6 +153,8 @@
           :gates="gates"
           :fighter-name="picked.callsign"
           :core-name="pickedCore ? pickedCore.name : ''"
+          preview
+          @expand="$emit('expand-core')"
           @toggle="$emit('toggle', $event)"
         />
 
@@ -292,7 +298,7 @@ const props = defineProps({
   quenchWhy: { type: String, default: null },
 });
 
-const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train', 'open-tree']);
+const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train', 'open-tree', 'expand-core']);
 
 const treeRef = ref(null);
 
