@@ -119,7 +119,11 @@
            они, иначе карточка ядра. Двух одинаковых кнопок на одном кадре быть
            не должно, а без кнопки в карточке ядра из зала не выйти на занятие
            лёжа — там карточку открывает наковальня, и статов рядом нет. -->
-      <section v-if="picked && (showStats || showTree)" class="fp-train">
+      <!-- ⚠️ TRAIN НА ЭКРАНЕ РОВНО ОДИН (правка 3 к ТЗ 29.09.2026). Карточка ядра
+           показывает кнопку, только когда рядом НЕ стоит блок статов (showTrain):
+           там, где видны обе панели, кнопка живёт в левой. Само действие,
+           обработчик и отмена не менялись — меняется только где кнопка показана. -->
+      <section v-if="picked && (showStats || showTree) && showTrain" class="fp-train">
         <button
           type="button" class="fp-train-btn"
           :class="{ 'is-cancel': pickedState === 'busy' }"
@@ -279,6 +283,9 @@ const props = defineProps({
   // Показывать ли строку-вход в грани: она нужна только стоя, где два блока
   // рядом не встают. Решает зал, а не панель: ориентацию знает он.
   canOpenTree: { type: Boolean, default: false },
+  // Показывать ли кнопку занятия. Зал гасит её у карточки ядра, пока стоит блок
+  // статов: он несёт ту же кнопку, а на экране должна быть ровно одна.
+  showTrain: { type: Boolean, default: true },
   fighters: { type: Array, default: () => [] },
   pickedId: { type: String, default: null },
   picked: { type: Object, default: null },

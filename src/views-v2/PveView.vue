@@ -69,6 +69,7 @@
       <ForgePanel
         ref="panelRef"
         :section="openSection"
+        :show-train="!statsOpen"
         :show-head="!statsOpen"
         :fighters="fighters"
         :picked-id="pickedId"
