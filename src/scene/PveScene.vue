@@ -548,7 +548,48 @@ function markFor(count, arcZ) {
     const a = mid - FIELD.step / 2, b = mid + FIELD.step / 2;
     x = Math.abs(a) <= Math.abs(b) ? a : b;
   }
-  return { x, z: frontZ + MARK.ahead };
+  // ⚠️ МЕТКА УВОДИТСЯ С ГЛУБИНЫ РЯДА. Подтверждённая причина того, что боец
+  //    «стоял на предмете»: по ряду ходил не блуждающий боец — зоны разбредания
+  //    до ряда не достают ни при каком составе, — а выбранный, вышедший НА МЕТКУ.
+  //    Метка считалась из той же глубины плиты, что и ряд, и попадала прямо в
+  //    него при 3, 4, 7 и 10 бойцах (перебор 1…10, замер 28.09.2026).
+  //
+  // ⚠️ УВОДИТСЯ ЗА РЯД, А НЕ ПЕРЕД НИМ, и это расходится с буквой ТЗ v2 («ближе
+  //    к камере»). Перед рядом места нет: на малой плите от ряда до ребра
+  //    остаётся 0.30, а бойцу нужно 0.80 на собственную ширину. Но главное —
+  //    боец ростом 1.95 против предмета в треть метра, поставленный БЛИЖЕ
+  //    камеры, закрыл бы собой и предмет, и слово под ним, то есть нарушил бы
+  //    пункт приёмки «ни одна метка не перекрывает подпись». За рядом он никого
+  //    не закрывает: ряд к камере ближе и проходит у него под ногами.
+  const band = propRowBandFor(compose ? compose.slab : null);
+  const zWant = frontZ + MARK.ahead;
+  return { x, z: band ? Math.min(zWant, band.zMin - BODY.halfW) : zWant };
+}
+
+/**
+ * ПОЛОСА РЯДА ПО ГЛУБИНЕ — куда нельзя ставить бойца.
+ *
+ * ⚠️ СЧИТАЕТСЯ ФОРМУЛОЙ, А НЕ ПО ПОСТРОЕННЫМ ПРЕДМЕТАМ, потому что метка нужна
+ *    РАНЬШЕ, чем предметы собраны (её место читают лампы). Запас взят с
+ *    избытком — по габаритам предметов в полную величину, хотя в ряду они
+ *    уменьшены; расстановка потом сверяет фактическую полосу с этой и ругается
+ *    в консоль, если формула перестала накрывать (см. solvePropRow).
+ */
+const ROW_BAND_PAD = {
+  back: 0.40,    // вглубь от самого дальнего предмета
+  front: 0.70,   // вперёд: вынос подписи (0.58) плюс её половина высоты
+};
+function propRowBandFor(slab) {
+  if (!slab) return null;
+  const base = slab.depth / 2 - PROP_ROW.front;
+  // Ближний край ряда — вершина дуги: u = 0.5 − tilt / (8 · bow).
+  const uTop = PROP_ROW.bow > 0
+    ? Math.min(1, Math.max(0, 0.5 - PROP_ROW.tilt / (8 * PROP_ROW.bow)))
+    : 0;
+  const w = 2 * uTop - 1;
+  const zHi = base - PROP_ROW.tilt * uTop - w * w * PROP_ROW.bow;
+  const zLo = base - PROP_ROW.tilt - PROP_ROW.bow;          // дальний конец, u = 1
+  return { zMin: zLo - ROW_BAND_PAD.back, zMax: zHi + ROW_BAND_PAD.front };
 }
 
 // ── Reaching INTO a fighter from outside (the sanctioned pattern — the combat
@@ -746,7 +787,10 @@ const PROP_ROW = {
   // Порядок СЛЕВА НАПРАВО в кадре. Он же — единственное место, где заведён
   // состав ряда: пара «ключ + из чего собрать».
   order: [
-    { key: 'shelf', make: buildBuffShelf },        // BUFFS — задел, нажатие ничего не открывает
+    // ⚠️ BUFFS В РЯДУ НЕТ (решение владельца 29.09.2026). Полка — декорация,
+    //    нажатий не принимает; шестой предмет в ряду заставлял ужимать остальные
+    //    вдвое, и ни предмет, ни слово под ним не читались. Полка осталась в
+    //    зале обстановкой и БЕЗ ПОДПИСИ — см. BUFFS_SPOT ниже.
     { key: 'roster', make: buildRoster },          // ROSTER
     { key: 'ascension', make: buildAscensionStand },// ASCENSION
     { key: 'upgrade', make: buildUpgrade },        // FORGE
@@ -801,17 +845,50 @@ const PROP_ROW = {
   //
   // Доля ПРОЛЁТА РЯДА на один просвет, а не точки экрана: точка экрана значит
   // разное на 390×844 и на 1920×1080 (разные пропорции кадра), а доля пролёта —
-  // одно и то же везде. Шесть предметов и пять просветов: 0.055 × 5 = 27% пролёта
-  // уходит на воздух, остальное — на сами предметы.
-  gapShare: 0.040,
+  // одно и то же везде. Пять предметов — четыре просвета.
+  gapShare: 0.055,
 
   // ⚠️ ВО СКОЛЬКО РАЗ УМЕНЬШАТЬ, ЗДЕСЬ НЕ НАПИСАНО — оно СЧИТАЕТСЯ из просвета
-  //    (см. solvePropRow). Собственная ширина шести предметов в кадре
-  //    складывается в две ширины пролёта ряда (замер 28.09.2026), то есть при
-  //    любой расстановке они налезают. Множитель общий на всех: ужать только
-  //    широкие значило бы поменять вид предметов друг относительно друга, а вид
-  //    предметов — вне этой работы.
+  //    (см. solvePropRow). Множитель общий на всех: ужать только широкие значило
+  //    бы поменять вид предметов друг относительно друга, а вид предметов — вне
+  //    этой работы.
+  //
+  // ⚠️ ПОДПИСЬ ПОД МНОЖИТЕЛЬ НЕ ПОПАДАЕТ. Она уменьшалась вместе с предметом, и
+  //    при шести предметах слова превратились в штрихи. Теперь у слова свой
+  //    размер в мире (FORGE_PROPS.label.em), и предмет ужимается ПОД НЕГО, а не
+  //    вместе с ним: ширина в ряду берётся по тому, что шире — предмет или его
+  //    слово.
   scaleMin: 0.30,   // ниже не опускаемся молча: см. предупреждение в solvePropRow
+
+  // Ширина малой плиты — точка отсчёта для кегля подписи (см. nestLabel).
+  // Числа кегля сняты на ней, на остальных ступенях слово пересчитывается.
+  labelRefWidth: 10.2,
+};
+
+// ── ПОЛКА БАФФОВ — ОБСТАНОВКА, А НЕ ПУНКТ РЯДА ────────────────────────────────
+// Стоит слева и ГЛУБЖЕ ряда: там свободно (поле бойцов начинается дальше, а ряд
+// проходит впереди), её видно целиком, и она ничего не закрывает.
+//
+// ⚠️ ПОДПИСИ У НЕЁ НЕТ, и это не забывчивость. Слово под предметом — обещание,
+//    что по нему можно нажать; полка нажатий не принимает.
+// ⚠️ СТОИТ ЗА РЯДОМ И НА ПРАВОМ ФЛАНГЕ, и это единственное свободное место.
+//    Перебраны все:
+//      · перед рядом — полоса между рядом и ребром плиты слишком мелкая: полка
+//        цепляла SPAR углом при полном составе (замер 29.09.2026);
+//      · левый фланг — в кадр не попадает вовсе (x = −3.5 садится в −11% кадра);
+//      · середина за рядом — там поле бойцов: зоны разбредания при полном
+//        составе доходят до z = 3.00.
+//    Правый фланг свободен от бойцов при любом составе (поле не шире ±2.40) и
+//    при этом ещё виден, потому что камера смотрит с правого плеча.
+//
+// Место не подобрано на глаз, а найдено перебором: из всех положений ряда и
+// глубин отобраны те, что при составах 3 и 10 разом дают полку целиком в кадре,
+// без пересечения с рядом и не ближе 1.6 метра до любого бойца и до метки.
+// Годных оказалось 81, эти числа — середина самой широкой их площадки, чтобы
+// место не рассыпалось от малого сдвига.
+const BUFFS_SPOT = {
+  edge: 0.135,       // доля кадра, как у концов ряда
+  backFromRow: 2.0,  // на сколько метров глубже ближнего края ряда
 };
 
 /** Разложенное направление камеры — считается один раз, нужно везде ниже. */
@@ -896,9 +973,36 @@ function nestLabel(obj, b, anchor, gx, gz, topY) {
   const m = obj.label;
   if (!m) return;
   const sc = obj.group.scale.x || 1;
+  // ⚠️ ВСТРЕЧНЫЙ МАСШТАБ: слово остаётся своего размера, как бы ни ужали предмет.
+  //    Пока оно ужималось вместе с ним, шесть предметов увели кегль в штрихи.
+  //
+  // ⚠️ И ЕЩЁ ОДИН МНОЖИТЕЛЬ — ЗА ПЛИТУ. Кегель задан в метрах, а плита растёт
+  //    ступенями вместе с удалением камеры: слово в метрах на большой плите
+  //    садится в кадр мельче (замер 28.09.2026: 27…43 точки против 42…64 на
+  //    малой). Читаемость слова не должна зависеть от того, сколько у игрока
+  //    бойцов, поэтому размер слова привязан к ЭКРАНУ, а не к миру.
+  m.scale.setScalar(labelWorldK / sc);
   const zAbs = gz + m.position.z * sc;
   const yAbs = topY + m.position.y * sc;
   m.position.x = (camSolveX(b, anchor, yAbs, zAbs) - gx) / sc;
+}
+
+/** Насколько глубоко предмет занимает плиту: ближний и дальний край в метрах. */
+function propWorldZ(group) {
+  let lo = Infinity, hi = -Infinity;
+  group.updateMatrixWorld(true);
+  group.traverse((m) => {
+    if (!m.isMesh || !m.visible || !m.geometry || m.userData.pressGlow) return;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    const bb = m.geometry.boundingBox;
+    for (let k = 0; k < 8; k++) {
+      _pc.set(k & 1 ? bb.max.x : bb.min.x, k & 2 ? bb.max.y : bb.min.y, k & 4 ? bb.max.z : bb.min.z);
+      _pc.applyMatrix4(m.matrixWorld);
+      if (_pc.z < lo) lo = _pc.z;
+      if (_pc.z > hi) hi = _pc.z;
+    }
+  });
+  return { min: lo, max: hi };
 }
 
 /**
@@ -924,6 +1028,9 @@ function solvePropRow(built, slab, topY) {
   const n = built.length;
   if (!n) return;
   const b = camBasis(slab.width, topY);
+  // Плита растёт ступенями вместе с удалением камеры, поэтому метры слова
+  // пересчитываются под ступень: в кадре кегль остаётся тем же.
+  labelWorldK = slab.width / PROP_ROW.labelRefWidth;
   const L = PROP_ROW.leftEdge, R = PROP_ROW.rightEdge;
   // Глубина: наклонная от левого конца к правому, с прогибом дуги посередине.
   const zAt = (t) => {
@@ -976,7 +1083,25 @@ function solvePropRow(built, slab, topY) {
     anchors = next;
   }
   for (let i = 0; i < n; i++) place(i);
-  if (DEV_MODE) window.__rowDebug = { scale: rowScale, L, R, anchors: anchors.slice(), zs: zs.slice(), half: built.map((it) => it._half),
+
+  // Полоса ряда по глубине — по фактическим габаритам вместе с подписями.
+  let zMin = Infinity, zMax = -Infinity;
+  for (const it of built) {
+    const box = propWorldZ(it.obj.group);
+    if (box.min < zMin) zMin = box.min;
+    if (box.max > zMax) zMax = box.max;
+  }
+  rowBand = { zMin, zMax, zMid: (zMin + zMax) / 2 };
+  // Сверка с формулой, по которой уводится метка: если предметы вылезли за неё,
+  // метка встанет в ряд — и об этом надо узнать из консоли, а не со снимка.
+  const declared = propRowBandFor(slab);
+  if (DEV_MODE && declared && (zMin < declared.zMin || zMax > declared.zMax)) {
+    console.warn('[зал] ряд вышел за расчётную полосу:',
+      { факт: [+zMin.toFixed(2), +zMax.toFixed(2)],
+        формула: [+declared.zMin.toFixed(2), +declared.zMax.toFixed(2)] });
+  }
+
+  if (DEV_MODE) window.__rowDebug = { scale: rowScale, band: rowBand, L, R, anchors: anchors.slice(), zs: zs.slice(), half: built.map((it) => it._half),
     pos: built.map((it) => [+it.obj.group.position.x.toFixed(3), +it.obj.group.position.z.toFixed(3)]) };
 }
 
@@ -988,6 +1113,22 @@ function buildForgeProps(topY) {
   });
   solvePropRow(built, compose.slab, topY);
   for (const it of built) propList.push(it);
+
+  // Полка баффов — обстановка: своё место, свой (общий с рядом) размер, без слова.
+  const shelf = buildBuffShelf({ label: false });
+  shelf.group.scale.setScalar(rowScale);
+  const b = camBasis(compose.slab.width, topY);
+  const zShelf = rowBand.zMin - BUFFS_SPOT.backFromRow;
+  shelf.group.position.set(camSolveX(b, BUFFS_SPOT.edge, topY, zShelf), topY, zShelf);
+  scene.add(shelf.group);
+  propList.push({ key: 'shelf', obj: shelf });
+  // Дев-ручка: подвинуть полку и сразу замерить — чтобы место искалось замером,
+  // а не пересборкой на каждую пробу.
+  if (DEV_MODE) window.__moveShelf = (edge, zAbs) => {
+    const sx = camSolveX(b, edge, topY, zAbs);
+    shelf.group.position.set(sx, topY, zAbs);
+    return { x: +sx.toFixed(2), z: +zAbs.toFixed(2) };
+  };
 }
 
 // ── ПОЗА КАМЕРЫ. Одна на зал, одна на каждый остров, все по домашнему правилу:
@@ -1360,6 +1501,13 @@ let stopTrainingWatch = null; // наблюдатель за состояния�
 let applyTraining = null;
 let mark = { x: 0, z: 0 };   // where the current fighter stands
 let rowScale = 1;          // во сколько раз уменьшены предметы ряда — считается, см. solvePropRow
+// Множитель размера слова за ступень плиты — чтобы кегль в КАДРЕ не зависел от
+// того, на какой плите стоит зал. Ставится расстановкой, читается nestLabel.
+let labelWorldK = 1;
+// ПОЛОСА РЯДА ПО ГЛУБИНЕ — куда нельзя ставить бойца. Считается расстановкой
+// (solvePropRow) по фактическим габаритам, а не задаётся числом: размер
+// предметов выводится из просвета и заранее неизвестен.
+let rowBand = { zMin: 0, zMax: 0, zMid: 0 };
 let compose = null;          // which plate step, how big, where the arc stands on it
 let rosterCount = 0;         // read once, at the moment the hall opens
 const camPos = new THREE.Vector3();      // where the camera IS
@@ -1997,6 +2145,10 @@ onMounted(() => {
           bag: bags.has(i),
         } : null)).filter(Boolean),
         bagSpots: bagSpots.map((b) => ({ x: +b.x.toFixed(2), z: +b.z.toFixed(2) })),
+        // Метка и полоса ряда — чтобы проверять развод замером, а не снимком.
+        mark: mark ? { x: +mark.x.toFixed(2), z: +mark.z.toFixed(2) } : null,
+        band: { zMin: +rowBand.zMin.toFixed(2), zMax: +rowBand.zMax.toFixed(2) },
+        rowScale: +rowScale.toFixed(3),
         slab: compose ? { width: compose.slab.width, depth: compose.slab.depth, topY: slab ? +slab.refs.topY.toFixed(2) : null } : null,
         cam: camera && controls ? {
           pos: [camera.position.x, camera.position.y, camera.position.z].map((v) => +v.toFixed(2)),

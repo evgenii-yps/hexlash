@@ -670,9 +670,12 @@ export function buildLegendAnchor() {
 // ═══════════════════ ПОЛКА БАФФОВ — ТОЛЬКО МЕСТО ═══════════════════
 // Решение 22.09.2026: предметы баффов — «позже». Здесь стоит пустая полка с
 // тремя нишами, помеченная как задел: ничего в неё не кладётся.
-export function buildBuffShelf() {
+export function buildBuffShelf({ label = true } = {}) {
   const B = FORGE_PROPS.shelf;
-  const api = propShell(B.label, LBL.em, LBL.y, LBL.lift);
+  // ⚠️ БЕЗ ПОДПИСИ, когда полка стоит обстановкой (решение владельца 29.09.2026).
+  //    Слово под предметом в этом зале означает «сюда можно нажать», а полка
+  //    нажатий не принимает — подписанная, она обещала бы несуществующее.
+  const api = propShell(label ? B.label : null, LBL.em, LBL.y, LBL.lift);
   if (api.label) api.label.rotation.x = -Math.PI / 2;
   const D = FORGE_PROPS.deskY;
 
