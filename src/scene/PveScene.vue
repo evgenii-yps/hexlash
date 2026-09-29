@@ -57,6 +57,7 @@ import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
 import { buildRoster, buildUpgrade, buildPunchBag, buildBagStand, buildBuffShelf, buildSparStand, buildAscensionStand } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
+import { buildSoonWord } from './soonWord.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { buildTree } from '@/data/upgradeTree.js';
@@ -227,6 +228,10 @@ const SPAR_ISLE = {
   //    именованное исключение, разрешённое владельцем 28.09.2026 для ЭТОГО
   //    острова: на нём один предмет, и смотреть на него в упор не на что.
   fit: 0.94,
+  // Доля ширины плиты под слово SOON. Слово должно читаться стоя на телефоне и не
+  // выходить за кромки плиты; половина ширины оставляет по четверти пустого пола
+  // с каждой стороны. Доля, а не число: остров берёт размеры у соседнего.
+  wordWidth: 0.5,
 };
 // ОТКЛИК НА НАЖАТИЕ у предметов зала.
 //
@@ -691,15 +696,20 @@ function buildNeighbourIsland(topY, count) {
  *    кадр целиком (именованное исключение, см. sparFrame и CAM). Ширина общая,
  *    удаление — уже нет.
  *
- * ⚠️ НА ОСТРОВЕ НЕТ НИЧЕГО, КРОМЕ САМОЙ ПЛИТЫ, И ПЛИТА — ЭТО И ЕСТЬ ВХОД (ТЗ
- *    29.09.2026). Нажатие по ней уводит на экран SPAR. Слово SOON снято, предмета
- *    на острове нет: была дверь-постамент, её убрали по решению владельца.
+ * ⚠️ ОСТРОВ ЗАКРЫТ (ТЗ 30.09.2026). Бой-настройку SPAR переделают целиком, на
+ *    демо 30.09 её не показываем, поэтому вход с острова снят: нажатие по плите не
+ *    делает ничего — ни перелёта, ни перехода, ни отклика. Над плитой парит
+ *    объёмное слово SOON (см. soonWord.js).
  *
- *    ⚠️ ПЛИТА СЛЫШИТ НАЖАТИЕ ТОЛЬКО ПОКА КАМЕРА СТОИТ НА ЭТОМ ОСТРОВЕ. Из зала
- *    остров виден с края кадра, и нажатие, случайно попавшее по нему издали,
- *    увело бы человека с экрана мимо острова — а лестница BACK обязана
- *    оставаться честной: остров → зал → острова режимов. См. `only` в propList и
- *    pickAt.
+ *    ⚠️ ПЛИТА — НЕ «ПУСТОЕ МЕСТО». Нажатие в пустое место закрывает панели и
+ *    уводит камеру в зал (PveView.onExit), а здесь оно не должно делать даже
+ *    этого. Поэтому плита и слово собраны в глухую зону (`sparDead`): pickAt
+ *    отдаёт по ним `{ kind: 'dead' }`, onPointerUp на нём молчит.
+ *
+ *    Сам экран /play/spar НЕ УДАЛЁН и работает по прямому адресу: открыть вход
+ *    обратно — вернуть в propList запись `{ key: 'sparGo', only: 'spar', … }` с
+ *    мешами плиты в `hit`, ветку `sparGo` в PveView.onPress и убрать глухую зону.
+ *    Механизм `only` в pickAt оставлен ради этого.
  */
 function buildSparIsland(topY) {
   if (trainHalfW <= 0) return;          // не у чего взять масштаб — острова не будет
@@ -711,18 +721,17 @@ function buildSparIsland(topY) {
   sparHalfW = width / 2;
   sparHalfD = trainHalfD;       // глубина тоже соседская — держим её под рукой для кадра
 
-  // Плита ловится тем же лучом и тем же путём, что предметы зала: запись в общем
-  // списке с теми же полями, а нажатие уходит наружу тем же сообщением `press`.
-  // Своей группы и своего отклика у неё нет — плита не предмет, лужицы под ней
-  // не будет; группа пустая и в сцену не добавляется, убирается плита как и
-  // раньше, отдельно.
-  const hit = [];
-  sparSlab.group.traverse((o) => { if (o.isMesh) hit.push(o); });
-  propList.push({
-    key: 'sparGo',
-    only: 'spar',
-    obj: { group: new THREE.Group(), hit, setPressed() {}, tick() {}, dispose() {} },
-  });
+  // Слово стоит в центре плиты. Разлом посередине ему не мешает: оно в воздухе, а
+  // не на полу. В списки нажатий оно НЕ заводится вовсе — плита вообще ничего не
+  // слышит (см. шапку функции), а слово к тому же не ловит луч.
+  sparWord = buildSoonWord(t.value.home.soon, width * SPAR_ISLE.wordWidth);
+  sparWord.group.position.set(sparCx, topY + sparWord.lift + sparWord.height / 2, 0);
+  scene.add(sparWord.group);
+
+  // Всё, что на острове можно задеть пальцем, — глухая зона (см. pickAt).
+  sparDead = [];
+  sparSlab.group.traverse((o) => { if (o.isMesh) sparDead.push(o); });
+  sparWord.group.traverse((o) => { if (o.isMesh) sparDead.push(o); });
 }
 
 /**
@@ -1464,7 +1473,8 @@ let renderer, scene, camera, slab, resizeObserver, clock;
 let trainSlab = null;
 let trainCx = 0, trainHalfW = 0, trainHalfD = 0;
 // ── Остров SPAR: зеркало острова груш, слева от главной плиты ──
-let sparSlab = null;
+let sparSlab = null, sparWord = null;
+let sparDead = [];   // меши, нажатие в которые не делает ничего: плита острова SPAR и слово над ней
 let sparCx = 0, sparHalfW = 0, sparHalfD = 0;
 const bags = new Map();          // номер места → груша; пустых не держим
 // КТО СЕЙЧАС НА ТРЕНИРОВОЧНОМ ОСТРОВЕ. Два набора, а не один, потому что груша
@@ -1869,6 +1879,14 @@ onMounted(() => {
       const entry = o ? live.find((r) => r.fighter.group === o) : null;
       if (entry) best = { d: hit.distance, res: { kind: 'fighter', entry } };
     }
+    // ГЛУХАЯ ЗОНА: плита закрытого острова SPAR и слово над ней (см. buildSparIsland).
+    // Ближайшее побеждает, как и у остальных: предмет или боец перед плитой её
+    // перекрывает. Нажатие в неё не «пустое место» — то закрывает панели и уводит
+    // камеру в зал, — а никакое: onPointerUp на нём не делает ничего.
+    if (sparDead.length) {
+      const dh = _ray.intersectObjects(sparDead, false)[0];
+      if (dh && (!best || dh.distance < best.d)) best = { d: dh.distance, res: { kind: 'dead' } };
+    }
     return best ? best.res : null;
   }
 
@@ -1900,6 +1918,8 @@ onMounted(() => {
     const d = downAt; downAt = null;
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
+    // Глухая зона (остров SPAR закрыт): ни отклика, ни перелёта, ни сообщения наружу.
+    if (d.entry && d.entry.kind === 'dead') return;
     if (d.entry && d.entry.kind === 'prop') {
       // ОТКЛИК НА НАЖАТИЕ — у всех предметов одинаковый: розовая лужица под
       // предметом зажигается на миг и гаснет сама. На телефоне наведения нет
@@ -2077,6 +2097,9 @@ onMounted(() => {
 
     lamps?.tick?.(t);
 
+    // Слово SOON над островом SPAR — лицом к камере (только рыскание, см. soonWord).
+    sparWord?.faceCamera(camera);
+
     renderer.render(scene, camera);
 
     // One settled frame toward readiness — counted only once every stage above is
@@ -2104,7 +2127,7 @@ onMounted(() => {
     window.__pickAt = (sx, sy) => {
       const rect = renderer.domElement.getBoundingClientRect();
       const e = pickAt(rect.left + sx * rect.width, rect.top + sy * rect.height);
-      return e ? (e.kind === 'prop' ? 'предмет:' + e.key : 'боец:' + e.entry.id) : 'пусто';
+      return e ? (e.kind === 'prop' ? 'предмет:' + e.key : e.kind === 'dead' ? 'глухо' : 'боец:' + e.entry.id) : 'пусто';
     };
     window.__forgeProbe = () => {
       if (!renderer || !scene) return null;
@@ -2673,6 +2696,8 @@ onBeforeUnmount(() => {
   bags.clear(); bagSpots = [];
   atBags.clear(); homing.clear(); hitPrev.clear();
   if (trainSlab) { scene.remove(trainSlab.group); trainSlab.dispose(); trainSlab = null; }
+  if (sparWord) { scene.remove(sparWord.group); sparWord.dispose(); sparWord = null; }
+  sparDead = [];
   if (sparSlab) { scene.remove(sparSlab.group); sparSlab.dispose(); sparSlab = null; }
   if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
   if (renderer) renderer.dispose();
