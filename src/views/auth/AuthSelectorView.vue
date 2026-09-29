@@ -153,7 +153,6 @@
 
             <div class="hx-fine">
               By continuing you agree to our
-              <router-link to="/rules">Terms</router-link> &amp;
               <router-link to="/privacy">Privacy Policy</router-link>.
             </div>
           </form>
