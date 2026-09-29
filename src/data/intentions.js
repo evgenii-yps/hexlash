@@ -61,8 +61,10 @@ const ESC_PASSIVE_DAMP = 0.5; // subtracted from HOLD / CATCH / BREAK / BREATHE 
               (build = save it; spend = release what's loaded; free = the default
               threshold release). */
 export const INTENTION_PROFILES = {
-  [INTENTIONS.PRESS]:   { axes: { distance: -35, initiative: 30, stick: 20 },              attack: 'free',  guard: -0.10, charge: 'free' },
-  [INTENTIONS.STRIKE]:  { axes: { distance: -25, initiative: 20, tempo: 15 },              attack: 'heavy', guard: -0.15, charge: 'spend' },
+  // PRESS / STRIKE deltas were −35/+30/+20 and −25/+20/+15: with a base ±20 they pinned ONSLAUGHT's distance and
+  // initiative against 0 / 100 (198–199 of 200 bouts bit-identical). Shrunk so the base stays visible (TZ_combat_distance_v1).
+  [INTENTIONS.PRESS]:   { axes: { distance: -10, initiative: 0, stick: 10 },               attack: 'free',  guard: -0.10, charge: 'free' },
+  [INTENTIONS.STRIKE]:  { axes: { distance: -10, initiative: 10, tempo: 15 },              attack: 'heavy', guard: -0.15, charge: 'spend' },
   [INTENTIONS.STING]:   { axes: { distance: 30, initiative: 10, tempo: -10, stick: -25 },  attack: 'light', guard: -0.05, charge: 'build' },
   [INTENTIONS.HOLD]:    { axes: {},                                                        attack: 'none',  guard: 0.20,  charge: 'free' },
   [INTENTIONS.BREAK]:   { axes: { distance: 35, initiative: -25, stick: -30 },             attack: 'none',  guard: 0.10,  charge: 'free' },

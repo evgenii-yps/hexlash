@@ -15,59 +15,28 @@
 //   node scripts/balance-recon.mjs [раздел ...]      разделы: axes inventory metrics det cores bias table effect levers raid | all
 //   SEEDS=200 node scripts/balance-recon.mjs effect
 // Результат: docs/balance-recon/out/<раздел>.md и .json (+ в консоль).
-import { createServer } from 'vite';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { openHarness, seedRandom, GAME_DUEL_POS } from './lib/bout-harness.mjs';
 
 const SEEDS = Number(process.env.SEEDS || 50);
 const RAID_SEEDS = Number(process.env.RAID_SEEDS || 20);
 const OUT = new URL('../docs/balance-recon/out/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
-// ── окружение Node: зерно + заглушка холста ──────────────────────────────────
-function seedRandom(seed) {
-  let a = seed >>> 0;
-  Math.random = () => {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function installCanvasStub() {
-  const noop = () => {};
-  const gradient = { addColorStop: noop };
-  const ctx = new Proxy({}, {
-    get: (_t, k) => {
-      if (k === 'createRadialGradient' || k === 'createLinearGradient') return () => gradient;
-      if (k === 'measureText') return () => ({ width: 0 });
-      if (k === 'getImageData') return (x, y, w, h) => ({ data: new Uint8ClampedArray(Math.max(1, w * h * 4)) });
-      return typeof k === 'string' ? noop : undefined;
-    },
-    set: () => true,
-  });
-  const canvasOf = (w, h) => ({ width: w, height: h, style: {}, getContext: () => ctx, toDataURL: () => 'data:,' });
-  globalThis.document = { createElement: (tag) => (tag === 'canvas' ? canvasOf(1, 1) : { style: {}, appendChild: noop }) };
-  globalThis.window = globalThis.window || { devicePixelRatio: 1, matchMedia: () => ({ matches: false, addEventListener: noop, removeEventListener: noop }) };
-}
-installCanvasStub();
-
-const server = await createServer({
-  configFile: false, appType: 'custom', logLevel: 'error',
-  resolve: { alias: { '@': new URL('../src', import.meta.url).pathname } },
-});
-const load = (p) => server.ssrLoadModule(p);
-const { runInstantBout, INSTANT_DT } = await load('/src/scene/instantBout.js');
+// Общий стенд (scripts/lib/bout-harness.mjs): заглушка холста, зерно, прогрев и
+// дуэль из НАСТОЯЩИХ точек выхода арены. Своего прелюдия здесь больше нет — прежний
+// ставил бойцов на (∓1.2, 0), а в игре они стоят по глубине плиты, 2.9 ед. друг от друга.
+const H = await openHarness();
+const { server, load, duel, runInstantBout, INSTANT_DT, resolveBehavior, strike } = H;
 const { buildFighter } = await load('/src/scene/buildFighter.js');
-const { resolveBehavior, AXIS_IDS, CORE_PROFILES } = await load('/src/data/behavior.js');
+const { AXIS_IDS, CORE_PROFILES } = await load('/src/data/behavior.js');
 const { CORES, CRYSTALS } = await load('/src/data/upgradeData.js');
 const { buildTree } = await load('/src/data/upgradeTree.js');
 const { CRYSTAL_TEXTS, FACET_NAMES } = await load('/src/data/crystalTexts.js');
 const { BUFF_BALANCE, rollDie } = await load('/src/data/buffBalance.js');
 const { KLICH_BALANCE, KLICH_IDS } = await load('/src/data/klichBalance.js');
 const { COMBAT_BALANCE } = await load('/src/data/combatBalance.js');
-const strike = await load('/src/services/buffStrike.js');
 const { composeRaid, composeFoe } = await load('/src/data/foeCompose.js');
 const { collapseSpawnPos } = await load('/src/data/collapseLayouts.js');
 
@@ -103,33 +72,10 @@ const emit = (name, mdText, json) => {
 const progress = (s) => process.stderr.write(s + '\n');
 
 // ── один бой один на один ────────────────────────────────────────────────────
-// Стороны: 'player' слева (x=-1.2), 'foe' справа (x=+1.2) — те же точки, что у
-// scripts/fight-regression.mjs. Опционально стороны меняются местами (swap), чтобы
-// убрать перекос «слева/справа» из замеров с лечением одной стороны.
-const POS_L = { x: -1.2, z: 0 };
-const POS_R = { x: 1.2, z: 0 };
-
-function duel({ seed, coreA, coreB, behA = null, behB = null, swap = false, onStep = null }) {
-  seedRandom(seed);
-  const a = { sideId: 'player', coreId: coreA, behavior: behA || resolveBehavior(coreA), side: 'player', pos: swap ? POS_R : POS_L };
-  const b = { sideId: 'foe', coreId: coreB, behavior: behB || resolveBehavior(coreB), side: 'opponent', pos: swap ? POS_L : POS_R };
-  const r = runInstantBout(swap ? [b, a] : [a, b], onStep ? { onStep } : {});
-  strike.clearAllDiceCharges();
-  const win = r.units.find((u) => u.sideId === r.winner);
-  return {
-    winner: r.winner, sec: r.sec, capped: r.capped,
-    winHp01: win ? win.hp / win.maxHp : 0,
-  };
-}
-
-// ПРОГРЕВ. Самый первый бой процесса не совпадает с тем же боем, посчитанным
-// позже: в нём что-то берёт числа из Math.random (найдено при
-// проверке детерминизма: 43.50 с против 44.50 с). Причина не выяснена (защищённый
-// файл бойца не открывался); рабочая гипотеза — ленивая инициализация, берущая
-// Math.random. Поэтому до любого замера прогреваем все ядра пробными боями; их
-// результат выбрасывается.
-for (const a of CORE_IDS) for (const b of CORE_IDS) duel({ seed: 999, coreA: a, coreB: b });
-strike.clearAllDiceCharges();
+// Стороны и точки — из общего стенда: 'player' (0.45, 1.3), 'foe' (−0.65, −1.4), как в
+// ArenaScene. swap меняет порядок в списке и точки местами — убирает перекос стороны.
+const POS_L = GAME_DUEL_POS.player;
+const POS_R = GAME_DUEL_POS.foe;
 
 // ── РАЗДЕЛ det: детерминизм харнесса ────────────────────────────────────────
 function sectionDet() {
@@ -193,7 +139,7 @@ function sectionCores() {
   })]);
   const mirrors = json.filter((j) => j.a === j.b).map((j) => `${CORE_NAME[j.a]}: победы «слева» ${j.wins}/${j.n}`).join(' · ');
   const text = [
-    `Пары: 16 упорядоченных (A слева, B справа), зёрна 1..${SEEDS}. Начальные позиции x=∓1.2. Ядра без зажжённых кристаллов.`,
+    `Пары: 16 упорядоченных (A слева, B справа), зёрна 1..${SEEDS}. Начальные позиции — как в игре: (0.45, 1.3) и (−0.65, −1.4). Ядра без зажжённых кристаллов.`,
     '', md(head, rows),
     '', '**Сводный винрейт ядра против трёх других (обе стороны плиты, без зеркал):**', '',
     md(['ядро', 'победы', 'винрейт'], agg),

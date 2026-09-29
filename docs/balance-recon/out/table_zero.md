@@ -2,23 +2,23 @@
 
 | рычаг | боёв изменилось | вывод |
 | --- | --- | --- |
-| strikePower | 80/80 | живой |
-| blockPenetration | 72/80 | живой |
+| strikePower | 78/80 | живой |
+| blockPenetration | 53/80 | живой |
 | interruptResist | 80/80 | живой |
-| accuracy | 74/80 | живой |
-| feintChance | 19/80 | живой |
-| feintPayoff | 7/80 | живой |
-| chargeGain | 31/80 | живой |
-| chargePower | 25/80 | живой |
-| toughness | 71/80 | живой |
-| staminaRegen | 71/80 | живой |
-| blockMitigation | 61/80 | живой |
-| blockCounter | 29/80 | живой |
-| interruptBonus | 47/80 | живой |
-| dodgeCounter | 38/80 | живой |
-| missCounter | 39/80 | живой |
-| chargeMax | 26/80 | живой |
-| chargePen | 8/80 | живой |
+| accuracy | 55/80 | живой |
+| feintChance | 30/80 | живой |
+| feintPayoff | 4/80 | живой |
+| chargeGain | 41/80 | живой |
+| chargePower | 33/80 | живой |
+| toughness | 72/80 | живой |
+| staminaRegen | 66/80 | живой |
+| blockMitigation | 56/80 | живой |
+| blockCounter | 23/80 | живой |
+| interruptBonus | 25/80 | живой |
+| dodgeCounter | 26/80 | живой |
+| missCounter | 26/80 | живой |
+| chargeMax | 47/80 | живой |
+| chargePen | 14/80 | живой |
 | (теги: все 26 сразу) | 0/80 | **ЛОЖЬ: бой не меняется вовсе** |
 
 **4.2б. Кристаллы, чей ЕДИНСТВЕННЫЙ бонус — мёртвый рычаг (осевой сдвиг, если он есть, остаётся):** нет.

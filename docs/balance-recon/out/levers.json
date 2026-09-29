@@ -1,17 +1,17 @@
 {
  "seeds": 50,
  "baseline": {
-  "wr": 46,
-  "med": 49.0499999999985
+  "wr": 54,
+  "med": 49.05833333333183
  },
  "results": [
   {
    "key": "towel/bot",
-   "applied": 175,
+   "applied": 159,
    "n": 200,
-   "wins": 132,
-   "wr": 66,
-   "medSec": 50.733333333331736,
+   "wins": 141,
+   "wr": 70.5,
+   "medSec": 50.816666666665064,
    "perCore": {
     "natisk": {
      "wins": 32,
@@ -19,19 +19,19 @@
      "wr": 64
     },
     "nalet": {
+     "wins": 33,
+     "n": 50,
+     "wr": 66
+    },
+    "skala": {
+     "wins": 42,
+     "n": 50,
+     "wr": 84
+    },
+    "zasada": {
      "wins": 34,
      "n": 50,
      "wr": 68
-    },
-    "skala": {
-     "wins": 39,
-     "n": 50,
-     "wr": 78
-    },
-    "zasada": {
-     "wins": 27,
-     "n": 50,
-     "wr": 54
     }
    }
   },
@@ -39,9 +39,9 @@
    "key": "towel/fixed",
    "applied": 200,
    "n": 200,
-   "wins": 109,
-   "wr": 54.5,
-   "medSec": 50.30833333333176,
+   "wins": 121,
+   "wr": 60.5,
+   "medSec": 50.208333333331765,
    "perCore": {
     "natisk": {
      "wins": 27,
@@ -49,19 +49,19 @@
      "wr": 54
     },
     "nalet": {
-     "wins": 28,
+     "wins": 27,
      "n": 50,
-     "wr": 56
+     "wr": 54
     },
     "skala": {
-     "wins": 29,
+     "wins": 33,
      "n": 50,
-     "wr": 58
+     "wr": 66
     },
     "zasada": {
-     "wins": 25,
+     "wins": 34,
      "n": 50,
-     "wr": 50
+     "wr": 68
     }
    }
   },
@@ -69,29 +69,29 @@
    "key": "bucket/bot",
    "applied": 200,
    "n": 200,
-   "wins": 100,
-   "wr": 50,
-   "medSec": 48.891666666665174,
+   "wins": 91,
+   "wr": 45.5,
+   "medSec": 49.84999999999845,
    "perCore": {
     "natisk": {
-     "wins": 22,
+     "wins": 23,
      "n": 50,
-     "wr": 44
+     "wr": 46
     },
     "nalet": {
-     "wins": 27,
+     "wins": 19,
      "n": 50,
-     "wr": 54
+     "wr": 38
     },
     "skala": {
-     "wins": 25,
-     "n": 50,
-     "wr": 50
-    },
-    "zasada": {
      "wins": 26,
      "n": 50,
      "wr": 52
+    },
+    "zasada": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
     }
    }
   },
@@ -99,19 +99,19 @@
    "key": "bucket/fixed",
    "applied": 200,
    "n": 200,
-   "wins": 88,
-   "wr": 44,
-   "medSec": 48.70833333333185,
+   "wins": 100,
+   "wr": 50,
+   "medSec": 50.49166666666508,
    "perCore": {
     "natisk": {
-     "wins": 23,
+     "wins": 25,
      "n": 50,
-     "wr": 46
+     "wr": 50
     },
     "nalet": {
-     "wins": 17,
+     "wins": 25,
      "n": 50,
-     "wr": 34
+     "wr": 50
     },
     "skala": {
      "wins": 25,
@@ -119,9 +119,9 @@
      "wr": 50
     },
     "zasada": {
-     "wins": 23,
+     "wins": 25,
      "n": 50,
-     "wr": 46
+     "wr": 50
     }
    }
   },
@@ -129,24 +129,24 @@
    "key": "dice/bot",
    "applied": 200,
    "n": 200,
-   "wins": 139,
-   "wr": 69.5,
-   "medSec": 47.8583333333319,
+   "wins": 146,
+   "wr": 73,
+   "medSec": 46.60833333333197,
    "perCore": {
     "natisk": {
-     "wins": 32,
+     "wins": 36,
      "n": 50,
-     "wr": 64
+     "wr": 72
     },
     "nalet": {
-     "wins": 34,
+     "wins": 29,
      "n": 50,
-     "wr": 68
+     "wr": 58
     },
     "skala": {
-     "wins": 35,
+     "wins": 43,
      "n": 50,
-     "wr": 70
+     "wr": 86
     },
     "zasada": {
      "wins": 38,
@@ -159,159 +159,9 @@
    "key": "dice/fixed",
    "applied": 200,
    "n": 200,
-   "wins": 126,
-   "wr": 63,
-   "medSec": 46.84166666666529,
-   "perCore": {
-    "natisk": {
-     "wins": 27,
-     "n": 50,
-     "wr": 54
-    },
-    "nalet": {
-     "wins": 32,
-     "n": 50,
-     "wr": 64
-    },
-    "skala": {
-     "wins": 31,
-     "n": 50,
-     "wr": 62
-    },
-    "zasada": {
-     "wins": 36,
-     "n": 50,
-     "wr": 72
-    }
-   }
-  },
-  {
-   "key": "dice/face1",
-   "applied": 200,
-   "n": 200,
-   "wins": 95,
-   "wr": 47.5,
-   "medSec": 48.61666666666519,
-   "perCore": {
-    "natisk": {
-     "wins": 23,
-     "n": 50,
-     "wr": 46
-    },
-    "nalet": {
-     "wins": 21,
-     "n": 50,
-     "wr": 42
-    },
-    "skala": {
-     "wins": 26,
-     "n": 50,
-     "wr": 52
-    },
-    "zasada": {
-     "wins": 25,
-     "n": 50,
-     "wr": 50
-    }
-   }
-  },
-  {
-   "key": "dice/face2",
-   "applied": 200,
-   "n": 200,
-   "wins": 99,
-   "wr": 49.5,
-   "medSec": 48.42499999999853,
-   "perCore": {
-    "natisk": {
-     "wins": 23,
-     "n": 50,
-     "wr": 46
-    },
-    "nalet": {
-     "wins": 23,
-     "n": 50,
-     "wr": 46
-    },
-    "skala": {
-     "wins": 28,
-     "n": 50,
-     "wr": 56
-    },
-    "zasada": {
-     "wins": 25,
-     "n": 50,
-     "wr": 50
-    }
-   }
-  },
-  {
-   "key": "dice/face3",
-   "applied": 200,
-   "n": 200,
-   "wins": 108,
-   "wr": 54,
-   "medSec": 47.37499999999859,
-   "perCore": {
-    "natisk": {
-     "wins": 23,
-     "n": 50,
-     "wr": 46
-    },
-    "nalet": {
-     "wins": 28,
-     "n": 50,
-     "wr": 56
-    },
-    "skala": {
-     "wins": 29,
-     "n": 50,
-     "wr": 58
-    },
-    "zasada": {
-     "wins": 28,
-     "n": 50,
-     "wr": 56
-    }
-   }
-  },
-  {
-   "key": "dice/face4",
-   "applied": 200,
-   "n": 200,
-   "wins": 126,
-   "wr": 63,
-   "medSec": 46.44166666666531,
-   "perCore": {
-    "natisk": {
-     "wins": 28,
-     "n": 50,
-     "wr": 56
-    },
-    "nalet": {
-     "wins": 30,
-     "n": 50,
-     "wr": 60
-    },
-    "skala": {
-     "wins": 34,
-     "n": 50,
-     "wr": 68
-    },
-    "zasada": {
-     "wins": 34,
-     "n": 50,
-     "wr": 68
-    }
-   }
-  },
-  {
-   "key": "dice/face5",
-   "applied": 200,
-   "n": 200,
-   "wins": 149,
-   "wr": 74.5,
-   "medSec": 45.4749999999987,
+   "wins": 133,
+   "wr": 66.5,
+   "medSec": 46.48333333333198,
    "perCore": {
     "natisk": {
      "wins": 35,
@@ -324,14 +174,164 @@
      "wr": 68
     },
     "skala": {
-     "wins": 39,
+     "wins": 34,
      "n": 50,
-     "wr": 78
+     "wr": 68
     },
     "zasada": {
+     "wins": 30,
+     "n": 50,
+     "wr": 60
+    }
+   }
+  },
+  {
+   "key": "dice/face1",
+   "applied": 200,
+   "n": 200,
+   "wins": 116,
+   "wr": 58,
+   "medSec": 48.866666666665175,
+   "perCore": {
+    "natisk": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "nalet": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "skala": {
+     "wins": 33,
+     "n": 50,
+     "wr": 66
+    },
+    "zasada": {
+     "wins": 31,
+     "n": 50,
+     "wr": 62
+    }
+   }
+  },
+  {
+   "key": "dice/face2",
+   "applied": 200,
+   "n": 200,
+   "wins": 124,
+   "wr": 62,
+   "medSec": 48.3666666666652,
+   "perCore": {
+    "natisk": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "nalet": {
+     "wins": 29,
+     "n": 50,
+     "wr": 58
+    },
+    "skala": {
+     "wins": 36,
+     "n": 50,
+     "wr": 72
+    },
+    "zasada": {
+     "wins": 32,
+     "n": 50,
+     "wr": 64
+    }
+   }
+  },
+  {
+   "key": "dice/face3",
+   "applied": 200,
+   "n": 200,
+   "wins": 136,
+   "wr": 68,
+   "medSec": 47.49166666666525,
+   "perCore": {
+    "natisk": {
+     "wins": 29,
+     "n": 50,
+     "wr": 58
+    },
+    "nalet": {
+     "wins": 32,
+     "n": 50,
+     "wr": 64
+    },
+    "skala": {
      "wins": 41,
      "n": 50,
      "wr": 82
+    },
+    "zasada": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    }
+   }
+  },
+  {
+   "key": "dice/face4",
+   "applied": 200,
+   "n": 200,
+   "wins": 146,
+   "wr": 73,
+   "medSec": 46.416666666665314,
+   "perCore": {
+    "natisk": {
+     "wins": 30,
+     "n": 50,
+     "wr": 60
+    },
+    "nalet": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    },
+    "skala": {
+     "wins": 45,
+     "n": 50,
+     "wr": 90
+    },
+    "zasada": {
+     "wins": 37,
+     "n": 50,
+     "wr": 74
+    }
+   }
+  },
+  {
+   "key": "dice/face5",
+   "applied": 200,
+   "n": 200,
+   "wins": 156,
+   "wr": 78,
+   "medSec": 44.8916666666654,
+   "perCore": {
+    "natisk": {
+     "wins": 35,
+     "n": 50,
+     "wr": 70
+    },
+    "nalet": {
+     "wins": 36,
+     "n": 50,
+     "wr": 72
+    },
+    "skala": {
+     "wins": 47,
+     "n": 50,
+     "wr": 94
+    },
+    "zasada": {
+     "wins": 38,
+     "n": 50,
+     "wr": 76
     }
    }
   },
@@ -339,29 +339,29 @@
    "key": "dice/face6",
    "applied": 200,
    "n": 200,
-   "wins": 160,
-   "wr": 80,
-   "medSec": 44.316666666665434,
+   "wins": 171,
+   "wr": 85.5,
+   "medSec": 42.90833333333218,
    "perCore": {
     "natisk": {
-     "wins": 36,
+     "wins": 41,
      "n": 50,
-     "wr": 72
+     "wr": 82
     },
     "nalet": {
-     "wins": 41,
+     "wins": 40,
      "n": 50,
-     "wr": 82
+     "wr": 80
     },
     "skala": {
+     "wins": 49,
+     "n": 50,
+     "wr": 98
+    },
+    "zasada": {
      "wins": 41,
      "n": 50,
      "wr": 82
-    },
-    "zasada": {
-     "wins": 42,
-     "n": 50,
-     "wr": 84
     }
    }
   },
@@ -369,14 +369,14 @@
    "key": "push/single",
    "applied": 200,
    "n": 200,
-   "wins": 99,
-   "wr": 49.5,
-   "medSec": 49.28333333333182,
+   "wins": 85,
+   "wr": 42.5,
+   "medSec": 50.54999999999841,
    "perCore": {
     "natisk": {
-     "wins": 24,
+     "wins": 21,
      "n": 50,
-     "wr": 48
+     "wr": 42
     },
     "nalet": {
      "wins": 25,
@@ -384,14 +384,14 @@
      "wr": 50
     },
     "skala": {
-     "wins": 25,
+     "wins": 22,
      "n": 50,
-     "wr": 50
+     "wr": 44
     },
     "zasada": {
-     "wins": 25,
+     "wins": 17,
      "n": 50,
-     "wr": 50
+     "wr": 34
     }
    }
   },
@@ -399,29 +399,29 @@
    "key": "push/kit",
    "applied": 200,
    "n": 200,
-   "wins": 90,
-   "wr": 45,
-   "medSec": 49.28333333333182,
+   "wins": 102,
+   "wr": 51,
+   "medSec": 51.108333333331714,
    "perCore": {
     "natisk": {
-     "wins": 25,
+     "wins": 29,
      "n": 50,
-     "wr": 50
+     "wr": 58
     },
     "nalet": {
-     "wins": 25,
+     "wins": 27,
      "n": 50,
-     "wr": 50
+     "wr": 54
     },
     "skala": {
-     "wins": 17,
+     "wins": 26,
      "n": 50,
-     "wr": 34
+     "wr": 52
     },
     "zasada": {
-     "wins": 23,
+     "wins": 20,
      "n": 50,
-     "wr": 46
+     "wr": 40
     }
    }
   },
@@ -429,29 +429,29 @@
    "key": "fallback/single",
    "applied": 200,
    "n": 200,
-   "wins": 94,
-   "wr": 47,
-   "medSec": 49.17499999999849,
+   "wins": 92,
+   "wr": 46,
+   "medSec": 49.883333333331784,
    "perCore": {
     "natisk": {
-     "wins": 24,
+     "wins": 19,
      "n": 50,
-     "wr": 48
+     "wr": 38
     },
     "nalet": {
-     "wins": 23,
+     "wins": 28,
      "n": 50,
-     "wr": 46
+     "wr": 56
     },
     "skala": {
-     "wins": 18,
+     "wins": 20,
      "n": 50,
-     "wr": 36
+     "wr": 40
     },
     "zasada": {
-     "wins": 29,
+     "wins": 25,
      "n": 50,
-     "wr": 58
+     "wr": 50
     }
    }
   },
@@ -459,29 +459,29 @@
    "key": "fallback/kit",
    "applied": 200,
    "n": 200,
-   "wins": 102,
-   "wr": 51,
-   "medSec": 49.183333333331824,
+   "wins": 85,
+   "wr": 42.5,
+   "medSec": 49.93333333333178,
    "perCore": {
     "natisk": {
-     "wins": 27,
+     "wins": 18,
      "n": 50,
-     "wr": 54
+     "wr": 36
     },
     "nalet": {
-     "wins": 27,
+     "wins": 22,
      "n": 50,
-     "wr": 54
+     "wr": 44
     },
     "skala": {
-     "wins": 21,
+     "wins": 28,
      "n": 50,
-     "wr": 42
+     "wr": 56
     },
     "zasada": {
-     "wins": 27,
+     "wins": 17,
      "n": 50,
-     "wr": 54
+     "wr": 34
     }
    }
   },
@@ -489,29 +489,29 @@
    "key": "hold/single",
    "applied": 200,
    "n": 200,
-   "wins": 98,
-   "wr": 49,
-   "medSec": 49.03333333333183,
+   "wins": 97,
+   "wr": 48.5,
+   "medSec": 50.116666666665104,
    "perCore": {
     "natisk": {
-     "wins": 24,
+     "wins": 30,
      "n": 50,
-     "wr": 48
+     "wr": 60
     },
     "nalet": {
-     "wins": 25,
+     "wins": 28,
      "n": 50,
-     "wr": 50
+     "wr": 56
     },
     "skala": {
-     "wins": 24,
+     "wins": 17,
      "n": 50,
-     "wr": 48
+     "wr": 34
     },
     "zasada": {
-     "wins": 25,
+     "wins": 22,
      "n": 50,
-     "wr": 50
+     "wr": 44
     }
    }
   },
@@ -519,29 +519,29 @@
    "key": "hold/kit",
    "applied": 200,
    "n": 200,
-   "wins": 102,
-   "wr": 51,
-   "medSec": 49.05833333333183,
+   "wins": 91,
+   "wr": 45.5,
+   "medSec": 50.51666666666508,
    "perCore": {
     "natisk": {
-     "wins": 24,
+     "wins": 29,
      "n": 50,
-     "wr": 48
+     "wr": 58
     },
     "nalet": {
+     "wins": 21,
+     "n": 50,
+     "wr": 42
+    },
+    "skala": {
+     "wins": 18,
+     "n": 50,
+     "wr": 36
+    },
+    "zasada": {
      "wins": 23,
      "n": 50,
      "wr": 46
-    },
-    "skala": {
-     "wins": 24,
-     "n": 50,
-     "wr": 48
-    },
-    "zasada": {
-     "wins": 31,
-     "n": 50,
-     "wr": 62
     }
    }
   }

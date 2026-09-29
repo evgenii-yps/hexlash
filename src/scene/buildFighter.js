@@ -572,6 +572,7 @@ export function buildFighter(
     swing: SLOW.swing * FK_DODGE.stepWidthMul, knee: FAST.knee, arm: 0,
     lean: SLOW.lean, bob: FAST.bob, twist: SLOW.twist,
   };
+  const CHASE_SCALE = motionFor(INTENTIONS.PRESS).speedMul || 1; // manner scale of the fastest chase (PRESS) — a retreat is never slower
   const FAST_DASH = 1.4; // max gap (world units) a FAST step-in commits before it plants
   // gait cadence (footwork.strideK) + facing turn speed (footwork.turnRate) live in
   // combatBalance.footwork now — single tunable source.
@@ -591,7 +592,7 @@ export function buildFighter(
   const RANGE_HYST = 0.25; // band around the engage distance before re-closing
   const CONTACT = 0.74; // hard minimum — bodies never interpenetrate (closer in-fighting)
   const CONTACT_SOFT = 0.9; // soft buffer above CONTACT — ease back here (no grinding)
-  const FAR = 1.9; // far edge of the approach band — arc straightens as the gap closes (tighter neutral spacing)
+  const FAR = COMBAT_BALANCE.distance.approachFar; // far edge of the approach band — arc straightens as the gap closes (window widened: TZ_combat_distance_v1)
   const STRIKE = 1.7; // legacy coarse radius (per-move reach gates the actual contact now)
 
   // --- Behaviour profile → fighter controls. The data-каркас
@@ -621,8 +622,12 @@ export function buildFighter(
   const lerp = THREE.MathUtils.lerp;
   const jit = (amp) => (Math.random() * 2 - 1) * amp; // ±amp bounded liveliness
 
-  const RANGE_NEAR = 0.82; // distance=0  → in-fighter, almost on contact (circles + strikes from here)
-  const RANGE_FAR = 1.45; //  distance=100 → spacing fighter (lowered again — closer neutral, steps in to strike)
+  // Desired-range window (numbers: combatBalance.distance). The far end now lies OUTSIDE the
+  // strike radius (hand 1.0 + tol 0.45), so a fighter has two working zones: inside (trade)
+  // and outside (approach / wait for a window / disengage). Was 0.82…1.45 — wholly inside reach.
+  const RANGE_NEAR = COMBAT_BALANCE.distance.rangeNear; // distance=0  → in-fighter (trades inside the strike radius)
+  const RANGE_FAR = COMBAT_BALANCE.distance.rangeFar; //  distance=100 → spacing fighter (holds outside the radius, steps in to strike)
+  const RANGE_MAX = COMBAT_BALANCE.distance.rangeMax; // ceiling of the desired range
   const tempo01 = n01(ax.tempo);
   const stick01 = n01(ax.stick);
   const counter01 = n01(ax.counter);
@@ -754,7 +759,7 @@ export function buildFighter(
     approachArc: 0.4 + Math.random() * 0.45, // lateral arc on the way in (rad)
   };
   // Initial range + aggression from the base profile (refreshed each frame).
-  character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
+  character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + character.rangeJit, CONTACT_SOFT, RANGE_MAX);
   character.aggression = THREE.MathUtils.clamp(n01(ax.initiative) + character.aggrJit, 0, 1);
 
   // --- Effective-axis layer. The fighter's BASE axes are never mutated; the
@@ -765,6 +770,7 @@ export function buildFighter(
   //     intention's delta clears. Runs in reduced motion too (the axis shift is
   //     fight logic, not animation).
   const baseAx = ax;
+  let escNow = 0; // latest escalation01 (0..1) seen by refreshAxes — lifts the disengage gate
   let stickEff = stick01; // live stick (base + intention delta), refreshed each frame
   const refreshAxes = () => {
     tickKlich(); // сдвиг от клича: пересчитать силу по существующим часам (lastT)
@@ -777,14 +783,18 @@ export function buildFighter(
     const esc01 = (fc && fc.escalation01) || 0;
     const escFwd = B.escalateForwardMax * esc01; // distance ↓ → closer range
     const escAggr = B.escalateAggroMax * esc01; // aggression ↑
+    escNow = esc01; // read by the disengage gate in update()
     // Effective axes = BASE + INTENTION delta (distance / initiative / stick /
     // tempo) + накал pull. Composing here means range / aggression / stick / cadence
     // are the single derived knobs the body reads; the base axes stay untouched.
-    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance + klichDelta.distance - escFwd, 0, 100);
-    const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative + klichDelta.initiative, 0, 100);
+    // Effective axes may run past the 0..100 base scale (combatBalance.distance.axisMin/Max): the
+    // sum base + intention + klich would otherwise pin a base ±20 against the edge.
+    const DX = B.distance;
+    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance + klichDelta.distance - escFwd, DX.axisMin, DX.axisMax);
+    const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative + klichDelta.initiative, DX.axisMin, DX.axisMax);
     stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick + klichDelta.stick) / 100, 0, 1);
     effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo + klichDelta.tempo) / 100, 0, 1);
-    character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
+    character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, RANGE_MAX);
     character.aggression = THREE.MathUtils.clamp(effInit / 100 + escAggr + character.aggrJit, 0, 1);
   };
 
@@ -1588,7 +1598,11 @@ export function buildFighter(
   // stance regen; attacking / hurt / dodge clips neither). Attack costs are
   // charged separately at strike start (decideAttack / reducedAttack).
   const tickStamina = (dt) => {
-    if (prevMag > 0.05) stamina -= B.staminaMoveDrainPerSec * THREE.MathUtils.clamp(prevMag / FAST.speed, 0, 1) * dt;
+    // BREATHE recovers wind even on the move (TZ_combat_distance_v1): its retreat is now a real FAST run
+    // and the disengage gate stops it from striking — without this a winded fighter drained faster than it
+    // regained (regen was stationary-only), sat in BREATHE at 0 stamina forever and stalled the bout (188 s).
+    if (intentionId === INTENTIONS.BREATHE && !clip) stamina += staminaRegenRate * dt;
+    else if (prevMag > 0.05) stamina -= B.staminaMoveDrainPerSec * THREE.MathUtils.clamp(prevMag / FAST.speed, 0, 1) * dt;
     else if (!clip) stamina += staminaRegenRate * dt; // rest/stance → recover (БАСТИОН-3 «дыхание» seam)
     stamina = THREE.MathUtils.clamp(stamina, 0, staminaMax);
   };
@@ -1761,7 +1775,10 @@ export function buildFighter(
     const tanz = ux * character.strafeBias;
     // PRESS — bore toward contact with only a slight lateral cut (manner: never circles).
     if (m.style === 'press') {
-      requestMove(ux + tanx * 0.3, uz + tanz * 0.3, FAST, Math.max(0, d - CONTACT_SOFT));
+      // Bores in to its DESIRED range (not blindly to contact): the range window now reaches outside the strike
+      // radius, and a PRESS fighter that ignored it would make the distance axis and the klich dead for the
+      // most aggressive core. At the default range (~1.0–1.1) this is still contact-close.
+      requestMove(ux + tanx * 0.3, uz + tanz * 0.3, FAST, Math.max(0, d - Math.max(CONTACT_SOFT, character.range)));
       return;
     }
     // STING — spring OUT to spacing AND drift laterally (a wide arc); darts back in
@@ -1844,8 +1861,11 @@ export function buildFighter(
     if (ad > br.anchorReach) {
       // Measured weighty walk across the plate (SLOW — no jog/sprint); brakes into the
       // anchor via maxDist. A short final close may quicken (FAST) like the approach.
-      const band = ad <= FAST_DASH ? FAST : SLOW;
-      requestMove(ax / ad, az / ad, band, ad);
+      // The retreat is never slower than the chase (TZ_combat_distance_v1): a chasing PRESS runs FAST × its
+      // manner scale, so a retreat that ambled in SLOW could never open the gap. Retreats run FAST at
+      // no less than the chaser's manner scale.
+      moveScale = Math.max(moveScale, CHASE_SCALE);
+      requestMove(ax / ad, az / ad, FAST, ad);
       return;
     }
     // Arrived: gentle wide drift around the foe at break distance — push OUT only if
@@ -1901,8 +1921,8 @@ export function buildFighter(
       // (moveScale: BREAK sharp, BREATHE slow) + facing (faceFoe always) + the
       // settle stance at range separate them. STING also bounces out here.
       const out = engage - d;
-      const band = out > FAST_DASH ? FAST : SLOW;
-      requestMove(-ux, -uz, band, out);
+      moveScale = Math.max(moveScale, CHASE_SCALE); // retreat ≥ chase speed (see navBreak)
+      requestMove(-ux, -uz, FAST, out);
       return;
     }
     if (nav.mode === 'approach') nav.until = 0; // just arrived → manner now
@@ -2247,7 +2267,7 @@ export function buildFighter(
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
     const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
-    ai.nextAt = t + atk.dur + pause;
+    ai.nextAt = t + atk.dur + pause * B.distance.attackPauseMul; // pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
@@ -2626,7 +2646,15 @@ export function buildFighter(
       updateRead(t);
       if (gatherUntil > 0 && lastT >= gatherUntil) {
         gatherUntil = 0;
-        if (!clip && !blocking && lastT >= staggerUntil) launchStrike(lastT, PUNCH); // the выпад after the coil
+        if (!clip && !blocking && lastT >= staggerUntil) {
+          // The выпад after the coil. A foe sitting just outside the fist's reach (the desired-range window is
+          // wider than the strike radius now) is CLOSED on with the weighted step-in instead of throwing a punch
+          // at air — otherwise two waiters whiff at each other from the window edge forever (TZ_combat_distance_v1).
+          const fp = getFoePos && getFoePos();
+          const fd = fp ? Math.hypot(fp.x - group.position.x, fp.z - group.position.z) : 0;
+          if (fp && fd > (PUNCH.reach || 1) + B.reachHitTol - 0.05) beginLunge(PUNCH, lastT);
+          else launchStrike(lastT, PUNCH);
+        }
       }
       gathering = gatherUntil > 0 && lastT < gatherUntil;
     }
@@ -2638,7 +2666,13 @@ export function buildFighter(
     // staggered (interrupt lock) the fighter does NOT attack.
     if (ai.on && !clip && !gathering) {
       faceFoe(dt);
-      if (!blocking && lastT >= staggerUntil && !lunge.active) { if (!tryReadReaction(t)) decideAttack(t); } // mid step-in: the lunge owns the decision
+      // DISENGAGING phases (a BREAK phase of the distance breathing, or the BREAK / BREATHE intention)
+      // do not initiate and do not answer with a reflex (сбив / контра) — otherwise a read reaction fires
+      // ~half the bout whatever the fighter decided and the retreat never happens (TZ_combat_distance_v1).
+      // The gate lifts once the stalemate накал passes disengageEscCap, so the bout always finishes.
+      const disengaging = (nav.macro === 'break' || intentionId === INTENTIONS.BREAK || intentionId === INTENTIONS.BREATHE)
+        && escNow < B.distance.disengageEscCap;
+      if (!blocking && lastT >= staggerUntil && !lunge.active && !disengaging) { if (!tryReadReaction(t)) decideAttack(t); } // mid step-in: the lunge owns the decision
     }
 
     if (clip) {

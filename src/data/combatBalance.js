@@ -242,6 +242,33 @@ export const COMBAT_BALANCE = {
     boundMargin: 0.92, // keep roam anchors inside the plate (fraction of the nav bounds)
   },
 
+  // --- ДИСТАНЦИЯ КАК ОСЬ БОЯ (TZ_combat_distance_v1). Раньше желаемая дистанция
+  //     бойца лежала целиком ВНУТРИ радиуса удара (0.82…1.45 при руке 1.0 + допуск
+  //     0.45): выходить было некуда, и ось `distance`, BUCKET и клич не могли ничего
+  //     двигать. Теперь у бойца две рабочие зоны: внутри радиуса — размен, снаружи —
+  //     подход, ожидание окна, отход. Окно желаемой дистанции растянуто на всю
+  //     плиту; сколько из него уйдёт на «снаружи», решает ось `distance` (и клич).
+  //     Числа подобраны замером под критерии приёмки, см. docs/combat-distance/.
+  distance: {
+    rangeNear: 1.15, //  ось distance = 0   → желаемая дистанция (внутри радиуса удара)
+    rangeFar: 2.9, //   ось distance = 100 → желаемая дистанция (снаружи радиуса)
+    rangeMax: 3.1, //   потолок желаемой дистанции (после разброса бойца)
+    approachFar: 3.0, // дальний край полосы подхода: дуга выпрямляется по мере сближения
+    // Предел ЭФФЕКТИВНЫХ осей (база + сдвиг намерения + клич + накал). База по-прежнему
+    // 0..100, а сумма может выйти за край: иначе сдвиг PRESS (−35 / +30) прижимал базу
+    // ±20 к 0 и 100, и оси distance / initiative у ONSLAUGHT не меняли бой вовсе.
+    axisMin: -40,
+    axisMax: 140,
+    // Фазы разрыва и дыхания не начинают атак и не отвечают рефлексом (сбив/контра)…
+    // …пока накал (escalation01) ниже этого порога. Выше — рефлексы возвращаются:
+    // это предохранитель от вечного разбегания (бой обязан доигрываться).
+    disengageEscCap: 0.5,
+    // ПАУЗА после удара растёт во столько раз (клип не трогаем — он анимация). Свободное
+    // время бойца (когда он ходит по намерению) было 8–11% боя; пауза — то, чем его можно
+    // поднять, не убирая рефлексы. Множитель ложится на паузу в launchStrike.
+    attackPauseMul: 1.6,
+  },
+
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
   //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON
@@ -949,7 +976,7 @@ export const COMBAT_BALANCE = {
     openReactLow: 0.3, openReactHigh: 0.95, // chance to punish a READ opening (recovery / stagger)
     catchBoost: 1.35, // CATCH (засада) — the dedicated waiter, reads + pounces hardest
     holdBoost: 1.12, // HOLD leans into the read a little
-    reactCooldownSec: 0.7, // min gap between conscious read-reactions (anti-spam)
+    reactCooldownSec: 1.65, // min gap between conscious read-reactions (anti-spam)
     gatherSec: 0.16, // visible "собрался" coil beat before a контра lunge (the улов reads as a moment)
   },
 

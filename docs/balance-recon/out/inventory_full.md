@@ -1,4 +1,4 @@
-Плоский список 392 ключей (все числа боя, баффов, клича, командования, стартовых профилей ядер, профилей намерений). Значения прочитаны из живых модулей.
+Плоский список 400 ключей (все числа боя, баффов, клича, командования, стартовых профилей ядер, профилей намерений). Значения прочитаны из живых модулей.
 
 | файл | ключ | значение |
 | --- | --- | --- |
@@ -93,6 +93,14 @@
 | src/data/combatBalance.js | `COMBAT_BALANCE.breath.pressBias` | 0.45 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.breath.spacerBias` | 1.6 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.breath.boundMargin` | 0.92 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.rangeNear` | 1.15 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.rangeFar` | 2.9 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.rangeMax` | 3.1 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.approachFar` | 3 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.axisMin` | -40 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.axisMax` | 140 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.disengageEscCap` | 0.5 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.distance.attackPauseMul` | 1.6 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.gradeBonusRamp` | [0.04,0.07,0.1,0.14,0.22] |
 | src/data/combatBalance.js | `COMBAT_BALANCE.panelDelaySec` | 1.5 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.chain.roundBonus` | [-0.5,-0.4,-0.25] |
@@ -239,7 +247,7 @@
 | src/data/combatBalance.js | `COMBAT_BALANCE.read.openReactHigh` | 0.95 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.read.catchBoost` | 1.35 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.read.holdBoost` | 1.12 |
-| src/data/combatBalance.js | `COMBAT_BALANCE.read.reactCooldownSec` | 0.7 |
+| src/data/combatBalance.js | `COMBAT_BALANCE.read.reactCooldownSec` | 1.65 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.read.gatherSec` | 0.16 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.microLife.cap` | 1 |
 | src/data/combatBalance.js | `COMBAT_BALANCE.microLife.breathHipY` | 0.012 |
@@ -299,11 +307,11 @@
 | src/data/klichBalance.js | `KLICH_BALANCE.fadeSec` | 2 |
 | src/data/klichBalance.js | `KLICH_BALANCE.chargesPerKlich` | 3 |
 | src/data/klichBalance.js | `KLICH_BALANCE.cooldownSec` | 6 |
-| src/data/klichBalance.js | `KLICH_BALANCE.axes.push.distance` | -40 |
+| src/data/klichBalance.js | `KLICH_BALANCE.axes.push.distance` | -70 |
 | src/data/klichBalance.js | `KLICH_BALANCE.axes.push.initiative` | 35 |
 | src/data/klichBalance.js | `KLICH_BALANCE.axes.push.tempo` | 10 |
 | src/data/klichBalance.js | `KLICH_BALANCE.axes.push.stick` | 25 |
-| src/data/klichBalance.js | `KLICH_BALANCE.axes.fallback.distance` | 45 |
+| src/data/klichBalance.js | `KLICH_BALANCE.axes.fallback.distance` | 90 |
 | src/data/klichBalance.js | `KLICH_BALANCE.axes.fallback.initiative` | -30 |
 | src/data/klichBalance.js | `KLICH_BALANCE.axes.fallback.tempo` | -10 |
 | src/data/klichBalance.js | `KLICH_BALANCE.axes.fallback.stick` | -35 |
@@ -355,14 +363,14 @@
 | src/data/behavior.js | `CORE_PROFILES.zasada.resilience` | 35 |
 | src/data/behavior.js | `CORE_PROFILES.zasada.counter` | 90 |
 | src/data/behavior.js | `CORE_PROFILES.zasada.slip` | 75 |
-| src/data/intentions.js | `INTENTION_PROFILES.press.axes.distance` | -35 |
-| src/data/intentions.js | `INTENTION_PROFILES.press.axes.initiative` | 30 |
-| src/data/intentions.js | `INTENTION_PROFILES.press.axes.stick` | 20 |
+| src/data/intentions.js | `INTENTION_PROFILES.press.axes.distance` | -10 |
+| src/data/intentions.js | `INTENTION_PROFILES.press.axes.initiative` | 0 |
+| src/data/intentions.js | `INTENTION_PROFILES.press.axes.stick` | 10 |
 | src/data/intentions.js | `INTENTION_PROFILES.press.attack` | free |
 | src/data/intentions.js | `INTENTION_PROFILES.press.guard` | -0.1 |
 | src/data/intentions.js | `INTENTION_PROFILES.press.charge` | free |
-| src/data/intentions.js | `INTENTION_PROFILES.strike.axes.distance` | -25 |
-| src/data/intentions.js | `INTENTION_PROFILES.strike.axes.initiative` | 20 |
+| src/data/intentions.js | `INTENTION_PROFILES.strike.axes.distance` | -10 |
+| src/data/intentions.js | `INTENTION_PROFILES.strike.axes.initiative` | 10 |
 | src/data/intentions.js | `INTENTION_PROFILES.strike.axes.tempo` | 15 |
 | src/data/intentions.js | `INTENTION_PROFILES.strike.attack` | heavy |
 | src/data/intentions.js | `INTENTION_PROFILES.strike.guard` | -0.15 |

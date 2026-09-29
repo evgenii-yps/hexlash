@@ -102,9 +102,9 @@ export const KLICH_BALANCE = {
    */
   axes: {
     // ВПЕРЁД — идёт вперёд, чаще размен, меньше разрывов дистанции.
-    push:     { distance: -40, initiative: 35, tempo: 10, stick: 25 },
+    push:     { distance: -70, initiative: 35, tempo: 10, stick: 25 },
     // ОТХОД — рвёт дистанцию, уходит от прессинга, реже атакует.
-    fallback: { distance: 45, initiative: -30, tempo: -10, stick: -35 },
+    fallback: { distance: 90, initiative: -30, tempo: -10, stick: -35 },
     // ДЕРЖАТЬ — упирается, держит оборону, терпит серию.
     hold:     { distance: -5, initiative: -25, tempo: -20, stick: 40 },
   },
