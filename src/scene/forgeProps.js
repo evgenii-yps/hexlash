@@ -40,7 +40,7 @@
 //    в src/styles/home.css) — второй такой полосы здесь не заводится.
 //
 // Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade, buildPunchBag,
-//               buildLegendAnchor, buildBuffShelf, buildBagStand, buildFloorMark.
+//               buildLegendAnchor, buildBuffShelf, buildBagStand.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -264,25 +264,6 @@ function buildLabel(text, width, { align = 'center', dim = 1 } = {}) {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = 2;
   return { mesh, dispose: () => { tex.dispose(); geo.dispose(); mat.dispose(); } };
-}
-
-/**
- * СЛОВО НА ПОЛУ ОСТРОВА. Та же гравировка, что на предметах, — матовая, цветом
- * `--ink-dim`, без свечения и без плашки.
- *
- * ⚠️ ПОЧЕМУ НЕ ЭКРАННАЯ ПЕЧАТЬ `.soon-stamp`. Приёмов для SOON в игре два, и
- *    каждый живёт в своём слое: в разметке — диагональная печать поверх кнопки
- *    (assets/main.css, решение 27.09.2026), в трёхмерном мире — гравировка.
- *    Печать поверх острова была бы наклейкой на стекле: она не едет вместе с
- *    миром при повороте камеры, а остров — это место, а не кнопка. Тот же приём
- *    уже стоит на предмете ASCENSION, когда легенда поднята.
- *
- * @param {number} width ширина слова в единицах мира
- */
-export function buildFloorMark(text, width) {
-  const lbl = buildLabel(text, width, { dim: 0.55 });
-  lbl.mesh.rotation.x = -Math.PI / 2;
-  return lbl;
 }
 
 // ─────────────────── Общая обвязка предмета ───────────────────
