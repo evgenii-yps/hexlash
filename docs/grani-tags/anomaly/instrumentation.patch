@@ -1,0 +1,23 @@
+diff --git a/src/data/intentions.js b/src/data/intentions.js
+index 97f9f1f4..94fe4a1b 100644
+--- a/src/data/intentions.js
++++ b/src/data/intentions.js
+@@ -122,7 +122,9 @@ export function chooseIntentionModel(self, foe, memory, fight) {
+    first, then the temperament-weighted score. Used directly when brain='spinal',
+    and as the safety net + fallback under brain='model'. */
+ export function chooseIntentionSpinal(self, foe, memory, fight) {
+-  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  const hn = hardNeed(self, foe, memory, fight);
++  if (globalThis.__hn) globalThis.__hn.push({ ini: self.ax01.initiative, dist: self.ax01.distance, hn: hn || 'score', cur: self.current, threat: memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5) });
++  return hn || spinalScore(self, foe, memory, fight);
+ }
+ 
+ // HARD NEEDS — state overrides temperament, fires instantly (no model round-trip).
+@@ -144,6 +146,7 @@ export function spinalScore(self, foe, memory, fight) {
+   const a = self.ax01;
+   const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
+   const closeBand = foe.has && foe.dist <= self.range + 0.5;
++  if (globalThis.__sw) globalThis.__sw.push({ ini: self.ax01.initiative, dist: self.ax01.distance, cur: self.current, threat: foeThreat, ph: foe.phase, phSwing: foe.phase === 'windup' || foe.phase === 'commit', has: foe.has, near: foe.dist, t: fight.t });
+   const far = foe.has && foe.dist > self.range + 0.7;
+   const lowStam = 1 - self.stamina01;
+   // READ → CATCH gravity: a perceived OPENING (recovery / stagger) pulls a counter-
