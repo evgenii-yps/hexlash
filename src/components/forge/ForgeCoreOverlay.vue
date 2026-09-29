@@ -11,11 +11,13 @@
      то есть в то же хранилище и в том же формате. Потолок зажжённых, отказы и
      налив — его собственные, не переписанные.
 
-     ЗАКРЫТИЕ.
-       · BACK (внизу, под большим пальцем) — закрывает СРАЗУ, с любого уровня.
-       · Касание мимо ядра — пустое место слоя вокруг карточки.
-       · Esc — как в зале: сначала на уровень выше внутри ядра, потом закрывает.
-     Карточка возвращается в прежний вид, выбранный боец не меняется.
+     НАЗАД — ОДИН, В ЛЕВОМ ВЕРХНЕМ УГЛУ (правка 1 к ТЗ 29.09.2026). Та же хром-
+     кнопка, что BACK зала, на том же месте и того же размера. Шагает на один
+     уровень назад: кристалл → грань → ядро → закрыть разворот, вернуться в зал.
+     Esc делает ровно то же самое. Внутренних кнопок «назад» у ядра здесь нет
+     (expanded), нижней кнопки тоже, а BACK зала на это время скрыт зал.
+     Касание мимо ядра — пустое место слоя вокруг карточки — по-прежнему закрывает
+     разворот целиком, с любого уровня. Выбранный боец не меняется.
 
      ⚠️ ПОД СЛОЕМ ЗАЛ НЕ ПРИНИМАЕТ НАЖАТИЙ. Слой лежит выше канваса, а зал слушает
      именно канвас (pointer/touch на его элементе), выше лежащий слой перехватывает
@@ -29,10 +31,11 @@
      самого слоя, а у его содержимого и стекла (см. forge.css): предок с
      opacity < 1 делает размытие слепым к сцене. -->
 <template>
-  <div class="fco" role="dialog" aria-modal="true" :aria-label="coreName" @click.self="$emit('close')">
-    <div class="fco-body" @click.self="$emit('close')">
+  <div class="fco" role="dialog" aria-modal="true" :aria-label="coreName" @click="onTap">
+    <div class="fco-body">
       <ForgeCore
         ref="coreRef"
+        expanded
         :core-id="coreId"
         :tree="tree"
         :spent="spent"
@@ -44,14 +47,12 @@
       />
     </div>
 
-    <!-- BACK — та же матовая хром-кнопка, что BACK в полосе зала. Стоит внизу: до
-         неё достаёт большой палец, а отступ считает системную полосу снизу. -->
-    <div class="fco-bar" @click.self="$emit('close')">
-      <button type="button" class="hs-chrome fco-back" :aria-label="t.home.back" @click="$emit('close')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
-        <span class="n">{{ t.home.back }}</span>
-      </button>
-    </div>
+    <!-- BACK — та же матовая хром-кнопка семьи .hs-chrome, что BACK зала: та же
+         форма и размер, угол тот же. Сам BACK зала на время разворота скрыт. -->
+    <button type="button" class="hs-chrome fco-back" :aria-label="t.home.back" @click="back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+      <span class="n">{{ t.home.back }}</span>
+    </button>
   </div>
 </template>
 
@@ -69,9 +70,19 @@ defineProps({
   fighterName: { type: String, default: '' },
   coreName: { type: String, default: '' },
 });
-defineEmits(['toggle', 'close']);
+const emit = defineEmits(['toggle', 'close']);
 
 const coreRef = ref(null);
-// Esc: сперва вверх по уровням внутри ядра; true — нажатие съедено, слой остаётся.
-defineExpose({ stepBack: () => coreRef.value?.stepBack?.() || false });
+
+// КАСАНИЕ МИМО ФИГУРЫ закрывает разворот целиком, с любого уровня. «Мимо» — это
+// пустое место: сам слой и его раскладочные коробки. Фигура, кнопки и строки текста
+// в счёт не идут. Список коробок, а не «всё, что не фигура», нарочно: описание
+// кристалла можно тронуть, чтобы прочитать, и слой от этого не должен исчезнуть.
+const EMPTY = '.fco, .fco-body, .fc, .fc-who, .fc-read, .fc-head, .fc-foot, .fc-lines';
+function onTap(e) { if (e.target.matches(EMPTY)) emit('close'); }
+// Шаг назад на уровень выше внутри ядра; true — шаг сделан и слой остаётся.
+const stepBack = () => coreRef.value?.stepBack?.() || false;
+// BACK и Esc делают одно и то же: на уровень выше, а с уровня «ядро» — закрыть.
+function back() { if (!stepBack()) emit('close'); }
+defineExpose({ stepBack, back });
 </script>

@@ -136,7 +136,10 @@
       </div>
       <!-- BACK — matte-chrome family member, arrow glyph + label → /play/mode.
            Второй ряд, под кластером. -->
-      <button type="button" class="hs-chrome pve-back" @click="goMode" :aria-label="t.home.back">
+      <!-- Пока открыт разворот ядра, этот BACK скрыт: в том же углу стоит BACK
+           разворота, и двух разных «назад» на одном месте быть не должно. visibility,
+           а не v-if/display — чтобы вторая строка полосы не сдвинулась. -->
+      <button type="button" class="hs-chrome pve-back" :style="coreOpen ? { visibility: 'hidden' } : null" @click="goMode" :aria-label="t.home.back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         <span class="n">{{ t.home.back }}</span>
       </button>
@@ -465,7 +468,8 @@ function onKeydown(e) {
   // Зал при этом не трогаем: он под слоем и ничего не принимает.
   if (e.key === 'Escape' && coreOpen.value) {
     e.preventDefault();
-    if (!overlayRef.value?.stepBack()) coreOpen.value = false;
+    overlayRef.value?.back();       // ровно то же, что кнопка BACK разворота
+    if (!overlayRef.value) coreOpen.value = false;
     return;
   }
   if (e.key !== 'Escape' || !pickedId.value) return;

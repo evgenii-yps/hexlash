@@ -802,9 +802,9 @@
 .fco {
   --fp-veil: color-mix(in srgb, var(--void) 82%, transparent);   /* плотнее панелей: 50% */
   --f-t: 0px; --f-r: 0px; --f-b: 0px; --f-l: 0px;
-  /* Что резервируем под остальное на слое: подпись, описание, кнопки, BACK, поля.
-     От этого зависит, насколько крупной встанет фигура. */
-  --fco-reserve: 300px;
+  /* Что резервируем под остальное на слое: место под BACK сверху, подпись, описание
+     и кнопку зажигания. От этого зависит, насколько крупной встанет фигура. */
+  --fco-reserve: 380px;
 
   position: fixed; inset: 0; z-index: var(--z-modal);
   display: flex; flex-direction: column;
@@ -818,7 +818,8 @@
 .fco-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; justify-content: center; align-items: center;
-  padding: var(--sp-4) var(--sp-3) 0;
+  /* Сверху — место под BACK (угол левый верхний), поэтому отступ больше боковых. */
+  padding: calc(var(--h-btn-sm) + var(--sp-4) + var(--sp-2)) var(--sp-3) var(--sp-4);
 }
 .fco .fc { width: min(100%, 720px); margin: auto 0; }
 
@@ -832,18 +833,25 @@
 }
 .fco .fc-who { justify-content: center; }
 
-/* BACK — внизу, под большим пальцем. Отступ считает системную полосу (env), а
-   запасной --sp-4 держит кнопку от края там, где полосы нет. */
-.fco-bar {
-  flex: none; display: flex; justify-content: center;
-  padding: var(--sp-3) var(--sp-4) max(var(--sp-4), env(safe-area-inset-bottom));
-}
+/* BACK — левый верхний угол, тот же угол и те же отступы, что у полосы зала
+   (там padding: sp-4 sp-5, на узких sp-2 sp-4 — см. .pve-root .hs-strip в PveView).
+   Сама форма — семья .hs-chrome (home.css), как у BACK зала. */
+.fco-back { position: absolute; top: var(--sp-4); left: var(--sp-5); }
+@media (max-width: 560px) { .fco-back { top: var(--sp-2); left: var(--sp-4); } }
+
+/* ПОДПИСЬ УРОВНЯ ПОД ФИГУРОЙ — по центру, как подсказка на уровне ядра. Название
+   грани / кристалла, подсказка и описание стоят под блоком, а не в углу. */
+.fco .fc-read { margin-left: auto; margin-right: auto; width: min(100%, 34rem); text-align: center; }
+.fco .fc-head { align-items: center; text-align: center; gap: var(--sp-2); }
+.fco .fc-hint--left { text-align: center; margin-top: var(--sp-2); }
+.fco .fc-lines { text-align: center; }
+.fco .fc-foot { justify-content: center; }
 
 /* Низкий экран боком: фигура слева, всё остальное колонкой справа. Порядок
    блоков в ForgeCore не меняется — только их раскладка. */
 @media (orientation: landscape) and (max-height: 520px) {
   .fco { --fco-reserve: 96px; }
-  .fco-body { padding-top: var(--sp-2); }
+  .fco-body { padding-bottom: var(--sp-2); }
   .fco .fc {
     width: min(100%, 860px); display: grid; align-items: center;
     grid-template-columns: auto minmax(0, 1fr); column-gap: var(--sp-5);
@@ -853,7 +861,6 @@
   .fco .fc-who { grid-area: who; justify-content: flex-start; }
   .fco .fc-read { grid-area: read; }
   .fco .fc-foot { grid-area: foot; }
-  .fco-bar { padding-top: var(--sp-2); padding-bottom: max(var(--sp-2), env(safe-area-inset-bottom)); }
 }
 
 /* ПОЯВЛЕНИЕ — не прозрачностью самого слоя (см. .fp-fade выше: предок с opacity < 1
