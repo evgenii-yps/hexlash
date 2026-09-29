@@ -1,0 +1,549 @@
+{
+ "seeds": 50,
+ "baseline": {
+  "wr": 46,
+  "med": 49.0499999999985
+ },
+ "results": [
+  {
+   "key": "towel/bot",
+   "applied": 175,
+   "n": 200,
+   "wins": 132,
+   "wr": 66,
+   "medSec": 50.733333333331736,
+   "perCore": {
+    "natisk": {
+     "wins": 32,
+     "n": 50,
+     "wr": 64
+    },
+    "nalet": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    },
+    "skala": {
+     "wins": 39,
+     "n": 50,
+     "wr": 78
+    },
+    "zasada": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    }
+   }
+  },
+  {
+   "key": "towel/fixed",
+   "applied": 200,
+   "n": 200,
+   "wins": 109,
+   "wr": 54.5,
+   "medSec": 50.30833333333176,
+   "perCore": {
+    "natisk": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "nalet": {
+     "wins": 28,
+     "n": 50,
+     "wr": 56
+    },
+    "skala": {
+     "wins": 29,
+     "n": 50,
+     "wr": 58
+    },
+    "zasada": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    }
+   }
+  },
+  {
+   "key": "bucket/bot",
+   "applied": 200,
+   "n": 200,
+   "wins": 100,
+   "wr": 50,
+   "medSec": 48.891666666665174,
+   "perCore": {
+    "natisk": {
+     "wins": 22,
+     "n": 50,
+     "wr": 44
+    },
+    "nalet": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "skala": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "zasada": {
+     "wins": 26,
+     "n": 50,
+     "wr": 52
+    }
+   }
+  },
+  {
+   "key": "bucket/fixed",
+   "applied": 200,
+   "n": 200,
+   "wins": 88,
+   "wr": 44,
+   "medSec": 48.70833333333185,
+   "perCore": {
+    "natisk": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "nalet": {
+     "wins": 17,
+     "n": 50,
+     "wr": 34
+    },
+    "skala": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "zasada": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    }
+   }
+  },
+  {
+   "key": "dice/bot",
+   "applied": 200,
+   "n": 200,
+   "wins": 139,
+   "wr": 69.5,
+   "medSec": 47.8583333333319,
+   "perCore": {
+    "natisk": {
+     "wins": 32,
+     "n": 50,
+     "wr": 64
+    },
+    "nalet": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    },
+    "skala": {
+     "wins": 35,
+     "n": 50,
+     "wr": 70
+    },
+    "zasada": {
+     "wins": 38,
+     "n": 50,
+     "wr": 76
+    }
+   }
+  },
+  {
+   "key": "dice/fixed",
+   "applied": 200,
+   "n": 200,
+   "wins": 126,
+   "wr": 63,
+   "medSec": 46.84166666666529,
+   "perCore": {
+    "natisk": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "nalet": {
+     "wins": 32,
+     "n": 50,
+     "wr": 64
+    },
+    "skala": {
+     "wins": 31,
+     "n": 50,
+     "wr": 62
+    },
+    "zasada": {
+     "wins": 36,
+     "n": 50,
+     "wr": 72
+    }
+   }
+  },
+  {
+   "key": "dice/face1",
+   "applied": 200,
+   "n": 200,
+   "wins": 95,
+   "wr": 47.5,
+   "medSec": 48.61666666666519,
+   "perCore": {
+    "natisk": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "nalet": {
+     "wins": 21,
+     "n": 50,
+     "wr": 42
+    },
+    "skala": {
+     "wins": 26,
+     "n": 50,
+     "wr": 52
+    },
+    "zasada": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    }
+   }
+  },
+  {
+   "key": "dice/face2",
+   "applied": 200,
+   "n": 200,
+   "wins": 99,
+   "wr": 49.5,
+   "medSec": 48.42499999999853,
+   "perCore": {
+    "natisk": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "nalet": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "skala": {
+     "wins": 28,
+     "n": 50,
+     "wr": 56
+    },
+    "zasada": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    }
+   }
+  },
+  {
+   "key": "dice/face3",
+   "applied": 200,
+   "n": 200,
+   "wins": 108,
+   "wr": 54,
+   "medSec": 47.37499999999859,
+   "perCore": {
+    "natisk": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "nalet": {
+     "wins": 28,
+     "n": 50,
+     "wr": 56
+    },
+    "skala": {
+     "wins": 29,
+     "n": 50,
+     "wr": 58
+    },
+    "zasada": {
+     "wins": 28,
+     "n": 50,
+     "wr": 56
+    }
+   }
+  },
+  {
+   "key": "dice/face4",
+   "applied": 200,
+   "n": 200,
+   "wins": 126,
+   "wr": 63,
+   "medSec": 46.44166666666531,
+   "perCore": {
+    "natisk": {
+     "wins": 28,
+     "n": 50,
+     "wr": 56
+    },
+    "nalet": {
+     "wins": 30,
+     "n": 50,
+     "wr": 60
+    },
+    "skala": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    },
+    "zasada": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    }
+   }
+  },
+  {
+   "key": "dice/face5",
+   "applied": 200,
+   "n": 200,
+   "wins": 149,
+   "wr": 74.5,
+   "medSec": 45.4749999999987,
+   "perCore": {
+    "natisk": {
+     "wins": 35,
+     "n": 50,
+     "wr": 70
+    },
+    "nalet": {
+     "wins": 34,
+     "n": 50,
+     "wr": 68
+    },
+    "skala": {
+     "wins": 39,
+     "n": 50,
+     "wr": 78
+    },
+    "zasada": {
+     "wins": 41,
+     "n": 50,
+     "wr": 82
+    }
+   }
+  },
+  {
+   "key": "dice/face6",
+   "applied": 200,
+   "n": 200,
+   "wins": 160,
+   "wr": 80,
+   "medSec": 44.316666666665434,
+   "perCore": {
+    "natisk": {
+     "wins": 36,
+     "n": 50,
+     "wr": 72
+    },
+    "nalet": {
+     "wins": 41,
+     "n": 50,
+     "wr": 82
+    },
+    "skala": {
+     "wins": 41,
+     "n": 50,
+     "wr": 82
+    },
+    "zasada": {
+     "wins": 42,
+     "n": 50,
+     "wr": 84
+    }
+   }
+  },
+  {
+   "key": "push/single",
+   "applied": 200,
+   "n": 200,
+   "wins": 99,
+   "wr": 49.5,
+   "medSec": 49.28333333333182,
+   "perCore": {
+    "natisk": {
+     "wins": 24,
+     "n": 50,
+     "wr": 48
+    },
+    "nalet": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "skala": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "zasada": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    }
+   }
+  },
+  {
+   "key": "push/kit",
+   "applied": 200,
+   "n": 200,
+   "wins": 90,
+   "wr": 45,
+   "medSec": 49.28333333333182,
+   "perCore": {
+    "natisk": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "nalet": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "skala": {
+     "wins": 17,
+     "n": 50,
+     "wr": 34
+    },
+    "zasada": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    }
+   }
+  },
+  {
+   "key": "fallback/single",
+   "applied": 200,
+   "n": 200,
+   "wins": 94,
+   "wr": 47,
+   "medSec": 49.17499999999849,
+   "perCore": {
+    "natisk": {
+     "wins": 24,
+     "n": 50,
+     "wr": 48
+    },
+    "nalet": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "skala": {
+     "wins": 18,
+     "n": 50,
+     "wr": 36
+    },
+    "zasada": {
+     "wins": 29,
+     "n": 50,
+     "wr": 58
+    }
+   }
+  },
+  {
+   "key": "fallback/kit",
+   "applied": 200,
+   "n": 200,
+   "wins": 102,
+   "wr": 51,
+   "medSec": 49.183333333331824,
+   "perCore": {
+    "natisk": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "nalet": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    },
+    "skala": {
+     "wins": 21,
+     "n": 50,
+     "wr": 42
+    },
+    "zasada": {
+     "wins": 27,
+     "n": 50,
+     "wr": 54
+    }
+   }
+  },
+  {
+   "key": "hold/single",
+   "applied": 200,
+   "n": 200,
+   "wins": 98,
+   "wr": 49,
+   "medSec": 49.03333333333183,
+   "perCore": {
+    "natisk": {
+     "wins": 24,
+     "n": 50,
+     "wr": 48
+    },
+    "nalet": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    },
+    "skala": {
+     "wins": 24,
+     "n": 50,
+     "wr": 48
+    },
+    "zasada": {
+     "wins": 25,
+     "n": 50,
+     "wr": 50
+    }
+   }
+  },
+  {
+   "key": "hold/kit",
+   "applied": 200,
+   "n": 200,
+   "wins": 102,
+   "wr": 51,
+   "medSec": 49.05833333333183,
+   "perCore": {
+    "natisk": {
+     "wins": 24,
+     "n": 50,
+     "wr": 48
+    },
+    "nalet": {
+     "wins": 23,
+     "n": 50,
+     "wr": 46
+    },
+    "skala": {
+     "wins": 24,
+     "n": 50,
+     "wr": 48
+    },
+    "zasada": {
+     "wins": 31,
+     "n": 50,
+     "wr": 62
+    }
+   }
+  }
+ ]
+}

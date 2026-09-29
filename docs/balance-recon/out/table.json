@@ -1,0 +1,1706 @@
+[
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "ROOT",
+  "dataName": "Heavy Hit",
+  "declaredShifts": [
+   "weight+14"
+  ],
+  "bonuses": [
+   "strikePower +4%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "weight": 14
+  },
+  "dAxesMarg": {
+   "weight": 14
+  },
+  "dStats": {
+   "strikePower": 4,
+   "mobility": -11
+  },
+  "effectText": "Holds his ground. He no longer gives way when pressed.",
+  "characterText": "Stubborn. He backs off less often than he should.",
+  "verdict": "не совпало (оси resilience,stick,distance не двигаются)"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "DRIVE",
+  "dataName": "Guard Crush",
+  "declaredShifts": [
+   "weight+8"
+  ],
+  "bonuses": [
+   "strikePower +7%",
+   "blockPenetration +40%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "weight": 8
+  },
+  "dAxesMarg": {
+   "weight": 8
+  },
+  "dStats": {
+   "strikePower": 7,
+   "blockPenetration": 0.4,
+   "mobility": -6
+  },
+  "effectText": "The weight moves with the punch, not just the arm.",
+  "characterText": "Impatient. He opens the exchange first.",
+  "verdict": "частично"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "GRIND",
+  "dataName": "Unshaken",
+  "declaredShifts": [
+   "resilience+14"
+  ],
+  "bonuses": [
+   "strikePower +10%",
+   "interruptResist +70%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "resilience": 14
+  },
+  "dAxesMarg": {
+   "resilience": 14
+  },
+  "dStats": {
+   "strikePower": 10
+  },
+  "effectText": "He does not fade in a long exchange.",
+  "characterText": "Takes punishment well. Stays in an exchange past the point where it pays.",
+  "verdict": "частично"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "BREAK",
+  "dataName": "Close Power",
+  "declaredShifts": [
+   "distance−8",
+   "weight+6"
+  ],
+  "bonuses": [
+   "strikePower +14%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "close_damage_ramp"
+  ],
+  "dAxes": {
+   "distance": -8,
+   "weight": 6
+  },
+  "dAxesMarg": {
+   "distance": -8,
+   "weight": 6
+  },
+  "dStats": {
+   "strikePower": 14,
+   "mobility": -5
+  },
+  "effectText": "Finds the moment an opponent tips, and pushes through it.",
+  "characterText": "Greedy for the finish. Forgets his guard when he smells weakness.",
+  "verdict": "не совпало (оси initiative,counter не двигаются)"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "ANVIL",
+  "dataName": "Breakthrough",
+  "declaredShifts": [
+   "weight+10"
+  ],
+  "bonuses": [
+   "strikePower +22%",
+   "blockPenetration +95%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "overload_strike"
+  ],
+  "dAxes": {
+   "weight": 10
+  },
+  "dAxesMarg": {
+   "weight": 10
+  },
+  "dStats": {
+   "strikePower": 22,
+   "blockPenetration": 0.95,
+   "mobility": -8
+  },
+  "effectText": "The body takes a hit and returns it through movement.",
+  "characterText": "Calm under pressure. He no longer panics in the corner.",
+  "verdict": "не совпало (оси resilience,counter не двигаются)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "WATCH",
+  "dataName": "Hard Entry",
+  "declaredShifts": [
+   "distance−8",
+   "initiative+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": -8,
+   "initiative": 6
+  },
+  "dAxesMarg": {
+   "distance": -8,
+   "initiative": 6
+  },
+  "dStats": {},
+  "effectText": "Sees where the opponent is going sooner.",
+  "characterText": "Careful. Waits a little longer before he enters.",
+  "verdict": "ПРОТИВОПОЛОЖНО (initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "TIMING",
+  "dataName": "Run-Down",
+  "declaredShifts": [
+   "stick+8",
+   "distance−6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "chase_strike"
+  ],
+  "dAxes": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dStats": {},
+  "effectText": "Lands in the gaps between the opponent's movements.",
+  "characterText": "Deliberate. Throws fewer blind punches.",
+  "verdict": "не совпало (оси tempo,counter не двигаются)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "FEINT",
+  "dataName": "Cut Off",
+  "declaredShifts": [
+   "stick+10"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "stick": 10
+  },
+  "dAxesMarg": {
+   "stick": 7
+  },
+  "dStats": {},
+  "effectText": "Lies with the body and punishes the answer.",
+  "characterText": "Sly. Starts playing with the opponent and loses tempo.",
+  "verdict": "не совпало (оси tempo не двигаются)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "ADAPT",
+  "dataName": "Cling",
+  "declaredShifts": [
+   "stick+10",
+   "distance−6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": -6,
+   "stick": 10
+  },
+  "dAxesMarg": {
+   "distance": -1
+  },
+  "dStats": {},
+  "effectText": "Stops repeating what has already failed twice.",
+  "characterText": "Flexible. Changes the plan even where holding it would have paid.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "COLD",
+  "dataName": "Lockdown",
+  "declaredShifts": [
+   "stick+14",
+   "distance−8"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "lockdown"
+  ],
+  "dAxes": {
+   "distance": -8,
+   "stick": 14
+  },
+  "dAxesMarg": {},
+  "dStats": {},
+  "effectText": "Another man's success does not knock him off his plan.",
+  "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+  "verdict": "не совпало (оси resilience не двигаются)"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "HOLD",
+  "dataName": "Long Combo",
+  "declaredShifts": [
+   "tempo+8"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "tempo": 8
+  },
+  "dAxesMarg": {
+   "tempo": 8
+  },
+  "dStats": {},
+  "effectText": "Recovers faster between exchanges.",
+  "characterText": "Composed. Asks for fewer pauses.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "SPITE",
+  "dataName": "No Pause",
+  "declaredShifts": [
+   "tempo+10"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "tempo": 10
+  },
+  "dAxesMarg": {
+   "tempo": 10
+  },
+  "dStats": {},
+  "effectText": "The worse it goes for him, the more dangerous he becomes.",
+  "characterText": "Angry. Dull in an even fight.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "VOW",
+  "dataName": "Building Momentum",
+  "declaredShifts": [
+   "tempo+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "hit_accel"
+  ],
+  "dAxes": {
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "tempo": 2
+  },
+  "dStats": {},
+  "effectText": "Holds the order he was given to the end instead of drifting off it.",
+  "characterText": "Loyal to the order. Improvises worse.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "HUNGER",
+  "dataName": "No Breather",
+  "declaredShifts": [
+   "tempo+6",
+   "stick+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "no_breather"
+  ],
+  "dAxes": {
+   "tempo": 6,
+   "stick": 6
+  },
+  "dAxesMarg": {
+   "stick": 6
+  },
+  "dStats": {},
+  "effectText": "Learns faster from what is done to him inside the fight.",
+  "characterText": "Eager. Probes where he should not.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "STILL",
+  "dataName": "Rampage",
+  "declaredShifts": [
+   "tempo+12"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "rampage"
+  ],
+  "dAxes": {
+   "tempo": 12
+  },
+  "dAxesMarg": {},
+  "dStats": {},
+  "effectText": "Slows down inside at the deciding moment and acts clean.",
+  "characterText": "Ice. His overall liveliness drops.",
+  "verdict": "ПРОТИВОПОЛОЖНО (tempo)"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "ROOT",
+  "dataName": "Quick Out",
+  "declaredShifts": [
+   "distance+8",
+   "tempo+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": 8,
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "distance": 8,
+   "tempo": 6
+  },
+  "dStats": {},
+  "effectText": "Holds his ground. He no longer gives way when pressed.",
+  "characterText": "Stubborn. He backs off less often than he should.",
+  "verdict": "ПРОТИВОПОЛОЖНО (distance)"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "DRIVE",
+  "dataName": "Pinpoint Entry",
+  "declaredShifts": [
+   "initiative+6"
+  ],
+  "bonuses": [
+   "accuracy +35%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "initiative": 6
+  },
+  "dAxesMarg": {
+   "initiative": 6
+  },
+  "dStats": {
+   "accuracy": 18
+  },
+  "effectText": "The weight moves with the punch, not just the arm.",
+  "characterText": "Impatient. He opens the exchange first.",
+  "verdict": "частично"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "GRIND",
+  "dataName": "Far Bounce",
+  "declaredShifts": [
+   "distance+10",
+   "slip+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": 10,
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "distance": 10,
+   "slip": 6
+  },
+  "dStats": {},
+  "effectText": "He does not fade in a long exchange.",
+  "characterText": "Takes punishment well. Stays in an exchange past the point where it pays.",
+  "verdict": "не совпало (оси resilience,stick не двигаются)"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "BREAK",
+  "dataName": "Clean Exchange",
+  "declaredShifts": [
+   "tempo+8"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "clean_chain"
+  ],
+  "dAxes": {
+   "tempo": 8
+  },
+  "dAxesMarg": {
+   "tempo": 8
+  },
+  "dStats": {},
+  "effectText": "Finds the moment an opponent tips, and pushes through it.",
+  "characterText": "Greedy for the finish. Forgets his guard when he smells weakness.",
+  "verdict": "не совпало (оси initiative,counter не двигаются)"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "ANVIL",
+  "dataName": "Perfect Prick",
+  "declaredShifts": [
+   "initiative+10",
+   "distance+8",
+   "slip+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "perfect_jab"
+  ],
+  "dAxes": {
+   "distance": 8,
+   "initiative": 10,
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "distance": 8,
+   "initiative": 10,
+   "slip": 6
+  },
+  "dStats": {},
+  "effectText": "The body takes a hit and returns it through movement.",
+  "characterText": "Calm under pressure. He no longer panics in the corner.",
+  "verdict": "не совпало (оси resilience,counter не двигаются)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "WATCH",
+  "dataName": "Fake-In",
+  "declaredShifts": [
+   "tempo+4"
+  ],
+  "bonuses": [
+   "feintChance +20%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "tempo": 4
+  },
+  "dAxesMarg": {
+   "tempo": 4
+  },
+  "dStats": {},
+  "effectText": "Sees where the opponent is going sooner.",
+  "characterText": "Careful. Waits a little longer before he enters.",
+  "verdict": "не совпало (оси counter,initiative не двигаются)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "TIMING",
+  "dataName": "Punish Reaction",
+  "declaredShifts": [
+   "tempo+4"
+  ],
+  "bonuses": [
+   "feintPayoff +50%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "tempo": 4
+  },
+  "dAxesMarg": {
+   "tempo": 4
+  },
+  "dStats": {},
+  "effectText": "Lands in the gaps between the opponent's movements.",
+  "characterText": "Deliberate. Throws fewer blind punches.",
+  "verdict": "ПРОТИВОПОЛОЖНО (tempo)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "FEINT",
+  "dataName": "Broken Rhythm",
+  "declaredShifts": [
+   "tempo+8"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "rhythm_break"
+  ],
+  "dAxes": {
+   "tempo": 8
+  },
+  "dAxesMarg": {
+   "tempo": 8
+  },
+  "dStats": {},
+  "effectText": "Lies with the body and punishes the answer.",
+  "characterText": "Sly. Starts playing with the opponent and loses tempo.",
+  "verdict": "ПРОТИВОПОЛОЖНО (tempo)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "ADAPT",
+  "dataName": "Feint to Interrupt",
+  "declaredShifts": [
+   "tempo+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "feint_interrupt"
+  ],
+  "dAxes": {
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "tempo": 6
+  },
+  "dStats": {},
+  "effectText": "Stops repeating what has already failed twice.",
+  "characterText": "Flexible. Changes the plan even where holding it would have paid.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "COLD",
+  "dataName": "Setup Combo",
+  "declaredShifts": [
+   "tempo+6"
+  ],
+  "bonuses": [
+   "feintPayoff +120%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "feint_combo"
+  ],
+  "dAxes": {
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "tempo": 6
+  },
+  "dStats": {},
+  "effectText": "Another man's success does not knock him off his plan.",
+  "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+  "verdict": "не совпало (оси resilience не двигаются)"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "HOLD",
+  "dataName": "Read the Tell",
+  "declaredShifts": [
+   "initiative−6"
+  ],
+  "bonuses": [
+   "strikePower +4%",
+   "accuracy +30%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "initiative": -6
+  },
+  "dAxesMarg": {
+   "initiative": -6
+  },
+  "dStats": {
+   "strikePower": 4,
+   "accuracy": 15
+  },
+  "effectText": "Recovers faster between exchanges.",
+  "characterText": "Composed. Asks for fewer pauses.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "SPITE",
+  "dataName": "Strike the Open",
+  "declaredShifts": [
+   "initiative+4"
+  ],
+  "bonuses": [
+   "strikePower +7%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "punish_exhausted"
+  ],
+  "dAxes": {
+   "initiative": 4
+  },
+  "dAxesMarg": {
+   "initiative": 4
+  },
+  "dStats": {
+   "strikePower": 7
+  },
+  "effectText": "The worse it goes for him, the more dangerous he becomes.",
+  "characterText": "Angry. Dull in an even fight.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "VOW",
+  "dataName": "Charged Run",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +10%",
+   "chargeGain +60%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 10,
+   "chargeGainPerSec": 7.2
+  },
+  "effectText": "Holds the order he was given to the end instead of drifting off it.",
+  "characterText": "Loyal to the order. Improvises worse.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "HUNGER",
+  "dataName": "Punish Aggression",
+  "declaredShifts": [
+   "counter+10"
+  ],
+  "bonuses": [
+   "strikePower +14%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "punish_aggression"
+  ],
+  "dAxes": {
+   "counter": 10
+  },
+  "dAxesMarg": {
+   "counter": 10
+  },
+  "dStats": {
+   "strikePower": 14
+  },
+  "effectText": "Learns faster from what is done to him inside the fight.",
+  "characterText": "Eager. Probes where he should not.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "STILL",
+  "dataName": "Killing Run",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +22%",
+   "chargePower +60%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "lethal_entry"
+  ],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 22,
+   "chargePowerBonusMax": 0.36
+  },
+  "effectText": "Slows down inside at the deciding moment and acts clean.",
+  "characterText": "Ice. His overall liveliness drops.",
+  "verdict": "не совпало (оси tempo не двигаются)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "ROOT",
+  "dataName": "Tough Hide",
+  "declaredShifts": [
+   "resilience+8"
+  ],
+  "bonuses": [
+   "toughness +4%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "resilience": 8
+  },
+  "dAxesMarg": {
+   "resilience": 8
+  },
+  "dStats": {
+   "toughness": 8
+  },
+  "effectText": "Holds his ground. He no longer gives way when pressed.",
+  "characterText": "Stubborn. He backs off less often than he should.",
+  "verdict": "частично"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "DRIVE",
+  "dataName": "Steady Guard",
+  "declaredShifts": [
+   "resilience+10"
+  ],
+  "bonuses": [
+   "toughness +7%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "resilience": 10
+  },
+  "dAxesMarg": {
+   "resilience": 2
+  },
+  "dStats": {
+   "toughness": 14
+  },
+  "effectText": "The weight moves with the punch, not just the arm.",
+  "characterText": "Impatient. He opens the exchange first.",
+  "verdict": "не совпало (оси weight,initiative не двигаются)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "GRIND",
+  "dataName": "Catch Breath",
+  "declaredShifts": [
+   "resilience+6"
+  ],
+  "bonuses": [
+   "toughness +10%",
+   "staminaRegen +60%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "resilience": 6
+  },
+  "dAxesMarg": {},
+  "dStats": {
+   "toughness": 20
+  },
+  "effectText": "He does not fade in a long exchange.",
+  "characterText": "Takes punishment well. Stays in an exchange past the point where it pays.",
+  "verdict": "частично"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "BREAK",
+  "dataName": "Dig In",
+  "declaredShifts": [
+   "distance−6"
+  ],
+  "bonuses": [
+   "toughness +14%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "dig_in"
+  ],
+  "dAxes": {
+   "distance": -6
+  },
+  "dAxesMarg": {
+   "distance": -6
+  },
+  "dStats": {
+   "toughness": 28
+  },
+  "effectText": "Finds the moment an opponent tips, and pushes through it.",
+  "characterText": "Greedy for the finish. Forgets his guard when he smells weakness.",
+  "verdict": "не совпало (оси initiative,counter не двигаются)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "ANVIL",
+  "dataName": "Unbreakable",
+  "declaredShifts": [
+   "resilience+8"
+  ],
+  "bonuses": [
+   "toughness +22%",
+   "blockMitigation +60%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "fortress"
+  ],
+  "dAxes": {
+   "resilience": 8
+  },
+  "dAxesMarg": {},
+  "dStats": {
+   "toughness": 44,
+   "blockMitigation": 0.3
+  },
+  "effectText": "The body takes a hit and returns it through movement.",
+  "characterText": "Calm under pressure. He no longer panics in the corner.",
+  "verdict": "частично"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "WATCH",
+  "dataName": "Riposte",
+  "declaredShifts": [
+   "counter+8",
+   "stick+6"
+  ],
+  "bonuses": [
+   "toughness +4%",
+   "blockCounter +50%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dStats": {
+   "toughness": 8
+  },
+  "effectText": "Sees where the opponent is going sooner.",
+  "characterText": "Careful. Waits a little longer before he enters.",
+  "verdict": "частично"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "TIMING",
+  "dataName": "Catch & Punish",
+  "declaredShifts": [
+   "counter+8"
+  ],
+  "bonuses": [
+   "toughness +7%",
+   "interruptBonus +50%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "counter": 8
+  },
+  "dStats": {
+   "toughness": 14
+  },
+  "effectText": "Lands in the gaps between the opponent's movements.",
+  "characterText": "Deliberate. Throws fewer blind punches.",
+  "verdict": "частично"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "FEINT",
+  "dataName": "Hard Meet",
+  "declaredShifts": [
+   "counter+10",
+   "stick+6"
+  ],
+  "bonuses": [
+   "toughness +10%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "stick": 6,
+   "counter": 10
+  },
+  "dAxesMarg": {
+   "stick": 6,
+   "counter": 10
+  },
+  "dStats": {
+   "toughness": 20
+  },
+  "effectText": "Lies with the body and punishes the answer.",
+  "characterText": "Sly. Starts playing with the opponent and loses tempo.",
+  "verdict": "не совпало (оси tempo не двигаются)"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "ADAPT",
+  "dataName": "Retaliation",
+  "declaredShifts": [
+   "counter+8"
+  ],
+  "bonuses": [
+   "toughness +14%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "retaliate_ramp"
+  ],
+  "dAxes": {
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "counter": 8
+  },
+  "dStats": {
+   "toughness": 28
+  },
+  "effectText": "Stops repeating what has already failed twice.",
+  "characterText": "Flexible. Changes the plan even where holding it would have paid.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "COLD",
+  "dataName": "Sea Wall",
+  "declaredShifts": [
+   "counter+8",
+   "stick+6"
+  ],
+  "bonuses": [
+   "toughness +22%",
+   "blockCounter +100%",
+   "interruptBonus +100%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "counter_trap"
+  ],
+  "dAxes": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "stick": 6,
+   "counter": 6
+  },
+  "dStats": {
+   "toughness": 44
+  },
+  "effectText": "Another man's success does not knock him off his plan.",
+  "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+  "verdict": "не совпало (оси resilience не двигаются)"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "HOLD",
+  "dataName": "Body Shove",
+  "declaredShifts": [
+   "stick+8",
+   "distance−6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dStats": {},
+  "effectText": "Recovers faster between exchanges.",
+  "characterText": "Composed. Asks for fewer pauses.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "SPITE",
+  "dataName": "Heavy Slam",
+  "declaredShifts": [
+   "weight+10"
+  ],
+  "bonuses": [
+   "blockPenetration +35%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "weight": 10
+  },
+  "dAxesMarg": {
+   "weight": 10
+  },
+  "dStats": {
+   "blockPenetration": 0.35,
+   "mobility": -8
+  },
+  "effectText": "The worse it goes for him, the more dangerous he becomes.",
+  "characterText": "Angry. Dull in an even fight.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "VOW",
+  "dataName": "No Way Around",
+  "declaredShifts": [
+   "stick+10"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "stick": 10
+  },
+  "dAxesMarg": {
+   "stick": 10
+  },
+  "dStats": {},
+  "effectText": "Holds the order he was given to the end instead of drifting off it.",
+  "characterText": "Loyal to the order. Improvises worse.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "HUNGER",
+  "dataName": "Pin",
+  "declaredShifts": [
+   "stick+8",
+   "distance−6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "pin"
+  ],
+  "dAxes": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dStats": {},
+  "effectText": "Learns faster from what is done to him inside the fight.",
+  "characterText": "Eager. Probes where he should not.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "STILL",
+  "dataName": "Clinch",
+  "declaredShifts": [
+   "stick+14",
+   "weight+8"
+  ],
+  "bonuses": [
+   "blockPenetration +50%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "clinch"
+  ],
+  "dAxes": {
+   "weight": 8,
+   "stick": 14
+  },
+  "dAxesMarg": {
+   "weight": 8,
+   "stick": 4
+  },
+  "dStats": {
+   "blockPenetration": 0.5,
+   "mobility": -6
+  },
+  "effectText": "Slows down inside at the deciding moment and acts clean.",
+  "characterText": "Ice. His overall liveliness drops.",
+  "verdict": "не совпало (оси tempo не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "ROOT",
+  "dataName": "Hard Counter",
+  "declaredShifts": [
+   "counter+8"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "counter": 8
+  },
+  "dStats": {},
+  "effectText": "Holds his ground. He no longer gives way when pressed.",
+  "characterText": "Stubborn. He backs off less often than he should.",
+  "verdict": "не совпало (оси resilience,stick,distance не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "DRIVE",
+  "dataName": "Slip Counter",
+  "declaredShifts": [
+   "slip+6"
+  ],
+  "bonuses": [
+   "dodgeCounter +50%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "slip": 6
+  },
+  "dStats": {},
+  "effectText": "The weight moves with the punch, not just the arm.",
+  "characterText": "Impatient. He opens the exchange first.",
+  "verdict": "не совпало (оси weight,initiative не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "GRIND",
+  "dataName": "Punish Aggression",
+  "declaredShifts": [
+   "counter+8"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "punish_aggression"
+  ],
+  "dAxes": {
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "counter": 2
+  },
+  "dStats": {},
+  "effectText": "He does not fade in a long exchange.",
+  "characterText": "Takes punishment well. Stays in an exchange past the point where it pays.",
+  "verdict": "не совпало (оси resilience,stick не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "BREAK",
+  "dataName": "Punish Whiff",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "missCounter +50%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {},
+  "effectText": "Finds the moment an opponent tips, and pushes through it.",
+  "characterText": "Greedy for the finish. Forgets his guard when he smells weakness.",
+  "verdict": "не совпало (оси initiative,counter не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "ANVIL",
+  "dataName": "Perfect Trap",
+  "declaredShifts": [
+   "counter+8",
+   "slip+4"
+  ],
+  "bonuses": [
+   "dodgeCounter +100%",
+   "missCounter +100%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "perfect_trap"
+  ],
+  "dAxes": {
+   "counter": 8,
+   "slip": 4
+  },
+  "dAxesMarg": {
+   "slip": 4
+  },
+  "dStats": {},
+  "effectText": "The body takes a hit and returns it through movement.",
+  "characterText": "Calm under pressure. He no longer panics in the corner.",
+  "verdict": "частично"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "WATCH",
+  "dataName": "Long Slip",
+  "declaredShifts": [
+   "slip+10",
+   "distance+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": 6,
+   "slip": 10
+  },
+  "dAxesMarg": {
+   "distance": 6,
+   "slip": 10
+  },
+  "dStats": {},
+  "effectText": "Sees where the opponent is going sooner.",
+  "characterText": "Careful. Waits a little longer before he enters.",
+  "verdict": "не совпало (оси counter,initiative не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "TIMING",
+  "dataName": "Hard to Reach",
+  "declaredShifts": [
+   "slip+8",
+   "distance+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [],
+  "dAxes": {
+   "distance": 6,
+   "slip": 8
+  },
+  "dAxesMarg": {
+   "distance": 6,
+   "slip": 8
+  },
+  "dStats": {},
+  "effectText": "Lands in the gaps between the opponent's movements.",
+  "characterText": "Deliberate. Throws fewer blind punches.",
+  "verdict": "не совпало (оси tempo,counter не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "FEINT",
+  "dataName": "Run 'Em Ragged",
+  "declaredShifts": [
+   "distance+8",
+   "slip+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "exhaust"
+  ],
+  "dAxes": {
+   "distance": 8,
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "distance": 8,
+   "slip": 6
+  },
+  "dStats": {},
+  "effectText": "Lies with the body and punishes the answer.",
+  "characterText": "Sly. Starts playing with the opponent and loses tempo.",
+  "verdict": "не совпало (оси tempo не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "ADAPT",
+  "dataName": "Open Window",
+  "declaredShifts": [
+   "slip+8"
+  ],
+  "bonuses": [
+   "dodgeCounter +40%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "slip": 8
+  },
+  "dAxesMarg": {
+   "slip": 1
+  },
+  "dStats": {},
+  "effectText": "Stops repeating what has already failed twice.",
+  "characterText": "Flexible. Changes the plan even where holding it would have paid.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "COLD",
+  "dataName": "Phantom",
+  "declaredShifts": [
+   "slip+12",
+   "distance+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "phantom"
+  ],
+  "dAxes": {
+   "distance": 6,
+   "slip": 12
+  },
+  "dAxesMarg": {},
+  "dStats": {},
+  "effectText": "Another man's success does not knock him off his plan.",
+  "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+  "verdict": "не совпало (оси resilience не двигаются)"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "HOLD",
+  "dataName": "Loaded Hit",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +4%",
+   "chargePower +50%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 4,
+   "chargePowerBonusMax": 0.3
+  },
+  "effectText": "Recovers faster between exchanges.",
+  "characterText": "Composed. Asks for fewer pauses.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "SPITE",
+  "dataName": "Long Charge",
+  "declaredShifts": [
+   "initiative−6",
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +7%",
+   "chargeMax +60%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "distance": 6,
+   "initiative": -6
+  },
+  "dAxesMarg": {
+   "distance": 6,
+   "initiative": -6
+  },
+  "dStats": {
+   "strikePower": 7,
+   "chargeMax": 60
+  },
+  "effectText": "The worse it goes for him, the more dangerous he becomes.",
+  "characterText": "Angry. Dull in an even fight.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "VOW",
+  "dataName": "Hit the Opening",
+  "declaredShifts": [
+   "initiative−6"
+  ],
+  "bonuses": [
+   "strikePower +10%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "vulnerable_strike"
+  ],
+  "dAxes": {
+   "initiative": -6
+  },
+  "dAxesMarg": {
+   "initiative": -6
+  },
+  "dStats": {
+   "strikePower": 10
+  },
+  "effectText": "Holds the order he was given to the end instead of drifting off it.",
+  "characterText": "Loyal to the order. Improvises worse.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "HUNGER",
+  "dataName": "Pierce",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +14%",
+   "chargePen +60%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 14,
+   "chargePenetrationBonusMax": 0.42
+  },
+  "effectText": "Learns faster from what is done to him inside the fight.",
+  "characterText": "Eager. Probes where he should not.",
+  "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "STILL",
+  "dataName": "Execution",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +22%",
+   "chargePower +80%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "execute"
+  ],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 2
+  },
+  "dStats": {
+   "strikePower": 22,
+   "chargePowerBonusMax": 0.48
+  },
+  "effectText": "Slows down inside at the deciding moment and acts clean.",
+  "characterText": "Ice. His overall liveliness drops.",
+  "verdict": "не совпало (оси tempo не двигаются)"
+ }
+]

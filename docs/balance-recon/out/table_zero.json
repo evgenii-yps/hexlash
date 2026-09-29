@@ -1,0 +1,354 @@
+{
+ "nearZero": [
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 2,
+   "facet": "WILL",
+   "crystal": "VOW",
+   "dataName": "Building Momentum",
+   "declaredShifts": [
+    "tempo+6"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "hit_accel"
+   ],
+   "dAxes": {
+    "tempo": 6
+   },
+   "dAxesMarg": {
+    "tempo": 2
+   },
+   "dStats": {},
+   "effectText": "Holds the order he was given to the end instead of drifting off it.",
+   "characterText": "Loyal to the order. Improvises worse.",
+   "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 3,
+   "facet": "MIND",
+   "crystal": "ADAPT",
+   "dataName": "Feint to Interrupt",
+   "declaredShifts": [
+    "tempo+6"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "feint_interrupt"
+   ],
+   "dAxes": {
+    "tempo": 6
+   },
+   "dAxesMarg": {
+    "tempo": 6
+   },
+   "dStats": {},
+   "effectText": "Stops repeating what has already failed twice.",
+   "characterText": "Flexible. Changes the plan even where holding it would have paid.",
+   "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+  }
+ ],
+ "satur": [
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 3,
+   "facet": "MIND",
+   "crystal": "ADAPT",
+   "dataName": "Cling",
+   "declaredShifts": [
+    "stick+10",
+    "distance−6"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [],
+   "dAxes": {
+    "distance": -6,
+    "stick": 10
+   },
+   "dAxesMarg": {
+    "distance": -1
+   },
+   "dStats": {},
+   "effectText": "Stops repeating what has already failed twice.",
+   "characterText": "Flexible. Changes the plan even where holding it would have paid.",
+   "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 4,
+   "facet": "MIND",
+   "crystal": "COLD",
+   "dataName": "Lockdown",
+   "declaredShifts": [
+    "stick+14",
+    "distance−8"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "lockdown"
+   ],
+   "dAxes": {
+    "distance": -8,
+    "stick": 14
+   },
+   "dAxesMarg": {},
+   "dStats": {},
+   "effectText": "Another man's success does not knock him off his plan.",
+   "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+   "verdict": "не совпало (оси resilience не двигаются)"
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 3,
+   "facet": "WILL",
+   "crystal": "HUNGER",
+   "dataName": "No Breather",
+   "declaredShifts": [
+    "tempo+6",
+    "stick+6"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "no_breather"
+   ],
+   "dAxes": {
+    "tempo": 6,
+    "stick": 6
+   },
+   "dAxesMarg": {
+    "stick": 6
+   },
+   "dStats": {},
+   "effectText": "Learns faster from what is done to him inside the fight.",
+   "characterText": "Eager. Probes where he should not.",
+   "verdict": "НЕТ ОСИ: текст про механику, которой у оси нет"
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 4,
+   "facet": "WILL",
+   "crystal": "STILL",
+   "dataName": "Rampage",
+   "declaredShifts": [
+    "tempo+12"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "rampage"
+   ],
+   "dAxes": {
+    "tempo": 12
+   },
+   "dAxesMarg": {},
+   "dStats": {},
+   "effectText": "Slows down inside at the deciding moment and acts clean.",
+   "characterText": "Ice. His overall liveliness drops.",
+   "verdict": "ПРОТИВОПОЛОЖНО (tempo)"
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 2,
+   "facet": "BODY",
+   "crystal": "GRIND",
+   "dataName": "Catch Breath",
+   "declaredShifts": [
+    "resilience+6"
+   ],
+   "bonuses": [
+    "toughness +10%",
+    "staminaRegen +60%"
+   ],
+   "liveSeam": true,
+   "tags": [],
+   "dAxes": {
+    "resilience": 6
+   },
+   "dAxesMarg": {},
+   "dStats": {
+    "toughness": 20
+   },
+   "effectText": "He does not fade in a long exchange.",
+   "characterText": "Takes punishment well. Stays in an exchange past the point where it pays.",
+   "verdict": "частично"
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 4,
+   "facet": "BODY",
+   "crystal": "ANVIL",
+   "dataName": "Unbreakable",
+   "declaredShifts": [
+    "resilience+8"
+   ],
+   "bonuses": [
+    "toughness +22%",
+    "blockMitigation +60%"
+   ],
+   "liveSeam": true,
+   "tags": [
+    "fortress"
+   ],
+   "dAxes": {
+    "resilience": 8
+   },
+   "dAxesMarg": {},
+   "dStats": {
+    "toughness": 44,
+    "blockMitigation": 0.3
+   },
+   "effectText": "The body takes a hit and returns it through movement.",
+   "characterText": "Calm under pressure. He no longer panics in the corner.",
+   "verdict": "частично"
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 4,
+   "facet": "BODY",
+   "crystal": "ANVIL",
+   "dataName": "Perfect Trap",
+   "declaredShifts": [
+    "counter+8",
+    "slip+4"
+   ],
+   "bonuses": [
+    "dodgeCounter +100%",
+    "missCounter +100%"
+   ],
+   "liveSeam": true,
+   "tags": [
+    "perfect_trap"
+   ],
+   "dAxes": {
+    "counter": 8,
+    "slip": 4
+   },
+   "dAxesMarg": {
+    "slip": 4
+   },
+   "dStats": {},
+   "effectText": "The body takes a hit and returns it through movement.",
+   "characterText": "Calm under pressure. He no longer panics in the corner.",
+   "verdict": "частично"
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 4,
+   "facet": "MIND",
+   "crystal": "COLD",
+   "dataName": "Phantom",
+   "declaredShifts": [
+    "slip+12",
+    "distance+6"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "phantom"
+   ],
+   "dAxes": {
+    "distance": 6,
+    "slip": 12
+   },
+   "dAxesMarg": {},
+   "dStats": {},
+   "effectText": "Another man's success does not knock him off his plan.",
+   "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+   "verdict": "не совпало (оси resilience не двигаются)"
+  }
+ ],
+ "zeroAxisMarg": [
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 4,
+   "facet": "MIND",
+   "crystal": "COLD",
+   "dataName": "Lockdown",
+   "declaredShifts": [
+    "stick+14",
+    "distance−8"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "lockdown"
+   ],
+   "dAxes": {
+    "distance": -8,
+    "stick": 14
+   },
+   "dAxesMarg": {},
+   "dStats": {},
+   "effectText": "Another man's success does not knock him off his plan.",
+   "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+   "verdict": "не совпало (оси resilience не двигаются)"
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 4,
+   "facet": "WILL",
+   "crystal": "STILL",
+   "dataName": "Rampage",
+   "declaredShifts": [
+    "tempo+12"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "rampage"
+   ],
+   "dAxes": {
+    "tempo": 12
+   },
+   "dAxesMarg": {},
+   "dStats": {},
+   "effectText": "Slows down inside at the deciding moment and acts clean.",
+   "characterText": "Ice. His overall liveliness drops.",
+   "verdict": "ПРОТИВОПОЛОЖНО (tempo)"
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 4,
+   "facet": "MIND",
+   "crystal": "COLD",
+   "dataName": "Phantom",
+   "declaredShifts": [
+    "slip+12",
+    "distance+6"
+   ],
+   "bonuses": [],
+   "liveSeam": false,
+   "tags": [
+    "phantom"
+   ],
+   "dAxes": {
+    "distance": 6,
+    "slip": 12
+   },
+   "dAxesMarg": {},
+   "dStats": {},
+   "effectText": "Another man's success does not knock him off his plan.",
+   "characterText": "Cold. Never rattled, and never lit up when a spark is what he needs.",
+   "verdict": "не совпало (оси resilience не двигаются)"
+  }
+ ]
+}
