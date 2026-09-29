@@ -1,0 +1,72 @@
+--- src/scene/buildFighter.js	2026-09-29 16:37:22.252830077 +0000
++++ src/scene/buildFighter.js	2026-09-29 17:23:05.625669097 +0000
+@@ -591,7 +591,7 @@
+   const RANGE_HYST = 0.25; // band around the engage distance before re-closing
+   const CONTACT = 0.74; // hard minimum — bodies never interpenetrate (closer in-fighting)
+   const CONTACT_SOFT = 0.9; // soft buffer above CONTACT — ease back here (no grinding)
+-  const FAR = 1.9; // far edge of the approach band — arc straightens as the gap closes (tighter neutral spacing)
++  const FAR = (globalThis.__V >= 4 ? 2.6 : 1.9); // far edge of the approach band — arc straightens as the gap closes (tighter neutral spacing)
+   const STRIKE = 1.7; // legacy coarse radius (per-move reach gates the actual contact now)
+ 
+   // --- Behaviour profile → fighter controls. The data-каркас
+@@ -622,7 +622,7 @@
+   const jit = (amp) => (Math.random() * 2 - 1) * amp; // ±amp bounded liveliness
+ 
+   const RANGE_NEAR = 0.82; // distance=0  → in-fighter, almost on contact (circles + strikes from here)
+-  const RANGE_FAR = 1.45; //  distance=100 → spacing fighter (lowered again — closer neutral, steps in to strike)
++  const RANGE_FAR = (globalThis.__V >= 4 ? 2.2 : 1.45); //  distance=100 → spacing fighter (lowered again — closer neutral, steps in to strike)
+   const tempo01 = n01(ax.tempo);
+   const stick01 = n01(ax.stick);
+   const counter01 = n01(ax.counter);
+@@ -1856,9 +1856,9 @@
+     requestMove(tanx * 0.7 + ux * err, tanz * 0.7 + uz * err, SLOW);
+   };
+ 
+-  const navigate = (t, dt, bs) => {
++  const navigate = (t, dt, bs, moveOnly = false) => {
+     const f = getFoePos && getFoePos();
+-    if (!f) { idlePose(bs); return; } // combat phases need a foe
++    if (!f) { if (!moveOnly) idlePose(bs); return; } // combat phases need a foe
+     const dx = f.x - group.position.x;
+     const dz = f.z - group.position.z;
+     const d = Math.hypot(dx, dz) || 1e-4;
+@@ -1906,6 +1906,7 @@
+       return;
+     }
+     if (nav.mode === 'approach') nav.until = 0; // just arrived → manner now
++    if (moveOnly) return;
+     maneuver(t, dt, ux, uz, d, bs); // at preferred range — intention manner + stance
+   };
+ 
+@@ -2638,7 +2639,14 @@
+     // staggered (interrupt lock) the fighter does NOT attack.
+     if (ai.on && !clip && !gathering) {
+       faceFoe(dt);
+-      if (!blocking && lastT >= staggerUntil && !lunge.active) { if (!tryReadReaction(t)) decideAttack(t); } // mid step-in: the lunge owns the decision
++      if (!blocking && lastT >= staggerUntil && !lunge.active) {
++        const V = Math.min(3, globalThis.__V >= 5 ? 2 : (globalThis.__V || 0));
++        const inBreak = nav.macro === 'break';
++        const passive = intentionId === INTENTIONS.BREAK || intentionId === INTENTIONS.BREATHE;
++        const skipRead = (V >= 2 && inBreak) || (V >= 3 && passive);
++        const skipAtk = V >= 1 && inBreak;
++        if (skipRead || !tryReadReaction(t)) { if (!skipAtk) decideAttack(t); }
++      }
+     }
+ 
+     if (clip) {
+@@ -2661,6 +2669,7 @@
+           const v = sample(clip.keys, ct);
+           apply(v);
+           coreBoost = N(v.core);
++          if (ai.on && globalThis.__V >= 6 && clip.impacts && clip.impacts.length && ct >= clip.impacts[clip.impacts.length - 1] && !lunge.active) navigate(t, dt, bs, true);
+         }
+       } else {
+         if (clip.feint) feintActive = false; // the fake finished — clear the readable flag
+@@ -2681,6 +2690,7 @@
+     } else if (gathering) {
+       gatherPose(bs); // coiled "собрался" tell before the контра lunge — plant, no nav
+     } else if (lastT < exhaleUntil) {
++      if (ai.on && (globalThis.__V >= 5)) navigate(t, dt, bs, true);
+       exhalePose(bs); // ВЫДОХ — short settle after a strike before movement resumes (arena + lab)
+     } else if (ai.on) {
+       if (lunge.active) stepInForStrike(t, dt); // step in under the chosen strike, then launch it

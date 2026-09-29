@@ -1,0 +1,42 @@
+[
+ {
+  "ax": "distance",
+  "d": -20,
+  "diff": 0
+ },
+ {
+  "ax": "distance",
+  "d": -10,
+  "diff": 0
+ },
+ {
+  "ax": "distance",
+  "d": 10,
+  "diff": 0
+ },
+ {
+  "ax": "distance",
+  "d": 20,
+  "diff": 0
+ },
+ {
+  "ax": "initiative",
+  "d": -20,
+  "diff": 2
+ },
+ {
+  "ax": "initiative",
+  "d": -10,
+  "diff": 0
+ },
+ {
+  "ax": "initiative",
+  "d": 10,
+  "diff": 1
+ },
+ {
+  "ax": "initiative",
+  "d": 20,
+  "diff": 1
+ }
+]

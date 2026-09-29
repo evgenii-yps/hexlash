@@ -1,0 +1,73 @@
+{
+ "natisk": {
+  "n": 666359,
+  "atk": 355979,
+  "other": 65905,
+  "block": 68763,
+  "exh": 68377,
+  "stag": 0,
+  "free": 107335,
+  "freeSp": 69192.52897072813,
+  "freeMov": 78019,
+  "intent": {
+   "press": 559634,
+   "breathe": 104466,
+   "strike": 2259
+  }
+ },
+ "nalet": {
+  "n": 747697,
+  "atk": 266923,
+  "other": 78434,
+  "block": 35307,
+  "exh": 57235,
+  "stag": 0,
+  "free": 309798,
+  "freeSp": 208015.55908223096,
+  "freeMov": 249855,
+  "intent": {
+   "sting": 68042,
+   "strike": 267223,
+   "catch": 49650,
+   "break": 97909,
+   "breathe": 245442,
+   "press": 19431
+  }
+ },
+ "skala": {
+  "n": 784428,
+  "atk": 268494,
+  "other": 83545,
+  "block": 125110,
+  "exh": 51670,
+  "stag": 0,
+  "free": 255609,
+  "freeSp": 151159.23066388146,
+  "freeMov": 208400,
+  "intent": {
+   "press": 79510,
+   "catch": 432467,
+   "hold": 80178,
+   "strike": 152244,
+   "breathe": 40029
+  }
+ },
+ "zasada": {
+  "n": 774679,
+  "atk": 240620,
+  "other": 84530,
+  "block": 78763,
+  "exh": 49835,
+  "stag": 0,
+  "free": 320931,
+  "freeSp": 162158.88667592945,
+  "freeMov": 265733,
+  "intent": {
+   "sting": 69649,
+   "catch": 431931,
+   "strike": 134823,
+   "press": 24361,
+   "breathe": 113915
+  }
+ }
+}
