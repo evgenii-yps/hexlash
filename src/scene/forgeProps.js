@@ -165,12 +165,6 @@ export const FORGE_PROPS = {
     //    подставке, то есть соперником, которого ещё не собрали.
     figScale: 0.80,    // рост силуэта (геометрия — одна единица высотой)
     label: 'SPAR',
-    // ПАРА — дверь на острове SPAR (ТЗ 29.09.2026). Два силуэта лицом друг к
-    // другу на одном широком постаменте: одиночный силуэт уже стоит в зале, и два
-    // одинаковых предмета подряд читались бы промахом. Числа — доли радиуса
-    // постамента, а не свои единицы: пара растёт и убывает вместе с ним.
-    pairPedMul: 1.6,   // во сколько раз постамент шире одиночного
-    pairSepMul: 0.62,  // где стоит каждый из двоих: доля радиуса ПАРНОГО постамента
   },
 };
 
@@ -648,19 +642,16 @@ export function buildBuffShelf() {
 // ⚠️ ГЕОМЕТРИЯ СИЛУЭТА ПРИХОДИТ ИЗ modePlates.js, а не пишется здесь заново.
 //    Второй такой фигуры в проекте быть не должно: она уже стоит кольцом у
 //    гексарха на экране режимов, и та же самая приходит сюда.
-export function buildSparStand({ pair = false } = {}) {
+export function buildSparStand() {
   const S = FORGE_PROPS.spar;
-  // ПАРА — тот же предмет, только шире: постамент растёт, силуэтов двое. Всё
-  // остальное (тон, рост, обвязка, отклик на нажатие) — одно и то же.
-  const R = pair ? S.pedR * S.pairPedMul : S.pedR;
-  const api = propShell(S.label, R * 2.2, 0.02, R + 0.30, {
-    puddleW: R * 2.6, puddleH: R * 2.6,
+  const api = propShell(S.label, S.pedR * 2.2, 0.02, S.pedR + 0.30, {
+    puddleW: S.pedR * 2.6, puddleH: S.pedR * 2.6,
   });
   if (api.label) api.label.rotation.x = -Math.PI / 2;
 
   // Постамент — тот же шестигранник, что под гексархом, только поставленный на
   // пол. Тон — постаментный из токенов, своего цвета не объявляется.
-  const pedGeo = new THREE.CylinderGeometry(R, R * 0.88, S.pedThick, 6, 1);
+  const pedGeo = new THREE.CylinderGeometry(S.pedR, S.pedR * 0.88, S.pedThick, 6, 1);
   const pedMat = bodyMat('pedestal');
   const ped = new THREE.Mesh(pedGeo, pedMat);
   ped.position.y = S.pedThick / 2;
@@ -672,27 +663,14 @@ export function buildSparStand({ pair = false } = {}) {
   // светлую деталь предмета.
   const figGeo = figureGeometry();
   const figMat = bodyMat('dark');
+  const fig = new THREE.Mesh(figGeo, figMat);
+  fig.position.y = S.pedThick;
+  fig.scale.setScalar(S.figScale);
+  // Геометрия смотрит в +Z; камера зала стоит спереди, поэтому разворачиваем
+  // фигуру лицом к ней — силуэт читается фронтально, а не боком.
+  fig.rotation.y = Math.PI;
+  api.add(fig);
   api.own(() => { figGeo.dispose(); figMat.dispose(); });
-  const stand = (x, faceY) => {
-    const fig = new THREE.Mesh(figGeo, figMat);
-    fig.position.set(x, S.pedThick, 0);
-    fig.scale.setScalar(S.figScale);
-    fig.rotation.y = faceY;
-    api.add(fig);
-  };
-  if (pair) {
-    // Лицом друг к другу вдоль оси X — тем же поворотом, каким пару ставит экран
-    // SPAR (там тела смотрят друг на друга по atan2 разницы мест). Геометрия
-    // смотрит в +Z: +90° разворачивает её к +X, −90° — к −X. Общая геометрия и
-    // материал на двоих: второго набора буферов пара не заводит.
-    const dx = R * S.pairSepMul;
-    stand(-dx, Math.PI / 2);
-    stand(dx, -Math.PI / 2);
-  } else {
-    // Геометрия смотрит в +Z; камера зала стоит спереди, поэтому разворачиваем
-    // фигуру лицом к ней — силуэт читается фронтально, а не боком.
-    stand(0, Math.PI);
-  }
 
   return api;
 }

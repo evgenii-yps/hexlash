@@ -1,17 +1,17 @@
-// spar-entry-e2e.mjs — ВХОД НА ЭКРАН SPAR С ОСТРОВА SPAR (ТЗ 29.09.2026).
+// spar-entry-e2e.mjs — ВХОД НА ЭКРАН SPAR С ОСТРОВА SPAR (ТЗ 29.09.2026): вход — сама плита острова.
 //
 // ЧТО ДОКАЗЫВАЕТСЯ:
-//   1. слова SOON на острове больше нет, а на его месте стоит предмет-дверь;
-//   2. из зала дверь НЕ слышит нажатия — ⚠️ ЭТА ПРОВЕРКА СЕГОДНЯ НЕ РАБОТАЕТ: дверь
-//      из зала за краем кадра, нажать в неё нечем, и прогон честно пишет «не проверено»
-//   3. нажал постамент в зале → улетел на остров → нажал дверь → /play/spar;
+//   1. слова SOON на острове больше нет, предмета на острове тоже нет — вход это плита;
+//   2. из зала плита острова НЕ слышит нажатия — ⚠️ ЭТА ПРОВЕРКА СЕГОДНЯ НЕ РАБОТАЕТ:
+//      из зала остров за краем кадра, нажать в него нечем, и прогон честно пишет «не проверено»
+//   3. нажал постамент в зале → улетел на остров → нажал плиту → /play/spar;
 //   4. лестница BACK прежняя: остров → зал → острова режимов;
 //   5. вернулся из SPAR в зал — встал на остров, откуда ушёл, и BACK ведёт в зал;
-//   6. быстрые повторные нажатия по двери дают один переход и ни одной ошибки;
-//   7. нажатие по двери во время перелёта не уводит с экрана;
+//   6. быстрые повторные нажатия по плите дают один переход и ни одной ошибки;
+//   7. нажатие по плите во время перелёта не уводит с экрана;
 //   8. десять заходов подряд без ошибок и без роста памяти.
 //
-// Координаты двери берутся из служебного зонда сцены (?dev=1 → __forgeProbe),
+// Координаты плиты берутся из служебного зонда сцены (?dev=1 → __forgeProbe),
 // а не угадываются по картинке.
 //
 //   CHROME=<путь к chrome> node scripts/spar-entry-e2e.mjs
@@ -56,32 +56,32 @@ const where = (p, key) => p.evaluate((k) => {
 }, key);
 const heap = (p) => p.evaluate(() => (performance.memory && performance.memory.usedJSHeapSize) || 0);
 
-console.log('\n── слова SOON на острове нет, стоит дверь ──');
+console.log('\n── слова SOON на острове нет, предмета на острове нет ──');
 {
   const p = await openHall();
   const door = await p.evaluate(() => window.__forgeProbe && window.__forgeProbe().taps.sparGo);
-  ok(!!door, 'предмет-дверь есть среди предметов зала', door ? `доля кадра ${door.sx}, ${door.sy}` : '');
-  // Постамент зала и дверь острова — разные предметы одной формы.
+  ok(!!door, 'плита острова — вход: она в списке нажимаемого', door ? `доля кадра ${door.sx}, ${door.sy}` : '');
+  // Постамент в зале — вход на остров; на самом острове предмета нет.
   const hallStand = await p.evaluate(() => window.__forgeProbe().taps.spar);
   ok(!!hallStand, 'постамент SPAR в зале на месте');
   await p.close();
 }
 
-console.log('\n── из зала дверь острова не слышит нажатия ──');
+console.log('\n── из зала плита острова не слышит нажатия ──');
 {
   const p = await openHall();
   const pt = await where(p, 'sparGo');
   if (pt && pt[0] > 0 && pt[0] < 390 && pt[1] > 0 && pt[1] < 844) {
     await tap(p, pt);
     await p.waitForTimeout(SETTLE);
-    ok(inHall(p), 'нажатие по месту двери из зала с экрана не уводит', p.url().replace(BASE, '').split('?')[0]);
+    ok(inHall(p), 'нажатие по месту плиты из зала с экрана не уводит', p.url().replace(BASE, '').split('?')[0]);
   } else {
-    skip('из зала дверь острова не слышит нажатия', `место двери за краем кадра ${JSON.stringify(pt)} — нажать нечем, защита стоит в коде, но прогон её не касался`);
+    skip('из зала плита острова не слышит нажатия', `место плиты за краем кадра ${JSON.stringify(pt)} — нажать нечем, защита стоит в коде, но прогон её не касался`);
   }
   await p.close();
 }
 
-console.log('\n── зал → остров → дверь → экран SPAR ──');
+console.log('\n── зал → остров → плита → экран SPAR ──');
 {
   const p = await openHall();
   const stand = await where(p, 'spar');
@@ -89,11 +89,11 @@ console.log('\n── зал → остров → дверь → экран SPAR
   await p.waitForTimeout(SETTLE);
   ok(inHall(p), 'постамент в зале: улетели на остров, с экрана не ушли');
   const pt = await where(p, 'sparGo');
-  ok(!!pt && pt[0] > 0 && pt[0] < 390 && pt[1] > 0 && pt[1] < 844, 'дверь острова в кадре', JSON.stringify(pt));
+  ok(!!pt && pt[0] > 0 && pt[0] < 390 && pt[1] > 0 && pt[1] < 844, 'плита острова в кадре', JSON.stringify(pt));
   await p.screenshot({ path: `${OUT}/01-island-door-portrait.png` });
   await tap(p, pt);
   await p.waitForURL(/\/play\/spar/, { timeout: 30_000 }).catch(() => {});
-  ok(p.url().includes('/play/spar'), 'нажатие по двери привело на экран SPAR', p.url().replace(BASE, ''));
+  ok(p.url().includes('/play/spar'), 'нажатие по плите привело на экран SPAR', p.url().replace(BASE, ''));
   await p.waitForTimeout(6000);
   await p.screenshot({ path: `${OUT}/02-spar-screen-portrait.png` });
 
@@ -115,21 +115,21 @@ console.log('\n── зал → остров → дверь → экран SPAR
   await p.close();
 }
 
-console.log('\n── нажатие по двери во время перелёта не уводит ──');
+console.log('\n── нажатие по плите во время перелёта не уводит ──');
 {
   const p = await openHall();
   const stand = await where(p, 'spar');
   await tap(p, stand);
-  // Сразу, пока камера летит: дверь ещё не слышит.
+  // Сразу, пока камера летит: плита ещё не слышит.
   await p.waitForTimeout(150);
   const pt = await where(p, 'sparGo');
   if (pt) await tap(p, pt);
   await p.waitForTimeout(400);
-  ok(inHall(p), 'во время перелёта дверь не сработала');
+  ok(inHall(p), 'во время перелёта плита не сработала');
   await p.close();
 }
 
-console.log('\n── быстрые повторные нажатия по двери ──');
+console.log('\n── быстрые повторные нажатия по плите ──');
 {
   const p = await openHall();
   await tap(p, await where(p, 'spar'));
