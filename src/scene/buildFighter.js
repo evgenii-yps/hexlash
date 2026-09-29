@@ -904,6 +904,7 @@ export function buildFighter(
         tempo: tempo01, weight: weight01, stick: stick01,
         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
       },
+      leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
       hp01: hp / maxHp,
       stamina01: stamina01(),
       charge01: charge / stats.chargeMax,

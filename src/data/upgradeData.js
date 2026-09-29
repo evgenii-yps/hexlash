@@ -100,6 +100,7 @@ function mkBranch(id, name, faces, stat = null) {
         : null;
       return {
         id: i + 1,
+        branch: id, // id ветки (a/b/c): резонанс ветки считает кристаллы по нему (TZ_grani_tags_v1)
         name: f.name,
         state: 'open',
         shifts,

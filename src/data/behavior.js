@@ -17,6 +17,8 @@
      counter    — 0 passive       … 100 punishes the foe's opening
      slip       — 0 easy to hit   … 100 elusive (evade + spacing) */
 
+import { resolveLeans } from './branchThreshold.js';
+
 export const AXES = [
   { id: 'distance', neutral: 50, desc: '0 in-close … 100 far out' },
   { id: 'initiative', neutral: 50, desc: '0 waits … 100 drives in' },
@@ -100,5 +102,7 @@ export function resolveBehavior(coreId, litFacets = []) {
     if (f.statBonus) addBonus(f.statBonus.stat, f.statBonus.pct); // hard-branch ramp (one per facet)
     for (const eb of f.extraBonuses || []) addBonus(eb.stat, eb.pct); // per-facet seam bonuses (0+)
   }
-  return { axes, effects, conditionals, statBonuses };
+  // Грани и теги (TZ_grani_tags_v1): наклоны выбора намерения + резонанс веток. Читает intentions.js.
+  const { leans, resonance } = resolveLeans(coreId, litFacets);
+  return { axes, effects, conditionals, statBonuses, leans, resonance };
 }

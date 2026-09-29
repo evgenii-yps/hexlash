@@ -161,6 +161,23 @@ export function spinalScore(self, foe, memory, fight) {
     [INTENTIONS.BREATHE]: 0.70 * lowStam + 0.10 * a.distance,
     [INTENTIONS.CATCH]:   0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + (foeThreat ? 0.25 : 0) + readPounce,
   };
+  // ГРАНИ И ТЕГИ (TZ_grani_tags_v1): наклоны из зажжённых кристаллов и резонанс веток. Раньше теги
+  // нигде не читались. Ложатся ДО накала — предохранитель от гляделок сильнее любого наклона.
+  if (self.leans) {
+    for (const l of self.leans) {
+      if (s[l.i] == null) continue;
+      let on = true;
+      switch (l.when) {
+        case 'close': on = foe.has && foe.inStrike; break;
+        case 'far': on = far; break;
+        case 'foeOpen': on = foe.phase === 'recovery' || foe.phase === 'stagger'; break;
+        case 'foeSwing': on = foeThreat || foe.phase === 'windup' || foe.phase === 'commit'; break;
+        case 'charged': on = self.charge01 >= 0.5; break;
+        default: on = true;
+      }
+      if (on) s[l.i] += l.w;
+    }
+  }
   // накал (stalemate safeguard): a rising escalation01 (silence-without-exchange)
   // pushes BOTH fighters toward the clash — lift the forward attacking intents, press
   // down the passive / disengage ones — so a гляделка can't last forever. The HARD

@@ -269,6 +269,20 @@ export const COMBAT_BALANCE = {
     attackPauseMul: 1.6,
   },
 
+  // --- ГРАНИ И ТЕГИ (TZ_grani_tags_v1). ЧЕРНОВЫЕ числа: финальные выставляются отдельным пасом.
+  //     Словарь ТЗ: ГРАНЬ = ветка (в коде `crystal`, id a/b/c), КРИСТАЛЛ = шаг ветки (в коде `face`, 1..5).
+  //     Теги (conditionals / effects) висят на кристаллах и раньше никем не читались. Теперь они — «наклоны»
+  //     выбора намерения (сумма прибавок к очкам намерений в spinalScore), а у ветки есть ПОРОГ: собрал
+  //     `threshold` кристаллов одной ветки — включается её резонанс (сильный наклон к её родным намерениям),
+  //     которого россыпь из разных веток не даёт. Наклоны — вход в выбор намерения, оси не двигают.
+  grani: {
+    threshold: 3, //      сколько кристаллов ОДНОЙ ветки включают резонанс ветки
+    homeLean: 0.3, //     наклон резонанса к главному намерению ветки (очки spinalScore, шкала 0…~1.3)
+    homeLeanMinor: 0.15, // …ко второстепенному
+    tagLean: 0.12, //     наклон одного тега (кристалл зажжён; условие тега — в branchThreshold.js)
+    vertexLean: 0.2, //   наклон тега-вершины (эффект шага 5)
+  },
+
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
   //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON

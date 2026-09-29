@@ -1,0 +1,91 @@
+{
+ "readers": [],
+ "json": [
+  {
+   "core": "natisk",
+   "branch": "a",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "nTags": 3,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "nTags": 3,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "nTags": 3,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "nTags": 2,
+   "diff": 0,
+   "seeds": 200
+  }
+ ],
+ "total": 0,
+ "nn": 2400
+}
