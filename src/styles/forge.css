@@ -13,9 +13,12 @@
 .forge-root {
   /* Единственное, что живёт локально, — СЛОТ ядра выбранного бойца: он
      подставляется на лету и вычисляется, а не дублирует токен. Второй тон
-     выводится осветлением по общему правилу (Документ А 2.3). Панели зала
-     берут --carbon: непрозрачная подложка вместо размытия — размытие над
-     тёмным залом стоит реальных кадров на телефоне и выглядит так же. */
+     выводится осветлением по общему правилу (Документ А 2.3).
+
+     ПАНЕЛИ ЗАЛА — СТЕКЛО (ТЗ 29.09.2026). Раньше здесь стояла непрозрачная
+     подложка «вместо размытия, потому что оно стоит кадров на телефоне». Владелец
+     решил иначе; цену размытия живой сцены под панелью замеряют на приёмке,
+     см. отчёт к ТЗ. Как устроено стекло — блок «THE PANEL» ниже. */
   --core: var(--core-skala);                 /* заменяется на цвет выбранного бойца */
   --core-sup: color-mix(in srgb, var(--core) var(--core-sup-mix), var(--ink));
 }
@@ -65,16 +68,116 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── the column ──────────────────────────────────────────────────────────── */
+/* СТЕКЛО, А НЕ ПЛАШКА (ТЗ 29.09.2026). У панели нет ни заливки, ни рамки, ни
+   линии по периметру: сцена под ней видна, но размыта и зашумлена, так что
+   читается пятном, а не деталями. Стекло — слой-псевдоэлемент ПОД
+   содержимым, а не свойства самого .fp, по одной причине: маска, которая
+   растворяет край, растворила бы заодно и текст. Текст стоит поверх и не
+   тускнеет никогда.
+
+     ::before — один слой: размытие того, что позади (тем же --blur-glass, что
+                уже у кнопок хром-семьи), поверх него очень слабая тёмная вуаль
+                ровно под читаемость и неподвижное зерно, только в площади
+                панели. Зерно не анимируется НИКОГДА, в том числе при включённых
+                анимациях: живое зерно на тёмной сцене читается как дрожание.
+
+   КРАЙ — ЗАТУХАНИЕ В НОЛЬ, А НЕ ОБРЕЗ. Слои вынесены наружу за кромку на ширину
+   затухания (--f-*), и затухание лежит ЗА пределами панели: весь текст стоит
+   там, где вуаль полной силы. Со стороны кромки экрана затухания нет (0px), и
+   стекло уходит за край. Какие стороны внутренние — решает раскладка (см. ниже:
+   справа колонка, стоя полоса снизу, блок статов слева).
+
+   ЧИТАЕМОСТЬ — пункт приёмки. Вуаль подбирается по замеру контраста над самым
+   светлым, что бывает в зале (лампа, ядро бойца). Не хватает — усиливать вуаль,
+   а не возвращать заливку и не двигать цвет текста. */
 .fp {
+  /* ── настройки стекла ─────────────────────────────────────────────────── */
+  --fp-fade: var(--sp-7);                              /* ширина затухания края */
+  --fp-veil: color-mix(in srgb, var(--void) 50%, transparent);  /* вуаль под текстом */
+  --f-t: 0px; --f-r: 0px; --f-b: 0px; --f-l: var(--fp-fade);   /* колонка справа */
+
   position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-panel);
   width: var(--fp-w);
   display: flex; flex-direction: column;
-  border-left: 1px solid var(--line);
-  background: var(--panel);
   font-family: var(--font-mono);
   color: var(--ink);
 }
 .fp * { box-sizing: border-box; }
+
+.fp::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  top: calc(var(--f-t) * -1); right: calc(var(--f-r) * -1);
+  bottom: calc(var(--f-b) * -1); left: calc(var(--f-l) * -1);
+  /* четыре края — четыре градиента, пересекаются. Ноль ширины даёт жёсткий край
+     (там, где панель уходит за экран). Кривая сглажена (smoothstep), иначе на
+     линейном спуске виден светлый пояс там, где он кончается. */
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-l) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-l) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-l) * .75),
+      #000 var(--f-l)),
+    linear-gradient(to left, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-r) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-r) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-r) * .75),
+      #000 var(--f-r)),
+    linear-gradient(to bottom, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-t) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-t) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-t) * .75),
+      #000 var(--f-t)),
+    linear-gradient(to top, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-b) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-b) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-b) * .75),
+      #000 var(--f-b));
+          mask-image:
+    linear-gradient(to right, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-l) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-l) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-l) * .75),
+      #000 var(--f-l)),
+    linear-gradient(to left, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-r) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-r) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-r) * .75),
+      #000 var(--f-r)),
+    linear-gradient(to bottom, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-t) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-t) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-t) * .75),
+      #000 var(--f-t)),
+    linear-gradient(to top, transparent 0,
+      color-mix(in srgb, #000 16%, transparent) calc(var(--f-b) * .25),
+      color-mix(in srgb, #000 50%, transparent) calc(var(--f-b) * .5),
+      color-mix(in srgb, #000 84%, transparent) calc(var(--f-b) * .75),
+      #000 var(--f-b));
+  -webkit-mask-composite: source-in;
+          mask-composite: intersect;
+
+  /* ОДИН СЛОЙ НА ВСЁ (вуаль + зерно + размытие + маска). Сначала было два —
+     стекло и отдельное зерно, — но каждый лишний слой во весь размер панели на
+     телефоне стоит кадров, а зерно к размытию ничего не добавляет по цене:
+     оно легло вторым фоном того же слоя.
+
+     ЗЕРНО — статичная картинка-шум, цвет = --ink (чистого белого в проекте нет).
+     Сила зашита в последнюю строку матрицы (`.098` = множитель прозрачности,
+     `-.014` = сдвиг): картинка не может быть прозрачнее слоя, поэтому крутить
+     её через opacity слоя нельзя. Ни transition, ни animation на слое быть не
+     должно — зерно не анимируется никогда. */
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .965  0 0 0 0 .957  0 0 0 0 .965  0 0 0 .098 -.014'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>") 0 0 / 160px 160px,
+    linear-gradient(var(--fp-veil), var(--fp-veil));
+  -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass));
+}
+/* Зерно — статичная картинка-шум, цвет = --ink (чистого белого в проекте нет).
+   Ни transition, ни animation на этом слое быть не должно. */
+.fp::after {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .965  0 0 0 0 .957  0 0 0 0 .965  0 0 0 1.4 -.2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+  opacity: var(--fp-grain);
+}
 
 /* ── 1 · head ────────────────────────────────────────────────────────────── */
 .fp-head {
@@ -486,10 +589,23 @@
 }
 
 /* ── enter / leave — the panel arrives with the camera, not before it ────── */
+/* ⚠️ ПРОЗРАЧНОСТЬ МЕНЯЕТСЯ НЕ У САМОЙ ПАНЕЛИ (ТЗ 29.09.2026). Предок с
+   opacity < 1 для браузера — «корень фона»: размытие внутри него видит только
+   его собственное содержимое, а не сцену позади. Пока панель появлялась, сцена
+   под ней была резкой, и в конце перехода размытие вспыхивало разом (поймано
+   кадром на середине перехода: opacity .87, надпись SOON под панелью чёткая).
+   Поэтому .fp ездит одним transform, а прозрачность — у её детей и у слоя стекла:
+   так размытие всё время смотрит на сцену и растёт вместе с панелью. */
 .fp-fade-enter-active, .fp-fade-leave-active {
-  transition: opacity var(--d-hover) var(--e-weight), transform var(--d-hover) var(--e-settle);
+  transition: transform var(--d-hover) var(--e-settle);
 }
-.fp-fade-enter-from, .fp-fade-leave-to { opacity: 0; transform: translateX(18px); }
+.fp-fade-enter-active::before, .fp-fade-leave-active::before,
+.fp-fade-enter-active > *, .fp-fade-leave-active > * {
+  transition: opacity var(--d-hover) var(--e-weight);
+}
+.fp-fade-enter-from, .fp-fade-leave-to { transform: translateX(18px); }
+.fp-fade-enter-from::before, .fp-fade-leave-to::before,
+.fp-fade-enter-from > *, .fp-fade-leave-to > * { opacity: 0; }
 
 /* ── phone, sideways: the same column, narrower ──────────────────────────── */
 @media (orientation: landscape) and (max-width: 1023px) {
@@ -532,7 +648,8 @@
   .fp {
     top: auto; left: 0; right: 0; bottom: 0; width: auto;   /* --fp-w здесь 0 — полосе уступать нечего */
     height: var(--fg-band);
-    border-left: 0; border-top: 1px solid var(--line);
+    /* полоса прижата к трём краям экрана: внутренний у неё один — верхний */
+    --f-t: var(--fp-fade); --f-r: 0px; --f-b: 0px; --f-l: 0px;
   }
   .fp-head, .fp-scroll, .fp-foot { padding: var(--sp-3); }
   .fp-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
@@ -579,8 +696,8 @@
      дважды: сверху её обходим, снизу оставляем столько же, чтобы блок читался
      по центру, а не прижатым. Полоса — 74 точки, 60 на узких (home.css). */
   max-height: calc(100dvh - 180px);
-  border-left: 0; border-right: 1px solid var(--line);
-  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  /* ЭКРАННЫЙ КРАЙ У БЛОКА ОДИН — левый. Остальные три стороны затухают. */
+  --f-t: var(--fp-fade); --f-r: var(--fp-fade); --f-b: var(--fp-fade); --f-l: 0px;
 }
 /* ЛЁЖА НА НИЗКОМ ЭКРАНЕ ОСИ СТАНОВЯТСЯ В ДВА СТОЛБЦА. Восемь строк в один
    столбец не помещаются в 390 точек высоты вместе с шапкой и кнопкой: замер —
@@ -643,7 +760,6 @@
   .fp--stats {
     top: 50%; left: 0; right: auto; bottom: auto;
     width: var(--fs-w); height: auto; max-height: calc(100dvh - 180px);
-    border-top: 1px solid var(--line); border-right: 1px solid var(--line);
   }
   .fp--stats .fp-head, .fp--stats .fp-scroll { padding: var(--sp-3); }
   /* Шапку стоя раскладывает в строку общий перелом ниже — блоку статов это не
