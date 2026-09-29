@@ -215,4 +215,33 @@ function sectionControls() {
   emit('controls', text, { before: { ...acc.before, secs: undefined, max: Math.max(...acc.before.secs) }, after: { ...acc.after, secs: undefined, max: Math.max(...acc.after.secs) }, longs });
 }
 if (all || want.has('controls')) sectionControls();
+
+// ── proof2 ───────────────────────────────────────────────────────────────────
+// TZ_tags_semantics_v2: те же наборы «ветка / вразнобой» для 3 кристаллов (шаги 1–3) и для 5 (вся ветка / глубина по кругу).
+// Один прогон = один код. Запускать на старом и новом дереве с разными метками, сводить вручную (merge-proof2.mjs).
+const PERMS5 = PERMS; // тот же набор перестановок; пятый и четвёртый кристалл берутся по кругу
+const oneBranch5 = (core, b) => [1, 2, 3, 4, 5].map((j) => facet(core, b, j));
+const scatter5 = (core, perm) => [1, 2, 3, 4, 5].map((j) => facet(core, BRANCH_IDS[perm[(j - 1) % 3]], j));
+function sectionProof2() {
+  const mk = () => ({ n: 0, sp: 0, far: 0, free: 0, secs: [], capped: 0 });
+  const ctl = { s3: mk(), s5: mk() };
+  const json = [];
+  for (const core of CORES_RUN()) for (const b of BRANCH_IDS) {
+    const row = { core, branch: b };
+    for (const [tag, one, sc, c] of [['3', oneBranch, scatter, ctl.s3], ['5', oneBranch5, scatter5, ctl.s5]]) {
+      const bhA = resolveBehavior(core, one(core, b));
+      const A = run(core, bhA, null, SEEDS, core, c);
+      const Bs = PERMS.map((p) => run(core, resolveBehavior(core, sc(core, p)), null, SEEDS, core, c));
+      const h2h = mean(PERMS.map((p) => run(core, bhA, resolveBehavior(core, sc(core, p)), SEEDS, core, c).wr));
+      const bShare = Object.fromEntries(INTENTS.map((k) => [k, mean(Bs.map((x) => x.share[k]))]));
+      row['wrA' + tag] = A.wr; row['wrB' + tag] = mean(Bs.map((x) => x.wr)); row['h2h' + tag] = h2h;
+      row['shareA' + tag] = A.share; row['shareB' + tag] = bShare; row['div' + tag] = l1(A.share, bShare);
+      row['sigsA' + tag] = A.sigs;
+    }
+    json.push(row); progress(`proof2 ${core} ${b}`);
+  }
+  const line = (a) => ({ far: a.far / a.n, free: a.free / a.n, speed: a.sp / a.n, med: quantile(a.secs, 0.5), max: Math.max(...a.secs), capped: a.capped, over100: a.secs.filter((x) => x > 100).length, n: a.secs.length });
+  emit('proof2', 'сырые данные для merge-proof2.mjs', { json, ctl: { s3: line(ctl.s3), s5: line(ctl.s5) } });
+}
+if (want.has('proof2')) sectionProof2();
 await H.server.close();

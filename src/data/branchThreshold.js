@@ -30,10 +30,10 @@ export const TAG_LEANS = {
   // ONSLAUGHT
   close_damage_ramp: [ST, 'close'],
   overload_strike: [ST, 'foeHpLow', true],     // вершина RAM: добивает раненого (было: заряд ≥ 0.5 — почти не наступал)
-  chase_strike: [P, 'foeQuiet'],               // CHASE: догоняет пассивного (было: враг далеко — 4%)
+  chase_strike: [P, 'longFight'],              // CHASE: гонит всё настойчивее с длиной боя (было: враг далеко — 4%)
   lockdown: [H, 'close', true],                // вершина CHASE: прижав вплотную — держит (было: PRESS вблизи, как шаг 2)
   hit_accel: [ST, 'longFight'],                // FRENZY: разгоняется с длиной боя (было: всегда)
-  no_breather: [P, 'foeWindLow'],              // FRENZY: не даёт выдохшемуся врагу отдышаться (было: всегда)
+  no_breather: [P, 'foeHpLow'],                // FRENZY: не даёт раненому врагу перевести дух (было: всегда)
   rampage: [ST, 'selfHpLow', true],            // вершина FRENZY: вразнос, когда прижали (было: всегда)
   // RAIDER
   clean_chain: [SG, 'always'],
@@ -48,7 +48,7 @@ export const TAG_LEANS = {
   dig_in: [H, 'close'],
   fortress: [H, 'selfHpLow', true],            // вершина BASTION: несокрушим, когда прижали (было: всегда)
   retaliate_ramp: [ST, 'hpDropped'],           // BREAKER: получил — отдаёт (было: CATCH по «враг бил» — мертво по устройству)
-  counter_trap: [C, 'foeWindLow', true],       // вершина BREAKER: стена, о которую враг выдыхается
+  counter_trap: [C, 'longFight', true],        // вершина BREAKER: стена, которая с длиной боя только крепнет
   pin: [H, 'close'],
   clinch: [P, 'close', true],
   // AMBUSH
