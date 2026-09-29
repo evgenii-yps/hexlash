@@ -60,6 +60,7 @@ import * as THREE from 'three';
 import { buildSlab } from './modePlates.js';
 import { makeHexGridTexture } from './arenaTextures.js';
 import { buildGateEmblem } from './gateEmblems.js';
+import { buildSoonWord } from './soonWord.js';
 
 // ───────────────────────────── Настройки ─────────────────────────────
 export const GATE_PLATES = {
@@ -156,6 +157,16 @@ export const GATE_PLATES = {
   dimLevel: 0.5,       // яркость НЕподсвеченного острова, пока горит другой
   litLerp: 6.5,        // 1/с сглаживания подсветки — без щелчка
   lockedLit: 0.0,      // запертый не загорается никогда
+
+  // ── ЗАКРЫТЫЙ ОСТРОВ (режим, которого на демо нет; ТЗ 30.09.2026) ─────────
+  // Над плитой парит объёмное слово SOON — то же, что закрывает остров SPAR в
+  // зале FORGE (soonWord.js), не второе такое же. Ширина слова — доля ширины
+  // плиты, чтобы слово ехало вместе с плитой; половина, как на острове SPAR:
+  // шире слово закрывало бы эмблему, а остров должен читаться как будущий режим.
+  soonWidth: 0.5,
+  // Насколько слово сдвинуто к передней кромке плиты — доля полуглубины. Ноль —
+  // центр плиты, где стоит эмблема; единица — сама кромка.
+  soonFront: 0.55,
 
   // Ядро — плоский светящийся диск в крышке острова. Не сфера и не столб: на
   // плите, которую разглядывают сверху-сбоку, диск читается, а столб спорит с
@@ -282,7 +293,9 @@ function buildCore(colorHex, topY) {
  * @param {Array<{id:string, core?:string, locked?:boolean, emblem?:string, body?:object}>} opts.items
  *        что стоит на островах: режимы на первом шаге, бойцы на втором.
  *        `core` — цвет режима или бойца, `locked` — остров виден, но не
- *        выбирается, `emblem` — вид эмблемы (только у режимов; см. gateEmblems),
+ *        выбирается, `closed` — закрыт заглушкой SOON: нажатие не даёт ничего
+ *        (в отличие от `locked`, где остров дрожит), над плитой парит слово
+ *        `lockLabel`; `emblem` — вид эмблемы (только у режимов; см. gateEmblems),
  *        `body` — ГОТОВОЕ тело бойца от `buildFighter` (только у бойцов).
  *        Тело сюда приходит собранным и остаётся собственностью сцены: остров
  *        его ставит и тикает, но не строит и не разбирает.
@@ -339,6 +352,8 @@ export function buildGatePlates(opts = {}) {
     return {
       id: item.id,
       locked: !!item.locked,
+      closed: !!item.closed,
+      word: null, wordText: item.lockLabel,
       root, slab, core, emblem, body, bodyH, pick, pickGeo,
       lit: 0,        // 0…1 — собственная подсветка
       level: 1,      // 1…dimLevel — насколько его топит свет соседа
@@ -352,6 +367,62 @@ export function buildGatePlates(opts = {}) {
   for (const it of items) plates[it.id] = make(it);
   const list = Object.values(plates);
   const pickables = list.map((p) => p.pick);
+
+  // ── ЗАКРЫТЫЕ ОСТРОВА: слово SOON над плитой ────────────────────────────
+  // Слово парит чуть над плитой (полвысоты букв, как на острове SPAR) и сдвинуто
+  // к ПЕРЕДНЕЙ кромке: в центре плиты стоит эмблема, и слово, поставленное
+  // туда, прошло бы сквозь неё. Перед эмблемой оно её частично закрывает — так
+  // читается подписью на предмете, а не ещё одним предметом.
+  //
+  // ⚠️ НАД ЭМБЛЕМОЙ СЛОВО НЕ ПОДНИМАЕМ. Первая сборка так и сделала — и слово
+  // легло на подпись острова ряда позади: ряды стоят тесно (на телефоне 120 px),
+  // а подпись ряда висит в этом просвете (замерено 390×844, слово CHAIN лежало
+  // на «TEAM V TEAM» под SQUAD).
+  //
+  // ⚠️ НЕ ТРОГАЕТ bounds(): рамку кадра камера считает по эмблемам, а слово ниже
+  // их макушек, — кадр первой страницы ворот, где стоят живые DUEL и SQUAD,
+  // не сдвигается.
+  for (const p of list) {
+    if (!p.closed) continue;
+    const w = buildSoonWord(p.wordText, o.halfW * 2 * o.soonWidth);
+    const y = p.slab.topY + w.lift + w.height / 2;
+    w.group.position.set(0, y, o.halfD * o.soonFront);
+    // ⚠️ БУКВЫ СЛИВАЕМ В ОДИН ОБЪЕКТ. soonWord отдаёт по мешу на букву (так его
+    //    строит SPAR, и трогать общий файл ради ворот нельзя); четыре слова — это
+    //    16 вызовов отрисовки на кадр, где до слов было 43. Материал у букв общий, а
+    //    выдавленные контуры не индексированы, поэтому слияние — простая склейка
+    //    массивов. Исходные меши и их геометрии уходят вместе со словом (dispose).
+    const letters = [];
+    w.group.traverse((m) => { if (m.isMesh) letters.push(m); });
+    const merged = new THREE.BufferGeometry();
+    for (const name of ['position', 'normal', 'uv']) {
+      const parts = letters.map((m) => m.geometry.getAttribute(name).array);
+      const size = letters[0].geometry.getAttribute(name).itemSize;
+      const out = new Float32Array(parts.reduce((n, a) => n + a.length, 0));
+      let at = 0;
+      for (const a of parts) { out.set(a, at); at += a.length; }
+      merged.setAttribute(name, new THREE.BufferAttribute(out, size));
+    }
+    const wordMesh = new THREE.Mesh(merged, letters[0].material);
+    letters.forEach((m) => w.group.remove(m));
+    w.group.add(wordMesh);
+    const disposeWord = w.dispose;
+    w.dispose = () => { disposeWord(); merged.dispose(); };
+    p.root.add(w.group);
+    p.word = w;
+    // Слово не ловит луч (его меши в pickables не входят), поэтому коробку
+    // выбора растим до его макушки, если она выше: нажатие в слово попадает в
+    // свой закрытый остров и гаснет там, а не «проваливается» в соседний.
+    const bottomAir = -o.height * 0.5;
+    const oldTop = bottomAir + p.pickGeo.parameters.height;
+    const topAir = Math.max(oldTop, y + w.height / 2);
+    if (topAir > oldTop) {
+      p.pickGeo.dispose();
+      p.pickGeo = new THREE.BoxGeometry(o.halfW * 2, topAir - bottomAir, o.halfD * 2);
+      p.pick.geometry = p.pickGeo;
+      p.pick.position.y = (topAir + bottomAir) / 2;
+    }
+  }
 
   let hovered = null;
   let portrait = false;
@@ -416,6 +487,14 @@ export function buildGatePlates(opts = {}) {
     extent.halfW = ((widest - 1) * o.stepX) / 2 + o.halfW;
     extent.halfD = ((rows - 1) * stepZ) / 2 + o.halfD;
     extent.rows = rows;
+  }
+
+  /**
+   * Развернуть слова SOON лицом к камере — раз в кадр. Только рыскание, слово
+   * само не движется (soonWord.faceCamera). Закрытых островов нет — цикл пуст.
+   */
+  function faceWords(camera) {
+    for (const p of list) p.word?.faceCamera(camera);
   }
 
   /** Габарит разложенного — сцене, чтобы отодвинуть камеру ровно настолько. */
@@ -576,6 +655,7 @@ export function buildGatePlates(opts = {}) {
       p.slab.dispose();
       p.core?.dispose();
       p.emblem?.dispose();
+      p.word?.dispose();
       p.pickGeo.dispose();
       p.pick.material.dispose();
     }
@@ -584,7 +664,7 @@ export function buildGatePlates(opts = {}) {
 
   return {
     group, plates, list, pickables,
-    layout, bounds, setHover, setSelected, refuse, aimFor, captionScreen, update, shaking, dispose,
+    layout, bounds, setHover, setSelected, refuse, aimFor, captionScreen, update, faceWords, shaking, dispose,
     get hovered() { return hovered; },
   };
 }

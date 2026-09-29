@@ -66,6 +66,7 @@
       :class="{
         'is-lit': tags.hovered === it.id || squad.includes(it.id),
         'is-locked': it.locked,
+        'is-closed': it.closed,
         'is-refused': tags.refused === it.id,
       }"
       :style="{ transform: `translate3d(${tagOf(it.id).x}px, ${tagOf(it.id).y}px, 0)` }"
@@ -74,7 +75,7 @@
       <div class="gc-card" :class="{ 'is-shown': !diving && tagOf(it.id).visible }">
         <span class="gc-name">{{ it.name }}</span>
         <span class="gc-desc">{{ it.tagline }}</span>
-        <span v-if="it.locked" class="gc-soon">{{ it.lockLabel }}</span>
+        <span v-if="it.locked && !it.closed" class="gc-soon">{{ it.lockLabel }}</span>
       </div>
     </div>
 
@@ -282,6 +283,10 @@ const MODE_CORE = {
 
 const modeItems = computed(() => ARENA_MODES.map((m) => ({
   id: m.id, name: m.name, tagline: m.tagline, locked: m.locked,
+  // Закрытый режим — заглушка SOON: слово парит над плитой в сцене, нажатие не
+  // даёт ничего. Тот же флаг гасит DOM-метку SOON под подписью: слово в сцене её
+  // заменяет, а два SOON на одном острове — это два слова там, где нужно одно.
+  closed: m.locked,
   lockLabel: t.value.gate.soon,
   core: MODE_CORE[m.id] || undefined,
   // Вид эмблемы совпадает с идентификатором режима — у каждого режима своя, и
@@ -542,6 +547,11 @@ const coreSig = computed(() => core.value?.sig || '');
 .gate-cap.is-locked .gc-name { color: var(--ink-off); }
 
 .gate-cap.is-locked .gc-desc { color: var(--ink-dim); opacity: 0.55; }
+/* ЗАКРЫТЫЙ РЕЖИМ (ТЗ 30.09.2026): и имя, и пояснение под ним — один цвет
+   `--ink-off`, без свечения и без дополнительного приглушения. Свой слой поверх
+   запертого бойца, у которого пояснение остаётся тусклее имени. */
+.gate-cap.is-closed .gc-name,
+.gate-cap.is-closed .gc-desc { color: var(--ink-off); opacity: 1; text-shadow: none; }
 .gc-soon {
   margin-top: var(--sp-1);
   font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 700;
