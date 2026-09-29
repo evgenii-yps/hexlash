@@ -207,10 +207,9 @@
              Интерфейс — ТОТ ЖЕ, что стоит в зале (ForgeCore), без единой
              правки. Новых форм не рисуется.
 
-             ⚠️ ПОГАСИТЬ КРИСТАЛЛ ЗДЕСЬ НЕЧЕМ: ForgeCore умеет только зажигать
-             (в зале гашение тоже недоступно), а править его этой работе
-             нельзя. Выход из промаха — «ЧИСТЫЙ»: он собирает соперника ЗАНОВО
-             с нуля, а не гасит по одному, и результат на экране тот же.
+             ⚠️ ГАСИТСЯ КРИСТАЛЛ ТЕМ ЖЕ СОБЫТИЕМ, ЧТО И ЗАЖИГАЕТСЯ (с 30.09.2026
+             ForgeCore умеет и то и другое, см. onFoeToggle). «ЧИСТЫЙ» по-прежнему
+             собирает соперника ЗАНОВО с нуля, разом, а не гасит по одному.
 
              ⚠️ ПОЗДНИЙ КЛИК гасится на этом узле — см. armLateClick. -->
         <section class="sp-sec sp-sec--core" ref="coreHost">
@@ -382,18 +381,18 @@ function presetMirror() {
   foeCore.value = me.value.core;
   foeTree.value = makeTree(me.value.core, litIdsOf(myTree.value));
 }
-/* ⚠️ «ЧИСТЫЙ» СОБИРАЕТ ЗАНОВО, А НЕ ГАСИТ ПО ОДНОМУ. Гасить нечем — ForgeCore
-   умеет только зажигать, — поэтому дерево строится с нуля. Результат на экране
-   тот же, и это оговорено ТЗ §2.4. */
+/* ⚠️ «ЧИСТЫЙ» СОБИРАЕТ ЗАНОВО, А НЕ ГАСИТ ПО ОДНОМУ: дерево строится с нуля
+   одним действием, и это оговорено ТЗ §2.4. */
 function presetClean() {
   if (!me.value) return;
   foeCore.value = me.value.core;
   foeTree.value = makeTree(me.value.core, null);
 }
 
-/* ЗАЖИГАНИЕ. Те же два предела, что и в хранилище — предел грани и потолок
-   пять, — и ни одного третьего: занятие здесь не спрашивается, права SPAR не
-   выдаёт и не забирает.
+/* ЗАЖИГАНИЕ И ГАШЕНИЕ. Те же два предела, что и в хранилище — предел грани и потолок
+   RESOURCE (upgradeData.js, один на проект), — и ни одного третьего: занятие здесь
+   не спрашивается, права SPAR не выдаёт и не забирает. Зажжённый по тому же событию
+   гасится — бесплатно, как и в зале.
 
    ⚠️ Наружу ForgeCore отдаёт СТАРЫЕ ИМЕНА: crystalId — это грань, faceId —
    кристалл. Так их зовёт хранилище.
@@ -405,10 +404,15 @@ function onFoeToggle({ crystalId, faceId }) {
   if (!tree) return;
   const branch = tree.find((c) => c.id === crystalId);
   const face = branch && branch.faces.find((f) => f.id === faceId);
-  if (!face || face.state !== 'open') return;
-  if (branch.faces.filter((f) => f.state === 'lit').length >= branch.limit) return;
-  if (countLit(tree) >= RESOURCE) return;
-  face.state = 'lit';
+  if (!face) return;
+  if (face.state === 'lit') {
+    face.state = 'open';
+  } else {
+    if (face.state !== 'open') return;
+    if (branch.faces.filter((f) => f.state === 'lit').length >= branch.limit) return;
+    if (countLit(tree) >= RESOURCE) return;
+    face.state = 'lit';
+  }
   foeTree.value = tree.map((b) => ({ ...b, faces: b.faces.map((f) => ({ ...f })) }));
 }
 

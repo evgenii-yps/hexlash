@@ -452,8 +452,13 @@
 .fco .fc[data-level='crystal'] .fc-cryst:not(.is-sel) { opacity: 1; }
 .fco .fc[data-level='crystal'] .fc-cryst:not(.is-sel) > :not(.fc-cryst__name):not(.fc-cryst__key) { opacity: .18; }
 
-/* Розовое — только на миг выбора. Оно тут одно на всю сцену. */
-.fc-flash polygon { fill: var(--pink); opacity: .75; pointer-events: none; }
+/* ОТКЛИК НА ВЫБОР — на миг, нейтральный. Раньше стоял розовый (#FF0069, .75) и
+   при каждом касании кристалла на 220 мс проступал розовым силуэтом на любом ядре
+   (замерено: единственный розовый элемент сцены; фигура и материалы ни при чём).
+   Выбор — не срабатывание предмета, розовому здесь делать нечего; цвет ядра тоже не
+   годится — им показан налив, и вспышка читалась бы зажжённой. Тон и сила — те же,
+   что у подсветки под пальцем (.fc-facet__glow): один язык «вот это ты выбираешь». */
+.fc-flash polygon { fill: var(--ink); opacity: .3; pointer-events: none; }
 
 /* ── что сейчас открыто, и что с этим делать ─────────────────────────── */
 .fc-read { margin-top: var(--sp-3); min-width: 0; flex: 0 0 auto; }
@@ -523,6 +528,25 @@
   transition: opacity var(--d-hover) var(--e-settle);
 }
 .fc-light:active { opacity: var(--o-dim); }
+/* Погасить — не главное действие, поэтому не розовое: семья .fc-back, а размер и
+   отступы — как у «зажечь», чтобы кнопка стояла ровно на его месте. */
+.fc-out {
+  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  border: 1px solid var(--line); border-radius: var(--r-none);
+  background: var(--fill-1); color: var(--ink-soft);
+  font-family: var(--font-display); font-size: var(--t-xs);
+  font-weight: 700; letter-spacing: var(--ls-title);
+  text-transform: uppercase; cursor: pointer;
+  transition: border-color var(--d-hover) var(--e-settle),
+              color var(--d-hover) var(--e-settle),
+              opacity var(--d-hover) var(--e-settle);
+}
+.fc-out:hover { border-color: var(--line-strong); color: var(--ink); }
+.fc-out:active { opacity: var(--o-dim); }
+/* Счётчик зажжённого — та же типографика, что у строки причины (.fc-why). Отдельный
+   класс — ради nowrap: когда строка подвала переносится, `LIT 3 OF 7` не должен
+   ломаться посередине. */
+.fc-count { white-space: nowrap; }
 .fc-back {
   min-height: var(--h-btn-sm); padding: 0 var(--sp-3);
   border: 1px solid var(--line); border-radius: var(--r-none);
@@ -547,7 +571,7 @@
 @media (prefers-reduced-motion: reduce) {
   .fc-core, .fc-facet, .fc-cryst, .fc-flash, .fc-flow-clip,
   .fc-facet__glow, .fc-cryst__glow,
-  .fc-light, .fc-back { transition: none !important; }
+  .fc-light, .fc-out, .fc-back { transition: none !important; }
 }
 
 .fp-hint {

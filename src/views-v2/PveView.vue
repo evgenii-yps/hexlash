@@ -309,13 +309,16 @@ const assignWhy = computed(() => {
   trainingTick.value;
   return picked.value ? store.getters['roster/assignBlock'](picked.value.id) : 'none';
 });
+// ⚠️ Зажечь и погасить кристалл от занятия НЕ ЗАВИСИТ (ТЗ 30.09.2026): facetGate
+// отказывает только когда бойца нет. Ключи остались, чтобы панель и разворот ядра
+// по-прежнему получали причину отказа одним путём, а не своей копией проверки.
 const lightWhy = computed(() => {
   trainingTick.value;
-  return picked.value ? facetGate(picked.value, true) : 'none';
+  return picked.value ? facetGate(picked.value) : 'none';
 });
 const quenchWhy = computed(() => {
   trainingTick.value;
-  return picked.value ? facetGate(picked.value, false) : 'none';
+  return picked.value ? facetGate(picked.value) : 'none';
 });
 
 function settle() {

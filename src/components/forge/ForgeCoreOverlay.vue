@@ -8,8 +8,8 @@
      ⚠️ ЛОГИКИ ЗАЖИГАНИЯ ЗДЕСЬ НЕТ. Внутри стоит тот же ForgeCore, что и в маленькой
      карточке (там он в режиме preview). Он получает те же свойства и шлёт то же
      событие toggle; оно уходит наверх (PveView.onToggle → roster/toggleFacet),
-     то есть в то же хранилище и в том же формате. Потолок зажжённых, отказы и
-     налив — его собственные, не переписанные.
+     то есть в то же хранилище и в том же формате. Потолок зажжённых (RESOURCE),
+     счётчик и налив — его собственные, не переписанные.
 
      НАЗАД — ОДИН, В ЛЕВОМ ВЕРХНЕМ УГЛУ (правка 1 к ТЗ 29.09.2026). Та же хром-
      кнопка, что BACK зала, на том же месте и того же размера. Шагает на один
@@ -60,12 +60,13 @@
 import { ref } from 'vue';
 import { t } from '@/locales/index.js';
 import ForgeCore from '@/components/forge/ForgeCore.vue';
+import { RESOURCE } from '@/data/upgradeData.js';
 
 defineProps({
   coreId: { type: String, required: true },
   tree: { type: Array, default: () => [] },
   spent: { type: Number, default: 0 },
-  resource: { type: Number, default: 5 },
+  resource: { type: Number, default: RESOURCE },
   gates: { type: Object, default: () => ({}) },
   fighterName: { type: String, default: '' },
   coreName: { type: String, default: '' },

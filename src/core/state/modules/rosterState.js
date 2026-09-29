@@ -23,8 +23,11 @@
 //   готов     — ready истина (занятие отработано, право на грань не забрано)
 //
 // ≠ НИКОГДА БОЛЬШЕ ОДНОГО НЕЗАБРАННОГО ПРАВА. Готовому нельзя назначить
-//   занятие, а погасить грань можно только тому, у кого права нет. Иначе право
-//   КОПИТСЯ, а копиться в этой работе ничему нельзя (ТЗ §4.1).
+//   занятие: метка «готов» одна и снимается зажжённым кристаллом (ТЗ §4.1).
+//
+// ⚠️ С 30.09.2026 ЗАНЯТИЕ НЕ УСЛОВИЕ ЗАЖИГАНИЯ. Кристалл зажигается и гасится в
+//   любом состоянии бойца (см. toggleFacet); «готов» осталось меткой, которая
+//   ничего не открывает и не запрещает. Погашение метку «готов» не выдаёт.
 //
 // `busy` — ПРОИЗВОДНОЕ от lesson, а не вторая правда. Поле осталось потому,
 // что его уже читают два экрана состава («IN THE FORGE», карточка не нажимается), и
@@ -318,10 +321,11 @@ const getters = {
         if (!f) return 'none';
         return assignGate(f, countLit(f.upgrade), RESOURCE);
     },
-    /** Причина, по которой грань нельзя зажечь, или null. */
+    /** Причина, по которой грань нельзя зажечь, или null. С 30.09.2026 — только
+     *  «бойца нет»: тренировка условием зажигания больше не служит. */
     lightBlock: (s) => (id) => {
         const f = s.fighters.find((x) => x.id === id);
-        return f ? facetGate(f, true) : 'none';
+        return facetGate(f || null);
     },
     // Points spent / available FOR ONE FIGHTER — the pool is per fighter, not
     // shared across the roster (owner's call, 24.08).
@@ -360,9 +364,13 @@ const mutations = {
         f.upgrade = tree;
         persist(s);
     },
-    // ГРАНЬ И ПРАВО МЕНЯЮТСЯ ОДНОЙ ЗАПИСЬЮ. Раздели их на две мутации — и
-    // между ними появился бы миг, когда грань уже горит, а право ещё не забрано.
-    // `right`: 'spend' — забрать право · 'return' — вернуть · ничего — не трогать.
+    // КРИСТАЛЛ И МЕТКА «ГОТОВ» МЕНЯЮТСЯ ОДНОЙ ЗАПИСЬЮ. Раздели их на две мутации —
+    // и между ними появился бы миг, когда кристалл уже горит, а метка ещё стоит.
+    // `right: 'spend'` — снять метку «готов» (занятие отработано, забрано зажжённым
+    // кристаллом). Ничего не передали — метку не трогать.
+    // ⚠️ Возврата права ('return') больше нет: гасить можно свободно, и погашение,
+    //    выдающее «готов» из воздуха, позволило бы копить право зажиганием и
+    //    гашением (ТЗ 30.09.2026).
     SET_FACE(s, { id, crystalId, faceId, faceState, right }) {
         const f = s.fighters.find((x) => x.id === id);
         const cr = f && f.upgrade && f.upgrade.find((c) => c.id === crystalId);
@@ -370,7 +378,6 @@ const mutations = {
         if (!face) return;
         face.state = faceState;
         if (right === 'spend') f.ready = false;
-        else if (right === 'return') f.ready = true;
         persist(s);
     },
     // НАЗНАЧИТЬ ЗАНЯТИЕ. Повторное нажатие приходит к уже занятому и ничего
@@ -494,10 +501,15 @@ const actions = {
         commit('SET_TREE', { id, tree: buildTree(f.core, null) });
     },
     /**
-     * Light or quench one facet, with the same two guards the upgrade screen
-     * used: the crystal's own limit and the fighter's point pool. Returns true
-     * when something changed, false when the move was refused (the caller
-     * shakes the facet).
+     * Light or quench one crystal. Returns true when something changed, false
+     * when the move was refused (the caller shakes the facet).
+     *
+     * ⚠️ БЕЗ УСЛОВИЙ, КРОМЕ ПОТОЛКА (ТЗ 30.09.2026). Зажечь можно любой из 15 в
+     * любой момент и в любом порядке — у свободного, занятого и готового бойца
+     * одинаково. Зажжённый гасится бесплатно и без подтверждения. Единственные
+     * отказы — потолок ветки (её размер) и потолок бойца (`RESOURCE`, один на
+     * проект). Тренировка условием больше не служит; зажжённый кристалл лишь снимает
+     * метку «готов», если она стояла (см. SET_FACE).
      */
     toggleFacet({ state: s, commit }, { id, crystalId, faceId }) {
         const f = s.fighters.find((x) => x.id === id);
@@ -507,17 +519,9 @@ const actions = {
         if (!face || face.state === 'locked') return false;
 
         if (face.state === 'lit') {                       // погасить
-            // Погашение ВОЗВРАЩАЕТ право — иначе одно промахнувшееся нажатие
-            // стоило бы игроку целого занятия. Но только тому, у кого права нет:
-            // иначе их стало бы два, а копиться праву нельзя (ТЗ §4.1).
-            if (facetGate(f, false)) return false;
-            commit('SET_FACE', { id, crystalId, faceId, faceState: 'open', right: 'return' });
+            commit('SET_FACE', { id, crystalId, faceId, faceState: 'open' });
             return true;
         }
-        // ЗАЖЕЧЬ МОЖЕТ ТОЛЬКО ГОТОВЫЙ. Прежний свободный путь закрыт: грань
-        // открывается занятием, а не нажатием (ТЗ §4.3). Это ЗАСЛОН, а не оформление:
-        // дерево считает те же ворота, но его можно миновать, а эту строку — нет.
-        if (facetGate(f, true)) return false;
         const litHere = cr.faces.filter((x) => x.state === 'lit').length;
         if (litHere >= cr.limit || countLit(f.upgrade) >= RESOURCE) return false;
         commit('SET_FACE', { id, crystalId, faceId, faceState: 'lit', right: 'spend' });
