@@ -561,7 +561,10 @@ function markFor(count, arcZ) {
   //    камеры, закрыл бы собой и предмет, и слово под ним, то есть нарушил бы
   //    пункт приёмки «ни одна метка не перекрывает подпись». За рядом он никого
   //    не закрывает: ряд к камере ближе и проходит у него под ногами.
-  const band = propRowBandFor(compose ? compose.slab : null);
+  // Полоса берётся ФАКТИЧЕСКАЯ — по собранным предметам. Формула нужна только
+  // если ряд ещё не собран (в этой сцене такого не бывает, порядок сборки это
+  // гарантирует), и оставлена страховкой.
+  const band = rowBand.zMax > rowBand.zMin ? rowBand : propRowBandFor(compose ? compose.slab : null);
   const zWant = frontZ + MARK.ahead;
   return { x, z: band ? Math.min(zWant, band.zMin - BODY.halfW) : zWant };
 }
@@ -818,8 +821,8 @@ const PROP_ROW = {
   // solvePropRow. Числа сняты замером на 390×844: это самый узкий кадр из тех, что
   // мы обслуживаем, и он же связывающий — на десктопе плита и так стоит в
   // середине экрана с большим запасом по бокам.
-  leftEdge: -0.153,
-  rightEdge: 0.159,
+  leftEdge: -0.168,
+  rightEdge: 0.167,
 
   // ── ГЛУБИНА. Ряд стоит у ПЕРЕДНЕГО ребра плиты, лицом к игроку.
   //
@@ -846,7 +849,17 @@ const PROP_ROW = {
   // Доля ПРОЛЁТА РЯДА на один просвет, а не точки экрана: точка экрана значит
   // разное на 390×844 и на 1920×1080 (разные пропорции кадра), а доля пролёта —
   // одно и то же везде. Пять предметов — четыре просвета.
-  gapShare: 0.055,
+  //
+  // ⚠️ 0.012 — ЭТО НИЖНЯЯ ГРАНИЦА, найденная замером 29.09.2026, и она НЕ ПО
+  //    СЛОВАМ, как просило ТЗ v3. По словам границы нет вовсе: видимый просвет
+  //    между двумя соседними словами не опускался ниже 25 точек даже когда
+  //    кромки предметов сходились до 1 точки, то есть в 10–17 раз шире пустоты
+  //    между буквами внутри слова (2.9–3.0 точки). Слова короче предметов, и
+  //    упираются всегда предметы. Поэтому граница поставлена по самим предметам,
+  //    ГЛАЗАМИ по снимкам ×3: при 5 точках (0.012) они стоят чётко порознь, при
+  //    2 точках (0.004) постаменты TRAINING и SPAR почти целуются, а рог
+  //    наковальни садится на грушу. Ниже 0.012 не опускаться.
+  gapShare: 0.012,
 
   // ⚠️ ВО СКОЛЬКО РАЗ УМЕНЬШАТЬ, ЗДЕСЬ НЕ НАПИСАНО — оно СЧИТАЕТСЯ из просвета
   //    (см. solvePropRow). Множитель общий на всех: ужать только широкие значило
@@ -987,9 +1000,13 @@ function nestLabel(obj, b, anchor, gx, gz, topY) {
   m.position.x = (camSolveX(b, anchor, yAbs, zAbs) - gx) / sc;
 }
 
-/** Насколько глубоко предмет занимает плиту: ближний и дальний край в метрах. */
-function propWorldZ(group) {
-  let lo = Infinity, hi = -Infinity;
+/**
+ * Габарит предмета в МИРЕ, в метрах: края по ширине и по глубине, по всем его
+ * частям вместе с подписью. Свечение нажатия пропускается — оно вдвое шире
+ * предмета и в покое невидимо.
+ */
+function propWorldBox(group) {
+  const r = { x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity };
   group.updateMatrixWorld(true);
   group.traverse((m) => {
     if (!m.isMesh || !m.visible || !m.geometry || m.userData.pressGlow) return;
@@ -998,11 +1015,13 @@ function propWorldZ(group) {
     for (let k = 0; k < 8; k++) {
       _pc.set(k & 1 ? bb.max.x : bb.min.x, k & 2 ? bb.max.y : bb.min.y, k & 4 ? bb.max.z : bb.min.z);
       _pc.applyMatrix4(m.matrixWorld);
-      if (_pc.z < lo) lo = _pc.z;
-      if (_pc.z > hi) hi = _pc.z;
+      if (_pc.x < r.x0) r.x0 = _pc.x;
+      if (_pc.x > r.x1) r.x1 = _pc.x;
+      if (_pc.z < r.z0) r.z0 = _pc.z;
+      if (_pc.z > r.z1) r.z1 = _pc.z;
     }
   });
-  return { min: lo, max: hi };
+  return r;
 }
 
 /**
@@ -1087,9 +1106,9 @@ function solvePropRow(built, slab, topY) {
   // Полоса ряда по глубине — по фактическим габаритам вместе с подписями.
   let zMin = Infinity, zMax = -Infinity;
   for (const it of built) {
-    const box = propWorldZ(it.obj.group);
-    if (box.min < zMin) zMin = box.min;
-    if (box.max > zMax) zMax = box.max;
+    const box = propWorldBox(it.obj.group);
+    if (box.z0 < zMin) zMin = box.z0;
+    if (box.z1 > zMax) zMax = box.z1;
   }
   rowBand = { zMin, zMax, zMid: (zMin + zMax) / 2 };
   // Сверка с формулой, по которой уводится метка: если предметы вылезли за неё,
@@ -1593,7 +1612,6 @@ onMounted(() => {
   //     given a size without opening a protected file — and there is no second
   //     floor around it any more: everything in the hall stands on this. ---
   compose = composeFor(rosterCount);
-  mark = markFor(rosterCount, compose.arcZ);   // the lamps need it, and they hang before the bodies stand
   slab = buildForgeSlab({
     width: compose.slab.width,
     depth: compose.slab.depth,
@@ -1603,6 +1621,15 @@ onMounted(() => {
   scene.add(slab.group);
   const topY = slab.refs.topY;
   load.stage('slab');
+
+  // ⚠️ ПРЕДМЕТЫ СОБИРАЮТСЯ ДО МЕТКИ И ДО ЛАМП, и порядок здесь несущий. Метка
+  //    уводится за полосу ряда, а полоса — это ФАКТИЧЕСКИЕ габариты предметов, и
+  //    они известны только после сборки: размер предметов выводится из просвета,
+  //    заранее его не посчитать. Пока метка считалась по формуле с запасом, рост
+  //    предметов выводил полосу за этот запас, и метка возвращалась в ряд
+  //    (поймано замером на составе из десяти, 29.09.2026).
+  buildForgeProps(topY);
+  mark = markFor(rosterCount, compose.arcZ);   // лампам нужна метка, и они висят раньше тел
 
   // Atmosphere / depth — warm dim lamp room-fill + a background dome (warm/dark FILL,
   // no pink, no new accent). PVE drops the home's lamp-haze halos and drifting dust.
@@ -1632,11 +1659,6 @@ onMounted(() => {
   //     The record carries only a core id; the hue comes from this scene's own
   //     palette. Read once at build time — the roster is edited in the shop, on
   //     another route, so arriving here always rebuilds the scene. ---
-  // Соседний остров с грушами + два предмета на главной плите. Шаг 1 встраивания:
-  // ГЕОМЕТРИЯ ТОЛЬКО. Ни нажатий, ни перелёта, ни переноса занятия сюда — это
-  // следующие шаги, и они не делаются, пока владелец не выбрал стартовую позу.
-  buildForgeProps(topY);
-
   // Имена осей берутся из САМОГО набора осей бойца, а не переписываются списком:
   // второй список рано или поздно разошёлся бы с первым.
 
@@ -2219,6 +2241,52 @@ onMounted(() => {
           }
           return out;
         })(),
+        // ── КАК СЛОВО ЧИТАЕТСЯ. Меряется по НАСТОЯЩЕЙ текстуре подписи, а не по её
+        //    плоскости: у плоскости есть поля по краям, и просвет между плоскостями
+        //    меньше видимого просвета между буквами двух слов. Для каждого слова:
+        //      inkL / inkR — где в кадре начинаются и кончаются сами буквы,
+        //      letterGap   — самый широкий пустой промежуток МЕЖДУ БУКВАМИ внутри
+        //                    слова, в долях кадра.
+        //    Два соседних слова читаются как два, пока пустое место между ними
+        //    заметно больше, чем между буквами внутри слова.
+        words: (() => {
+          const out = {};
+          const c = new THREE.Vector3();
+          const sxAt = (m, col, PX) => {
+            const w = m.geometry.parameters.width;
+            c.set(-w / 2 + (col / PX) * w, 0, 0); m.localToWorld(c); c.project(camera);
+            return c.x * 0.5 + 0.5;
+          };
+          for (const pr of propList) {
+            const m = pr.obj.label;
+            if (!m || !m.visible || !m.material.map || !m.material.map.image) continue;
+            const cv = m.material.map.image, PX = cv.width, H = cv.height;
+            const px = cv.getContext('2d').getImageData(0, 0, PX, H).data;
+            const ink = new Array(PX).fill(false);
+            for (let x = 0; x < PX; x++) {
+              for (let y = 0; y < H; y++) if (px[(y * PX + x) * 4 + 3] > 40) { ink[x] = true; break; }
+            }
+            let c0 = 0; while (c0 < PX && !ink[c0]) c0++;
+            let c1 = PX - 1; while (c1 > 0 && !ink[c1]) c1--;
+            let bestGap = 0, run = 0, gs = 0;
+            for (let x = c0; x <= c1; x++) {
+              if (!ink[x]) { if (!run) gs = x; run++; }
+              else { if (run) { const g = sxAt(m, x, PX) - sxAt(m, gs, PX); if (g > bestGap) bestGap = g; } run = 0; }
+            }
+            out[pr.key] = { inkL: +sxAt(m, c0, PX).toFixed(4), inkR: +sxAt(m, c1 + 1, PX).toFixed(4), letterGap: +bestGap.toFixed(5) };
+          }
+          return out;
+        })(),
+        // Края предметов в МИРЕ и края плиты — чтобы проверять, что ничто не
+        // вылезает за кромку, замером, а не по снимку.
+        world: (() => {
+          const out = {};
+          for (const pr of propList) {
+            const wb = propWorldBox(pr.obj.group);
+            out[pr.key] = { x0: +wb.x0.toFixed(2), x1: +wb.x1.toFixed(2), z0: +wb.z0.toFixed(2), z1: +wb.z1.toFixed(2) };
+          }
+          return { props: out, halfW: compose ? +(compose.slab.width / 2).toFixed(2) : 0, halfD: compose ? +(compose.slab.depth / 2).toFixed(2) : 0 };
+        })(),
         // Экранные коробки ТЕЛ — чтобы видеть замером, а не глазами, стоит ли
         // кто-то на ряду и не закрывает ли подпись.
         bodies: (() => {
@@ -2572,7 +2640,7 @@ onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (stopTrainingWatch) { stopTrainingWatch(); stopTrainingWatch = null; }
   applyTraining = null;
-  if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; }
+  if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; delete window.__rowDebug; delete window.__moveShelf; }
   if (controls) { controls.dispose(); controls = null; }
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
