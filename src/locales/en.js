@@ -125,8 +125,9 @@ export default {
     // шаг, шагом луч. Здесь он верный и другого нет:
     //   FACET   — весь луч «Печати» целиком. Их три.
     //   CRYSTAL — один из пяти шагов внутри грани. Их пятнадцать.
-    // ⚠️ НИ ОДНОЙ ЦИФРЫ. Ни счётчика прав, ни «0 / 5», ни процентов: сколько
-    // зажжено — видно по наливу самого ядра.
+    // ⚠️ ЦИФРА ОДНА — счётчик litCount ниже (ТЗ 30.09.2026), в развороте ядра.
+    // Ни процентов, ни цифр у граней; в маленькой карточке счётчика нет — там сколько
+    // зажжено видно по наливу самого ядра.
     openCore: "OPEN HIS CORE",
     coreHint: "GUIDE OVER THE CORE · A FACET LIGHTS UP",
     // Подпись под ядром в маленькой карточке: по фигуре там работает только нажатие,
@@ -134,6 +135,10 @@ export default {
     coreOpenHint: "TAP THE CORE TO OPEN IT",
     facetHint: "GUIDE OVER THE FACET · A CRYSTAL LIGHTS UP",
     lightUp: "LIGHT IT",
+    // Погасить зажжённый кристалл: бесплатно, без подтверждения.
+    putOut: "PUT OUT",
+    // Счётчик зажжённого. m — потолок бойца, приходит из RESOURCE (upgradeData.js).
+    litCount: "LIT {n} OF {max}",
     // Подпись второй строки описания кристалла: как он меняет манеру бойца.
     // ⚠️ Внутреннего словаря здесь быть не может — игрок его не видит. Слово
     // DOCTRINE и прочее наружу не выходит; для игрока это просто характер.
@@ -141,7 +146,6 @@ export default {
     backToFacet: "← BACK TO THE FACET",
     backToCore: "← BACK TO THE CORE",
     // почему этот кристалл не зажечь — по одной причине на случай
-    whyLit: "THIS ONE IS ALREADY LIT",
     whyFacetFull: "THIS FACET IS FULL",
     whySpent: "HE HOLDS ALL HE CAN · NOTHING LEFT TO LIGHT",
     buildEmpty: "NOTHING LIT YET",
@@ -165,13 +169,11 @@ export default {
     trainCancel: "CANCEL",
     // причины отказа — спокойными словами, без восклицаний
     whyBusy: "HE IS WORKING · LET HIM FINISH",
-    whyReady: "HIS LESSON IS DONE · LIGHT A CRYSTAL TO TAKE IT",
+    whyReady: "HIS LESSON IS DONE · LIGHTING A CRYSTAL CLEARS IT",
     whyFull: "EVERY CRYSTAL IS LIT · NOTHING LEFT TO WORK FOR",
-    whyUntrained: "A CRYSTAL IS EARNED, NOT PICKED · TRAIN HIM FIRST",
-    whyHolds: "ONE LESSON, ONE CRYSTAL · LIGHT THE ONE HE EARNED FIRST",
     // строка под кнопкой, пока занятие идёт — ни чисел, ни полосы
     trainingNote: "HE IS DRILLING IN THE HALL",
-    readyNote: "HIS LESSON IS DONE · ONE CRYSTAL IS HIS TO LIGHT",
+    readyNote: "HIS LESSON IS DONE",
     // шапка — по одному состоянию на строку
     headNoPick: "NO FIGHTER",
     headNoPickSub: "PICK ONE FROM THE ROSTER",

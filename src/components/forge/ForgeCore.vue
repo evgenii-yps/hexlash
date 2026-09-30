@@ -16,9 +16,11 @@
      через coreFacets.js — того же источника, что рисует ядро на лендинге, в
      деке и на экране входа. Второй отрисовки быть не должно.
 
-     ⚠️ НИ ОДНОЙ ЦИФРЫ. Сколько зажжено — видно по наливу, а не по счётчику.
-     Прежняя карточка писала «0 / 5» вверху и у каждой грани; это ушло вместе
-     с ней.
+     ⚠️ ЦИФРА ОДНА — счётчик `LIT n OF m` в нижней строке разворота (ТЗ 30.09.2026,
+     прежняя строка «TRAIN HIM FIRST» снята, счётчик встал на её место). Больше
+     цифр нет: ни процентов, ни цифр у граней. В маленькой карточке (`preview`)
+     счётчика нет — там сколько зажжено видно по наливу. Потолок `m` — один на весь
+     проект, RESOURCE в upgradeData.js; здесь своего числа нет.
 
      ВЕДЕНИЕМ, А НЕ ТЫЧКОМ. Палец ведёт по ядру — под ним подсвечивается целая
      грань; отпустил внутри фигуры — она и выбрана, отпустил в пустоте — не
@@ -197,7 +199,7 @@
 
         <!-- Отклик на выбор. ⚠️ Отдельным слоем и ПОСЛЕДНИМ в порядке: летящий
              предмет стартует ровно с места вспышки и закрывал её собой.
-             Единственное розовое на этой сцене. -->
+             Цвет — нейтральный (см. .fc-flash в forge.css), розового на сцене нет. -->
         <g v-if="flash" class="fc-flash" :style="flashStyle" aria-hidden="true">
           <polygon :points="flash.points" />
         </g>
@@ -240,7 +242,16 @@
         v-if="level === 'crystal' && canLightSel"
         type="button" class="fc-light" @click="lightUp"
       >{{ t.forge.lightUp }}</button>
-      <p v-else-if="level === 'crystal'" class="fc-why">{{ whySel }}</p>
+      <!-- ПОГАСИТЬ — бесплатно и без подтверждения (ТЗ 30.09.2026). Стоит на месте
+           кнопки зажигания: кристалл либо горит, либо нет, и кнопка одна. -->
+      <button
+        v-else-if="level === 'crystal' && canQuenchSel"
+        type="button" class="fc-out" @click="putOut"
+      >{{ t.forge.putOut }}</button>
+      <p v-else-if="level === 'crystal' && whySel" class="fc-why">{{ whySel }}</p>
+      <!-- СЧЁТЧИК зажжённого. Тот же `.fc-why`: положение и типографика прежней
+           строки, на месте которой он стоит. Не показывается в превью-карточке. -->
+      <p v-if="!preview" class="fc-why fc-count" aria-live="polite">{{ litText }}</p>
       <button v-if="level !== 'core' && !expanded" type="button" class="fc-back" @click="goBack">
         {{ level === 'crystal' ? t.forge.backToFacet : t.forge.backToCore }}
       </button>
@@ -250,10 +261,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, useId } from 'vue';
-import { t } from '@/locales/index.js';
+import { t, interpolate } from '@/locales/index.js';
 import HexCore from '@/components/core/HexCore.vue';
 import { coreFacets } from '@/data/coreFacets.js';
-import { getCore } from '@/data/upgradeData.js';
+import { getCore, RESOURCE } from '@/data/upgradeData.js';
 import { facetTitle, crystalTitle, crystalText } from '@/data/crystalTexts.js';
 
 const props = defineProps({
@@ -262,10 +273,11 @@ const props = defineProps({
   // пять «faces». По верному словарю это ТРИ ГРАНИ по ПЯТЬ КРИСТАЛЛОВ. Имена
   // в данных не трогаем — они часть счёта, а счёт не меняется.
   tree: { type: Array, default: () => [] },
-  // Сколько уже потрачено и сколько всего можно — ЧИСЛАМИ ВНУТРЬ, но на экран
-  // они не выходят ни разу: по ним решается только, можно ли ещё зажигать.
+  // Сколько уже зажжено и сколько всего можно. Решают, можно ли ещё зажигать, и
+  // рисуют счётчик `LIT n OF m`. Потолок по умолчанию — RESOURCE, а не своё число:
+  // второго места, где он записан, быть не должно.
   spent: { type: Number, default: 0 },
-  resource: { type: Number, default: 5 },
+  resource: { type: Number, default: RESOURCE },
   // Отказы приходят готовыми ключами сверху: { light, quench }. Свой счёт
   // правил здесь не заводится — две копии разошлись бы в первый же день.
   gates: { type: Object, default: () => ({}) },
@@ -362,22 +374,22 @@ const canLightSel = computed(() => {
     && canLightAny.value
     && facetLitCount(f) < b.limit;
 });
-/* Порядок важен: предел грани и пустой набор — это навсегда, а неотработанное
-   занятие — до ближайшего занятия. Сначала непоправимое. */
+/* Зажжённый гасится — бесплатно, в любой момент (ТЗ 30.09.2026). Условий нет. */
+const canQuenchSel = computed(() => faceOf(selCrystal.value)?.state === 'lit');
+/* Почему открытый кристалл не зажечь: осталось два случая — грань заполнена или
+   потолок бойца. Занятие среди причин больше не стоит (facetGate). */
 const whySel = computed(() => {
   const c = selCrystal.value;
   const f = selFacet.value;
   const b = branchOf(f);
   const g = t.value.forge;
-  if (!c || !b) return '';
-  if (isLit(c)) return g.whyLit;
+  if (!c || !b || isLit(c)) return '';
   if (facetLitCount(f) >= b.limit) return g.whyFacetFull;
   if (props.spent >= props.resource) return g.whySpent;
-  if (props.gates.light === 'busy') return g.whyBusy;
-  if (props.gates.light === 'full') return g.whyFull;
-  if (props.gates.light === 'holds') return g.whyHolds;
-  return g.whyUntrained;
+  return '';
 });
+/* Счётчик зажжённого: `LIT 3 OF 7`. Число считает хранилище, здесь только показ. */
+const litText = computed(() => interpolate(t.value.forge.litCount, { n: props.spent, max: props.resource }));
 
 /* ── налив ─────────────────────────────────────────────────────────────── */
 const flowStyle = (f) => ({
@@ -491,7 +503,9 @@ const crystalStyle = (c) => (props.expanded
   ? { transform: hold(expCrystalPose(selFacet.value, c).cryX, box / 2, facetTurn(selFacet.value), EXP.cryK, c.cx, c.cy) }
   : { transform: hold(L.crystal.x, L.crystal.y, facetTurn(selFacet.value), L.crystal.k, c.cx, c.cy) });
 
-/* Розовое — только на миг выбора, там, где отпустили. Единственное на сцене. */
+/* Отклик на выбор — на миг, там, где отпустили. НЕЙТРАЛЬНЫЙ, не розовый: при выборе
+   ничего не срабатывает (розовое свечение принадлежит срабатыванию предмета), а цвет
+   ядра показывает налив, и вспышка им читалась бы зажжённой (ТЗ 30.09.2026, работа 3). */
 const flash = ref(null);
 let flashTimer = null;
 const flashStyle = computed(() => (flash.value?.level === 'crystal' ? facetStyle.value : coreStyle.value));
@@ -619,6 +633,11 @@ function chooseCrystal(c) {
    Так их зовёт хранилище, и переименование здесь тронуло бы счёт. */
 function lightUp() {
   if (!canLightSel.value) return;
+  emit('toggle', { crystalId: selFacet.value.id, faceId: faceOf(selCrystal.value).id });
+}
+/* Погасить — то же событие toggle: хранилище само различает «горит» и «нет». */
+function putOut() {
+  if (!canQuenchSel.value) return;
   emit('toggle', { crystalId: selFacet.value.id, faceId: faceOf(selCrystal.value).id });
 }
 function goBack() {

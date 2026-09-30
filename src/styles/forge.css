@@ -34,7 +34,7 @@
    же причине, по какой рядом лежит --fg-band: им пользуются двое, и они
    обязаны совпадать. Лёжа панель стоит справа, стоя — полосой снизу, поэтому
    в вертикали ширины у неё нет и полосе ничего уступать не нужно. */
-:root { --fp-w: 380px; }
+:root { --fp-w: 440px; }   /* было 380: карточка ядра выросла, см. блок «карточка» ниже */
 @media (orientation: landscape) and (max-width: 1023px) { :root { --fp-w: min(46vw, 300px); } }
 @media (orientation: portrait) { :root { --fp-w: 0px; } }
 
@@ -94,7 +94,8 @@
   /* ── настройки стекла ─────────────────────────────────────────────────── */
   --fp-fade: var(--sp-7);                              /* ширина затухания края */
   --fp-veil: color-mix(in srgb, var(--void) 50%, transparent);  /* вуаль под текстом */
-  --f-t: 0px; --f-r: 0px; --f-b: 0px; --f-l: var(--fp-fade);   /* колонка справа */
+  --f-t: var(--fp-fade); --f-r: var(--fp-fade); --f-b: var(--fp-fade); --f-l: var(--fp-fade);
+  --fp-foot-h: 44px;                                   /* высота строки гостя внизу */
 
   position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-panel);
   width: var(--fp-w);
@@ -104,7 +105,49 @@
 }
 .fp * { box-sizing: border-box; }
 
-.fp::before, .fco::before {
+/* ═══ КАРТОЧКА ПРАВОЙ ПАНЕЛИ (правка 2 к ТЗ 29.09.2026) ══════════════════════
+   Раньше правая панель была колонкой во всю высоту экрана, и около двух третей её
+   были пустые: форма осталась от непрозрачной плашки, а со стеклом и затуханием
+   блок во всю высоту выглядел обрезком. Теперь .fp — прозрачный контейнер во всю
+   высоту (он же держит строку гостя внизу экрана и клики пропускает), а стекло и
+   содержимое — в карточке .fp-card: она ровно по своему содержимому, у правого
+   края и по центру высоты. Пустое место выше и ниже карточки больше не
+   перехватывает нажатия — они уходят в зал.
+
+   Блок статов слева (.fp--stats) устроен как раньше: для него .fp-card невидима
+   (display: contents), а стекло остаётся на самом .fp. */
+.fp:not(.fp--stats) {
+  pointer-events: none;
+  justify-content: center;
+}
+.fp:not(.fp--stats) .fp-card {
+  position: relative; isolation: isolate; pointer-events: auto;
+  display: flex; flex-direction: column; min-height: 0;
+  /* Край экрана справа: карточка отступает от него, чтобы затухание было со всех
+     четырёх сторон; лишняя часть правого затухания просто уходит за экран. */
+  margin-right: var(--sp-4);
+  /* Выше и ниже остаётся место: снизу строка гостя, сверху — то же, для симметрии. */
+  max-height: calc(100dvh - 2 * var(--sp-7));
+}
+.fp--stats .fp-card { display: contents; }
+
+/* СТРОКА ГОСТЯ — прижата к низу ЭКРАНА и внутрь карточки не въезжает. Она ребёнок
+   .fp (полноэкранного контейнера), а не карточки, и абсолютна относительно него. */
+.fp:not(.fp--stats) .fp-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none;
+}
+
+/* ФИГУРА ЯДРА РАСТЁТ ВО ВСЮ ШИРИНУ КАРТОЧКИ за вычетом полей (правка 2). Рамка —
+   тёмный прямоугольник, в котором она сидела, — снята: фигура стоит прямо на
+   стекле, как на развороте. Размер: по ширине, но не выше, чем позволяет высота
+   экрана (за вычетом позывного, подсказки, TRAIN и полей). Было: высота clamp
+   150…300 при ширине колонки 380 — фигура 234 на экране в 900. Стало 392 на
+   широком: ×1.7 по стороне, ×2.8 по площади, а колонка шире всего на 60. */
+.fp .fc-stage {
+  width: min(100%, calc(100dvh - 250px)); height: auto; aspect-ratio: 1;
+  margin-left: auto; margin-right: auto; background: transparent;
+}
+.fp--stats::before, .fp:not(.fp--stats) .fp-card::before, .fco::before {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
   top: calc(var(--f-t) * -1); right: calc(var(--f-r) * -1);
   bottom: calc(var(--f-b) * -1); left: calc(var(--f-l) * -1);
@@ -400,9 +443,22 @@
 }
 .fc-cryst.is-lit .fc-cryst__name { fill: var(--ink); }
 .fc[data-level='crystal'] .fc-cryst:not(.is-sel) { opacity: .18; }
+/* В РАЗВОРОТЕ НАЗВАНИЯ СОСЕДНИХ КРИСТАЛЛОВ НЕ ГАСНУТ (правка 2 к ТЗ 29.09.2026).
+   На уровне кристалла остальные приглушались целой группой (.18), вместе с
+   подписью, — а на уровне грани подписи ярче. Пока блок был мелкий, разницы не
+   видно; в крупном она бросается в глаза. Теперь глушится только сам знак, подпись
+   остаётся такой же, как на уровне грани. Правило с .fco: SPAR делит этот файл,
+   и у него всё как было. */
+.fco .fc[data-level='crystal'] .fc-cryst:not(.is-sel) { opacity: 1; }
+.fco .fc[data-level='crystal'] .fc-cryst:not(.is-sel) > :not(.fc-cryst__name):not(.fc-cryst__key) { opacity: .18; }
 
-/* Розовое — только на миг выбора. Оно тут одно на всю сцену. */
-.fc-flash polygon { fill: var(--pink); opacity: .75; pointer-events: none; }
+/* ОТКЛИК НА ВЫБОР — на миг, нейтральный. Раньше стоял розовый (#FF0069, .75) и
+   при каждом касании кристалла на 220 мс проступал розовым силуэтом на любом ядре
+   (замерено: единственный розовый элемент сцены; фигура и материалы ни при чём).
+   Выбор — не срабатывание предмета, розовому здесь делать нечего; цвет ядра тоже не
+   годится — им показан налив, и вспышка читалась бы зажжённой. Тон и сила — те же,
+   что у подсветки под пальцем (.fc-facet__glow): один язык «вот это ты выбираешь». */
+.fc-flash polygon { fill: var(--ink); opacity: .3; pointer-events: none; }
 
 /* ── что сейчас открыто, и что с этим делать ─────────────────────────── */
 .fc-read { margin-top: var(--sp-3); min-width: 0; flex: 0 0 auto; }
@@ -472,6 +528,25 @@
   transition: opacity var(--d-hover) var(--e-settle);
 }
 .fc-light:active { opacity: var(--o-dim); }
+/* Погасить — не главное действие, поэтому не розовое: семья .fc-back, а размер и
+   отступы — как у «зажечь», чтобы кнопка стояла ровно на его месте. */
+.fc-out {
+  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  border: 1px solid var(--line); border-radius: var(--r-none);
+  background: var(--fill-1); color: var(--ink-soft);
+  font-family: var(--font-display); font-size: var(--t-xs);
+  font-weight: 700; letter-spacing: var(--ls-title);
+  text-transform: uppercase; cursor: pointer;
+  transition: border-color var(--d-hover) var(--e-settle),
+              color var(--d-hover) var(--e-settle),
+              opacity var(--d-hover) var(--e-settle);
+}
+.fc-out:hover { border-color: var(--line-strong); color: var(--ink); }
+.fc-out:active { opacity: var(--o-dim); }
+/* Счётчик зажжённого — та же типографика, что у строки причины (.fc-why). Отдельный
+   класс — ради nowrap: когда строка подвала переносится, `LIT 3 OF 7` не должен
+   ломаться посередине. */
+.fc-count { white-space: nowrap; }
 .fc-back {
   min-height: var(--h-btn-sm); padding: 0 var(--sp-3);
   border: 1px solid var(--line); border-radius: var(--r-none);
@@ -496,7 +571,7 @@
 @media (prefers-reduced-motion: reduce) {
   .fc-core, .fc-facet, .fc-cryst, .fc-flash, .fc-flow-clip,
   .fc-facet__glow, .fc-cryst__glow,
-  .fc-light, .fc-back { transition: none !important; }
+  .fc-light, .fc-out, .fc-back { transition: none !important; }
 }
 
 .fp-hint {
@@ -638,27 +713,37 @@
   .fp-train  { order: 2; }
   .fp-style  { order: 3; }
   .fp-tree   { order: 4; }
-  /* ⚠️ КАРТОЧКА ЯДРА — ИСКЛЮЧЕНИЕ, И ОНО ОБРАТНОЕ. Порядок выше писан для
-     полной панели, где дерево было последним из пяти блоков и к нему
-     прокручивались. Карточку ядра открывают НАРОЧНО — наковальней или строкой
-     из статов, — и прокручиваться к тому, ради чего её открыли, незачем.
-     Занятие уходит под фигуру: оно здесь не шаг назад, а ответ на «зажечь
-     нечем» — сходи позанимайся. */
-  .fp.is-core .fp-tree  { order: 0; }
-  .fp.is-core .fp-train { order: 1; }
 }
+/* ⚠️ КАРТОЧКА ЯДРА — ИСКЛЮЧЕНИЕ, И ОНО ОБРАТНОЕ. Порядок выше писан для полной
+   панели, где дерево было последним из пяти блоков и к нему прокручивались.
+   Карточку ядра открывают НАРОЧНО — наковальней или строкой из статов, — и
+   прокручиваться к тому, ради чего её открыли, незачем. Занятие уходит под фигуру:
+   оно здесь не шаг назад, а ответ на «зажечь нечем» — сходи позанимайся.
+   С правки 2 (29.09.2026) это верно на ЛЮБОЙ ширине, а не только на коротких
+   панелях: порядок сверху вниз — позывной и ядро → фигура → подсказка → TRAIN. */
+.fp.is-core .fp-tree  { order: 0; }
+.fp.is-core .fp-train { order: 1; align-items: center; text-align: center; }
 
 /* ── phone, upright: a band along the BOTTOM ─────────────────────────────
       The head and the way out stay put; the tree and the roster share what is
       left and scroll. The band's height is what the camera framing reserves
       too (see CAM.rect in PveScene) — the two numbers are meant to agree. */
 @media (orientation: portrait) {
-  .fp {
+  /* ВЕРТИКАЛЬ — ПО-ПРЕЖНЕМУ ПОЛОСА СНИЗУ, а не колонка у края: справа на телефоне
+     места нет. Но высота теперь по содержимому (раньше жёсткие 40vh, и TRAIN
+     уезжал под обрез). Карточка стоит над строкой гостя; по бокам экран, поэтому
+     затухание у неё сверху и снизу. */
+  .fp:not(.fp--stats) {
     top: auto; left: 0; right: 0; bottom: 0; width: auto;   /* --fp-w здесь 0 — полосе уступать нечего */
-    height: var(--fg-band);
-    /* полоса прижата к трём краям экрана: внутренний у неё один — верхний */
-    --f-t: var(--fp-fade); --f-r: 0px; --f-b: 0px; --f-l: 0px;
+    height: auto; justify-content: flex-end;
+    padding-bottom: var(--fp-foot-h);
+    --f-t: var(--fp-fade); --f-r: 0px; --f-b: var(--fp-fade); --f-l: 0px;
   }
+  .fp:not(.fp--stats) .fp-card { margin-right: 0; max-height: var(--fg-band); }
+  /* Вертикаль: фигура ограничена ВЫСОТОЙ, а не шириной — блок обязан уместиться в
+     ту полосу, которую раньше занимала панель. Ширина экрана здесь дала бы фигуру
+     в 366 точек и почти весь блок сцены закрыла бы. */
+  .fp .fc-stage { width: min(100%, clamp(150px, 22vh, 240px)); }
   .fp-head, .fp-scroll, .fp-foot { padding: var(--sp-3); }
   .fp-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
   .fp-kicker { width: 100%; }
