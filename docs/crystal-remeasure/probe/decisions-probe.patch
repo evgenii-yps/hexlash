@@ -1,0 +1,64 @@
+diff --git a/src/data/intentions.js b/src/data/intentions.js
+index 6926e1db..55639558 100644
+--- a/src/data/intentions.js
++++ b/src/data/intentions.js
+@@ -126,7 +126,38 @@ export function chooseIntentionModel(self, foe, memory, fight) {
+    first, then the temperament-weighted score. Used directly when brain='spinal',
+    and as the safety net + fallback under brain='model'. */
+ export function chooseIntentionSpinal(self, foe, memory, fight) {
+-  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  // ЗОНД crystal-remeasure (только копия дерева). Решения стороны 'player' считаются с подменой входа («как будто кристалла нет»).
++  const P = globalThis.__PROBE;
++  if (!(P && P.on && self.side === 'player')) return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  const run = (o) => hardNeed(o, foe, memory, fight) || spinalScore(o, foe, memory, fight);
++  P.holds = null;
++  const need = hardNeed(self, foe, memory, fight);
++  const act = need || spinalScore(self, foe, memory, fight);
++  if (!P.holds && self.leans && self.leans.length) spinalScore(self, foe, memory, fight); // условия тегов нужны и когда решила жёсткая нужда
++  const holds = P.holds;
++  const R = P.rec;
++  if (R) {
++    R.dec++; if (need) R.need++;
++    const cfAct = {};
++    for (const c of P.cfs || []) {
++      const o = { ...self };
++      if (c.ax01) o.ax01 = c.ax01;
++      if (c.leans !== undefined) o.leans = c.leans;
++      const a = run(o);
++      cfAct[c.name] = a;
++      if (a !== act) R.chg[c.name] = (R.chg[c.name] || 0) + 1;
++    }
++    for (const t of P.tagSpecs || []) {
++      if (!holds || !self.leans) continue;
++      let on = false;
++      for (const l of self.leans) if (t.tags.includes(l.tag) && String(l.when).split('&').every(holds)) { on = true; break; }
++      if (on) {
++        R.tt[t.key] = (R.tt[t.key] || 0) + 1;
++        if (cfAct[t.flipCf] !== undefined && cfAct[t.flipCf] !== act) R.tf[t.key] = (R.tf[t.key] || 0) + 1;
++      }
++    }
++  }
++  return act;
+ }
+ 
+ // HARD NEEDS — the state sets the FLOOR, the character bends where the floor sits and how the fighter answers
+@@ -214,6 +245,7 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
+         default: return true;
+       }
+     };
++    if (globalThis.__PROBE) globalThis.__PROBE.holds = holds; // ЗОНД
+     for (const l of self.leans) {
+       if (s[l.i] == null) continue;
+       if (String(l.when).split('&').every(holds)) s[l.i] += l.w;
+diff --git a/src/scene/buildFighter.js b/src/scene/buildFighter.js
+index 0b9ff0a3..f35a6438 100644
+--- a/src/scene/buildFighter.js
++++ b/src/scene/buildFighter.js
+@@ -906,6 +906,7 @@ export function buildFighter(
+         tempo: tempo01, weight: weight01, stick: stick01,
+         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
+       },
++      side, // ЗОНД crystal-remeasure: сторона бойца (только копия дерева)
+       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
+       hp01: hp / maxHp,
+       hpHist,
