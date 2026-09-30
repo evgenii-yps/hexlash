@@ -16,11 +16,13 @@
      через coreFacets.js — того же источника, что рисует ядро на лендинге, в
      деке и на экране входа. Второй отрисовки быть не должно.
 
-     ⚠️ ЦИФРА ОДНА — счётчик `LIT n OF m` в нижней строке разворота (ТЗ 30.09.2026,
-     прежняя строка «TRAIN HIM FIRST» снята, счётчик встал на её место). Больше
-     цифр нет: ни процентов, ни цифр у граней. В маленькой карточке (`preview`)
-     счётчика нет — там сколько зажжено видно по наливу. Потолок `m` — один на весь
-     проект, RESOURCE в upgradeData.js; здесь своего числа нет.
+     ⚠️ ЦИФР НА ЭКРАНЕ НЕТ. Сколько зажжено, показывает ряд маленьких шестиугольников
+     под кнопкой (ТЗ 30.09.2026; прежний текст `LIT n OF m` снят — серое на тёмном
+     рядом с розовой кнопкой не читалось и не объяснял себя). Ни процентов, ни цифр у
+     граней. Единственное место со словами — строка «нет места», когда все заняты. В
+     маленькой карточке (`preview`) ряда нет — там сколько зажжено видно по наливу.
+     Потолок `m` — один на весь проект, RESOURCE в upgradeData.js; здесь своего числа
+     нет, ряд строится ровно из него.
 
      ВЕДЕНИЕМ, А НЕ ТЫЧКОМ. Палец ведёт по ядру — под ним подсвечивается целая
      грань; отпустил внутри фигуры — она и выбрана, отпустил в пустоте — не
@@ -207,7 +209,7 @@
     </div>
 
     <!-- ── что сейчас открыто ───────────────────────────────────────────── -->
-    <div class="fc-read">
+    <div ref="readEl" class="fc-read" :class="{ 'is-more': moreBelow }" @scroll.passive="updateMore">
       <template v-if="level === 'core'">
         <p class="fc-hint">{{ preview ? t.forge.coreOpenHint : t.forge.coreHint }}</p>
       </template>
@@ -221,15 +223,14 @@
         <p v-if="level === 'facet'" class="fc-hint fc-hint--left">{{ t.forge.facetHint }}</p>
 
         <!-- ОПИСАНИЕ КРИСТАЛЛА — две вещи и ни одной цифры (ТЗ 24.09.2026):
-             что он даёт бойцу в бою, и как он меняет его манеру. Вторую
-             подписываем словом CHARACTER — внутреннего словаря игрок не видит.
+             что он даёт бойцу в бою, и как он меняет его манеру. Подписи CHARACTER
+             над второй строкой больше нет (ТЗ 30.09.2026, v3): строка и так
+             читается как характер, а место нужно под размер.
              ⚠️ Предложения набраны своим регистром, а не капителью: капитель в
-             системе отведена лейблам и ударным словам до трёх. Заглавными здесь
-             только сама подпись CHARACTER — она лейбл. -->
+             системе отведена лейблам и ударным словам до трёх. -->
         <div v-else-if="cryText" class="fc-lines">
           <p class="fc-line fc-line--effect">{{ cryText.effect }}</p>
           <p class="fc-char">
-            <span class="fc-char__label">{{ t.forge.characterLabel }}</span>
             <span class="fc-char__text">{{ cryText.character }}</span>
           </p>
         </div>
@@ -242,6 +243,13 @@
         v-if="level === 'crystal' && canLightSel"
         type="button" class="fc-light" @click="lightUp"
       >{{ t.forge.lightUp }}</button>
+      <!-- Все места заняты, а этот кристалл не горит: кнопка на месте, но выключена.
+           Убирать её нельзя — игрок не понял бы, куда она делась; текст и вид те же,
+           меняется только состояние. -->
+      <button
+        v-else-if="level === 'crystal' && poolBlocksSel"
+        type="button" class="fc-light" disabled
+      >{{ t.forge.lightUp }}</button>
       <!-- ПОГАСИТЬ — бесплатно и без подтверждения (ТЗ 30.09.2026). Стоит на месте
            кнопки зажигания: кристалл либо горит, либо нет, и кнопка одна. -->
       <button
@@ -249,9 +257,24 @@
         type="button" class="fc-out" @click="putOut"
       >{{ t.forge.putOut }}</button>
       <p v-else-if="level === 'crystal' && whySel" class="fc-why">{{ whySel }}</p>
-      <!-- СЧЁТЧИК зажжённого. Тот же `.fc-why`: положение и типографика прежней
-           строки, на месте которой он стоит. Не показывается в превью-карточке. -->
-      <p v-if="!preview" class="fc-why fc-count" aria-live="polite">{{ litText }}</p>
+      <!-- РЯД ЗАНЯТОГО. Отдельной строкой ПОД кнопкой, а не сбоку: рядом с яркой
+           кнопкой он терялся. Столько шестиугольников, сколько разрешает потолок;
+           заливаются слева направо цветом ядра — независимо от того, какие именно
+           кристаллы зажжены. Для чтения с экрана — текстовая подпись. -->
+      <div
+        v-if="!preview" class="fc-pips" :style="{ '--core': hue }"
+        role="img" :aria-label="litText"
+      >
+        <svg
+          v-for="i in resource" :key="i" class="fc-pip"
+          :class="{ 'is-lit': i <= spent, 'is-new': i - 1 === pipFlash }"
+          :viewBox="pipBox" aria-hidden="true"
+        >
+          <polygon class="fc-pip__ring" :points="heart" />
+          <polygon class="fc-pip__hex" :points="heart" />
+        </svg>
+      </div>
+      <p v-if="!preview && spentFull" class="fc-noroom" role="status">{{ t.forge.noRoom }}</p>
       <button v-if="level !== 'core' && !expanded" type="button" class="fc-back" @click="goBack">
         {{ level === 'crystal' ? t.forge.backToFacet : t.forge.backToCore }}
       </button>
@@ -260,7 +283,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, useId } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, useId } from 'vue';
 import { t, interpolate } from '@/locales/index.js';
 import HexCore from '@/components/core/HexCore.vue';
 import { coreFacets } from '@/data/coreFacets.js';
@@ -274,7 +297,7 @@ const props = defineProps({
   // в данных не трогаем — они часть счёта, а счёт не меняется.
   tree: { type: Array, default: () => [] },
   // Сколько уже зажжено и сколько всего можно. Решают, можно ли ещё зажигать, и
-  // рисуют счётчик `LIT n OF m`. Потолок по умолчанию — RESOURCE, а не своё число:
+  // рисуют ряд шестиугольников. Потолок по умолчанию — RESOURCE, а не своё число:
   // второго места, где он записан, быть не должно.
   spent: { type: Number, default: 0 },
   resource: { type: Number, default: RESOURCE },
@@ -376,8 +399,10 @@ const canLightSel = computed(() => {
 });
 /* Зажжённый гасится — бесплатно, в любой момент (ТЗ 30.09.2026). Условий нет. */
 const canQuenchSel = computed(() => faceOf(selCrystal.value)?.state === 'lit');
-/* Почему открытый кристалл не зажечь: осталось два случая — грань заполнена или
-   потолок бойца. Занятие среди причин больше не стоит (facetGate). */
+/* Почему открытый кристалл не зажечь: грань заполнена. Второй случай — потолок
+   бойца — показывается не строкой причины, а выключенной кнопкой и строкой «нет
+   места» под рядом (poolBlocksSel, spentFull). Занятие среди причин больше не
+   стоит (facetGate). */
 const whySel = computed(() => {
   const c = selCrystal.value;
   const f = selFacet.value;
@@ -385,11 +410,74 @@ const whySel = computed(() => {
   const g = t.value.forge;
   if (!c || !b || isLit(c)) return '';
   if (facetLitCount(f) >= b.limit) return g.whyFacetFull;
-  if (props.spent >= props.resource) return g.whySpent;
   return '';
 });
-/* Счётчик зажжённого: `LIT 3 OF 7`. Число считает хранилище, здесь только показ. */
+/* Все места заняты. Решает и выключенную кнопку, и строку «нет места». */
+const spentFull = computed(() => props.spent >= props.resource);
+/* Этот кристалл не горит, а места нет: кнопка зажигания показывается выключенной.
+   ⚠️ Если заодно полна и его грань — всё равно она: чинится обоими способами одним и
+   тем же действием (погасить любой), и две причины подряд игроку ни к чему. */
+const poolBlocksSel = computed(() => spentFull.value && faceOf(selCrystal.value)?.state === 'open');
+/* Подпись ряда для чтения с экрана: `3 OF 7 CRYSTALS LIT`. Число считает хранилище. */
 const litText = computed(() => interpolate(t.value.forge.litCount, { n: props.spent, max: props.resource }));
+
+/* ── ряд шестиугольников ───────────────────────────────────────────────── */
+/* ⚠️ ФОРМА — СЕРДЦЕ ЯДРА, та же, что у кристалла и у ядра на лендинге, входе и деке
+   (`heart` из coreFacets). Своей геометрии ряд не рисует: берётся её обводка и
+   рамка вида подгоняется под неё с полем на толщину линии. */
+const heartPts = heart.split(' ').map((p) => p.split(',').map(Number));
+const pipBox = (() => {
+  const xs = heartPts.map((p) => p[0]);
+  const ys = heartPts.map((p) => p[1]);
+  const pad = 2;
+  const x0 = Math.min(...xs) - pad;
+  const y0 = Math.min(...ys) - pad;
+  return `${x0.toFixed(2)} ${y0.toFixed(2)} ${(Math.max(...xs) + pad - x0).toFixed(2)} ${(Math.max(...ys) + pad - y0).toFixed(2)}`;
+})();
+
+/* ВСПЫШКА при зажигании: только что заполненный шестиугольник. Только когда
+   зажжён РОВНО один кристалл — смена бойца или «Зеркало» меняют счёт скачком, и
+   вспыхивать тогда нечему. Длина — в CSS (.fc-pip.is-new), здесь только срок, после
+   которого метка снимается. */
+const PIP_FLASH_MS = 520;
+const pipFlash = ref(null);
+let pipTimer = 0;
+watch(() => props.spent, (n, o) => {
+  clearTimeout(pipTimer);
+  pipFlash.value = null;
+  if (n !== o + 1) return;
+  pipFlash.value = n - 1;
+  pipTimer = setTimeout(() => { pipFlash.value = null; }, PIP_FLASH_MS);
+});
+onBeforeUnmount(() => clearTimeout(pipTimer));
+
+/* ── текстовая часть карточки прокручивается, кнопка и ряд — нет ────────────
+   В развороте высоты может не хватать (телефон стоя с крупным текстом, лёжа тем
+   более): тогда прокручивается ТОЛЬКО .fc-read, а .fc-foot остаётся прижатым к
+   низу. Полосы прокрутки нет (см. forge.css); что ниже есть ещё — говорит мягкое
+   затемнение нижней кромки, класс is-more. Он снимается, когда дошли до конца или
+   когда всё помещается. */
+const readEl = ref(null);
+const moreBelow = ref(false);
+function updateMore() {
+  const el = readEl.value;
+  moreBelow.value = !!el && el.scrollHeight - el.clientHeight - el.scrollTop > 2;
+}
+let readRo = null;
+onMounted(() => {
+  if (typeof ResizeObserver === 'undefined' || !readEl.value) return;
+  readRo = new ResizeObserver(updateMore);
+  readRo.observe(readEl.value);
+  updateMore();
+});
+onBeforeUnmount(() => { if (readRo) readRo.disconnect(); });
+/* Другой уровень или другой кристалл — текст другой: читать с начала. */
+watch([level, () => sel.value, () => cry.value], () => {
+  requestAnimationFrame(() => {
+    if (readEl.value) readEl.value.scrollTop = 0;
+    updateMore();
+  });
+});
 
 /* ── налив ─────────────────────────────────────────────────────────────── */
 const flowStyle = (f) => ({

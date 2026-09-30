@@ -337,7 +337,12 @@
    Подсветка под пальцем НЕЙТРАЛЬНАЯ — см. .fc-facet__glow. */
 .fp-tree { display: flex; flex-direction: column; min-width: 0; }
 
-.fc { display: flex; flex-direction: column; min-width: 0; }
+.fc {
+  display: flex; flex-direction: column; min-width: 0;
+  /* Высота кнопок карточки: было --h-btn-md (48), теперь на восемь точек выше —
+     надпись выросла (11 → 13 → 18), кнопка растёт вместе с ней (48 → 56 → 72). */
+  --fc-btn-h: calc(var(--h-btn-md) + var(--sp-5));
+}
 
 /* Кто открыт — одной строкой. Имя заглавными, ядро своим цветом. */
 .fc-who {
@@ -345,12 +350,12 @@
   display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0;
 }
 .fc-who .nm {
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700;
   letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .fc-who .cr {
-  font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--core); white-space: nowrap;
 }
 
@@ -464,77 +469,71 @@
 .fc-read { margin-top: var(--sp-3); min-width: 0; flex: 0 0 auto; }
 .fc-head { display: flex; flex-direction: column; gap: var(--sp-1); }
 .fc-kicker {
-  font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  font-size: var(--t-md); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--ink-off);
 }
 .fc-name {
-  margin: 0; font-family: var(--font-display); font-size: var(--t-sm);
+  margin: 0; font-family: var(--font-display); font-size: var(--t-xl);
   font-weight: 700; letter-spacing: var(--ls-title);
   text-transform: uppercase; color: var(--ink);
 }
 .fc-hint {
-  margin: 0; font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  margin: 0; font-size: var(--t-md); letter-spacing: var(--ls-title);
   text-transform: uppercase; color: var(--ink-off); text-align: center;
 }
 .fc-hint--left { text-align: left; }
 /* ОПИСАНИЕ КРИСТАЛЛА — что он даёт в бою и как меняет манеру. Настоящий текст,
    а не перечень фраз из игровых данных (ТЗ 24.09.2026). Цифр здесь нет ни одной.
 
-   ⚠️ ПРОКРУТКА ОСТАЁТСЯ, и она здесь единственная страховка от того, ради чего
-   ограничение и заводилось: длинное описание не должно выдавливать «ЗАЖЕЧЬ» и
-   возврат под нижний край (замерено прежде — на 67 точек в самой низкой
-   раскладке). Потолок поднят с 4.2em до 7.5em, потому что вместо двух-трёх
-   слов тут теперь два предложения: при прежнем потолке строка характера
-   пряталась под сгиб целиком, и её приходилось искать прокруткой.
+   ⚠️ СВОЕЙ ПРОКРУТКИ У ЭТОГО БЛОКА БОЛЬШЕ НЕТ (ТЗ 30.09.2026, v3). Потолок
+   высоты снят: текст растёт вместе с кеглем. Прокручивается не он, а вся текстовая
+   часть — .fc-read, см. «.fco .fc-read» ниже — а кнопка и ряд остаются внизу.
+   В SPAR карточка стоит в панели, у которой прокрутка своя.
 
    ⚠️ КАПИТЕЛИ У ПРЕДЛОЖЕНИЙ НЕТ. Она в системе отведена лейблам и ударным
    словам до трёх (hexlash-design §3); целое предложение заглавными и читается
-   хуже, и занимает заметно больше места. Заглавными здесь только подпись
-   CHARACTER — она лейбл. Трекинга у предложений тоже нет: он для подписей. */
+   хуже, и занимает заметно больше места. Трекинга у предложений тоже нет: он для подписей. */
 .fc-lines {
   margin: var(--sp-2) 0 0; padding: 0;
-  max-height: 7.5em; overflow-y: auto; overscroll-behavior: contain;
 }
 /* ⚠️ Предложения переносятся, а не обрезаются: ни одного обрезающего правила
    здесь быть не должно. Длинное слово ломается, чтобы не распирать колонку. */
 .fc-line, .fc-char__text {
-  margin: 0; font-family: var(--font-display); font-size: var(--t-xs);
-  line-height: 1.45; color: var(--ink-dim);
+  margin: 0; font-family: var(--font-display); font-size: var(--t-lg);
+  line-height: 1.4; color: var(--ink-dim);
   overflow-wrap: anywhere; hyphens: none;
 }
 .fc-char { margin: var(--sp-2) 0 0; }
-/* Подпись строки характера — лейбл, потому моно и заглавными. */
-.fc-char__label {
-  display: block; font-family: var(--font-mono); font-size: var(--t-micro);
-  letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
-}
-.fc-char__text { display: block; margin-top: var(--sp-1); }
+.fc-char__text { display: block; }
 
 .fc-foot {
   margin-top: var(--sp-3); flex: 0 0 auto; display: flex; align-items: center;
   gap: var(--sp-3); flex-wrap: wrap;
 }
 .fc-why {
-  margin: 0; font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  margin: 0; font-size: var(--t-md); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--ink-off);
 }
 /* Зажечь — главное действие экрана, потому розовое. Оно тут одно. */
 .fc-light {
-  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  min-height: var(--fc-btn-h); padding: 0 var(--sp-6);
   border: 0; border-radius: var(--r-none); background: var(--pink);
-  color: var(--ink); font-family: var(--font-display); font-size: var(--t-xs);
+  color: var(--ink); font-family: var(--font-display); font-size: var(--t-lg);
   font-weight: 700; letter-spacing: var(--ls-title);
   text-transform: uppercase; cursor: pointer;
   transition: opacity var(--d-hover) var(--e-settle);
 }
-.fc-light:active { opacity: var(--o-dim); }
+.fc-light:active:not(:disabled) { opacity: var(--o-dim); }
+/* Места нет: кнопка на месте, текст и цвет те же, гаснет и не нажимается. 0.4 — то же
+   значение, что у выключенной кнопки кабинета (.cab-btn:disabled). */
+.fc-light:disabled { opacity: 0.4; cursor: not-allowed; }
 /* Погасить — не главное действие, поэтому не розовое: семья .fc-back, а размер и
    отступы — как у «зажечь», чтобы кнопка стояла ровно на его месте. */
 .fc-out {
-  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  min-height: var(--fc-btn-h); padding: 0 var(--sp-6);
   border: 1px solid var(--line); border-radius: var(--r-none);
   background: var(--fill-1); color: var(--ink-soft);
-  font-family: var(--font-display); font-size: var(--t-xs);
+  font-family: var(--font-display); font-size: var(--t-lg);
   font-weight: 700; letter-spacing: var(--ls-title);
   text-transform: uppercase; cursor: pointer;
   transition: border-color var(--d-hover) var(--e-settle),
@@ -543,15 +542,53 @@
 }
 .fc-out:hover { border-color: var(--line-strong); color: var(--ink); }
 .fc-out:active { opacity: var(--o-dim); }
-/* Счётчик зажжённого — та же типографика, что у строки причины (.fc-why). Отдельный
-   класс — ради nowrap: когда строка подвала переносится, `LIT 3 OF 7` не должен
-   ломаться посередине. */
-.fc-count { white-space: nowrap; }
+/* РЯД ЗАНЯТОГО — семь (RESOURCE) шестиугольников отдельной строкой под кнопкой.
+   flex-basis 100% уводит его на свою строку и центрирует относительно всего подвала,
+   а не кнопки; воздух над ним (sp-3 своего поля + sp-3 зазора подвала) отделяет его от
+   кнопки, чтобы он читался отдельной вещью, а не подписью к ней.
+   --core задаётся на самом ряду: в SPAR карточка стоит вне того предка, что красит
+   остальной экран, и без этого ряд брал бы цвет по умолчанию, а не ядра бойца.
+   ⚠️ ПУСТОЙ — КОНТУР --ink-dim (#A9A5AF), не --ink-off (#5D5D66, «выключено»): на
+   телефоне при дневном свете --ink-off сливается с фоном. Толщина линии не
+   масштабируется вместе с фигурой (vector-effect), иначе при 26 px она была бы
+   волосяной. */
+.fc-pips {
+  flex: 0 0 100%; display: flex; justify-content: center; flex-wrap: nowrap;
+  gap: var(--sp-2); margin-top: var(--sp-3);
+}
+.fc-pip { display: block; flex: none; height: 44px; width: auto; overflow: visible; }
+.fc-pip polygon { vector-effect: non-scaling-stroke; }
+.fc-pip__hex {
+  fill: none; stroke: var(--ink-dim); stroke-width: 1.5px; stroke-linejoin: miter;
+  transition: fill var(--d-fast) var(--e-settle), stroke var(--d-fast) var(--e-settle);
+}
+.fc-pip.is-lit .fc-pip__hex { fill: var(--core); stroke: var(--core); }
+/* ВСПЫШКА при зажигании — в цвете ядра, не розовая: розовый здесь запрещён (тем же
+   грехом болел отклик на выбор, см. .fc-flash). Кольцо расходится и гаснет, заливка
+   проступает из прозрачности. Яркость не поднимаем: красное ядро от этого уходит в
+   розовое. */
+.fc-pip__ring {
+  fill: none; stroke: var(--core); stroke-width: 2px; opacity: 0;
+  transform-box: fill-box; transform-origin: center;
+}
+.fc-pip.is-new .fc-pip__ring { animation: fc-pip-ring var(--d-panel) var(--e-settle) both; }
+.fc-pip.is-new .fc-pip__hex { animation: fc-pip-fill var(--d-panel) var(--e-settle) both; }
+@keyframes fc-pip-ring {
+  from { opacity: .9; transform: scale(1); }
+  to   { opacity: 0;  transform: scale(1.9); }
+}
+@keyframes fc-pip-fill { from { fill-opacity: .25; } to { fill-opacity: 1; } }
+/* Строка «нет места» — читаемым тоном (--ink-soft), а не серым в ноль. */
+.fc-noroom {
+  flex: 0 0 100%; margin: 0; text-align: center;
+  font-size: var(--t-lg); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-soft);
+}
 .fc-back {
   min-height: var(--h-btn-sm); padding: 0 var(--sp-3);
   border: 1px solid var(--line); border-radius: var(--r-none);
   background: var(--fill-1); color: var(--ink-soft);
-  font: inherit; font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  font: inherit; font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; cursor: pointer;
   transition: border-color var(--d-hover) var(--e-settle),
               color var(--d-hover) var(--e-settle);
@@ -564,14 +601,18 @@
    выключенными не были. Селектор с .fp нарочно: правила .fc-* выше делит с залом
    экран SPAR (SparView подключает этот файл ради ядра), и его подписи здесь не
    перекрашиваются. */
-.fp .fc-kicker, .fp .fc-hint, .fp .fc-char__label, .fp .fc-why { color: var(--ink-dim); }
+.fp .fc-kicker, .fp .fc-hint, .fp .fc-why { color: var(--ink-dim); }
 
 /* «Уменьшить движение»: переходов нет, конечные состояния те же. Отклик на
    выбор остаётся — он не украшение. */
 @media (prefers-reduced-motion: reduce) {
   .fc-core, .fc-facet, .fc-cryst, .fc-flash, .fc-flow-clip,
   .fc-facet__glow, .fc-cryst__glow,
-  .fc-light, .fc-out, .fc-back { transition: none !important; }
+  .fc-light, .fc-out, .fc-back, .fc-pip__hex { transition: none !important; }
+  /* Вспышка остаётся, но без расхождения кольца: масштаб уходит, смена прозрачности
+     нет (правило системы). */
+  .fc-pip.is-new .fc-pip__ring { animation-name: fc-pip-ring-still; }
+  @keyframes fc-pip-ring-still { from { opacity: .9; } to { opacity: 0; } }
 }
 
 .fp-hint {
@@ -957,7 +998,7 @@
   --f-t: 0px; --f-r: 0px; --f-b: 0px; --f-l: 0px;
   /* Что резервируем под остальное на слое: место под BACK сверху, подпись, описание
      и кнопку зажигания. От этого зависит, насколько крупной встанет фигура. */
-  --fco-reserve: 380px;
+  --fco-reserve: 450px;   /* было 380: кнопка и ряд выросли, фигура отдаёт им высоту */
 
   position: fixed; inset: 0; z-index: var(--z-modal);
   display: flex; flex-direction: column;
@@ -974,7 +1015,24 @@
   /* Сверху — место под BACK (угол левый верхний), поэтому отступ больше боковых. */
   padding: calc(var(--h-btn-sm) + var(--sp-4) + var(--sp-2)) var(--sp-3) var(--sp-4);
 }
-.fco .fc { width: min(100%, 720px); margin: auto 0; }
+.fco .fc { width: min(100%, 720px); margin: auto 0; max-height: 100%; }
+
+/* ТЕКСТОВАЯ ЧАСТЬ ПРОКРУЧИВАЕТСЯ, КНОПКА И РЯД — НЕТ (ТЗ 30.09.2026, v3).
+   Фигура, подпись «кто», кнопка и ряд занимают свою высоту и не сжимаются; всё,
+   чего не хватает, берёт на себя .fc-read. Когда текст помещается — прокрутки нет,
+   затемнения нет, следов не видно. Полосы прокрутки нет совсем: что ниже есть ещё,
+   показывает мягкое затемнение нижней кромки (класс is-more ставит ForgeCore),
+   оно уходит, когда дошли до конца. */
+.fco .fc-stage, .fco .fc-who, .fco .fc-foot { flex: 0 0 auto; }
+.fco .fc-read {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.fco .fc-read::-webkit-scrollbar { display: none; }
+.fco .fc-read.is-more {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--sp-6)), transparent);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - var(--sp-6)), transparent);
+}
 
 /* ФИГУРА — максимально крупная, какая влезает с полями: меньшая из ширины экрана
    и высоты за вычетом резерва. Фон убран: зал позади виден сквозь стекло, а не
@@ -1007,12 +1065,18 @@
   .fco-body { padding-bottom: var(--sp-2); }
   .fco .fc {
     width: min(100%, 860px); display: grid; align-items: center;
+    /* Высота — на всё тело слоя, строка текста — остаток между подписью и
+       кнопкой: она и прокручивается, а кнопка остаётся внизу. */
+    height: 100%; margin: 0;
     grid-template-columns: auto minmax(0, 1fr); column-gap: var(--sp-5);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas: "stage who" "stage read" "stage foot";
   }
   .fco .fc-stage { grid-area: stage; }
   .fco .fc-who { grid-area: who; justify-content: flex-start; }
-  .fco .fc-read { grid-area: read; }
+  /* stretch, а не центр: иначе строка принимает высоту текста целиком и не
+     прокручивается — налезает на кнопку. */
+  .fco .fc-read { grid-area: read; align-self: stretch; }
   .fco .fc-foot { grid-area: foot; }
 }
 
