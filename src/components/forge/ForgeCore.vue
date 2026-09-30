@@ -265,6 +265,7 @@ import { t, interpolate } from '@/locales/index.js';
 import HexCore from '@/components/core/HexCore.vue';
 import { coreFacets } from '@/data/coreFacets.js';
 import { getCore, RESOURCE } from '@/data/upgradeData.js';
+import { APEX_FACE, apexOpenInBranch } from '@/data/apexGate.js';
 import { facetTitle, crystalTitle, crystalText } from '@/data/crystalTexts.js';
 
 const props = defineProps({
@@ -372,8 +373,13 @@ const canLightSel = computed(() => {
   if (!c || !b) return false;
   return faceOf(c)?.state === 'open'
     && canLightAny.value
-    && facetLitCount(f) < b.limit;
+    && facetLitCount(f) < b.limit
+    && apexReady(c, b);
 });
+/* ВЕРШИНА ЗАКРЫТА, пока не горят четыре нижних кристалла этой грани
+   (TZ_apex_gate_v1). Правило живёт в data/apexGate.js — здесь только вопрос. */
+const isApex = (c) => faceOf(c)?.id === APEX_FACE;
+const apexReady = (c, b) => !isApex(c) || apexOpenInBranch(b);
 /* Зажжённый гасится — бесплатно, в любой момент (ТЗ 30.09.2026). Условий нет. */
 const canQuenchSel = computed(() => faceOf(selCrystal.value)?.state === 'lit');
 /* Почему открытый кристалл не зажечь: осталось два случая — грань заполнена или
@@ -384,6 +390,7 @@ const whySel = computed(() => {
   const b = branchOf(f);
   const g = t.value.forge;
   if (!c || !b || isLit(c)) return '';
+  if (!apexReady(c, b)) return g.whyApexClosed;
   if (facetLitCount(f) >= b.limit) return g.whyFacetFull;
   if (props.spent >= props.resource) return g.whySpent;
   return '';

@@ -18,6 +18,7 @@
      slip       — 0 easy to hit   … 100 elusive (evade + spacing) */
 
 import { resolveLeans } from './branchThreshold.js';
+import { withoutClosedApex } from './apexGate.js';
 
 export const AXES = [
   { id: 'distance', neutral: 50, desc: '0 in-close … 100 far out' },
@@ -92,7 +93,10 @@ export function resolveBehavior(coreId, litFacets = []) {
     chargeMax: 0, chargeGain: 0, chargePower: 0, chargePen: 0,
   };
   const addBonus = (st, pct) => { if (st) statBonuses[st] = (statBonuses[st] || 0) + (pct || 0); };
-  for (const f of litFacets) {
+  // Вершина без четырёх нижних кристаллов своей грани в бою не участвует
+  // (TZ_apex_gate_v1): набор, нарушающий правило, приходит сюда только со стороны.
+  const valid = withoutClosedApex(litFacets);
+  for (const f of valid) {
     if (!f) continue;
     for (const s of f.shifts || []) {
       if (s && AXIS_IDS.includes(s.axis)) axes[s.axis] = clampAxis(axes[s.axis] + (s.delta || 0));
@@ -103,6 +107,6 @@ export function resolveBehavior(coreId, litFacets = []) {
     for (const eb of f.extraBonuses || []) addBonus(eb.stat, eb.pct); // per-facet seam bonuses (0+)
   }
   // Грани и теги (TZ_grani_tags_v1): наклоны выбора намерения + резонанс веток. Читает intentions.js.
-  const { leans, resonance } = resolveLeans(coreId, litFacets);
+  const { leans, resonance } = resolveLeans(coreId, valid);
   return { axes, effects, conditionals, statBonuses, leans, resonance };
 }

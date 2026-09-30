@@ -146,6 +146,7 @@ export default {
     backToFacet: "← BACK TO THE FACET",
     backToCore: "← BACK TO THE CORE",
     // почему этот кристалл не зажечь — по одной причине на случай
+    whyApexClosed: "THE APEX OPENS WHEN THE FOUR BELOW IT ARE LIT",
     whyFacetFull: "THIS FACET IS FULL",
     whySpent: "HE HOLDS ALL HE CAN · NOTHING LEFT TO LIGHT",
     buildEmpty: "NOTHING LIT YET",

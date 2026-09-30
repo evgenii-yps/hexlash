@@ -56,6 +56,7 @@
 // exactly the state the hall's own auto-pick is built to fill.
 import { CORES, RESOURCE } from '@/data/upgradeData.js';
 import { buildTree, litIdsOf, countLit } from '@/data/upgradeTree.js';
+import { APEX_FACE, apexOpenInBranch } from '@/data/apexGate.js';
 import { pickCallsign } from '@/data/callsigns.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
 import { LESSON_MS, lessonEndsAt, assignGate, facetGate, stateOf } from '@/services/training.js';
@@ -520,10 +521,18 @@ const actions = {
 
         if (face.state === 'lit') {                       // погасить
             commit('SET_FACE', { id, crystalId, faceId, faceState: 'open' });
+            // ВЕРШИНА ЗАВИСИТ ОТ НИЖНИХ (TZ_apex_gate_v1): погас кристалл 1–4 —
+            // горевшая вершина этой грани гаснет вместе с ним, её очко возвращается.
+            const apex = cr.faces.find((x) => x.id === APEX_FACE);
+            if (faceId !== APEX_FACE && apex && apex.state === 'lit') {
+                commit('SET_FACE', { id, crystalId, faceId: APEX_FACE, faceState: 'open' });
+            }
             return true;
         }
         const litHere = cr.faces.filter((x) => x.state === 'lit').length;
         if (litHere >= cr.limit || countLit(f.upgrade) >= RESOURCE) return false;
+        // Вершину зажечь можно, только когда горят четыре нижних этой грани.
+        if (faceId === APEX_FACE && !apexOpenInBranch(cr)) return false;
         commit('SET_FACE', { id, crystalId, faceId, faceState: 'lit', right: 'spend' });
         return true;
     },

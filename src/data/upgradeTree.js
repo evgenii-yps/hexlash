@@ -9,6 +9,7 @@
        upgradeData.js changes (a facet that no longer exists is simply dropped,
        never resurrected as a stale copy). */
 import { CRYSTALS, RESOURCE } from './upgradeData.js';
+import { APEX_FACE, apexOpen } from './apexGate.js';
 
 /** Lit faces of a working tree, as { crystalId: [faceId, …] }. Empty → {}. */
 export function litIdsOf(tree) {
@@ -32,6 +33,7 @@ export function countLit(tree) {
  * Both caps are re-applied here — the per-crystal limit and the global RESOURCE
  * pool — so saved data can never over-spend, however it was written. A facet
  * that is locked in the current content stays locked. Unknown ids are ignored.
+ * The apex (step 5) is dropped unless steps 1–4 of its branch are lit (apexGate).
  * Returns null for an unknown core.
  */
 export function buildTree(coreId, lit) {
@@ -50,6 +52,11 @@ export function buildTree(coreId, lit) {
       if (inCrystal >= cr.limit) break;
       if (f.state !== 'open') continue;
       if (!ids.includes(f.id)) continue;
+      // ВЕРШИНА ЗАКРЫТА, пока четыре нижних кристалла этой грани не горят
+      // (TZ_apex_gate_v1). Грани идут по порядку 1..5, так что к моменту
+      // вершины нижние уже разобраны; но в число берём именно ГОРЯЩИЕ,
+      // а не просимые: нижний мог не зажечься из-за потолка.
+      if (f.id === APEX_FACE && !apexOpen(cr.faces.filter((x) => x.state === 'lit').map((x) => x.id))) continue;
       f.state = 'lit';
       spent += 1;
       inCrystal += 1;

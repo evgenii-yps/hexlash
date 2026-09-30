@@ -19,6 +19,7 @@
 import { CORES, CRYSTALS } from './upgradeData.js';
 import { buildTree, countLit } from './upgradeTree.js';
 import { resolveBehavior } from './behavior.js';
+import { APEX_FACE } from './apexGate.js';
 import { pickCallsign } from './callsigns.js';
 import { COMBAT_BALANCE, toughnessBonusFor } from './combatBalance.js';
 
@@ -39,8 +40,22 @@ export function randomLitIds(coreId, n, rnd = Math.random) {
     const j = Math.floor(rnd() * (i + 1));
     [all[i], all[j]] = [all[j], all[i]];
   }
+  const chosen = all.slice(0, n);
+  const rest = all.slice(n).filter((p) => p.f !== APEX_FACE);
+  // ВЕРШИНА БЕЗ ЧЕТЫРЁХ НИЖНИХ ЗАКРЫТА (TZ_apex_gate_v1): buildTree её всё равно
+  // отбросил бы, и у соперника вышло бы меньше граней, чем у игрока. Поэтому
+  // выпавшую «одинокую» вершину меняем на случайный нижний кристалл — число
+  // граней сохраняется, набор остаётся допустимым.
+  const has = (cr) => chosen.filter((p) => p.cr === cr && p.f !== APEX_FACE).length;
+  for (let i = 0; i < chosen.length; i++) {
+    const p = chosen[i];
+    if (p.f === APEX_FACE && has(p.cr) < APEX_FACE - 1) {
+      if (!rest.length) { chosen.splice(i, 1); i--; continue; }
+      chosen[i] = rest.shift();
+    }
+  }
   const out = {};
-  for (const pick of all.slice(0, n)) (out[pick.cr] = out[pick.cr] || []).push(pick.f);
+  for (const pick of chosen) (out[pick.cr] = out[pick.cr] || []).push(pick.f);
   return out;
 }
 

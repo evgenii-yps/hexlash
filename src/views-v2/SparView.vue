@@ -293,6 +293,7 @@ import ForgeCore from '@/components/forge/ForgeCore.vue';
 import SparScene from '@/scene/SparScene.vue';
 import { CORES, RESOURCE, getCore } from '@/data/upgradeData.js';
 import { buildTree, litIdsOf, countLit } from '@/data/upgradeTree.js';
+import { APEX_FACE, apexOpenInBranch } from '@/data/apexGate.js';
 import { crystalTitle } from '@/data/crystalTexts.js';
 import { BUFF_IDS, BUFF_META } from '@/data/buffBalance.js';
 // СБОРКА ЕДЕТ В БОЙ ПАМЯТЬЮ СТРАНИЦЫ, а не сейфом: SPAR ничего никуда не пишет,
@@ -407,10 +408,16 @@ function onFoeToggle({ crystalId, faceId }) {
   if (!face) return;
   if (face.state === 'lit') {
     face.state = 'open';
+    // Вершина зависит от нижних (TZ_apex_gate_v1): погас нижний — вершина гаснет с ним.
+    if (faceId !== APEX_FACE) {
+      const apex = branch.faces.find((f) => f.id === APEX_FACE);
+      if (apex && apex.state === 'lit') apex.state = 'open';
+    }
   } else {
     if (face.state !== 'open') return;
     if (branch.faces.filter((f) => f.state === 'lit').length >= branch.limit) return;
     if (countLit(tree) >= RESOURCE) return;
+    if (faceId === APEX_FACE && !apexOpenInBranch(branch)) return;
     face.state = 'lit';
   }
   foeTree.value = tree.map((b) => ({ ...b, faces: b.faces.map((f) => ({ ...f })) }));
