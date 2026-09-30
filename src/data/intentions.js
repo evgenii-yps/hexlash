@@ -167,36 +167,36 @@ export function spinalScore(self, foe, memory, fight) {
   // ГРАНИ И ТЕГИ (TZ_grani_tags_v1): наклоны из зажжённых кристаллов и резонанс веток. Раньше теги
   // нигде не читались. Ложатся ДО накала — предохранитель от гляделок сильнее любого наклона.
   if (self.leans) {
-    for (const l of self.leans) {
-      if (s[l.i] == null) continue;
-      let on = true;
-      switch (l.when) {
-        case 'close': on = foe.has && foe.inStrike; break;
-        case 'far': on = far; break;
-        case 'foeOpen': on = foe.phase === 'recovery' || foe.phase === 'stagger'; break;
-        case 'foeSwing': on = foeThreat || foe.phase === 'windup' || foe.phase === 'commit'; break;
-        case 'charged': on = self.charge01 >= 0.5; break;
+    // Условие наклона: одно имя или несколько через «&» (все сразу) — «враг ранен И затих».
+    const holds = (w) => {
+      switch (w) {
+        case 'close': return foe.has && foe.inStrike;
+        case 'far': return far;
+        case 'foeOpen': return foe.phase === 'recovery' || foe.phase === 'stagger';
+        case 'foeSwing': return foeThreat || foe.phase === 'windup' || foe.phase === 'commit';
+        case 'charged': return self.charge01 >= 0.5;
         // НОВЫЕ условия (TZ_tags_semantics_v2): читают состояние, что уже есть у бойца; пороги — combatBalance.grani.
-        case 'selfHpLow': on = self.hp01 < GR.selfHpLow; break;
-        case 'foeHpLow': on = foe.hp01 != null && foe.hp01 < GR.foeHpLow; break;
-        case 'selfWindLow': on = self.stamina01 < GR.selfWindLow; break;
-        case 'foeWindLow': on = foe.stamina01 != null && foe.stamina01 < GR.foeWindLow; break;
-        case 'longFight': on = (fight.elapsed || 0) > GR.longFightSec; break;
+        case 'selfHpLow': return self.hp01 < GR.selfHpLow;
+        case 'foeHpLow': return foe.hp01 != null && foe.hp01 < GR.foeHpLow;
+        case 'selfWindLow': return self.stamina01 < GR.selfWindLow;
+        case 'foeWindLow': return foe.stamina01 != null && foe.stamina01 < GR.foeWindLow;
+        case 'longFight': return (fight.elapsed || 0) > GR.longFightSec;
         case 'foeQuiet': { // враг не бил дольше N с: последний 'attack' в памяти, нет его — с начала боя
           let last = -Infinity;
           for (const e of memory) if (e.type === 'attack' && e.t > last) last = e.t;
-          on = (last === -Infinity ? (fight.elapsed || 0) : fight.t - last) > GR.foeQuietSec;
-          break;
+          return (last === -Infinity ? (fight.elapsed || 0) : fight.t - last) > GR.foeQuietSec;
         }
         case 'hpDropped': { // своё HP упало на N% максимума за последние M с (пик в окне − сейчас)
           let peak = self.hp01;
           for (const h of self.hpHist || []) if (fight.t - h.t <= GR.hpDropWindSec && h.hp01 > peak) peak = h.hp01;
-          on = peak - self.hp01 >= GR.hpDropFrac;
-          break;
+          return peak - self.hp01 >= GR.hpDropFrac;
         }
-        default: on = true;
+        default: return true;
       }
-      if (on) s[l.i] += l.w;
+    };
+    for (const l of self.leans) {
+      if (s[l.i] == null) continue;
+      if (String(l.when).split('&').every(holds)) s[l.i] += l.w;
     }
   }
   // накал (stalemate safeguard): a rising escalation01 (silence-without-exchange)

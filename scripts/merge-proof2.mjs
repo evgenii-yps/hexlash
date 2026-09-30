@@ -31,7 +31,7 @@ for (const core of ['natisk', 'nalet', 'skala', 'zasada']) for (const br of CRYS
       const o0 = oldTags(core, br.id, 'vs_zero')[idx], o1 = oldTags(core, br.id, 'vs_same')[idx]; idx++;
       const oldKey = o0[0].split('|'); // tag|intent|when
       const n0 = newH[`${core}|${br.id}|vs_zero`][`${tag}|${intent}|${when}`], n1 = newH[`${core}|${br.id}|vs_same`][`${tag}|${intent}|${when}`];
-      rows.push([tag + (oldKey[0] !== tag ? ` (было ${oldKey[0]})` : ''), `${INT[intent]} +${vertex ? G.vertexLean : G.tagLean}${vertex ? ' (вершина)' : ''}`, WHEN[when], NAME[core], `${br.id} ${FACET_NAMES[br.id]} · ${br.name}`, `${i + 1}${vertex ? ' ★' : ''}`, `${INT[oldKey[1]]} · ${WHEN[oldKey[2]] || oldKey[2]}`, `${pc(o0[1])} / ${pc(o1[1])}`, `${pc(n0)} / ${pc(n1)}`]);
+      rows.push([tag + (oldKey[0] !== tag ? ` (было ${oldKey[0]})` : ''), `${INT[intent]} +${vertex ? G.vertexLean : G.tagLean}${vertex ? ' (вершина)' : ''}`, String(when).split('&').map((w) => WHEN[w]).join(' И '), NAME[core], `${br.id} ${FACET_NAMES[br.id]} · ${br.name}`, `${i + 1}${vertex ? ' ★' : ''}`, `${INT[oldKey[1]]} · ${WHEN[oldKey[2]] || oldKey[2]}`, `${pc(o0[1])} / ${pc(o1[1])}`, `${pc(n0)} / ${pc(n1)}`]);
     }
   });
 }

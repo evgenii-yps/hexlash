@@ -22,7 +22,7 @@ const P = 'press', ST = 'strike', SG = 'sting', H = 'hold', BR = 'break', C = 'c
    желаемой дистанции) · foeOpen (враг открыт: восстановление/сбив) · foeSwing (враг замахивается/недавно
    бил) · charged (заряд хлёсткого удара ≥ 0.5) · НОВЫЕ (TZ_tags_semantics_v2): selfHpLow · foeHpLow ·
    selfWindLow · foeWindLow · longFight · foeQuiet (враг не бил дольше N с) · hpDropped (своё HP упало на N%
-   за M с). Условия «враг бил» (foeSwing) у BULWARK и AMBUSH мертвы по устройству — жёсткая потребность
+   за M с). Условия склеиваются через «&» — наклон включается, когда истинны все (perfect_trap: foeHpLow&foeQuiet). Условия «враг бил» (foeSwing) у BULWARK и AMBUSH мертвы по устройству — жёсткая потребность
    CATCH решает тик до очков, — поэтому у их веток BREAKER и TRAP теги на новом словаре. */
 
 /* Тег → [намерение, условие, вершина?]. Черновые соответствия по смыслу тега (комментарии в upgradeData.js). */
@@ -53,7 +53,7 @@ export const TAG_LEANS = {
   clinch: [P, 'close', true],
   // AMBUSH
   punish_aggression: [C, 'hpDropped'],         // TRAP·3: осталось CATCH; условие из нового словаря
-  perfect_trap: [ST, 'foeQuiet', true],        // вершина TRAP: капкан захлопывается, когда враг затих (было: CATCH по «враг бил»)
+  perfect_trap: [ST, 'foeHpLow&foeQuiet', true], // вершина TRAP: добивает переставшего сопротивляться — враг ранен И затих (было: просто «затих» — 68–72%, переодетое «всегда»)
   exhaust: [SG, 'longFight'],                  // SHADOW: изматывает с длиной боя (было: враг далеко — 5%)
   phantom: [BR, 'hpDropped', true],            // вершина SHADOW: уходит из-под удара после попадания
   vulnerable_strike: [ST, 'foeOpen'],
