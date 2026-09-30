@@ -55,7 +55,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildPunchBag, buildBagStand, buildBuffShelf, buildSparStand, buildAscensionStand } from './forgeProps.js';
+import { buildPunchBag, buildBagStand, buildSparStand, buildAscensionStand } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildSoonWord } from './soonWord.js';
 import { buildFighter } from './buildFighter.js';
@@ -184,6 +184,17 @@ const MARK = {
   // 2.0 — замер: на составах 1…10 в обеих раскладках ни одно тело не за рамкой,
   // а до ближайшего соседа на экране остаётся не меньше 0.15 доли кадра.
   ahead: 2.0,          // how far in FRONT of the field's foremost row the mark sits
+};
+
+// МЕТКА ЛЕВЕЕ РЯДА ПРЕДМЕТОВ (30.09.2026). Раньше выбранный боец выходил за ряд по
+// центру и стоял ровно позади ASCENSION: рост 1.95 против предмета в треть метра —
+// тело закрывало предмет и подпись. Теперь метка стоит левее левой кромки ряда, на
+// свободной части плиты, той же глубины (за рядом), а слева места нет — там метка
+// остаётся прежней (см. markLeft). Числа — доли кадра, как у самого ряда.
+const MARK_LEFT = {
+  gap: 0.03,     // зазор по кадру между правым краем тела и левой кромкой ряда (с подписью)
+  edge: 0.10,    // доля полукадра у левого обреза экрана, которую тело занимать не должно
+  wall: 0.30,    // м до левого ребра плиты сверх половины тела
 };
 
 // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
@@ -571,7 +582,47 @@ function markFor(count, arcZ) {
   // гарантирует), и оставлена страховкой.
   const band = rowBand.zMax > rowBand.zMin ? rowBand : propRowBandFor(compose ? compose.slab : null);
   const zWant = frontZ + MARK.ahead;
-  return { x, z: band ? Math.min(zWant, band.zMin - BODY.halfW) : zWant };
+  const z = band ? Math.min(zWant, band.zMin - BODY.halfW) : zWant;
+  const left = markLeft(z);
+  return { x: left != null ? left : x, z };
+}
+
+/**
+ * Куда встать левее ряда на глубине `z`: самый правый x, при котором тело целиком
+ * левее левой кромки ряда (с подписью) минус зазор. Возвращает null, если такого
+ * места нет НА ЭТОМ ЭКРАНЕ — тогда метка остаётся прежней, без подгонки:
+ *   · тело ушло бы за левое ребро плиты, или
+ *   · тело не помещается в кадр (в вертикали слева от ряда 2–3% кадра — места нет).
+ * Экран читается по текущим пропорциям холста, поэтому поворот телефона пересчитывает
+ * метку (см. refreshMark).
+ *
+ * Тело меряется по восьми углам коробки (полуширина BODY.halfW, рост BODY.height): голова
+ * и ступни садятся в кадр в разные доли, и берётся худшая.
+ */
+function markLeft(z) {
+  if (!rowBasis || !isFinite(rowLo) || !slab || !compose || !viewH) return null;
+  const b = rowBasis, topY = slab.refs.topY, hw = BODY.halfW;
+  const span = (x) => {
+    let lo = Infinity, hi = -Infinity;
+    for (const dx of [-hw, hw]) for (const dz of [-hw, hw]) for (const y of [topY, topY + BODY.height]) {
+      const r = camRatio(b, x + dx, y, z + dz);
+      if (r < lo) lo = r;
+      if (r > hi) hi = r;
+    }
+    return { lo, hi };
+  };
+  const want = rowLo - MARK_LEFT.gap;                       // правая грань тела не правее
+  let xMin = -(compose.slab.width / 2 - hw - MARK_LEFT.wall);
+  let xMax = 0;
+  if (span(xMin).hi > want) return null;                    // даже у самого ребра плиты — правее нужного
+  for (let i = 0; i < 40; i++) {                            // самый правый x, который ещё годится
+    const m = (xMin + xMax) / 2;
+    if (span(m).hi <= want) xMin = m; else xMax = m;
+  }
+  // На экране: полукадр по горизонтали = tan(fov/2) · пропорции.
+  const tanX = Math.tan((FOV.forge / 2) * Math.PI / 180) * (viewW / viewH);
+  if (span(xMin).lo < -tanX * (1 - MARK_LEFT.edge)) return null;
+  return xMin;
 }
 
 /**
@@ -799,10 +850,7 @@ const PROP_ROW = {
   // Порядок СЛЕВА НАПРАВО в кадре. Он же — единственное место, где заведён
   // состав ряда: пара «ключ + из чего собрать».
   order: [
-    // ⚠️ BUFFS В РЯДУ НЕТ (решение владельца 29.09.2026). Полка — декорация,
-    //    нажатий не принимает; шестой предмет в ряду заставлял ужимать остальные
-    //    вдвое, и ни предмет, ни слово под ним не читались. Полка осталась в
-    //    зале обстановкой и БЕЗ ПОДПИСИ — см. BUFFS_SPOT ниже.
+    // ⚠️ ПОЛКИ БАФФОВ В ЗАЛЕ БОЛЬШЕ НЕТ вовсе (30.09.2026): ни в ряду, ни обстановкой.
     // ⚠️ ПЛАНШЕТ (ROSTER) И НАКОВАЛЬНЯ (FORGE) В РЯДУ БОЛЬШЕ НЕТ (30.09.2026).
     //    Список бойцов стал постоянной панелью экрана, а карточку граней открывает
     //    нажатие по бойцу — предметам открывать было нечего. Раскладка ниже ничего
@@ -891,36 +939,6 @@ const PROP_ROW = {
   // Ширина малой плиты — точка отсчёта для кегля подписи (см. nestLabel).
   // Числа кегля сняты на ней, на остальных ступенях слово пересчитывается.
   labelRefWidth: 10.2,
-};
-
-// ── ПОЛКА БАФФОВ — ОБСТАНОВКА, А НЕ ПУНКТ РЯДА ────────────────────────────────
-// Стоит слева и ГЛУБЖЕ ряда: там свободно (поле бойцов начинается дальше, а ряд
-// проходит впереди), её видно целиком, и она ничего не закрывает.
-//
-// ⚠️ ПОДПИСИ У НЕЁ НЕТ, и это не забывчивость. Слово под предметом — обещание,
-//    что по нему можно нажать; полка нажатий не принимает.
-// ⚠️ СТОИТ ЗА РЯДОМ И НА ПРАВОМ ФЛАНГЕ, и это единственное свободное место.
-//    Перебраны все:
-//      · перед рядом — полоса между рядом и ребром плиты слишком мелкая: полка
-//        цепляла SPAR углом при полном составе (замер 29.09.2026);
-//      · левый фланг — в кадр не попадает вовсе (x = −3.5 садится в −11% кадра);
-//      · середина за рядом — там поле бойцов: зоны разбредания при полном
-//        составе доходят до z = 3.00.
-//    Правый фланг свободен от бойцов при любом составе (поле не шире ±2.40) и
-//    при этом ещё виден, потому что камера смотрит с правого плеча.
-//
-// Место не подобрано на глаз, а найдено перебором: из всех положений ряда и
-// глубин отобраны те, что при составах 3 и 10 разом дают полку целиком в кадре,
-// без пересечения с рядом и не ближе 1.6 метра до любого бойца и до метки.
-// Годных оказалось 81, эти числа — середина самой широкой их площадки, чтобы
-// место не рассыпалось от малого сдвига.
-const BUFFS_SPOT = {
-  edge: 0.135,       // доля кадра, как у концов ряда
-  backFromRow: 2.0,  // на сколько метров глубже ближнего края ряда
-  // ⚠️ РАЗМЕР У ПОЛКИ СВОЙ (30.09.2026). Раньше она брала размер ряда, и он был
-  //    ×0.748. Ряд из трёх предметов считает себе другой множитель, а полка от
-  //    этой работы не менялась — поэтому её размер закреплён на прежнем.
-  scale: 0.748,
 };
 
 /** Разложенное направление камеры — считается один раз, нужно везде ниже. */
@@ -1122,6 +1140,11 @@ function solvePropRow(built, slab, topY) {
   }
   for (let i = 0; i < n; i++) place(i);
 
+  // Левая кромка ряда в кадре — по ней метка бойца встаёт левее ряда (см. markLeft).
+  rowLo = Infinity;
+  for (const it of built) rowLo = Math.min(rowLo, propRatioSpan(it.obj.group, b).lo);
+  rowBasis = b;
+
   // Полоса ряда по глубине — по фактическим габаритам вместе с подписями.
   let zMin = Infinity, zMax = -Infinity;
   for (const it of built) {
@@ -1151,22 +1174,6 @@ function buildForgeProps(topY) {
   });
   solvePropRow(built, compose.slab, topY);
   for (const it of built) propList.push(it);
-
-  // Полка баффов — обстановка: своё место, свой (общий с рядом) размер, без слова.
-  const shelf = buildBuffShelf({ label: false });
-  shelf.group.scale.setScalar(BUFFS_SPOT.scale);
-  const b = camBasis(compose.slab.width, topY);
-  const zShelf = rowBand.zMin - BUFFS_SPOT.backFromRow;
-  shelf.group.position.set(camSolveX(b, BUFFS_SPOT.edge, topY, zShelf), topY, zShelf);
-  scene.add(shelf.group);
-  propList.push({ key: 'shelf', obj: shelf });
-  // Дев-ручка: подвинуть полку и сразу замерить — чтобы место искалось замером,
-  // а не пересборкой на каждую пробу.
-  if (DEV_MODE) window.__moveShelf = (edge, zAbs) => {
-    const sx = camSolveX(b, edge, topY, zAbs);
-    shelf.group.position.set(sx, topY, zAbs);
-    return { x: +sx.toFixed(2), z: +zAbs.toFixed(2) };
-  };
 }
 
 // ── ПОЗА КАМЕРЫ. Одна на зал, одна на каждый остров, все по домашнему правилу:
@@ -1540,6 +1547,8 @@ let stopTrainingWatch = null; // наблюдатель за состояния�
 let applyTraining = null;
 let mark = { x: 0, z: 0 };   // where the current fighter stands
 let rowScale = 1;          // во сколько раз уменьшены предметы ряда — считается, см. solvePropRow
+let rowLo = Infinity;      // левая кромка ряда в кадре (доля кадра, см. camRatio) вместе с подписями
+let rowBasis = null;       // разложение камеры, по которому она посчитана — нужно метке (см. markLeft)
 // Множитель размера слова за ступень плиты — чтобы кегль в КАДРЕ не зависел от
 // того, на какой плите стоит зал. Ставится расстановкой, читается nestLabel.
 let labelWorldK = 1;
@@ -2202,6 +2211,34 @@ onMounted(() => {
         bagSpots: bagSpots.map((b) => ({ x: +b.x.toFixed(2), z: +b.z.toFixed(2) })),
         // Метка и полоса ряда — чтобы проверять развод замером, а не снимком.
         mark: mark ? { x: +mark.x.toFixed(2), z: +mark.z.toFixed(2) } : null,
+        // Тела в кадре: обвод настоящих мешей (без светящихся слоёв и плашек) в долях
+        // экрана — по нему проверяется, что боец на метке не закрывает предмет и подпись.
+        bodies: (() => {
+          const out = [];
+          const c = new THREE.Vector3();
+          roster.forEach((x, i) => {
+            if (!x.fighter?.group.parent) return;
+            const acc = { l: 9, r: -9, t: 9, b: -9 };
+            x.fighter.group.updateMatrixWorld(true);
+            x.fighter.group.traverse((m) => {
+              if (!m.isMesh || !m.visible || !m.geometry) return;
+              if (m.material && m.material.blending === THREE.AdditiveBlending) return;
+              if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+              const bb = m.geometry.boundingBox;
+              for (let k = 0; k < 8; k++) {
+                c.set(k & 1 ? bb.max.x : bb.min.x, k & 2 ? bb.max.y : bb.min.y, k & 4 ? bb.max.z : bb.min.z);
+                m.localToWorld(c); c.project(camera);
+                const sx = c.x * 0.5 + 0.5, sy = -c.y * 0.5 + 0.5;
+                if (sx < acc.l) acc.l = sx; if (sx > acc.r) acc.r = sx;
+                if (sy < acc.t) acc.t = sy; if (sy > acc.b) acc.b = sy;
+              }
+            });
+            out.push({ i, id: x.id, current: x.id === currentId, x: +x.fighter.group.position.x.toFixed(2), z: +x.fighter.group.position.z.toFixed(2),
+              l: +acc.l.toFixed(4), r: +acc.r.toFixed(4), t: +acc.t.toFixed(4), b: +acc.b.toFixed(4) });
+          });
+          return out;
+        })(),
+        markLeftUsed: (() => { const l = markLeft(mark.z); return l != null; })(),
         band: { zMin: +rowBand.zMin.toFixed(2), zMax: +rowBand.zMax.toFixed(2) },
         rowScale: +rowScale.toFixed(3),
         slab: compose ? { width: compose.slab.width, depth: compose.slab.depth, topY: slab ? +slab.refs.topY.toFixed(2) : null } : null,
@@ -2400,6 +2437,7 @@ onMounted(() => {
     // только кадр. Ставим сразу, а не подводим плавно: это новый экран, а не ход.
     // Поворот пересобирает кадр ТОГО МЕСТА, где игрок стоит, а не всегда зала:
     // повернуть телефон, стоя на острове, не должно уносить с острова.
+    refreshMark();
     goPlace(place, true);
     // ⚠️ ПЕРВЫЙ ВЫЗОВ НАБЛЮДАТЕЛЯ РАЗМЕРА — НЕ ПОВОРОТ ЭКРАНА. ResizeObserver
     //    дёргает обработчик один раз сразу, как только начал смотреть, и этот
@@ -2592,6 +2630,18 @@ function crossTo(key) {
   goPlace(to, reduced);
 }
 
+/** Пропорции экрана изменились (поворот): метка могла встать иначе — переставить и отправить на неё выбранного. */
+function refreshMark() {
+  if (!compose || !roster.length || !slab) return;
+  const next = markFor(roster.length, compose.arcZ);
+  if (Math.abs(next.x - mark.x) < 1e-6 && Math.abs(next.z - mark.z) < 1e-6) return;
+  mark = next;
+  const cur = roster.findIndex((r) => r.id === currentId);
+  if (cur < 0 || !roster[cur].fighter || atBags.has(cur)) return;
+  if (reduced) roster[cur].fighter.group.position.set(mark.x, slab.refs.topY, mark.z);
+  else director?.sendTo(cur, mark.x, mark.z);
+}
+
 function select(id) {
   const idx = roster.findIndex((r) => r.id === id);
   if (idx < 0) { exitWork(); return; }
@@ -2673,7 +2723,7 @@ onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (stopTrainingWatch) { stopTrainingWatch(); stopTrainingWatch = null; }
   applyTraining = null;
-  if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; delete window.__rowDebug; delete window.__moveShelf; }
+  if (DEV_MODE) { delete window.__forgeProbe; delete window.__forgeBodyBox; delete window.__rowDebug; }
   if (controls) { controls.dispose(); controls = null; }
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }

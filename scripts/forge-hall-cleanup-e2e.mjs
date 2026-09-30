@@ -4,8 +4,7 @@
 // По образцу соседних forge-islands-e2e.mjs / home-roster-e2e.mjs.
 //
 // ЧТО ИМЕННО ДОКАЗЫВАЕТСЯ:
-//   1. в ряду остались ровно три предмета (ASCENSION, TRAINING, SPAR) + безымянная
-//      полка; планшета и наковальни в сцене нет;
+//   1. в ряду остались ровно три предмета (ASCENSION, TRAINING, SPAR), полки нет; планшета и наковальни в сцене нет;
 //   2. просветы между кромками предметов равны, подписи не налезают, крайние не
 //      подходят к рамке — на четырёх раскладках; множитель размера напечатан;
 //   3. метка выхода бойца не попадает в полосу ряда при составах 1…10;
@@ -15,6 +14,9 @@
 //      занятого повторное нажатие меню не открывает;
 //   6. кнопка TRAIN на экране ровно одна во всех состояниях: только список ·
 //      список + меню · широкая горизонталь с тремя блоками;
+//   6b. МЕТКА ВЫБРАННОГО БОЙЦА (добавка 2): левее ряда предметов, тело не закрывает ASCENSION и
+//      его подпись, целиком в кадре и на плите, метка вне полосы ряда; на вертикали слева
+//      места нет — метка прежняя (числа печатаются); поворот экрана переставляет метку;
 //   7. ПРОГОН ПРОГРЕССА: назначить занятие → дождаться READY → зажечь кристалл;
 //      запись игрока в конце выводится в файл — её сравнивают с прогоном на `main`
 //      (SAVE_ONLY=1 — только этот раздел, для старого кода).
@@ -194,7 +196,7 @@ if (!TAIL) console.log('\n── ряд предметов: три предме�
 for (const [w, h] of (TAIL ? [] : LAYOUTS)) {
   const { ctx, p } = await open({ w, h, s: save(3) });
   const pr = await probe(p);
-  const keys = Object.keys(pr.box).filter((k) => k !== 'shelf');
+  const keys = Object.keys(pr.box);
   ok(keys.sort().join() === 'ascension,bags,spar', `${w}×${h}: в ряду ASCENSION, TRAINING, SPAR`, keys.join());
   ok(!pr.box.roster && !pr.box.upgrade && !pr.taps.roster && !pr.taps.upgrade, `${w}×${h}: планшета и наковальни в сцене нет`);
   const bx = ['ascension', 'bags', 'spar'].map((k) => ({ k, ...pr.box[k] })).sort((a, b) => a.l - b.l);
@@ -306,6 +308,8 @@ for (const n of [1, 3, 4, 5, 7, 8, 10]) {
   let u = await ui(p);
   const barTop = u.barBox ? u.barBox[1] : null;
   console.log(`    полоса ряда y ${rowTop.toFixed(0)}…${labBot.toFixed(0)}; свёрнутый список y ${u.barBox ? u.barBox[1] + '…' + u.barBox[3] : '—'}`);
+  const WAS = { 1: 751.9, 3: 751.9, 4: 751.9, 5: 749.6, 7: 749.6, 8: 748.1, 10: 748.1 };   // низ подписей на 9bc59176
+  ok(Math.abs(labBot - WAS[n]) < 0.2 && JSON.stringify(u.barBox) === JSON.stringify([0, 756, 390, 800]), `${tag}: строка списка и зазор те же, что на 9bc59176`, `низ подписей ${labBot.toFixed(1)} (было ${WAS[n]}), строка ${JSON.stringify(u.barBox)}`);
   ok(u.bar && barTop >= labBot, `${tag}: свёрнутый список не заходит на полосу ряда`, `верх списка ${barTop}, низ подписей ${labBot.toFixed(1)}, зазор ${(barTop - labBot).toFixed(1)}`);
   ok(u.train === 1, `${tag}: TRAIN ровно одна (в свёрнутой строке)`, `кнопок ${u.train}`);
   await p.screenshot({ path: `${OUT}/vert-compact-n${n}.png` });
@@ -349,6 +353,65 @@ for (const n of [1, 3, 10]) {
     await p.screenshot({ path: `${OUT}/vert-tap-${key}-n${n}.png` });
     await ctx.close();
   }
+}
+}
+
+// ───────────────────────── МЕТКА ВЫБРАННОГО БОЙЦА (добавка 2) ─────────────────────────
+// Боец на метке — тот, чьё тело нельзя мерить по «сохранённой позе»: ждём, пока он дойдёт.
+const inter = (a, c) => !(a.r <= c.l || c.r <= a.l || a.b <= c.t || c.b <= a.t);
+async function onMarkProbe(p) {
+  let pr = null, cur = null;
+  for (let i = 0; i < 45; i++) {
+    await p.waitForTimeout(1000);
+    pr = await probe(p);
+    cur = pr.bodies.find((x) => Math.hypot(x.x - pr.mark.x, x.z - pr.mark.z) < 0.2);
+    if (cur) break;
+  }
+  return { pr, cur };
+}
+if (!TAIL) {
+console.log('\n── метка бойца: левее ряда, тело не закрывает ASCENSION и подпись ──');
+for (const [w, h] of LAYOUTS) {
+  const port = h > w;
+  for (const n of [1, 3, 10]) {
+    const tag = `${w}×${h} n=${n}`;
+    const { ctx, p } = await open({ w, h, s: save(n) });
+    const { pr, cur } = await onMarkProbe(p);
+    ok(!!cur, `${tag}: выбранный боец дошёл до метки`, JSON.stringify(pr.mark));
+    if (!cur) { await ctx.close(); continue; }
+    const asc = pr.box.ascension;
+    const hitAsc = inter(cur, asc) || inter(cur, asc.own) || inter(cur, asc.label);
+    const info = `тело x ${(cur.l * w).toFixed(0)}…${(cur.r * w).toFixed(0)} px, ASCENSION с подписью x ${(asc.l * w).toFixed(0)}…${(asc.r * w).toFixed(0)} px, зазор ${((asc.l - cur.r) * w).toFixed(0)} px`;
+    if (port) {
+      // Слева места нет: метка остаётся прежней (условие отката). Числа — в отчёт.
+      ok(pr.markLeftUsed === false, `${tag}: слева места нет — метка прежняя`, info);
+      console.log(`    вертикаль n=${n}: перекрытие с ASCENSION ${hitAsc ? 'ЕСТЬ' : 'нет'} (прежнее место метки); ${info}`);
+    } else {
+      ok(pr.markLeftUsed === true, `${tag}: метка левее ряда`, JSON.stringify(pr.mark));
+      ok(!hitAsc, `${tag}: тело не закрывает ASCENSION и подпись`, info);
+    }
+    ok(pr.mark.z < pr.band.zMin, `${tag}: метка вне полосы ряда`, `z ${pr.mark.z} < ${pr.band.zMin}`);
+    ok(cur.l >= 0 && cur.r <= 1 && cur.t >= 0 && cur.b <= 1, `${tag}: боец целиком в кадре`, JSON.stringify([cur.l, cur.r, cur.t, cur.b]));
+    ok(cur.x - 0.4 + pr.slab.width / 2 >= 0.3, `${tag}: не за левым ребром плиты`, `запас ${(cur.x - 0.4 + pr.slab.width / 2).toFixed(2)} м`);
+    await p.waitForTimeout(4000);
+    await p.screenshot({ path: `${OUT}/mark-${w}x${h}-n${n}.png` });
+    await ctx.close();
+  }
+}
+// Поворот экрана: вертикаль → горизонталь → вертикаль. Метка переставляется, боец идёт на неё.
+{
+  const { ctx, p } = await open({ w: 390, h: 844, s: save(3) });
+  let { pr, cur } = await onMarkProbe(p);
+  ok(pr.markLeftUsed === false, 'поворот: в вертикали метка прежняя', JSON.stringify(pr.mark));
+  await p.setViewportSize({ width: 844, height: 390 });
+  await p.waitForTimeout(1500);
+  ({ pr, cur } = await onMarkProbe(p));
+  ok(pr.markLeftUsed === true && !!cur, 'поворот: в горизонтали метка левее, боец дошёл', JSON.stringify(pr.mark));
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForTimeout(1500);
+  ({ pr, cur } = await onMarkProbe(p));
+  ok(pr.markLeftUsed === false && !!cur, 'поворот: обратно в вертикали метка прежняя, боец дошёл', JSON.stringify(pr.mark));
+  await ctx.close();
 }
 }
 

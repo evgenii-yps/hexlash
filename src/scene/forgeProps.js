@@ -40,7 +40,7 @@
 //    в src/styles/home.css) — второй такой полосы здесь не заводится.
 //
 // Экспортирует: FORGE_PROPS (настройки), buildPunchBag,
-//               buildLegendAnchor, buildBuffShelf, buildBagStand.
+//               buildLegendAnchor, buildBagStand.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -118,9 +118,6 @@ export const FORGE_PROPS = {
     swingKick: 0.42,    // толчок от одного удара, радиан/с
     swingMax: 0.52,     // предел отклонения, радиан
   },
-  // Полка баффов — только МЕСТО, задел (решение 22.09: предметы баффов позже).
-  shelf: { w: 1.10, d: 0.30, niches: 3, label: 'BUFFS' },
-
   // Место легенды — пустой якорь высоко над плитой.
   legend: { ringR: 0.62, label: 'LEGEND' },
 
@@ -570,38 +567,6 @@ export function buildLegendAnchor() {
     },
     dispose() { disposers.forEach((d) => d()); },
   };
-}
-
-// ═══════════════════ ПОЛКА БАФФОВ — ТОЛЬКО МЕСТО ═══════════════════
-// Решение 22.09.2026: предметы баффов — «позже». Здесь стоит пустая полка с
-// тремя нишами, помеченная как задел: ничего в неё не кладётся.
-export function buildBuffShelf({ label = true } = {}) {
-  const B = FORGE_PROPS.shelf;
-  // ⚠️ БЕЗ ПОДПИСИ, когда полка стоит обстановкой (решение владельца 29.09.2026).
-  //    Слово под предметом в этом зале означает «сюда можно нажать», а полка
-  //    нажатий не принимает — подписанная, она обещала бы несуществующее.
-  const api = propShell(label ? B.label : null, LBL.em, LBL.y, LBL.lift);
-  if (api.label) api.label.rotation.x = -Math.PI / 2;
-  const D = FORGE_PROPS.deskY;
-
-  const plank = ownBox(api, slabBox(B.w, 0.06, B.d, 'pedestal'));
-  plank.position.y = D * 0.72;
-  api.add(plank);
-  for (const sx of [-1, 1]) {
-    const leg = ownBox(api, slabBox(0.06, D * 0.72, B.d * 0.8, 'dark'));
-    leg.position.set(sx * (B.w / 2 - 0.05), D * 0.36, 0);
-    api.add(leg, { pickable: false });
-  }
-  const step = B.w / B.niches;
-  for (let i = 0; i < B.niches; i++) {
-    const nicheGeo = new THREE.CylinderGeometry(step * 0.26, step * 0.26, 0.02, 6);
-    const nicheM = bodyMat('dark');
-    const n = new THREE.Mesh(nicheGeo, nicheM);
-    n.position.set(-B.w / 2 + step * (i + 0.5), D * 0.72 + 0.04, 0);
-    api.group.add(n);
-    api.own(() => { nicheGeo.dispose(); nicheM.dispose(); });
-  }
-  return api;
 }
 
 // ═══════════════════ SPAR — СОПЕРНИК, КОТОРОГО ЕЩЁ НЕ СОБРАЛИ ═══════════════════
