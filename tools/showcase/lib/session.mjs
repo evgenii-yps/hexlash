@@ -152,6 +152,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
     if (a.type === 'up' || a.type === 'click') await page.mouse.up();
     if (a.type === 'clickEl') await page.evaluate((sel) => document.querySelector(sel).click(), a.sel);
     if (a.type === 'eval') await page.evaluate(a.code);
+    await page.evaluate(() => window.__vt.sync());
     marks.push({ b, f: b - offset, name: a.mark || a.type, kind: 'action' });
   }
 
