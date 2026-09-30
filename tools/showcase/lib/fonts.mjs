@@ -16,9 +16,10 @@ const css = FACES.flatMap(([fam, dir, ws]) => ws.map((w) =>
   `@font-face{font-family:'${fam}';font-style:normal;font-weight:${w};font-display:block;src:url(${HOST}${dir}-latin-${w}-normal.woff2) format('woff2');}`)).join('\n');
 
 /** Навешивает маршруты подмены шрифтов на контекст браузера. */
-export async function routeFonts(ctx) {
-  await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', headers: { 'access-control-allow-origin': '*' }, body: css }));
+export async function routeFonts(ctx, log) {
+  await ctx.route(/fonts\.googleapis\.com/, (r) => { if (log) log.mocked++; r.fulfill({ status: 200, contentType: 'text/css', headers: { 'access-control-allow-origin': '*' }, body: css }); });
   await ctx.route(/fonts\.gstatic\.com\/__showcase\//, (r) => {
+    if (log) log.mocked++;
     const file = r.request().url().split('/__showcase/')[1];
     const dir = file.replace(/-latin-.*$/, '');
     try {

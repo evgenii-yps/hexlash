@@ -1,61 +1,103 @@
 #!/usr/bin/env node
 // Командная строка рендера ролика.
 //
-//   node tools/showcase/cli.mjs build                 весь ролик: все планы → кадры → mp4
-//   node tools/showcase/cli.mjs plan <id> [опции]     один план (или его диапазон)
-//   node tools/showcase/cli.mjs verify <id>           два независимых рендера + сверка кадров
-//   node tools/showcase/cli.mjs guard [ref]           снимки игры «до и после»: ref (по умолчанию origin/main) против рабочей копии
+//   node tools/showcase/cli.mjs build                 весь ролик одной командой: подбор боёв (если цифры боя
+//                                                     изменились) → кадры всех планов → выборочная сверка
+//                                                     повторяемости → шкала → mp4, дорожка меток, стоп-кадры
+//   node tools/showcase/cli.mjs fights [duel|squad]   подбор боёв заново (зёрна, окна) → plan/fights.lock.json
+//   node tools/showcase/cli.mjs plan <id> [опции]     один план
+//   node tools/showcase/cli.mjs verify <id>           ПОЛНАЯ сверка: второй рендер всех кадров и сравнение побайтно
+//   node tools/showcase/cli.mjs guard [ref]           снимки игры «до» (ref, по умолчанию origin/main) и «после» (рабочая копия)
+//   node tools/showcase/cli.mjs regress [ref]         регрессионный снимок боя и обе контрольные суммы: ref против рабочей копии
 //
-// Опции: --range a-b (кадры плана)  --size 1280x720  --every 2 (каждый n-й кадр; 2 = черновик 30 кадр/с)
-//        --out <папка>
+// Опции: --size 1280x720  --every 2 (каждый n-й кадр; 2 = черновик 30 кадр/с)  --range a-b  --only id,id
+//        --no-verify (без выборочной сверки)  --out <папка>
 import { parseArgs } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync, existsSync, mkdirSync } from 'node:fs';
-import { startServer } from './lib/server.mjs';
+import { readFileSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { startServer, REPO } from './lib/server.mjs';
 import { openSession, warm } from './lib/session.mjs';
 import { encode } from './lib/ffmpeg.mjs';
+import { provenance } from './lib/provenance.mjs';
+import { lockStatus, refreshFights, resolvePlan, readLock, analyze } from './lib/fights.mjs';
+import { encodeTimeline, buildMarks, writeMarks, copyStills, layout, fmt } from './lib/assemble.mjs';
 import { plans, FPS } from './plan/trailer.plan.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const { values: o, positionals: [cmd = 'help', planId] } = parseArgs({
+const { values: o, positionals: [cmd = 'help', arg] } = parseArgs({
   allowPositionals: true,
-  options: { range: { type: 'string' }, size: { type: 'string', default: '1280x720' }, every: { type: 'string', default: '1' }, out: { type: 'string' } },
+  options: {
+    range: { type: 'string' }, size: { type: 'string', default: '1280x720' }, every: { type: 'string', default: '2' },
+    out: { type: 'string' }, only: { type: 'string' }, 'no-verify': { type: 'boolean', default: false },
+  },
 });
 const size = o.size.split('x').map(Number);
 const every = Number(o.every);
 const outRoot = o.out || path.join(HERE, 'out');
 const pick = (id) => { const p = plans.find((x) => x.id === id); if (!p) throw new Error('нет плана ' + id + '; есть: ' + plans.map((x) => x.id).join(', ')); return p; };
+const SAMPLE = 10;   // выборочная сверка: каждый 10-й кадр плана
 
-async function renderPlan(base, plan, dir, { from = 0, to = plan.len } = {}) {
-  await warm(base, [plan.route], size);
-  console.log(`▶ ${plan.id} [${from}..${to}) ${size.join('×')} каждый ${every}-й кадр`);
-  const t0 = Date.now();
-  const s = await openSession({ base, plan, size });
-  const hashes = await s.run({ outDir: dir, from, to, every, onFrame: (f, n) => { if (f % 30 === 0) process.stdout.write(`  кадр ${f}/${n}\r`); } });
-  await s.close();
-  console.log(`  готово за ${((Date.now() - t0) / 1000).toFixed(0)} с                `);
-  return hashes;
+/** События для дорожки меток из журнала боя. */
+function fightEvents(journal, plan) {
+  if (!journal || !journal.length) return [];
+  const a = analyze(journal); const ev = [];
+  const off = plan.offset || 0;
+  for (const h of a.hits) ev.push({ f: h.b - off, kind: 'fight', name: h.onHero ? `удар по герою (−${h.dmg} HP)` : `удар по врагу (−${h.dmg} HP)` });
+  if (a.ko) ev.push({ f: a.ko.b - off, kind: 'fight', name: `выбывание бойца ${a.ko.unit}` });
+  if (a.togOn >= 0) ev.push({ f: a.togOn - off, kind: 'legend', name: 'тумблер: ВЕДЁТ ЛЕГЕНДА включён' });
+  for (const l of a.lines) ev.push({ f: l.b - off, kind: 'legend', name: `легенда: ${l.text}` });
+  return ev;
 }
 
-import { execFileSync } from 'node:child_process';
-import { symlinkSync, rmSync } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { REPO } from './lib/server.mjs';
+async function renderPlan(base, planIn, dir, { from, to, every: ev = every, sz = size, capture = true } = {}) {
+  const plan = resolvePlan(planIn);
+  const t0 = Date.now();
+  const s = await openSession({ base, plan, size: sz, log: () => {} });
+  const { hashes, journal } = await s.run({
+    outDir: dir, every: ev, capture,
+    onFrame: (f, n) => { if (f % 60 === 0) process.stdout.write(`  ${plan.id} кадр ${f}/${n}\r`); },
+  });
+  const net = s.net(); const marks = s.marks;
+  await s.close();
+  return { plan, hashes, journal, marks, net, events: fightEvents(journal, plan), sec: Math.round((Date.now() - t0) / 1000) };
+}
 
-// Контрольные снимки ИГРЫ как она есть (без режиссёра и без скрытия интерфейса).
-// Делаются один раз на эталоне (ref) и один раз на рабочей копии; обвязка — одна и
-// та же, поэтому расхождение возможно только от изменений в игре.
-const GUARD_SCENES = [['home', '/play/home'], ['gate', '/play/gate'], ['forge', '/play/pve']];
+/** Выборочная сверка: второй независимый рендер, снимаем только каждый SAMPLE-й кадр. */
+async function verifySample(base, plan, first, { sz = size } = {}) {
+  const dir = path.join(outRoot, '_verify', plan.id);
+  const second = await renderPlan(base, plan, dir, { every: SAMPLE, sz });
+  const fs = Object.keys(second.hashes);
+  const bad = fs.filter((f) => first.hashes[f] !== undefined && first.hashes[f] !== second.hashes[f]);
+  const compared = fs.filter((f) => first.hashes[f] !== undefined).length;
+  rmSync(dir, { recursive: true, force: true });
+  return { compared, mismatched: bad.length, firstBad: bad[0] ?? null, net: second.net };
+}
+
+const sumNet = (list) => list.reduce((a, n) => ({
+  blocked: a.blocked + n.blockedTotal, analytics: a.analytics + n.analyticsBlocked, ws: a.ws + n.websocketsBlocked, sent: a.sent + n.sentOutside,
+  hosts: { ...a.hosts, ...Object.fromEntries(Object.entries(n.blockedByHost).map(([h, c]) => [h, (a.hosts[h] || 0) + c])) },
+}), { blocked: 0, analytics: 0, ws: 0, sent: 0, hosts: {} });
+
+// ───────────────────────── контрольные снимки игры ─────────────────────────
+const GUARD_SCENES = [
+  ['home', { route: '/play/home', align: 150, world: { roster: [{ callsign: 'HAWK', core: 'natisk' }, { callsign: 'CINDER', core: 'skala' }, { callsign: 'ASH', core: 'zasada' }] } }],
+  ['gate', { route: '/play/gate', align: 150, world: { roster: [{ callsign: 'HAWK', core: 'natisk' }, { callsign: 'CINDER', core: 'skala' }, { callsign: 'ASH', core: 'zasada' }] } }],
+  ['forge', { route: '/play/pve', align: 150, world: { roster: [{ callsign: 'HAWK', core: 'natisk' }, { callsign: 'CINDER', core: 'skala' }, { callsign: 'ASH', core: 'zasada' }] } }],
+  // БОЙ: дуэль с зажатыми зёрнами; снимок на 300-м кадре боя
+  ['arena-bout', { kind: 'arena', route: '/play/arena', seedBuild: 7, fightSeed: 9007, offset: 0, len: 300, world: { roster: [{ callsign: 'HAWK', core: 'natisk', lit: { a: [1, 2, 3] } }], squad: [0], mode: 'duel', n: 1 } }],
+];
 const GUARD_LAYOUTS = [[390, 844], [844, 390], [1280, 720], [1920, 1080]];
 async function shootAll(root, port) {
   const s = await startServer({ root, port });
   const hashes = {};
   try {
-    await warm(s.base, GUARD_SCENES.map((x) => x[1]));
-    for (const [id, route] of GUARD_SCENES) for (const lay of GUARD_LAYOUTS) {
-      const sess = await openSession({ base: s.base, plan: { route, align: 150, world: { roster: [{ callsign: 'HAWK', core: 'natisk' }, { callsign: 'CINDER', core: 'skala' }, { callsign: 'ASH', core: 'zasada' }] } }, size: lay, log: () => {} });
-      await sess.pump(30);
+    await warm(s.base, GUARD_SCENES.map((x) => x[1]), [1280, 720]);
+    for (const [id, pl] of GUARD_SCENES) for (const lay of GUARD_LAYOUTS) {
+      const sess = await openSession({ base: s.base, plan: pl, size: lay, log: () => {} });
+      if (pl.kind === 'arena') await sess.run({ capture: false, frames: 300 }); else await sess.pump(30);
       hashes[`${id}@${lay.join('x')}`] = createHash('md5').update(await sess.snapshot()).digest('hex').slice(0, 12);
       await sess.close();
       process.stdout.write(`  ${id}@${lay.join('x')}\r`);
@@ -63,54 +105,128 @@ async function shootAll(root, port) {
   } finally { await s.stop(); }
   return hashes;
 }
-async function guard(ref) {
+function refWorktree(ref) {
   const wt = path.join(HERE, '.cache/ref-worktree');
   rmSync(wt, { recursive: true, force: true });
   execFileSync('git', ['-C', REPO, 'worktree', 'prune']);
   execFileSync('git', ['-C', REPO, 'worktree', 'add', '--detach', wt, ref], { stdio: 'ignore' });
   symlinkSync(path.join(REPO, 'node_modules'), path.join(wt, 'node_modules'));
+  return wt;
+}
+function dropWorktree(wt) {
+  rmSync(path.join(wt, 'node_modules'), { force: true });
+  execFileSync('git', ['-C', REPO, 'worktree', 'remove', '--force', wt], { stdio: 'ignore' });
+}
+const sha = (root) => execFileSync('git', ['-C', root, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+
+async function guard(ref) {
+  const wt = refWorktree(ref);
   try {
-    console.log('▶ эталон', ref, execFileSync('git', ['-C', wt, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim());
+    console.log('▶ эталон', ref, sha(wt));
     const A = await shootAll(wt, 5198);
-    console.log('▶ рабочая копия', execFileSync('git', ['-C', REPO, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim());
+    console.log('▶ рабочая копия', sha(REPO));
     const B = await shootAll(REPO, 5199);
     const keys = Object.keys(A); const bad = keys.filter((k) => A[k] !== B[k]);
     for (const k of keys) console.log(`  ${A[k] === B[k] ? '✓' : '✗'} ${k}  ${A[k]} ${B[k]}`);
     console.log(bad.length ? `✗ разошлись: ${bad.length} из ${keys.length}` : `✓ все ${keys.length} снимков совпали`);
     process.exitCode = bad.length ? 1 : 0;
-  } finally {
-    rmSync(path.join(wt, 'node_modules'), { force: true });
-    execFileSync('git', ['-C', REPO, 'worktree', 'remove', '--force', wt], { stdio: 'ignore' });
-  }
+  } finally { dropWorktree(wt); }
 }
 
-const srv = cmd === 'guard' ? { base: '', stop: async () => {} } : await startServer();
+// ───────────────────────── регрессия боя ─────────────────────────
+function runRegress(root, script) {
+  const out = execFileSync(process.execPath, [path.join(root, 'scripts', script)], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'], timeout: 1_800_000 });
+  const line = out.split('\n').find((l) => /checksum/i.test(l)) || '';
+  const n = out.split('\n').filter((l) => l.trim()).length;
+  return { checksum: line.trim(), lines: n, out };
+}
+async function regress(ref) {
+  const wt = refWorktree(ref);
+  try {
+    const res = [];
+    for (const script of ['fight-regression.mjs', 'fight-regression-builds.mjs']) {
+      console.log(`▶ ${script}`);
+      const a = runRegress(wt, script); console.log(`  ${ref} ${sha(wt)}: ${a.checksum}  (строк ${a.lines})`);
+      const b = runRegress(REPO, script); console.log(`  рабочая копия ${sha(REPO)}: ${b.checksum}  (строк ${b.lines})`);
+      const same = a.out === b.out;
+      console.log(`  ${same ? '✓ вывод совпал построчно' : '✗ РАЗОШЛОСЬ'}`);
+      res.push({ script, ref: a.checksum, work: b.checksum, same });
+    }
+    process.exitCode = res.every((r) => r.same) ? 0 : 1;
+    return res;
+  } finally { dropWorktree(wt); }
+}
+
+// ───────────────────────── команды ─────────────────────────
+const needsServer = !['guard', 'regress', 'help'].includes(cmd);
+const srv = needsServer ? await startServer() : { base: '', stop: async () => {} };
 try {
-  if (cmd === 'plan') {
-    const plan = pick(planId);
-    const [a, b] = o.range ? o.range.split('-').map(Number) : [0, plan.len];
+  if (cmd === 'fights') {
+    const which = arg ? [arg] : ['duel', 'squad'];
+    const lock = await refreshFights(srv.base, which);
+    console.log('✓ замок записан:', path.relative(REPO, path.join(HERE, 'plan/fights.lock.json')), JSON.stringify(Object.fromEntries(Object.entries(lock.fights).map(([k, v]) => [k, { seed: v.seedBuild, tried: v.tried, offset: v.offset }]))));
+  } else if (cmd === 'plan') {
+    const plan = pick(arg);
     const dir = path.join(outRoot, plan.id, 'frames');
-    await renderPlan(srv.base, plan, dir, { from: a, to: b });
-    const out = path.join(outRoot, plan.id, `${plan.id}${o.range ? `_${a}-${b}` : ''}.mp4`);
+    const [a, b] = o.range ? o.range.split('-').map(Number) : [0, plan.len];
+    await warm(srv.base, [resolvePlan(plan)], size);
+    const r = await renderPlan(srv.base, plan, dir, {});
+    const out = path.join(outRoot, plan.id, `${plan.id}.mp4`);
     encode({ frames: path.join(dir, '%05d.png'), out, fps: FPS / every });
-    console.log('  →', out);
+    console.log(`  ${plan.id}: ${r.sec} с, сеть: заблокировано ${r.net.blockedTotal}, аналитика ${r.net.analyticsBlocked}, ушло ${r.net.sentOutside}  → ${out}`);
   } else if (cmd === 'verify') {
-    const plan = pick(planId);
+    const plan = pick(arg);
     const h = [];
-    for (const tag of ['run-a', 'run-b']) h.push(await renderPlan(srv.base, plan, path.join(outRoot, plan.id, tag), {}));
-    const keys = Object.keys(h[0]);
-    const bad = keys.filter((k) => h[0][k] !== h[1][k]);
+    for (const tag of ['run-a', 'run-b']) h.push((await renderPlan(srv.base, plan, path.join(outRoot, plan.id, tag), { every: 1 })).hashes);
+    const keys = Object.keys(h[0]); const bad = keys.filter((k) => h[0][k] !== h[1][k]);
     console.log(bad.length === 0 ? `✓ ${keys.length} кадров совпали побайтно` : `✗ расхождений: ${bad.length} из ${keys.length}, первый кадр ${bad[0]}`);
     process.exitCode = bad.length ? 1 : 0;
   } else if (cmd === 'build') {
-    for (const plan of plans) {
+    const t0 = Date.now();
+    const prov = provenance();
+    console.log(`▶ main ${prov.main?.slice(0, 8)} «${prov.mainSubject}» · ветка ${prov.head.slice(0, 8)} · правок игры в ветке: ${prov.gameFilesChangedVsMain} · цифры боя ${prov.combatFingerprint}`);
+    // одна команда: цифры боя изменились → бои пересобираются от нового журнала, зёрна подбираются заново
+    const ls = lockStatus();
+    if (!ls.fresh) { console.log(`⚠ ${ls.why} — подбираю бои заново`); await refreshFights(srv.base); }
+    const lock = readLock();
+    const only = o.only ? o.only.split(',') : null;
+    const list = plans.filter((p) => !only || only.includes(p.id));
+    await warm(srv.base, list.filter((p) => p.kind !== 'logo').map((p) => resolvePlan(p)), size);
+    const results = {}; const verify = {}; const nets = [];
+    for (const plan of list) {
       const dir = path.join(outRoot, plan.id, 'frames');
-      await renderPlan(srv.base, plan, dir, {});
-      encode({ frames: path.join(dir, '%05d.png'), out: path.join(outRoot, plan.id, `${plan.id}.mp4`), fps: FPS / every });
+      const r = await renderPlan(srv.base, plan, dir, {});
+      results[plan.id] = r; nets.push(r.net);
+      console.log(`  ✓ ${plan.id}: ${r.sec} с, кадров снято ${Object.keys(r.hashes).length}, сеть: заблокировано ${r.net.blockedTotal}, ушло ${r.net.sentOutside}`);
+      if (!o['no-verify']) {
+        const v = await verifySample(srv.base, plan, r);
+        nets.push(v.net); verify[plan.id] = { compared: v.compared, mismatched: v.mismatched, firstBad: v.firstBad };
+        console.log(`    сверка (каждый ${SAMPLE}-й кадр, второй рендер): ${v.compared} кадров, расхождений ${v.mismatched}`);
+        if (v.mismatched) process.exitCode = 1;
+      }
     }
+    // шкала
+    const dir = path.join(outRoot, 'trailer'); mkdirSync(dir, { recursive: true });
+    if (!only) {
+      const mp4 = path.join(dir, `stage2-draft-${size[1]}p${FPS / every}.mp4`);
+      encodeTimeline({ root: outRoot, every, out: mp4 });
+      writeMarks(dir, buildMarks({ results }));
+      const stills = copyStills({ root: outRoot, every, dir: path.join(dir, 'stills') });
+      writeFileSync(path.join(dir, 'stills.json'), JSON.stringify(stills, null, 1));
+      console.log('  → ', mp4);
+    }
+    const net = sumNet(nets);
+    const info = { provenance: prov, lock: { fingerprint: lock.combat.fingerprint, fights: Object.fromEntries(Object.entries(lock.fights).map(([k, v]) => [k, { seedBuild: v.seedBuild, fightSeed: v.fightSeed, offset: v.offset, tried: v.tried, cores: v.cores }])) },
+      size, every, timeline: layout().parts.map((p) => ({ id: p.id, start: p.start, len: p.len })), seconds: Math.round((Date.now() - t0) / 1000) };
+    writeFileSync(path.join(dir, 'build-info.json'), JSON.stringify(info, null, 1));
+    writeFileSync(path.join(dir, 'net-report.json'), JSON.stringify({ total: net, perPlan: Object.fromEntries(Object.entries(results).map(([k, v]) => [k, v.net])) }, null, 1));
+    writeFileSync(path.join(dir, 'verify-report.json'), JSON.stringify(verify, null, 1));
+    console.log(`✓ готово за ${info.seconds} с. Сеть за весь прогон: заблокировано ${net.blocked} запросов (из них аналитика ${net.analytics}), WebSocket ${net.ws}, УШЛО НАРУЖУ: ${net.sent}`);
   } else if (cmd === 'guard') {
-    await guard(planId || 'origin/main');
+    await guard(arg || 'origin/main');
+  } else if (cmd === 'regress') {
+    await regress(arg || 'origin/main');
   } else {
-    console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 10).join('\n'));
+    console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 17).join('\n'));
   }
 } finally { await srv.stop(); }

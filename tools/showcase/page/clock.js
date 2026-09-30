@@ -38,6 +38,18 @@
   }
   window.Date = VDate;
 
+  // ── учёт запросов в полёте ──
+  let inflight = 0;
+  const XO = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function (...a) {
+    inflight++; let done = false;
+    const fin = () => { if (!done) { done = true; inflight--; } };
+    this.addEventListener('loadend', fin); this.addEventListener('error', fin); this.addEventListener('abort', fin); this.addEventListener('timeout', fin);
+    return XO.apply(this, a);
+  };
+  const FO = window.fetch.bind(window);
+  window.fetch = (...a) => { inflight++; const p = FO(...a); const fin = () => { inflight--; }; p.then(fin, fin); return p; };
+
   // ── случайность ──
   //
   // Два потока. Игра и сторонние библиотеки (аналитика с повтором запросов «с дрожью»)
@@ -105,7 +117,13 @@
     anchored: () => anchored,
     anchorFrame: () => anchorFrame,
     // Два настоящих кадра отрисовки браузера: доставить события transitionend и т.п.
-    settle() { return new Promise((r) => realRAF(() => realRAF(r))); },
+    // И дождаться ответов на запросы, которые игра успела отправить в ЭТОМ кадре (мы
+    // их обрываем, и обрыв приходит в реальное время): иначе под нагрузкой ответ
+    // попадал бы в разные виртуальные кадры и бой расходился.
+    async settle() {
+      await new Promise((r) => realRAF(() => realRAF(r)));
+      for (let i = 0; i < 100 && inflight > 0; i++) await new Promise((r) => realST(r, 10));
+    },
     realDelay(ms) { return new Promise((r) => realST(r, ms)); },
   };
 })();
