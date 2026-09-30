@@ -155,7 +155,14 @@
         .hxl-num sup { font-size: .26em; color: var(--accent); vertical-align: .9em; margin-left: .06em;
             text-shadow: 0 0 2vmin rgba(var(--accent-rgb), .8); }
         .hxl-creed { font-family: var(--impact); font-weight: 800; text-transform: uppercase;
-            font-size: 6.4vmin; letter-spacing: .04em; color: var(--bone); white-space: nowrap; }
+            font-size: 6.4vmin; letter-spacing: .04em; color: var(--bone);
+            /* Фраз двенадцать, самая длинная в одну строку не встаёт: девиз переносится
+               и занимает ФИКСИРОВАННУЮ высоту (строк — столько, сколько нужно самой
+               длинной: --creed-lines), поэтому процент не прыгает от фразы к фразе.
+               Размер один на все фразы. Короткая фраза стоит у верха слота, рядом с
+               процентом, как стояла NEVER GIVE UP. */
+            --creed-lines: 2; line-height: 1.05; height: calc(var(--creed-lines) * 1.05em);
+            max-width: 88vw; text-align: center; text-wrap: balance; overflow-wrap: normal; hyphens: none; }
         .hxl-creed b { color: #fff; text-shadow: 0 0 1vmin rgba(var(--accent-rgb), .7), 0 0 4vmin rgba(var(--accent-rgb), .6); }
 
         /* Footer: progress bar + rotating field note */
@@ -176,7 +183,7 @@
             .hxl-bar { width: 70vmin; }
             .hxl-hud i { width: 6vmin; height: 6vmin; }
             .hxl-lock { --word: 8vmin; }
-            .hxl-creed { font-size: 8vmin; }
+            .hxl-creed { font-size: 8vmin; --creed-lines: 3; }
             .hxl-tag { font-size: 3vmin; }
             .hxl-line { font-size: 3.2vmin; }
         }
@@ -217,7 +224,7 @@
 
     <div class="hxl-mid">
         <div class="hxl-num" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="hxl-num-v">00</span><sup>%</sup></div>
-        <div class="hxl-creed">NEVER <b>GIVE UP.</b></div>
+        <div class="hxl-creed">NEVER <b>GIVE UP</b></div>
     </div>
 
     <div class="hxl-foot">
@@ -246,6 +253,42 @@
   var tag   = el.querySelector('.hxl-tag');
   var line  = el.querySelector('.hxl-line');
 
+  /* Девиз — одна фраза из двенадцати на каждую загрузку.
+     ⚠️ Список дублируется в src/views-v2/SceneLoadingOverlay.vue — менять оба.
+     `|` — где начинается выделенная часть (как у GIVE UP. раньше): у фраз из двух
+     предложений выделено второе, у остальных — последнее слово; у NEVER GIVE UP
+     оставлено прежнее GIVE UP. Сам `|` на экран не попадает.
+     Одна и та же фраза не выпадает два раза подряд: последняя помнится в браузере
+     (localStorage, в try/catch — нет хранилища, значит просто случайная). Ту же
+     ячейку читает и оверлей, поэтому «подряд» считается по обеим поверхностям. */
+  var QUOTES = [
+    'NEVER |GIVE UP',
+    'KEEP |PUNCHING',
+    'EVERYONE HAS A PLAN UNTIL THEY GET |PUNCHED',
+    'FLOAT LIKE A BUTTERFLY. |STING LIKE A BEE.',
+    "DON'T COUNT THE DAYS. |MAKE THE DAYS COUNT.",
+    'SUFFER NOW. |LIVE AS A CHAMPION.',
+    "CHAMPIONS AREN'T MADE IN |GYMS",
+    'KEEP MOVING |FORWARD',
+    "HE CAN RUN, BUT HE CAN'T |HIDE",
+    'BE WATER, MY |FRIEND',
+    'TRAIN HARD. |FIGHT EASY.',
+    'FALL SEVEN TIMES. |STAND UP EIGHT.'
+  ];
+  var QUOTE_KEY = 'hexlash-loading-quote';
+  function quoteHtml(q){ var i = q.indexOf('|'); return q.slice(0, i) + '<b>' + q.slice(i + 1) + '</b>'; }
+  function quotePlain(q){ return q.replace('|', ''); }
+  function pickQuote(){
+    var last = null;
+    try { last = localStorage.getItem(QUOTE_KEY); } catch (e) {}
+    var pool = QUOTES.filter(function (x) { return quotePlain(x) !== last; });   /* everything but the last one shown */
+    var q = pool[Math.floor(Math.random() * pool.length)];
+    try { localStorage.setItem(QUOTE_KEY, quotePlain(q)); } catch (e) {}
+    return q;
+  }
+  var quote = pickQuote();
+  creed.innerHTML = quoteHtml(quote);
+
   var TIPS = [
     'THE BELL IS ABOUT TO RING.',
     'RESPECT THE GRIND. NOTHING IS HANDED OUT.',
@@ -266,7 +309,7 @@
   }
   function restoreLoading(){            /* lets the bar recover if progress dips */
     if (!completed) return; completed = false;
-    creed.innerHTML = 'NEVER <b>GIVE UP.</b>';
+    creed.innerHTML = quoteHtml(quote);   /* the phrase already chosen for this load, not a new one */
     tag.textContent = 'FIELD NOTE';
     ti = 0; rotateTip();
   }
@@ -294,7 +337,13 @@
        the same tick the other one comes up. */
     handoff: function () {
       stopTips();
-      if (el.parentNode) el.parentNode.removeChild(el);
+      if (el.parentNode) {
+        /* The overlay shows THIS phrase for the rest of this load — the picture must
+           not change under the player on the way over. Only the real first-load
+           handover (the splash still on screen) leaves it; later hops pick anew. */
+        window.__hxQuote = quote;
+        el.parentNode.removeChild(el);
+      }
     }
   };
 

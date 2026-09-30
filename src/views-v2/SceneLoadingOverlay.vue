@@ -77,11 +77,44 @@ const TIPS = [
   'READ YOUR OPPONENT. THEN STRIKE.',
   'STEP IN. THE ARENA IS WAITING.',
 ];
-const LOADING_CREED = 'NEVER <b>GIVE UP.</b>';
 const READY_CREED = 'STEP <b>IN.</b>';
 
+// The creed — one phrase of twelve per load.
+// ⚠️ The list is duplicated in index.html (the page-load splash) — change both.
+// `|` marks where the emphasised part starts (second sentence for two-sentence
+// phrases, the last word for the rest; NEVER GIVE UP keeps its old GIVE UP). It
+// never reaches the screen. The last phrase is remembered in localStorage (same
+// cell as the splash) inside try/catch, so the same phrase never comes twice in a
+// row; no storage — just random.
+const QUOTES = [
+  'NEVER |GIVE UP',
+  'KEEP |PUNCHING',
+  'EVERYONE HAS A PLAN UNTIL THEY GET |PUNCHED',
+  'FLOAT LIKE A BUTTERFLY. |STING LIKE A BEE.',
+  "DON'T COUNT THE DAYS. |MAKE THE DAYS COUNT.",
+  'SUFFER NOW. |LIVE AS A CHAMPION.',
+  "CHAMPIONS AREN'T MADE IN |GYMS",
+  'KEEP MOVING |FORWARD',
+  "HE CAN RUN, BUT HE CAN'T |HIDE",
+  'BE WATER, MY |FRIEND',
+  'TRAIN HARD. |FIGHT EASY.',
+  'FALL SEVEN TIMES. |STAND UP EIGHT.',
+];
+const QUOTE_KEY = 'hexlash-loading-quote';
+const quoteHtml = (q) => { const i = q.indexOf('|'); return q.slice(0, i) + '<b>' + q.slice(i + 1) + '</b>'; };
+const quotePlain = (q) => q.replace('|', '');
+function pickQuote() {
+  let last = null;
+  try { last = localStorage.getItem(QUOTE_KEY); } catch (_) { /* no storage — just random */ }
+  const pool = QUOTES.filter((x) => quotePlain(x) !== last); // everything but the last one shown
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  try { localStorage.setItem(QUOTE_KEY, quotePlain(q)); } catch (_) { /* ignore */ }
+  return q;
+}
+const quote = ref(QUOTES[0]);
+
 const tipIndex = ref(0);
-const creed = computed(() => (loadingState.progress >= 100 ? READY_CREED : LOADING_CREED));
+const creed = computed(() => (loadingState.progress >= 100 ? READY_CREED : quoteHtml(quote.value)));
 const tag = computed(() => (loadingState.progress >= 100 ? 'ARENA READY' : 'FIELD NOTE'));
 const line = computed(() =>
   loadingState.progress >= 100 ? 'PRESS TO ENTER THE CAGE.' : TIPS[tipIndex.value % TIPS.length],
@@ -94,6 +127,11 @@ function stopTips() { if (tipTimer) { clearInterval(tipTimer); tipTimer = null; 
 watch(show, (up) => {
   stopTips();
   if (!up) return;
+  // A new phrase per screen. On the first-load handover the splash leaves its own
+  // phrase in window.__hxQuote (index.html) — take it once, so the phrase does not
+  // change on the way from the splash to this overlay.
+  if (typeof window !== 'undefined' && window.__hxQuote) { quote.value = window.__hxQuote; window.__hxQuote = null; }
+  else quote.value = pickQuote();
   tipIndex.value = 0;
   tipTimer = setInterval(() => { tipIndex.value += 1; }, 3200);
 }, { immediate: true });
@@ -152,7 +190,10 @@ onBeforeUnmount(stopTips);
   font-variant-numeric: tabular-nums; }
 .hxo-num sup { font-size: .26em; color: var(--pink); vertical-align: .9em; margin-left: .06em; }
 .hxo-creed { font-family: var(--font-display); font-weight: 800; text-transform: uppercase;
-  font-size: 6.4vmin; letter-spacing: var(--ls-tight); color: var(--ink); white-space: nowrap; }
+  font-size: 6.4vmin; letter-spacing: var(--ls-tight); color: var(--ink);
+  /* Same fixed slot as #hx-load .hxl-creed in index.html — keep the two in step. */
+  --creed-lines: 2; line-height: 1.05; height: calc(var(--creed-lines) * 1.05em);
+  max-width: 88vw; text-align: center; text-wrap: balance; overflow-wrap: normal; hyphens: none; }
 /* Свечения на экране загрузки нет (Документ Б, экран 8): единственное
    свечение в Hexlash — разлом арены. Раньше здесь светились четыре вещи —
    процент, знак процента, слово в девизе и полоса. Розовый остался цветом. */
@@ -205,7 +246,7 @@ onBeforeUnmount(stopTips);
   .hxo-bar { width: 70vmin; }
   .hxo-hud i { width: 6vmin; height: 6vmin; }
   .hxo-lock { --word: 8vmin; }
-  .hxo-creed { font-size: 8vmin; }
+  .hxo-creed { font-size: 8vmin; --creed-lines: 3; }
   .hxo-tag { font-size: 3vmin; }
   .hxo-line { font-size: 3.2vmin; }
 }
