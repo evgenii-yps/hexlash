@@ -66,7 +66,7 @@ const primary = (counts) => B3.slice().sort((x, y) => ((counts[y] || 0) - (count
 const name = (c) => B3.filter((b) => c[b]).map((b) => `${b}${c[b]}`).join('+');
 
 const out = { factor: FACTOR, rows: [], a5: [], ctl: {}, seeds: SEEDS };
-const ctlZero = mk(), ctlAll = mk();
+const ctlZero = mk(), ctlAll = mk(); const ctlP = {}; // ctlP[узор] — встречи набора с эталонами, по узорам
 for (const core of CORE_IDS) {
   if (ONLY && !ONLY.has(core)) continue;
   // Комparators: чистая ветка из 5 и россыпь из 7 (3+2+2, три раскладки) — по одному разу на ядро.
@@ -80,8 +80,9 @@ for (const core of CORE_IDS) {
       const z = mk();
       const R = run(core, beh, null, z);
       const prim = primary(p.counts);
-      const hA5 = run(core, beh, A5[prim].beh, ctlAll);
-      const hS7 = mean(S7.map((x) => run(core, beh, x.beh, ctlAll).wr));
+      const cp = (ctlP[pn] ||= mk());
+      const hA5 = run(core, beh, A5[prim].beh, cp);
+      const hS7 = mean(S7.map((x) => run(core, beh, x.beh, cp).wr));
       for (const k of ['n', 'sp', 'far', 'free', 'capped']) { ctlZero[k] += z[k]; }
       ctlZero.secs.push(...z.secs);
       out.rows.push({ core, pattern: pn, set: name(p.counts), primary: prim, resonance: Object.keys(beh.resonance), wr: R.wr, wrA5: A5[prim].r.wr, wrS7: S7wr, h2hA5: hA5.wr, h2hS7: hS7, divA5: l1(R.share, A5[prim].r.share), divS7: l1(R.share, S7share), share: R.share, far: z.far / z.n, free: z.free / z.n, speed: z.sp / z.n, med: quantile(z.secs, 0.5), max: Math.max(...z.secs), capped: z.capped, over100: z.secs.filter((x) => x > 100).length, sigs: R.sigs });
@@ -90,6 +91,6 @@ for (const core of CORE_IDS) {
   }
 }
 const line = (a) => ({ far: a.far / a.n, free: a.free / a.n, speed: a.sp / a.n, med: quantile(a.secs, 0.5), max: Math.max(...a.secs), capped: a.capped, over100: a.secs.filter((x) => x > 100).length, n: a.secs.length });
-out.ctl = { zero: ctlZero.n ? line(ctlZero) : null, zeroRaw: { n: ctlZero.n, sp: ctlZero.sp, far: ctlZero.far, free: ctlZero.free, secs: ctlZero.secs, capped: ctlZero.capped }, allRaw: { n: ctlAll.n, sp: ctlAll.sp, far: ctlAll.far, free: ctlAll.free, secs: ctlAll.secs, capped: ctlAll.capped } };
+out.ctl = { zero: ctlZero.n ? line(ctlZero) : null, zeroRaw: { n: ctlZero.n, sp: ctlZero.sp, far: ctlZero.far, free: ctlZero.free, secs: ctlZero.secs, capped: ctlZero.capped }, allRaw: null, byPattern: Object.fromEntries(Object.entries(ctlP).map(([k, v]) => [k, { n: v.n, sp: v.sp, far: v.far, free: v.free, secs: v.secs, capped: v.capped }])) };
 writeFileSync(OUT + `${process.env.ONLY || 'all'}.json`, JSON.stringify(out));
 await H.server.close();
