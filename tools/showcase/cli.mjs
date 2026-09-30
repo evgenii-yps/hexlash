@@ -201,7 +201,7 @@ try {
       if (!o['no-verify']) {
         const v = await verifySample(srv.base, plan, r);
         nets.push(v.net); verify[plan.id] = { compared: v.compared, mismatched: v.mismatched, firstBad: v.firstBad };
-        console.log(`    сверка (каждый ${SAMPLE}-й кадр, второй рендер): ${v.compared} кадров, расхождений ${v.mismatched}`);
+        console.log(`    сверка (каждый ${SAMPLE}-й кадр, второй рендер): ${v.compared} кадров, расхождений ${v.mismatched}${v.firstBad !== null ? ", первый кадр " + v.firstBad : ""}`);
         if (v.mismatched) process.exitCode = 1;
       }
     }
