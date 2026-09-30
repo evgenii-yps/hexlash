@@ -120,7 +120,6 @@ let diving = false;    // пролёт идёт — остров уже выбр
 let modeIdleSince = null; // clock time the mode-stage orbit went idle (auto-return)
 let modeReturning = false;
 let modeHomePose = null;  // the default mode framing, for the idle auto-return
-let lastFitPanel = null;  // last measured top chrome — see signFitPanel
 let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
@@ -584,10 +583,8 @@ function rebuildProps() {
 // тянулся за ним. Теперь на острове до шести тел, следить не за кем — пивот стоит
 // НА МЕСТЕ и равен тому, куда камера смотрела на старте: (0, плита + 1.1, 1.0).
 //
-// ⚠️ ЭТО ТА САМАЯ ТОЧКА, по которой считается вывеска (signFitPoses ниже) и с которой
-//    камера стартовала раньше, — поэтому стартовый ракурс сохранён до пикселя, а
-//    вывеска не сдвигается. Ракурс НЕ подбирается под композицию (правило 23.09);
-//    если вывеска поехала — это не подгоняется, а докладывается числами.
+// ⚠️ Это та самая точка, с которой камера стартовала раньше, — поэтому стартовый
+//    ракурс сохранён до пикселя. Ракурс НЕ подбирается под композицию (правило 23.09).
 const PIVOT = { x: 0, z: 1.0, lift: 1.1 }; // z = 1.0 — середина переднего пояса плиты
 const pivotPoint = () => new THREE.Vector3(PIVOT.x, (arenaRefs ? arenaRefs.topY : 0.5) + PIVOT.lift, PIVOT.z);
 
@@ -601,6 +598,8 @@ const pivotPoint = () => new THREE.Vector3(PIVOT.x, (arenaRefs ? arenaRefs.topY 
 const HOME_ORBIT = { minDist: 3.5, maxDist: 12, polarMin: 0.3, polarMax: 1.4 };
 
 // ── Домашнее покачивание ──
+// (30.09.2026: объёмная вывеска HEXLASH с дома убрана. Цифры ниже замерены на ней;
+// покачивание осталось как есть — это принятое глазами поведение камеры.)
 // ⚠️ 14.09.2026, решение владельца. Раньше камера дома уходила в БЕСКОНЕЧНЫЙ обход
 // (`controls.autoRotate`) и не останавливалась никогда — только от касания пальцем.
 // Замерено на живой странице: 25 секунд прогона, камера всё ещё едет. Следствие —
@@ -804,89 +803,6 @@ function homeFraming() {
 
 function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(); }
 
-// ── the HEXLASH sign's fit rule: what the scene owes it ───────────────────────
-// The rule itself lives in transitionFlight.js; what it cannot know from in there
-// is the viewport, the chrome over the corridor, and which pose to judge by. All
-// three are gathered here and handed over — at build, and on every resize.
-
-/**
- * The framing the fit is measured at: the one the screen OPENS on.
- *
- * CAM_BASE aimed where the pivot is set at build — the fighter's starting spot on the
- * seam, (0, slab + 1.1, 1.0). Not poseFor('home'), which is wherever the camera has
- * drifted to this frame: the word must not resize itself all day.
- *
- * ⚠️ And not the drift envelope either, which was tried and measured and does not
- * work. This camera does not hold still: (when this was measured the pivot trailed the
- * wandering fighter by up to a unit either way — that follow is gone now, the pivot
- * stands on PIVOT; the measurement is otherwise unchanged), it sways about the opening pose until the
- * player first touches it (HOME_SWAY), and after that the player owns it outright.
- * A unit of pivot at this distance swings the word some sixty screen pixels — against a word
- * forty-six pixels tall and a guard of twenty. Sizing for the worst corner of that
- * drift left the word at five per cent of the frame on every layout, which is not a
- * word. So the guard is held at the frame the screen opens on, and the drift is what
- * it always was: the word rides up and down under the chrome as the camera moves.
- * A camera the player can spin cannot be promised a clearance at every angle by any
- * size at all — what it can be promised is the frame it opens on.
- */
-function signFitPoses() {
-  const y = (arenaRefs ? arenaRefs.topY : 0.5) + 1.1;
-  return [{ position: CAM_BASE, target: new THREE.Vector3(0, y, 1.0) }];
-}
-
-/**
- * The top chrome's box, in CANVAS coordinates.
- *
- * Measured off the live elements rather than copied out of home.css as a number: the
- * panel is CSS and the word is geometry, the only thing the two share is the screen,
- * and a number copied across goes stale the first time the chrome is restyled.
- *
- * The BUTTONS, not the strip around them. A strip is full-bleed and a cluster has air
- * in it, and air cannot collide with anything — measuring either would have the word
- * ducking a panel that is not over it. Filtered to the top band, because the same
- * class dresses a full-height dock down the side that sits behind the slab and is not
- * what "заходит под верхнюю панель" is about.
- *
- * And the LAYOUT box, not getBoundingClientRect. The chrome slides in on entry and
- * fades away for the flight, so its drawn rect is twenty pixels off its settled place
- * for the first second of the session — long enough for the fit to be computed
- * against it and never corrected, which is precisely what happened on the first pass
- * here. The layout box is the same from the first frame and does not answer to
- * transforms, and where the chrome LIVES is what the word has to keep clear of.
- */
-function layoutBox(el) {
-  let x = 0;
-  let y = 0;
-  for (let n = el; n; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
-  return { x, y, w: el.offsetWidth, h: el.offsetHeight };
-}
-
-function signFitPanel() {
-  const cv = canvasEl.value;
-  if (!cv) return lastFitPanel;
-  const c = layoutBox(cv);
-  const spans = [];
-  let bottom = 0;
-  for (const el of document.querySelectorAll('.hs-strip .hs-chrome')) {
-    const b = layoutBox(el);
-    if (b.w < 4 || b.h < 4) continue;                      // hidden / not laid out yet
-    if (b.y + b.h - c.y > c.h * 0.35) continue;            // the side dock, not the top bar
-    spans.push([b.x - c.x, b.x + b.w - c.x]);
-    bottom = Math.max(bottom, b.y + b.h - c.y);
-  }
-  // Arrange mode takes the strip out of the tree altogether. A resize in there would
-  // otherwise find no panel, conclude there was nothing to duck, and hand back a
-  // full-size word that nothing would correct on the way out. The chrome is coming
-  // back to where it was, so the last place it lived is the honest answer.
-  if (spans.length) lastFitPanel = { bottom, spans };
-  return lastFitPanel;
-}
-
-function refitSign() {
-  if (!flight || !viewW || !viewH) return null;
-  return flight.fitSign({ width: viewW, height: viewH }, signFitPanel(), signFitPoses());
-}
-
 // Hand the orbit back to the player at the home stage: pivot on the fighter, the
 // original wide corridor, no azimuth limit.
 function applyHomeOrbit() {
@@ -903,7 +819,7 @@ function applyHomeOrbit() {
 
 // …and at the mode stage: a FULL circle around the pair. The plates stand in the
 // same world as the home, so the player has to be able to turn round and find the
-// corridor, the sign and the home still there behind them — a fenced-in arc would
+// corridor and the home still there behind them — a fenced-in arc would
 // have given the game away as a backdrop with two props on it.
 //
 // Only the two limits that protect the illusion survive: the pitch floor keeps the
@@ -949,7 +865,7 @@ function modeIdleReturn(t) {
 
 // ─── presence: which end of the ONE world the camera is standing at ───
 // 0 at the home, 1 at the plates. Everything that belongs to one end dims out with
-// it: the plates and the sign sink to a hint in the haze while the player is at
+// it: the plates sink to a hint in the haze while the player is at
 // home, and the home's own glows go out once the camera has left it. Nothing is
 // switched OFF — the player can orbit either stage a full circle, and a hard cut
 // would show as a hole in the world the moment they looked the wrong way.
@@ -963,7 +879,7 @@ const band = (d, off, on) => {
   const x = THREE.MathUtils.clamp((off - d) / Math.max(off - on, 1e-4), 0, 1);
   return x * x * (3 - 2 * x); // smoothstep — no step as the camera crosses over
 };
-// The far end keeps a floor: seen from the home the plates and the sign sink to a
+// The far end keeps a floor: seen from the home the plates sink to a
 // suggestion in the haze rather than to nothing — a hard cut would show as a hole in
 // the world the moment the player orbits. What actually HIDES them is the distance
 // falloff in transitionFlight (scene.fog), which past its `far` replaces them with
@@ -1208,7 +1124,7 @@ onMounted(() => {
   // COUNTER FILL, from the far end of the corridor. The key sits over the home and
   // faces down the +Z side of everything, which was fine while that was the only
   // side anyone ever saw. Now the player can orbit the plates a full circle and look
-  // back up the corridor — and from there the sign's far face, the plates' near
+  // back up the corridor — and from there the plates' near
   // walls and the home's back were all unlit black. This is a dim cold counter-light,
   // not an accent: it puts a readable matte grey on those faces and nothing more.
   const counter = new THREE.DirectionalLight(FAR_FILL.color, FAR_FILL.intensity);
@@ -1348,14 +1264,13 @@ onMounted(() => {
   }
 
   // --- The flight director. Owns the camera path, the fog envelope, the haze the
-  //     camera passes through and the HEXLASH sign standing in the corridor.
+  //     camera passes through.
   flight = createTransitionFlight({ scene, camera, poseFor, reduced });
   flight.setLookHint(controls.target);
   // Второй режиссёр камеры — пролёт внутрь острова. Одновременно с перелётом он
   // работать не может: клик по плите возможен только когда перелёт уже сел
   // (modeSelectable), а начавшийся пролёт снимает выбор до конца жизни экрана.
   dive = createIslandDive({ camera, controls });
-  refitSign();
   load.stage('stages');
 
   // Orbit start/end also stamps the mode stage's idle clock (the auto-return).
@@ -1401,7 +1316,7 @@ onMounted(() => {
     // both stages living in one world.
     // Which end of the corridor are we standing at? Everything that belongs to one
     // end fades with it — see farPresence / homeGlowGate.
-    const presence = farPresence(); // plates / sign / haze
+    const presence = farPresence(); // plates / haze
     const flying = flight ? flight.update(dt, t, presence) : false;
     // Пролёт внутрь острова владеет камерой так же, как перелёт, но это ДРУГАЯ
     // поездка: перелёт возит между двумя стоянками одного мира, эта уезжает со
@@ -1587,9 +1502,6 @@ onMounted(() => {
     // and re-frames it. Mid-flight the director re-aims itself (it watches poseFor),
     // so only the standing case is handled here.
     modePlates?.layout(camera.aspect);
-    // The word in the corridor is sized by what the frame and the chrome leave it, so
-    // a new viewport is exactly when it gets re-fitted — and the only time it does.
-    refitSign();
     // We just moved the picture under ourselves — the settled-frame count has to
     // start again, or the screen could lift on a frame that is about to change.
     load?.unsettle();
