@@ -527,7 +527,10 @@
   text-transform: uppercase; cursor: pointer;
   transition: opacity var(--d-hover) var(--e-settle);
 }
-.fc-light:active { opacity: var(--o-dim); }
+.fc-light:active:not(:disabled) { opacity: var(--o-dim); }
+/* Места нет: кнопка на месте, текст и цвет те же, гаснет и не нажимается. 0.4 — то же
+   значение, что у выключенной кнопки кабинета (.cab-btn:disabled). */
+.fc-light:disabled { opacity: 0.4; cursor: not-allowed; }
 /* Погасить — не главное действие, поэтому не розовое: семья .fc-back, а размер и
    отступы — как у «зажечь», чтобы кнопка стояла ровно на его месте. */
 .fc-out {
@@ -543,10 +546,48 @@
 }
 .fc-out:hover { border-color: var(--line-strong); color: var(--ink); }
 .fc-out:active { opacity: var(--o-dim); }
-/* Счётчик зажжённого — та же типографика, что у строки причины (.fc-why). Отдельный
-   класс — ради nowrap: когда строка подвала переносится, `LIT 3 OF 7` не должен
-   ломаться посередине. */
-.fc-count { white-space: nowrap; }
+/* РЯД ЗАНЯТОГО — семь (RESOURCE) шестиугольников отдельной строкой под кнопкой.
+   flex-basis 100% уводит его на свою строку и центрирует относительно всего подвала,
+   а не кнопки; воздух над ним (sp-3 своего поля + sp-3 зазора подвала) отделяет его от
+   кнопки, чтобы он читался отдельной вещью, а не подписью к ней.
+   --core задаётся на самом ряду: в SPAR карточка стоит вне того предка, что красит
+   остальной экран, и без этого ряд брал бы цвет по умолчанию, а не ядра бойца.
+   ⚠️ ПУСТОЙ — КОНТУР --ink-dim (#A9A5AF), не --ink-off (#5D5D66, «выключено»): на
+   телефоне при дневном свете --ink-off сливается с фоном. Толщина линии не
+   масштабируется вместе с фигурой (vector-effect), иначе при 26 px она была бы
+   волосяной. */
+.fc-pips {
+  flex: 0 0 100%; display: flex; justify-content: center; flex-wrap: nowrap;
+  gap: var(--sp-2); margin-top: var(--sp-3);
+}
+.fc-pip { display: block; flex: none; height: 26px; width: auto; overflow: visible; }
+.fc-pip polygon { vector-effect: non-scaling-stroke; }
+.fc-pip__hex {
+  fill: none; stroke: var(--ink-dim); stroke-width: 1.5px; stroke-linejoin: miter;
+  transition: fill var(--d-fast) var(--e-settle), stroke var(--d-fast) var(--e-settle);
+}
+.fc-pip.is-lit .fc-pip__hex { fill: var(--core); stroke: var(--core); }
+/* ВСПЫШКА при зажигании — в цвете ядра, не розовая: розовый здесь запрещён (тем же
+   грехом болел отклик на выбор, см. .fc-flash). Кольцо расходится и гаснет, заливка
+   проступает из прозрачности. Яркость не поднимаем: красное ядро от этого уходит в
+   розовое. */
+.fc-pip__ring {
+  fill: none; stroke: var(--core); stroke-width: 2px; opacity: 0;
+  transform-box: fill-box; transform-origin: center;
+}
+.fc-pip.is-new .fc-pip__ring { animation: fc-pip-ring var(--d-panel) var(--e-settle) both; }
+.fc-pip.is-new .fc-pip__hex { animation: fc-pip-fill var(--d-panel) var(--e-settle) both; }
+@keyframes fc-pip-ring {
+  from { opacity: .9; transform: scale(1); }
+  to   { opacity: 0;  transform: scale(1.9); }
+}
+@keyframes fc-pip-fill { from { fill-opacity: .25; } to { fill-opacity: 1; } }
+/* Строка «нет места» — читаемым тоном (--ink-soft), а не серым в ноль. */
+.fc-noroom {
+  flex: 0 0 100%; margin: 0; text-align: center;
+  font-size: var(--t-xs); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--ink-soft);
+}
 .fc-back {
   min-height: var(--h-btn-sm); padding: 0 var(--sp-3);
   border: 1px solid var(--line); border-radius: var(--r-none);
@@ -571,7 +612,11 @@
 @media (prefers-reduced-motion: reduce) {
   .fc-core, .fc-facet, .fc-cryst, .fc-flash, .fc-flow-clip,
   .fc-facet__glow, .fc-cryst__glow,
-  .fc-light, .fc-out, .fc-back { transition: none !important; }
+  .fc-light, .fc-out, .fc-back, .fc-pip__hex { transition: none !important; }
+  /* Вспышка остаётся, но без расхождения кольца: масштаб уходит, смена прозрачности
+     нет (правило системы). */
+  .fc-pip.is-new .fc-pip__ring { animation-name: fc-pip-ring-still; }
+  @keyframes fc-pip-ring-still { from { opacity: .9; } to { opacity: 0; } }
 }
 
 .fp-hint {
