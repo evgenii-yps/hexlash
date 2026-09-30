@@ -1,0 +1,11 @@
+{
+  "name": "hexlash-showcase-rig",
+  "private": true,
+  "type": "module",
+  "description": "Обвязка рендера cinematic-ролика. Живёт отдельно от игры: ни одного файла игры не меняет.",
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.5",
+    "@fontsource/saira-condensed": "^5.2.5",
+    "playwright": "1.56.1"
+  }
+}
