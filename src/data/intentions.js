@@ -20,6 +20,7 @@
      CATCH   — ловить    : wait out the foe's swing and punish it. */
 
 import { COMBAT_BALANCE } from './combatBalance.js';
+import { KLICH_BALANCE } from './klichBalance.js';
 const GR = COMBAT_BALANCE.grani;
 const NEED = COMBAT_BALANCE.hardNeed;
 
@@ -218,6 +219,13 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
       if (s[l.i] == null) continue;
       if (String(l.when).split('&').every(holds)) s[l.i] += l.w;
     }
+  }
+  // КЛИЧ ТРЕНЕРА (TZ_klich_v2): пока он действует, очки намерений его группы получают наклон (вес и состав групп —
+  // data/klichBalance.js; сила `self.klich.k` 0…1 идёт по часам клича: полная, затем линейно в ноль). Ложится там же, где наклоны
+  // тегов, и ДО накала. В ответе на замах (swingReply) читается этим же spinalScore — выбор там идёт среди трёх защитных намерений.
+  if (self.klich && self.klich.k > 0) {
+    const grp = KLICH_BALANCE.groups[self.klich.id];
+    if (grp) for (const id of grp) if (s[id] != null) s[id] += KLICH_BALANCE.lean * self.klich.k;
   }
   // накал (stalemate safeguard): a rising escalation01 (silence-without-exchange)
   // pushes BOTH fighters toward the clash — lift the forward attacking intents, press

@@ -262,6 +262,8 @@ function applyKlich(id, unit) {
   // Правило 4: новый клич ЗАМЕНЯЕТ предыдущий. Рычаг бойца сам перезаписывает
   // сдвиг, поэтому снимать старый отдельно не нужно — довольно заменить запись.
   f.applyKlich(KLICH_BALANCE.axes[id], KLICH_BALANCE.holdSec, KLICH_BALANCE.fadeSec);
+  // TZ_klich_v2: боец узнаёт, КАКОЙ клич действует — выбор намерения клонится к его группе (data/klichBalance.js).
+  if (f.setKlichId) f.setKlichId(id);
   const total = KLICH_BALANCE.holdSec + KLICH_BALANCE.fadeSec;
   effects.set(unit, { id, startedAt: nowT, until: nowT + total, key: `k${++badgeSeq}` });
   return true;
