@@ -1,0 +1,30 @@
+diff --git a/src/data/intentions.js b/src/data/intentions.js
+index 93f89e71..2cc0fb4a 100644
+--- a/src/data/intentions.js
++++ b/src/data/intentions.js
+@@ -127,7 +127,12 @@ export function chooseIntentionModel(self, foe, memory, fight) {
+    first, then the temperament-weighted score. Used directly when brain='spinal',
+    and as the safety net + fallback under brain='model'. */
+ export function chooseIntentionSpinal(self, foe, memory, fight) {
+-  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  // ЗОНД klich-reach (только копия дерева): журнал решений стороны 'player' — время, намерение, решила ли жёсткая нужда, действующий клич.
++  const P = globalThis.__PROBE;
++  const need = hardNeed(self, foe, memory, fight);
++  const act = need || spinalScore(self, foe, memory, fight);
++  if (P && P.on && P.log && self.side === 'player') P.log.push({ t: fight.t, act, need: need ? 1 : 0, kid: self.klich ? self.klich.id : null, kk: self.klich ? self.klich.k : 0, range: self.range });
++  return act;
+ }
+ 
+ // HARD NEEDS — the state sets the FLOOR, the character bends where the floor sits and how the fighter answers
+diff --git a/src/scene/buildFighter.js b/src/scene/buildFighter.js
+index cc0cd186..0b8e2e84 100644
+--- a/src/scene/buildFighter.js
++++ b/src/scene/buildFighter.js
+@@ -914,6 +914,7 @@ export function buildFighter(
+         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
+       },
+       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
++      side, // ЗОНД klich-reach: сторона бойца (только копия дерева)
+       klich: klichId ? { id: klichId, k: klichStrength } : null, // действующий клич тренера и его сила — наклон к группе намерений (data/klichBalance.js)
+       hp01: hp / maxHp,
+       hpHist,

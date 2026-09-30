@@ -1,0 +1,2278 @@
+{
+ "base": "cad3c631",
+ "grani": {
+  "threshold": 3,
+  "homeLean": 0.3,
+  "homeLeanMinor": 0.15,
+  "tagLean": 0.12,
+  "vertexLean": 0.2,
+  "selfHpLow": 0.5,
+  "foeHpLow": 0.4,
+  "selfWindLow": 0.4,
+  "foeWindLow": 0.4,
+  "longFightSec": 30,
+  "foeQuietSec": 3,
+  "hpDropFrac": 0.15,
+  "hpDropWindSec": 6
+ },
+ "readers": {
+  "strikePower": [
+   "scene/buildFighter.js"
+  ],
+  "toughness": [
+   "scene/buildFighter.js"
+  ],
+  "accuracy": [
+   "scene/buildFighter.js"
+  ],
+  "blockMitigation": [
+   "scene/buildFighter.js"
+  ],
+  "blockPenetration": [
+   "scene/buildFighter.js"
+  ],
+  "chargeMax": [
+   "scene/buildFighter.js"
+  ],
+  "chargeGain": [
+   "scene/buildFighter.js"
+  ],
+  "chargePower": [
+   "scene/buildFighter.js"
+  ],
+  "chargePen": [
+   "scene/buildFighter.js"
+  ],
+  "interruptResist": [
+   "scene/buildFighter.js"
+  ],
+  "staminaRegen": [
+   "scene/buildFighter.js"
+  ],
+  "feintPayoff": [
+   "scene/buildFighter.js"
+  ],
+  "interruptBonus": [
+   "scene/buildFighter.js"
+  ],
+  "dodgeCounter": [
+   "scene/buildFighter.js"
+  ],
+  "blockCounter": [
+   "scene/buildFighter.js"
+  ],
+  "missCounter": [
+   "scene/buildFighter.js"
+  ],
+  "feintChance": [
+   "scene/buildFighter.js"
+  ]
+ },
+ "cells": [
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/ROOT (a1)",
+   "dataName": "Heavy Hit",
+   "recordedShifts": {
+    "weight": 14
+   },
+   "actualShifts": {
+    "weight": 14
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "weight": 79
+   },
+   "statBonuses": {
+    "strikePower": 0.04
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 104
+    },
+    "mobility": {
+     "from": 96,
+     "to": 85
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/DRIVE (a2)",
+   "dataName": "Guard Crush",
+   "recordedShifts": {
+    "weight": 8
+   },
+   "actualShifts": {
+    "weight": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "weight": 85
+   },
+   "statBonuses": {
+    "strikePower": 0.07,
+    "blockPenetration": 0.4
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 107
+    },
+    "mobility": {
+     "from": 96,
+     "to": 90
+    },
+    "blockPenetration": {
+     "from": 0,
+     "to": 0.4
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/GRIND (a3)",
+   "dataName": "Unshaken",
+   "recordedShifts": {
+    "resilience": 14
+   },
+   "actualShifts": {
+    "resilience": 14
+   },
+   "onStop": [],
+   "clampAt3": [
+    "resilience"
+   ],
+   "branchAxesWithout": {
+    "resilience": 60
+   },
+   "statBonuses": {
+    "strikePower": 0.1,
+    "interruptResist": 0.7
+   },
+   "invisibleLevers": [
+    "interruptResist"
+   ],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 110
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/BREAK (a4)",
+   "dataName": "Close Power",
+   "recordedShifts": {
+    "distance": -8,
+    "weight": 6
+   },
+   "actualShifts": {
+    "distance": -8,
+    "weight": 6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "distance"
+   ],
+   "branchAxesWithout": {
+    "distance": 15,
+    "weight": 87
+   },
+   "statBonuses": {
+    "strikePower": 0.14
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 114
+    },
+    "mobility": {
+     "from": 96,
+     "to": 91
+    }
+   },
+   "tags": [
+    "close_damage_ramp"
+   ],
+   "leans": [
+    {
+     "tag": "close_damage_ramp",
+     "intention": "strike",
+     "when": "close",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/ANVIL (a5)",
+   "dataName": "Breakthrough",
+   "recordedShifts": {
+    "weight": 10
+   },
+   "actualShifts": {
+    "weight": 10
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "weight": 83
+   },
+   "statBonuses": {
+    "strikePower": 0.22,
+    "blockPenetration": 0.95
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 122
+    },
+    "mobility": {
+     "from": 96,
+     "to": 88
+    },
+    "blockPenetration": {
+     "from": 0,
+     "to": 0.95
+    }
+   },
+   "tags": [
+    "overload_strike"
+   ],
+   "leans": [
+    {
+     "tag": "overload_strike",
+     "intention": "strike",
+     "when": "foeHpLow",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/WATCH (b1)",
+   "dataName": "Hard Entry",
+   "recordedShifts": {
+    "distance": -8,
+    "initiative": 6
+   },
+   "actualShifts": {
+    "distance": -8,
+    "initiative": 6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "distance",
+    "initiative"
+   ],
+   "branchAxesWithout": {
+    "distance": 0,
+    "initiative": 90
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/TIMING (b2)",
+   "dataName": "Run-Down",
+   "recordedShifts": {
+    "stick": 8,
+    "distance": -6
+   },
+   "actualShifts": {
+    "distance": -6,
+    "stick": 8
+   },
+   "onStop": [],
+   "clampAt3": [
+    "stick",
+    "distance"
+   ],
+   "branchAxesWithout": {
+    "stick": 100,
+    "distance": 0
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "chase_strike"
+   ],
+   "leans": [
+    {
+     "tag": "chase_strike",
+     "intention": "press",
+     "when": "longFight",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/FEINT (b3)",
+   "dataName": "Cut Off",
+   "recordedShifts": {
+    "stick": 10
+   },
+   "actualShifts": {
+    "stick": 10
+   },
+   "onStop": [],
+   "clampAt3": [
+    "stick"
+   ],
+   "branchAxesWithout": {
+    "stick": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/ADAPT (b4)",
+   "dataName": "Cling",
+   "recordedShifts": {
+    "stick": 10,
+    "distance": -6
+   },
+   "actualShifts": {
+    "distance": -6,
+    "stick": 10
+   },
+   "onStop": [],
+   "clampAt3": [
+    "stick",
+    "distance"
+   ],
+   "branchAxesWithout": {
+    "stick": 100,
+    "distance": 0
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/COLD (b5)",
+   "dataName": "Lockdown",
+   "recordedShifts": {
+    "stick": 14,
+    "distance": -8
+   },
+   "actualShifts": {
+    "distance": -8,
+    "stick": 14
+   },
+   "onStop": [],
+   "clampAt3": [
+    "stick",
+    "distance"
+   ],
+   "branchAxesWithout": {
+    "stick": 100,
+    "distance": 0
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "lockdown"
+   ],
+   "leans": [
+    {
+     "tag": "lockdown",
+     "intention": "hold",
+     "when": "close",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/HOLD (c1)",
+   "dataName": "Long Combo",
+   "recordedShifts": {
+    "tempo": 8
+   },
+   "actualShifts": {
+    "tempo": 8
+   },
+   "onStop": [],
+   "clampAt3": [
+    "tempo"
+   ],
+   "branchAxesWithout": {
+    "tempo": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/SPITE (c2)",
+   "dataName": "No Pause",
+   "recordedShifts": {
+    "tempo": 10
+   },
+   "actualShifts": {
+    "tempo": 10
+   },
+   "onStop": [],
+   "clampAt3": [
+    "tempo"
+   ],
+   "branchAxesWithout": {
+    "tempo": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/VOW (c3)",
+   "dataName": "Building Momentum",
+   "recordedShifts": {
+    "tempo": 6
+   },
+   "actualShifts": {
+    "tempo": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "hit_accel"
+   ],
+   "leans": [
+    {
+     "tag": "hit_accel",
+     "intention": "strike",
+     "when": "longFight",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/HUNGER (c4)",
+   "dataName": "No Breather",
+   "recordedShifts": {
+    "tempo": 6,
+    "stick": 6
+   },
+   "actualShifts": {
+    "tempo": 6,
+    "stick": 6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "stick"
+   ],
+   "branchAxesWithout": {
+    "tempo": 100,
+    "stick": 85
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "no_breather"
+   ],
+   "leans": [
+    {
+     "tag": "no_breather",
+     "intention": "press",
+     "when": "foeHpLow",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/STILL (c5)",
+   "dataName": "Rampage",
+   "recordedShifts": {
+    "tempo": 12
+   },
+   "actualShifts": {
+    "tempo": 12
+   },
+   "onStop": [],
+   "clampAt3": [
+    "tempo"
+   ],
+   "branchAxesWithout": {
+    "tempo": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "rampage"
+   ],
+   "leans": [
+    {
+     "tag": "rampage",
+     "intention": "strike",
+     "when": "selfHpLow",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/ROOT (a1)",
+   "dataName": "Quick Out",
+   "recordedShifts": {
+    "distance": 8,
+    "tempo": 6
+   },
+   "actualShifts": {
+    "distance": 8,
+    "tempo": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 73,
+    "tempo": 73
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/DRIVE (a2)",
+   "dataName": "Pinpoint Entry",
+   "recordedShifts": {
+    "initiative": 6
+   },
+   "actualShifts": {
+    "initiative": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "initiative": 80
+   },
+   "statBonuses": {
+    "accuracy": 0.35
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "accuracy": {
+     "from": 50,
+     "to": 68
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/GRIND (a3)",
+   "dataName": "Far Bounce",
+   "recordedShifts": {
+    "distance": 10,
+    "slip": 6
+   },
+   "actualShifts": {
+    "distance": 10,
+    "slip": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 71,
+    "slip": 71
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/BREAK (a4)",
+   "dataName": "Clean Exchange",
+   "recordedShifts": {
+    "tempo": 8
+   },
+   "actualShifts": {
+    "tempo": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 71
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "clean_chain"
+   ],
+   "leans": [
+    {
+     "tag": "clean_chain",
+     "intention": "sting",
+     "when": "always",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/ANVIL (a5)",
+   "dataName": "Perfect Prick",
+   "recordedShifts": {
+    "initiative": 10,
+    "distance": 8,
+    "slip": 6
+   },
+   "actualShifts": {
+    "distance": 8,
+    "initiative": 10,
+    "slip": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "initiative": 76,
+    "distance": 73,
+    "slip": 71
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "perfect_jab"
+   ],
+   "leans": [
+    {
+     "tag": "perfect_jab",
+     "intention": "sting",
+     "when": "foeQuiet",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/WATCH (b1)",
+   "dataName": "Fake-In",
+   "recordedShifts": {
+    "tempo": 4
+   },
+   "actualShifts": {
+    "tempo": 4
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 89
+   },
+   "statBonuses": {
+    "feintChance": 0.2
+   },
+   "invisibleLevers": [
+    "feintChance"
+   ],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/TIMING (b2)",
+   "dataName": "Punish Reaction",
+   "recordedShifts": {
+    "tempo": 4
+   },
+   "actualShifts": {
+    "tempo": 4
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 89
+   },
+   "statBonuses": {
+    "feintPayoff": 0.5
+   },
+   "invisibleLevers": [
+    "feintPayoff"
+   ],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/FEINT (b3)",
+   "dataName": "Broken Rhythm",
+   "recordedShifts": {
+    "tempo": 8
+   },
+   "actualShifts": {
+    "tempo": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 85
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "rhythm_break"
+   ],
+   "leans": [
+    {
+     "tag": "rhythm_break",
+     "intention": "break",
+     "when": "close",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/ADAPT (b4)",
+   "dataName": "Feint to Interrupt",
+   "recordedShifts": {
+    "tempo": 6
+   },
+   "actualShifts": {
+    "tempo": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 87
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "feint_interrupt"
+   ],
+   "leans": [
+    {
+     "tag": "feint_interrupt",
+     "intention": "sting",
+     "when": "foeSwing",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/COLD (b5)",
+   "dataName": "Setup Combo",
+   "recordedShifts": {
+    "tempo": 6
+   },
+   "actualShifts": {
+    "tempo": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "tempo": 87
+   },
+   "statBonuses": {
+    "feintPayoff": 1.2
+   },
+   "invisibleLevers": [
+    "feintPayoff"
+   ],
+   "dStats": {},
+   "tags": [
+    "feint_combo"
+   ],
+   "leans": [
+    {
+     "tag": "feint_combo",
+     "intention": "strike",
+     "when": "close",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/HOLD (c1)",
+   "dataName": "Read the Tell",
+   "recordedShifts": {
+    "initiative": -6
+   },
+   "actualShifts": {
+    "initiative": -6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "initiative": 74
+   },
+   "statBonuses": {
+    "strikePower": 0.04,
+    "accuracy": 0.3
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 104
+    },
+    "accuracy": {
+     "from": 50,
+     "to": 65
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/SPITE (c2)",
+   "dataName": "Strike the Open",
+   "recordedShifts": {
+    "initiative": 4
+   },
+   "actualShifts": {
+    "initiative": 4
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "initiative": 64
+   },
+   "statBonuses": {
+    "strikePower": 0.07
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 107
+    }
+   },
+   "tags": [
+    "punish_exhausted"
+   ],
+   "leans": [
+    {
+     "tag": "punish_exhausted",
+     "intention": "strike",
+     "when": "foeWindLow",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/VOW (c3)",
+   "dataName": "Charged Run",
+   "recordedShifts": {
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 61
+   },
+   "statBonuses": {
+    "strikePower": 0.1,
+    "chargeGain": 0.6
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 110
+    },
+    "chargeGainPerSec": {
+     "from": 12,
+     "to": 19.200000000000003
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/HUNGER (c4)",
+   "dataName": "Punish Aggression",
+   "recordedShifts": {
+    "counter": 10
+   },
+   "actualShifts": {
+    "counter": 10
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "counter": 45
+   },
+   "statBonuses": {
+    "strikePower": 0.14
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 114
+    }
+   },
+   "tags": [
+    "hunt_reply"
+   ],
+   "leans": [
+    {
+     "tag": "hunt_reply",
+     "intention": "strike",
+     "when": "foeSwing",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/STILL (c5)",
+   "dataName": "Killing Run",
+   "recordedShifts": {
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 61
+   },
+   "statBonuses": {
+    "strikePower": 0.22,
+    "chargePower": 0.6
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 122
+    },
+    "chargePowerBonusMax": {
+     "from": 0.6,
+     "to": 0.96
+    }
+   },
+   "tags": [
+    "lethal_entry"
+   ],
+   "leans": [
+    {
+     "tag": "lethal_entry",
+     "intention": "press",
+     "when": "foeHpLow",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/ROOT (a1)",
+   "dataName": "Tough Hide",
+   "recordedShifts": {
+    "resilience": 8
+   },
+   "actualShifts": {
+    "resilience": 8
+   },
+   "onStop": [],
+   "clampAt3": [
+    "resilience"
+   ],
+   "branchAxesWithout": {
+    "resilience": 100
+   },
+   "statBonuses": {
+    "toughness": 0.04
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 208
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/DRIVE (a2)",
+   "dataName": "Steady Guard",
+   "recordedShifts": {
+    "resilience": 10
+   },
+   "actualShifts": {
+    "resilience": 10
+   },
+   "onStop": [],
+   "clampAt3": [
+    "resilience"
+   ],
+   "branchAxesWithout": {
+    "resilience": 100
+   },
+   "statBonuses": {
+    "toughness": 0.07
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 214
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/GRIND (a3)",
+   "dataName": "Catch Breath",
+   "recordedShifts": {
+    "resilience": 6
+   },
+   "actualShifts": {
+    "resilience": 6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "resilience"
+   ],
+   "branchAxesWithout": {
+    "resilience": 100
+   },
+   "statBonuses": {
+    "toughness": 0.1,
+    "staminaRegen": 0.6
+   },
+   "invisibleLevers": [
+    "staminaRegen"
+   ],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 220
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/BREAK (a4)",
+   "dataName": "Dig In",
+   "recordedShifts": {
+    "distance": -6
+   },
+   "actualShifts": {
+    "distance": -6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 20
+   },
+   "statBonuses": {
+    "toughness": 0.14
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 228
+    }
+   },
+   "tags": [
+    "dig_in"
+   ],
+   "leans": [
+    {
+     "tag": "dig_in",
+     "intention": "hold",
+     "when": "close",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/ANVIL (a5)",
+   "dataName": "Unbreakable",
+   "recordedShifts": {
+    "resilience": 8
+   },
+   "actualShifts": {
+    "resilience": 8
+   },
+   "onStop": [],
+   "clampAt3": [
+    "resilience"
+   ],
+   "branchAxesWithout": {
+    "resilience": 100
+   },
+   "statBonuses": {
+    "toughness": 0.22,
+    "blockMitigation": 0.6
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 244
+    },
+    "blockMitigation": {
+     "from": 0.5,
+     "to": 0.8
+    }
+   },
+   "tags": [
+    "fortress"
+   ],
+   "leans": [
+    {
+     "tag": "fortress",
+     "intention": "hold",
+     "when": "selfHpLow",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/WATCH (b1)",
+   "dataName": "Riposte",
+   "recordedShifts": {
+    "counter": 8,
+    "stick": 6
+   },
+   "actualShifts": {
+    "stick": 6,
+    "counter": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "counter": 94,
+    "stick": 82
+   },
+   "statBonuses": {
+    "toughness": 0.04,
+    "blockCounter": 0.5
+   },
+   "invisibleLevers": [
+    "blockCounter"
+   ],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 208
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/TIMING (b2)",
+   "dataName": "Catch & Punish",
+   "recordedShifts": {
+    "counter": 8
+   },
+   "actualShifts": {
+    "counter": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "counter": 94
+   },
+   "statBonuses": {
+    "toughness": 0.07,
+    "interruptBonus": 0.5
+   },
+   "invisibleLevers": [
+    "interruptBonus"
+   ],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 214
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/FEINT (b3)",
+   "dataName": "Hard Meet",
+   "recordedShifts": {
+    "counter": 10,
+    "stick": 6
+   },
+   "actualShifts": {
+    "stick": 6,
+    "counter": 10
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "counter": 92,
+    "stick": 82
+   },
+   "statBonuses": {
+    "toughness": 0.1
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 220
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/ADAPT (b4)",
+   "dataName": "Retaliation",
+   "recordedShifts": {
+    "counter": 8
+   },
+   "actualShifts": {
+    "counter": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "counter": 94
+   },
+   "statBonuses": {
+    "toughness": 0.14
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 228
+    }
+   },
+   "tags": [
+    "retaliate_ramp"
+   ],
+   "leans": [
+    {
+     "tag": "retaliate_ramp",
+     "intention": "strike",
+     "when": "hpDropped",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/COLD (b5)",
+   "dataName": "Sea Wall",
+   "recordedShifts": {
+    "counter": 8,
+    "stick": 6
+   },
+   "actualShifts": {
+    "stick": 6,
+    "counter": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "counter": 94,
+    "stick": 82
+   },
+   "statBonuses": {
+    "toughness": 0.22,
+    "blockCounter": 1,
+    "interruptBonus": 1
+   },
+   "invisibleLevers": [
+    "blockCounter",
+    "interruptBonus"
+   ],
+   "dStats": {
+    "toughness": {
+     "from": 200,
+     "to": 244
+    }
+   },
+   "tags": [
+    "counter_trap"
+   ],
+   "leans": [
+    {
+     "tag": "counter_trap",
+     "intention": "catch",
+     "when": "longFight",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/HOLD (c1)",
+   "dataName": "Body Shove",
+   "recordedShifts": {
+    "stick": 8,
+    "distance": -6
+   },
+   "actualShifts": {
+    "distance": -6,
+    "stick": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "stick": 100,
+    "distance": 14
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/SPITE (c2)",
+   "dataName": "Heavy Slam",
+   "recordedShifts": {
+    "weight": 10
+   },
+   "actualShifts": {
+    "weight": 10
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "weight": 73
+   },
+   "statBonuses": {
+    "blockPenetration": 0.35
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "mobility": {
+     "from": 88,
+     "to": 80
+    },
+    "blockPenetration": {
+     "from": 0,
+     "to": 0.35
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/VOW (c3)",
+   "dataName": "No Way Around",
+   "recordedShifts": {
+    "stick": 10
+   },
+   "actualShifts": {
+    "stick": 10
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "stick": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/HUNGER (c4)",
+   "dataName": "Pin",
+   "recordedShifts": {
+    "stick": 8,
+    "distance": -6
+   },
+   "actualShifts": {
+    "distance": -6,
+    "stick": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "stick": 100,
+    "distance": 14
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "pin"
+   ],
+   "leans": [
+    {
+     "tag": "pin",
+     "intention": "hold",
+     "when": "close",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/STILL (c5)",
+   "dataName": "Clinch",
+   "recordedShifts": {
+    "stick": 14,
+    "weight": 8
+   },
+   "actualShifts": {
+    "weight": 8,
+    "stick": 14
+   },
+   "onStop": [],
+   "clampAt3": [
+    "stick"
+   ],
+   "branchAxesWithout": {
+    "stick": 96,
+    "weight": 75
+   },
+   "statBonuses": {
+    "blockPenetration": 0.5
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "mobility": {
+     "from": 88,
+     "to": 82
+    },
+    "blockPenetration": {
+     "from": 0,
+     "to": 0.5
+    }
+   },
+   "tags": [
+    "clinch"
+   ],
+   "leans": [
+    {
+     "tag": "clinch",
+     "intention": "press",
+     "when": "close",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/ROOT (a1)",
+   "dataName": "Hard Counter",
+   "recordedShifts": {
+    "counter": 8
+   },
+   "actualShifts": {
+    "counter": 8
+   },
+   "onStop": [],
+   "clampAt3": [
+    "counter"
+   ],
+   "branchAxesWithout": {
+    "counter": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/DRIVE (a2)",
+   "dataName": "Slip Counter",
+   "recordedShifts": {
+    "slip": 6
+   },
+   "actualShifts": {
+    "slip": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "slip": 79
+   },
+   "statBonuses": {
+    "dodgeCounter": 0.5
+   },
+   "invisibleLevers": [
+    "dodgeCounter"
+   ],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/GRIND (a3)",
+   "dataName": "Punish Aggression",
+   "recordedShifts": {
+    "counter": 8
+   },
+   "actualShifts": {
+    "counter": 8
+   },
+   "onStop": [],
+   "clampAt3": [
+    "counter"
+   ],
+   "branchAxesWithout": {
+    "counter": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "punish_aggression"
+   ],
+   "leans": [
+    {
+     "tag": "punish_aggression",
+     "intention": "catch",
+     "when": "hpDropped",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/BREAK (a4)",
+   "dataName": "Punish Whiff",
+   "recordedShifts": {
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 80
+   },
+   "statBonuses": {
+    "missCounter": 0.5
+   },
+   "invisibleLevers": [
+    "missCounter"
+   ],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/ANVIL (a5)",
+   "dataName": "Perfect Trap",
+   "recordedShifts": {
+    "counter": 8,
+    "slip": 4
+   },
+   "actualShifts": {
+    "counter": 8,
+    "slip": 4
+   },
+   "onStop": [],
+   "clampAt3": [
+    "counter"
+   ],
+   "branchAxesWithout": {
+    "counter": 100,
+    "slip": 81
+   },
+   "statBonuses": {
+    "dodgeCounter": 1,
+    "missCounter": 1
+   },
+   "invisibleLevers": [
+    "dodgeCounter",
+    "missCounter"
+   ],
+   "dStats": {},
+   "tags": [
+    "perfect_trap"
+   ],
+   "leans": [
+    {
+     "tag": "perfect_trap",
+     "intention": "strike",
+     "when": "foeHpLow&foeQuiet",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/WATCH (b1)",
+   "dataName": "Long Slip",
+   "recordedShifts": {
+    "slip": 10,
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6,
+    "slip": 10
+   },
+   "onStop": [],
+   "clampAt3": [
+    "slip"
+   ],
+   "branchAxesWithout": {
+    "slip": 100,
+    "distance": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/TIMING (b2)",
+   "dataName": "Hard to Reach",
+   "recordedShifts": {
+    "slip": 8,
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6,
+    "slip": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "slip": 100,
+    "distance": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/FEINT (b3)",
+   "dataName": "Run 'Em Ragged",
+   "recordedShifts": {
+    "distance": 8,
+    "slip": 6
+   },
+   "actualShifts": {
+    "distance": 8,
+    "slip": 6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "distance"
+   ],
+   "branchAxesWithout": {
+    "distance": 98,
+    "slip": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "exhaust"
+   ],
+   "leans": [
+    {
+     "tag": "exhaust",
+     "intention": "sting",
+     "when": "longFight",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/ADAPT (b4)",
+   "dataName": "Open Window",
+   "recordedShifts": {
+    "slip": 8
+   },
+   "actualShifts": {
+    "slip": 8
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "slip": 100
+   },
+   "statBonuses": {
+    "dodgeCounter": 0.4
+   },
+   "invisibleLevers": [
+    "dodgeCounter"
+   ],
+   "dStats": {},
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/COLD (b5)",
+   "dataName": "Phantom",
+   "recordedShifts": {
+    "slip": 12,
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6,
+    "slip": 12
+   },
+   "onStop": [],
+   "clampAt3": [
+    "slip"
+   ],
+   "branchAxesWithout": {
+    "slip": 100,
+    "distance": 100
+   },
+   "statBonuses": {},
+   "invisibleLevers": [],
+   "dStats": {},
+   "tags": [
+    "phantom"
+   ],
+   "leans": [
+    {
+     "tag": "phantom",
+     "intention": "break",
+     "when": "hpDropped",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/HOLD (c1)",
+   "dataName": "Loaded Hit",
+   "recordedShifts": {
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 98
+   },
+   "statBonuses": {
+    "strikePower": 0.04,
+    "chargePower": 0.5
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 104
+    },
+    "chargePowerBonusMax": {
+     "from": 0.6,
+     "to": 0.8999999999999999
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/SPITE (c2)",
+   "dataName": "Long Charge",
+   "recordedShifts": {
+    "initiative": -6,
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6,
+    "initiative": -6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "initiative"
+   ],
+   "branchAxesWithout": {
+    "initiative": 9,
+    "distance": 98
+   },
+   "statBonuses": {
+    "strikePower": 0.07,
+    "chargeMax": 0.6
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 107
+    },
+    "chargeMax": {
+     "from": 100,
+     "to": 160
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/VOW (c3)",
+   "dataName": "Hit the Opening",
+   "recordedShifts": {
+    "initiative": -6
+   },
+   "actualShifts": {
+    "initiative": -6
+   },
+   "onStop": [],
+   "clampAt3": [
+    "initiative"
+   ],
+   "branchAxesWithout": {
+    "initiative": 9
+   },
+   "statBonuses": {
+    "strikePower": 0.1
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 110
+    }
+   },
+   "tags": [
+    "vulnerable_strike"
+   ],
+   "leans": [
+    {
+     "tag": "vulnerable_strike",
+     "intention": "strike",
+     "when": "foeOpen",
+     "vertex": false,
+     "weight": 0.12
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/HUNGER (c4)",
+   "dataName": "Pierce",
+   "recordedShifts": {
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 98
+   },
+   "statBonuses": {
+    "strikePower": 0.14,
+    "chargePen": 0.6
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 114
+    },
+    "chargePenetrationBonusMax": {
+     "from": 0.7,
+     "to": 1.1199999999999999
+    }
+   },
+   "tags": [],
+   "leans": [],
+   "deadTags": [],
+   "hasInput": true
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/STILL (c5)",
+   "dataName": "Execution",
+   "recordedShifts": {
+    "distance": 6
+   },
+   "actualShifts": {
+    "distance": 6
+   },
+   "onStop": [],
+   "clampAt3": [],
+   "branchAxesWithout": {
+    "distance": 98
+   },
+   "statBonuses": {
+    "strikePower": 0.22,
+    "chargePower": 0.8
+   },
+   "invisibleLevers": [],
+   "dStats": {
+    "strikePower": {
+     "from": 100,
+     "to": 122
+    },
+    "chargePowerBonusMax": {
+     "from": 0.6,
+     "to": 1.08
+    }
+   },
+   "tags": [
+    "execute"
+   ],
+   "leans": [
+    {
+     "tag": "execute",
+     "intention": "strike",
+     "when": "foeHpLow",
+     "vertex": true,
+     "weight": 0.2
+    }
+   ],
+   "deadTags": [],
+   "hasInput": true
+  }
+ ]
+}

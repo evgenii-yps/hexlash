@@ -1,0 +1,97 @@
+{
+ "categories": {
+  "nBoth": 27,
+  "nOut": 5,
+  "nBeh": 19,
+  "nNone": 9,
+  "behDec": 19,
+  "behBodyOnly": 27
+ },
+ "perFlag": {
+  "ПУСТОЙ": 0,
+  "МАЛЫЙ ВЕС": 23,
+  "ГЛУХОЙ КАНАЛ": 19
+ },
+ "perCell": {
+  "ПУСТОЙ": 0,
+  "МАЛЫЙ ВЕС": 16,
+  "ГЛУХОЙ КАНАЛ": 16,
+  "смешанный": 1
+ },
+ "lists": {
+  "ПУСТОЙ": [],
+  "МАЛЫЙ ВЕС": [
+   "ONSLAUGHT WILL/VOW (c3) Building Momentum — ИСХОД",
+   "RAIDER BODY/GRIND (a3) Far Bounce — ИСХОД",
+   "RAIDER BODY/ANVIL (a5) Perfect Prick — ИСХОД",
+   "BULWARK BODY/GRIND (a3) Catch Breath — ПОВЕДЕНИЕ",
+   "BULWARK BODY/BREAK (a4) Dig In — ИСХОД",
+   "BULWARK MIND/WATCH (b1) Riposte — ИСХОД + ПОВЕДЕНИЕ",
+   "BULWARK MIND/TIMING (b2) Catch & Punish — ИСХОД + ПОВЕДЕНИЕ",
+   "BULWARK MIND/FEINT (b3) Hard Meet — ИСХОД + ПОВЕДЕНИЕ",
+   "BULWARK MIND/ADAPT (b4) Retaliation — ИСХОД + ПОВЕДЕНИЕ",
+   "BULWARK MIND/COLD (b5) Sea Wall — ПОВЕДЕНИЕ",
+   "BULWARK WILL/HOLD (c1) Body Shove — ИСХОД + ПОВЕДЕНИЕ",
+   "BULWARK WILL/VOW (c3) No Way Around — ПОВЕДЕНИЕ",
+   "AMBUSH BODY/DRIVE (a2) Slip Counter — ПОВЕДЕНИЕ",
+   "AMBUSH MIND/FEINT (b3) Run 'Em Ragged — ИСХОД",
+   "AMBUSH MIND/ADAPT (b4) Open Window — ПОВЕДЕНИЕ",
+   "AMBUSH WILL/SPITE (c2) Long Charge — ИСХОД + ПОВЕДЕНИЕ",
+   "AMBUSH WILL/VOW (c3) Hit the Opening — ПОВЕДЕНИЕ"
+  ],
+  "ГЛУХОЙ КАНАЛ": [
+   "ONSLAUGHT BODY/ROOT (a1) Heavy Hit — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "ONSLAUGHT MIND/WATCH (b1) Hard Entry — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "ONSLAUGHT MIND/FEINT (b3) Cut Off — ИСХОД + ПОВЕДЕНИЕ [при ×3 не меняется ничего]",
+   "ONSLAUGHT MIND/COLD (b5) Lockdown — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "ONSLAUGHT WILL/HOLD (c1) Long Combo — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "ONSLAUGHT WILL/SPITE (c2) No Pause — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "ONSLAUGHT WILL/HUNGER (c4) No Breather — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "RAIDER BODY/ROOT (a1) Quick Out — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "RAIDER BODY/BREAK (a4) Clean Exchange — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "RAIDER MIND/TIMING (b2) Punish Reaction — ИСХОД + ПОВЕДЕНИЕ [при ×3 не меняется ничего]",
+   "RAIDER MIND/FEINT (b3) Broken Rhythm — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "RAIDER MIND/ADAPT (b4) Feint to Interrupt — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "RAIDER MIND/COLD (b5) Setup Combo — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "BULWARK WILL/VOW (c3) No Way Around — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "BULWARK WILL/HUNGER (c4) Pin — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "AMBUSH BODY/GRIND (a3) Punish Aggression — ИСХОД [при ×3 поведение меняется, выигрыш нет]",
+   "AMBUSH BODY/BREAK (a4) Punish Whiff — ИСХОД [при ×3 поведение меняется, выигрыш нет]"
+  ]
+ },
+ "vertices": {
+  "solo": 12,
+  "branch": 9,
+  "absorbed": 6
+ },
+ "invisible": [
+  "natisk Run-Down",
+  "natisk Cut Off",
+  "natisk Cling",
+  "natisk Long Combo",
+  "natisk No Pause",
+  "skala No Way Around",
+  "zasada Hard Counter",
+  "zasada Long Slip",
+  "zasada Hard to Reach"
+ ],
+ "control": {
+  "A": {
+   "bouts": 48000,
+   "median": 51.64999999999835,
+   "over100": 0,
+   "capped": 0
+  },
+  "B": {
+   "bouts": 57600,
+   "median": 50.64999999999841,
+   "over100": 4,
+   "capped": 0
+  }
+ },
+ "effectCompare": {
+  "corr": 0.9824461616259437,
+  "flips": 0,
+  "bigMoves": 0
+ }
+}

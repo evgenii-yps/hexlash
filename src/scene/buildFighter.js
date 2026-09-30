@@ -828,8 +828,11 @@ export function buildFighter(
   const klichPeak = { distance: 0, initiative: 0, tempo: 0, stick: 0 }; // сдвиг на полную силу
   let klichUntil = 0; // когда сдвиг окончательно сойдёт на нет (0 = клича нет)
   let klichFade = 0;  // сколько секунд длится сход на нет в конце
+  let klichId = null;     // id действующего клича (push|fallback|hold) — читает выбор намерения (TZ_klich_v2); null = клича нет
+  let klichStrength = 0;  // его текущая сила 0…1 по тем же часам, что сдвиг осей: полная, затем линейно в ноль
   const clearKlich = () => {
     klichUntil = 0; klichFade = 0;
+    klichId = null; klichStrength = 0;
     klichDelta.distance = 0; klichDelta.initiative = 0; klichDelta.tempo = 0; klichDelta.stick = 0;
   };
   const tickKlich = () => {
@@ -837,6 +840,7 @@ export function buildFighter(
     const left = klichUntil - lastT;
     if (left <= 0) { clearKlich(); return; }
     const k = klichFade > 0 ? Math.min(1, left / klichFade) : 1; // полная сила, потом линейно в ноль
+    klichStrength = k;
     klichDelta.distance = klichPeak.distance * k;
     klichDelta.initiative = klichPeak.initiative * k;
     klichDelta.tempo = klichPeak.tempo * k;
@@ -850,8 +854,11 @@ export function buildFighter(
     klichPeak.stick = axes.stick || 0;
     klichFade = Math.max(0, fadeSec);
     klichUntil = lastT + Math.max(0, holdSec) + klichFade;
+    klichId = null; // id называет следующий вызов setKlichId; пока не назван — наклона нет, оси действуют как раньше
     tickKlich();
   };
+  // Назвать действующий клич для выбора намерения. Зовётся сразу после applyKlich (services/klich.js).
+  const setKlichId = (id) => { klichId = id || null; };
   const intentionFlags = { attack: 'free', guard: 0, charge: 'free' };
   let intentionId = INTENTIONS.HOLD;
   let intentionNextAt = 0; // loop time the next pick fires (INTENTION_TICK_SEC apart)
@@ -907,6 +914,7 @@ export function buildFighter(
         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
       },
       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
+      klich: klichId ? { id: klichId, k: klichStrength } : null, // действующий клич тренера и его сила — наклон к группе намерений (data/klichBalance.js)
       hp01: hp / maxHp,
       hpHist,
       stamina01: stamina01(),
@@ -2877,6 +2885,7 @@ export function buildFighter(
     setBuffPace,      // ВЕДРО: множитель хода (1 = баффа нет)
     // КЛИЧ — два рычага. Выключены, пока их никто не зовёт.
     applyKlich,       // наложить временный сдвиг манеры (оси, сколько держать, сколько гаснуть)
+    setKlichId,       // назвать клич для выбора намерения (id из data/klichBalance.js)
     clearKlich,       // снять сдвиг досрочно
     wasLastHitBlocked: () => lastHitBlocked, // КУБИК: последний прилетевший удар ушёл в блок
     getHp: () => hp,

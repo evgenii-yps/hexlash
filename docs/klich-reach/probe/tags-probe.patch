@@ -1,0 +1,34 @@
+diff --git a/src/data/intentions.js b/src/data/intentions.js
+index 5ba97a86..97dc26b6 100644
+--- a/src/data/intentions.js
++++ b/src/data/intentions.js
+@@ -127,7 +127,16 @@ export function chooseIntentionModel(self, foe, memory, fight) {
+    first, then the temperament-weighted score. Used directly when brain='spinal',
+    and as the safety net + fallback under brain='model'. */
+ export function chooseIntentionSpinal(self, foe, memory, fight) {
+-  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  // ЗОНД klich-reach (наклоны кристаллов × клич; только копия дерева). Для решений стороны 'player' с кличем считаем четыре выбора:
++  // act — настоящий; nk — клич убран (наклоны граней остались); nl — убраны и клич, и наклоны граней; rl — клич остался, наклоны граней убраны.
++  const P = globalThis.__PROBE;
++  const run = (o) => hardNeed(o, foe, memory, fight) || spinalScore(o, foe, memory, fight);
++  const act = run(self);
++  if (P && P.on && P.log && self.side === 'player') {
++    const nk = run({ ...self, klich: null }), nl = run({ ...self, klich: null, leans: null }), rl = run({ ...self, leans: null });
++    P.log.push({ t: fight.t, act, nk, nl, rl, kid: self.klich ? self.klich.id : null, kk: self.klich ? self.klich.k : 0 });
++  }
++  return act;
+ }
+ 
+ // HARD NEEDS — the state sets the FLOOR, the character bends where the floor sits and how the fighter answers
+diff --git a/src/scene/buildFighter.js b/src/scene/buildFighter.js
+index cc0cd186..0b8e2e84 100644
+--- a/src/scene/buildFighter.js
++++ b/src/scene/buildFighter.js
+@@ -914,6 +914,7 @@ export function buildFighter(
+         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
+       },
+       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
++      side, // ЗОНД klich-reach: сторона бойца (только копия дерева)
+       klich: klichId ? { id: klichId, k: klichStrength } : null, // действующий клич тренера и его сила — наклон к группе намерений (data/klichBalance.js)
+       hp01: hp / maxHp,
+       hpHist,

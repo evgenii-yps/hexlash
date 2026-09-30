@@ -1,0 +1,150 @@
+[
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 1,
+  "channels": [
+   "axes",
+   "bonus"
+  ]
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 1,
+  "channels": [
+   "axes"
+  ]
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 3,
+  "channels": [
+   "axes"
+  ]
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 5,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 1,
+  "channels": [
+   "axes"
+  ]
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 2,
+  "channels": [
+   "axes"
+  ]
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 4,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 1,
+  "channels": [
+   "axes"
+  ]
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 4,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 2,
+  "channels": [
+   "axes",
+   "bonus"
+  ]
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 3,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 4,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 5,
+  "channels": [
+   "axes",
+   "bonus",
+   "lean"
+  ]
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 3,
+  "channels": [
+   "axes"
+  ]
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 4,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 3,
+  "channels": [
+   "axes",
+   "lean"
+  ]
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 4,
+  "channels": [
+   "axes",
+   "bonus"
+  ]
+ }
+]

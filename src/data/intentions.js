@@ -20,6 +20,7 @@
      CATCH   — ловить    : wait out the foe's swing and punish it. */
 
 import { COMBAT_BALANCE } from './combatBalance.js';
+import { KLICH_BALANCE } from './klichBalance.js';
 const GR = COMBAT_BALANCE.grani;
 const NEED = COMBAT_BALANCE.hardNeed;
 
@@ -237,7 +238,18 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
   // Hysteresis: a small bonus to the held intention so it doesn't flip-flop every
   // tick (deterministic — no random). argmax, ties broken by INTENTION_IDS order.
   if (s[self.current] != null) s[self.current] += 0.08;
-  let best = only[0];
-  for (const id of only) if (s[id] > s[best]) best = id;
+  // КЛИЧ ТРЕНЕРА (TZ_klich_v2, приказ внутри группы): пока клич на ПОЛНОЙ силе (весь holdSec; `self.klich.k` == 1), выбор по очкам идёт
+  // только среди намерений его группы (data/klichBalance.js); очки внутри неё — те же, что всегда: оси, теги, резонанс, накал, удержание.
+  // Сила пошла на убыль (fadeSec) — ограничение снято. Тот же приём, что swingReply: argmax по подмножеству `only`. В ответе на замах
+  // подмножество — пересечение {CATCH, BREAK, HOLD} с группой; пустое пересечение (PUSH) — ответ как без клича. Жёсткие нужды
+  // (выдох при пустом запасе, удар полным зарядом) стоят выше очков и не затрагиваются.
+  let pool = only;
+  if (self.klich && self.klich.k >= 1) {
+    const grp = KLICH_BALANCE.groups[self.klich.id];
+    const cut = grp ? only.filter((id) => grp.includes(id)) : [];
+    if (cut.length) pool = cut;
+  }
+  let best = pool[0];
+  for (const id of pool) if (s[id] > s[best]) best = id;
   return best;
 }
