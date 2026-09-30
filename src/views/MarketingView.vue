@@ -404,11 +404,12 @@ function onAnchorClick(e) {
 }
 
 useDocumentMeta({
-  // Tab/share title is the bare domain on every route (incl. the landing).
-  // og:title / twitter:title derive from this; description + og:image (marketing)
-  // are intentionally left untouched.
+  // Tab title is the bare domain on every route (incl. the landing).
+  // Share card (og/twitter title + description) matches static index.html,
+  // which is what link crawlers (Telegram etc.) actually read.
   title: 'hexlash.com',
-  description: 'Pick your fighter, build your loadout, take the belt. A Web3 turn-based fighter on Base. Train. Fight. Rise.',
+  ogTitle: 'Hexlash',
+  description: 'Raise an AI fighter that thinks for itself — then hand it the controls. PvP arena on Base.',
   ogImage: 'https://hexlash.com/og-image.png',
 });
 
