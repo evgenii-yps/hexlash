@@ -52,6 +52,7 @@ if (MODE === 'seven') for (const c of CORE_IDS) { per[c] = mk(); for (const coun
 for (const c of Object.keys(per)) { const p = per[c]; total.n += p.n; total.far += p.far; total.free += p.free; total.sp += p.sp; total.secs.push(...p.secs); total.capped += p.capped; total.wins += p.wins; total.bouts += p.bouts; }
 const sum = (a) => ({ far: a.far / a.n, free: a.free / a.n, speed: a.sp / a.n, median: quantile(a.secs, 0.5), max: Math.max(...a.secs), over100: a.secs.filter((x) => x > 100).length, capped: a.capped, bouts: a.bouts, winRate: a.wins / a.bouts });
 const res = { mode: MODE, seeds: SEEDS, bend: process.env.BEND ?? null, total: sum(total), perCore: Object.fromEntries(Object.entries(per).map(([c, p]) => [c, sum(p)])) };
+if (process.env.DUMP) res.secs = total.secs; // все длины боёв — для хвоста (перцентили, число боёв дольше N с)
 writeFileSync(OUT + `${LABEL}-controls-${MODE}.json`, JSON.stringify(res, null, 1) + '\n');
 console.log(JSON.stringify(res.total));
 await H.server.close();
