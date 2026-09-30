@@ -209,7 +209,7 @@
     </div>
 
     <!-- ── что сейчас открыто ───────────────────────────────────────────── -->
-    <div class="fc-read">
+    <div ref="readEl" class="fc-read" :class="{ 'is-more': moreBelow }" @scroll.passive="updateMore">
       <template v-if="level === 'core'">
         <p class="fc-hint">{{ preview ? t.forge.coreOpenHint : t.forge.coreHint }}</p>
       </template>
@@ -223,15 +223,14 @@
         <p v-if="level === 'facet'" class="fc-hint fc-hint--left">{{ t.forge.facetHint }}</p>
 
         <!-- ОПИСАНИЕ КРИСТАЛЛА — две вещи и ни одной цифры (ТЗ 24.09.2026):
-             что он даёт бойцу в бою, и как он меняет его манеру. Вторую
-             подписываем словом CHARACTER — внутреннего словаря игрок не видит.
+             что он даёт бойцу в бою, и как он меняет его манеру. Подписи CHARACTER
+             над второй строкой больше нет (ТЗ 30.09.2026, v3): строка и так
+             читается как характер, а место нужно под размер.
              ⚠️ Предложения набраны своим регистром, а не капителью: капитель в
-             системе отведена лейблам и ударным словам до трёх. Заглавными здесь
-             только сама подпись CHARACTER — она лейбл. -->
+             системе отведена лейблам и ударным словам до трёх. -->
         <div v-else-if="cryText" class="fc-lines">
           <p class="fc-line fc-line--effect">{{ cryText.effect }}</p>
           <p class="fc-char">
-            <span class="fc-char__label">{{ t.forge.characterLabel }}</span>
             <span class="fc-char__text">{{ cryText.character }}</span>
           </p>
         </div>
@@ -451,6 +450,34 @@ watch(() => props.spent, (n, o) => {
   pipTimer = setTimeout(() => { pipFlash.value = null; }, PIP_FLASH_MS);
 });
 onBeforeUnmount(() => clearTimeout(pipTimer));
+
+/* ── текстовая часть карточки прокручивается, кнопка и ряд — нет ────────────
+   В развороте высоты может не хватать (телефон стоя с крупным текстом, лёжа тем
+   более): тогда прокручивается ТОЛЬКО .fc-read, а .fc-foot остаётся прижатым к
+   низу. Полосы прокрутки нет (см. forge.css); что ниже есть ещё — говорит мягкое
+   затемнение нижней кромки, класс is-more. Он снимается, когда дошли до конца или
+   когда всё помещается. */
+const readEl = ref(null);
+const moreBelow = ref(false);
+function updateMore() {
+  const el = readEl.value;
+  moreBelow.value = !!el && el.scrollHeight - el.clientHeight - el.scrollTop > 2;
+}
+let readRo = null;
+onMounted(() => {
+  if (typeof ResizeObserver === 'undefined' || !readEl.value) return;
+  readRo = new ResizeObserver(updateMore);
+  readRo.observe(readEl.value);
+  updateMore();
+});
+onBeforeUnmount(() => { if (readRo) readRo.disconnect(); });
+/* Другой уровень или другой кристалл — текст другой: читать с начала. */
+watch([level, () => sel.value, () => cry.value], () => {
+  requestAnimationFrame(() => {
+    if (readEl.value) readEl.value.scrollTop = 0;
+    updateMore();
+  });
+});
 
 /* ── налив ─────────────────────────────────────────────────────────────── */
 const flowStyle = (f) => ({

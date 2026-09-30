@@ -33,14 +33,18 @@ async function seed(page, { fighter, lit }) {
 const measure = (page, root) => page.evaluate((root) => {
   const q = (s) => document.querySelector(`${root} ${s}`);
   const fs = (s) => { const e = q(s); if (!e) return null; const c = getComputedStyle(e); const r = e.getBoundingClientRect(); return { px: c.fontSize, h: Math.round(r.height), w: Math.round(r.width), bottom: Math.round(r.bottom) }; };
-  const names = ['.fc-who .nm', '.fc-who .cr', '.fc-kicker', '.fc-name', '.fc-hint', '.fc-line--effect', '.fc-char__label', '.fc-char__text', '.fc-light', '.fc-out', '.fc-why', '.fc-noroom', '.fc-back', '.fc-pip'];
+  const names = ['.fc-who .nm', '.fc-who .cr', '.fc-kicker', '.fc-name', '.fc-hint', '.fc-line--effect', '.fc-char__text', '.fc-light', '.fc-out', '.fc-why', '.fc-noroom', '.fc-back', '.fc-pip'];
   const out = {}; for (const n of names) { const v = fs(n); if (v) out[n] = v; }
   const ws = document.documentElement.clientWidth, hs = document.documentElement.clientHeight;
   const card = q('.fc'); const cr = card && card.getBoundingClientRect();
   let sc = null; for (let e = card; e; e = e.parentElement) { if (e.scrollHeight > e.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(e).overflowY)) { sc = { cls: e.className, sh: e.scrollHeight, ch: e.clientHeight }; break; } }
   const hOver = [...document.querySelectorAll(`${root} .fc *`)].filter((e) => { const r = e.getBoundingClientRect(); return r.width && (r.right > ws + 1 || r.left < -1); }).map((e) => e.className && e.className.baseVal === undefined ? e.className : e.tagName).slice(0, 5);
-  const lines = q('.fc-lines'); 
-  return { viewport: [ws, hs], cardBottom: cr && Math.round(cr.bottom), cardTop: cr && Math.round(cr.top), scroller: sc, hOverflow: hOver, linesScroll: lines ? { sh: lines.scrollHeight, ch: lines.clientHeight } : null, pipRow: (() => { const p = q('.fc-pips'); if (!p) return null; const r = p.getBoundingClientRect(); return { w: Math.round(r.width), l: Math.round(r.left), r: Math.round(r.right) }; })(), els: out };
+  const lines = q('.fc-lines');
+  const rd = q('.fc-read'), ft = q('.fc-foot');
+  const fr = ft && ft.getBoundingClientRect(), rr = rd && rd.getBoundingClientRect();
+  const read = rd ? { sh: rd.scrollHeight, ch: rd.clientHeight, top: Math.round(rr.top), bottom: Math.round(rr.bottom), more: rd.classList.contains('is-more') } : null;
+  const foot = ft ? { top: Math.round(fr.top), bottom: Math.round(fr.bottom), visible: fr.top >= 0 && fr.bottom <= hs } : null;
+  return { read, foot, viewport: [ws, hs], cardBottom: cr && Math.round(cr.bottom), cardTop: cr && Math.round(cr.top), scroller: sc, hOverflow: hOver, linesScroll: lines ? { sh: lines.scrollHeight, ch: lines.clientHeight } : null, pipRow: (() => { const p = q('.fc-pips'); if (!p) return null; const r = p.getBoundingClientRect(); return { w: Math.round(r.width), l: Math.round(r.left), r: Math.round(r.right) }; })(), els: out };
 }, root);
 
 async function forge({ w, h, fighter, lit, facet, crystal }, steps) {
@@ -63,7 +67,7 @@ const pick = async (p, facet, crystal, root = '.fco') => {
 const shot = (p, n) => p.screenshot({ path: `${OUT}/${PREFIX}-${n}.png` });
 const meas = async (p, tag, root = '.fco') => { const m = await measure(p, root); note(`${tag}: ${JSON.stringify(m)}`); };
 
-for (const [tag, w, h] of (process.env.ONLY === 'spar' ? [] : [['m', 390, 844], ['d', 1280, 800]])) {
+for (const [tag, w, h] of (process.env.ONLY ? [] : [['m', 390, 844], ['l', 844, 390], ['d', 1280, 800]])) {
   // 1 · кристалл BREAK (самый длинный по сумме текста) с тремя зажжёнными: LIGHT IT живая
   await forge({ w, h, fighter: 0, lit: 3 }, async (p) => { await pick(p, 'a', 3); await shot(p, `${tag}-1-break`); await meas(p, `${tag} break`); });
   // 2 · COLD — второй по длине, в другой грани
@@ -76,8 +80,27 @@ for (const [tag, w, h] of (process.env.ONLY === 'spar' ? [] : [['m', 390, 844], 
   await forge({ w, h, fighter: 0, lit: 3 }, async (p) => { await pick(p, 'a', null); await shot(p, `${tag}-5-facet`); await meas(p, `${tag} facet`); });
 }
 
+// 7 · все 15 кристаллов (по пять в гранях): один проход на грань, телефон стоя и лёжа
+if (process.env.ONLY !== 'spar') {
+  for (const [tag, w, h] of [['m', 390, 844], ['l', 844, 390]]) {
+    await forge({ w, h, fighter: 0, lit: 3 }, async (p) => {
+      // Грань и кристалл выставляем прямо в состоянии карточки (dev-сборка): клавишей
+      // между кристаллами одной грани и между гранями в прогоне не переходится.
+      for (const f of [...'abc']) {
+        for (let c = 0; c < 5; c++) {
+          await p.evaluate(({ f, c }) => { const st = document.querySelector('.fco .fc').__vueParentComponent.setupState; st.sel = f; st.cry = c; }, { f, c });
+          await p.waitForTimeout(450);
+          await shot(p, `${tag}-7-all-${f}${c}`);
+          const m = await measure(p, '.fco'); const name = await p.locator('.fco .fc-name').textContent().catch(() => '?');
+          note(`${tag} all ${f}${c} ${name}: read=${JSON.stringify(m.read)} foot=${JSON.stringify(m.foot)} hOver=${JSON.stringify(m.hOverflow.filter((x) => x !== 'g' && x !== 'polygon'))}`);
+        }
+      }
+    });
+  }
+}
+
 // 6 · SPAR, телефон: та же карточка у своего бойца
-{
+if (process.env.ONLY !== 'all') {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage(); page.on('pageerror', (e) => note(`pageerror: ${e.message}`));
   await seed(page, { fighter: 0, lit: 3 });
