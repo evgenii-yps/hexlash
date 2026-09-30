@@ -743,6 +743,55 @@
 .fp--list .fp-style  { order: 2; }
 .fp--list.is-beside  { right: var(--fp-w); width: var(--fl-w); }
 
+/* ── СВЁРНУТЫЙ СПИСОК НА ВЕРТИКАЛИ (30.09.2026) ────────────────────────────────
+   Одна строка в 44 точки (минимальная тач-зона) у самого низа, над строкой гостя:
+   имя выбранного слева — оно раскрывает список, TRAIN справа. Высота карточки
+   ровно 44, поэтому её верх на 390×844 — y 756, а нижняя кромка подписей ряда
+   предметов — 752: полосы не пересекаются при любом составе (замер 748…752).
+   Верхнее затухание стекла сужено, чтобы стекло не размывало подписи ряда. */
+.fp--list.is-compact { --f-t: var(--sp-1); }
+.fp--list.is-compact .fp-card { max-height: none; }
+.fp-bar { display: flex; align-items: stretch; gap: var(--sp-2); height: var(--h-btn-sm); padding: 0 var(--sp-3); }
+.fp-bar-main {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--sp-3);
+  padding: 0 var(--sp-3); font: inherit; font-size: var(--t-xs); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink); text-align: left;
+  border: 1px solid transparent; border-left: 2px solid var(--core);
+  background: var(--fill-1); border-radius: var(--r-none); cursor: pointer;
+  transition: background var(--d-fast), border-color var(--d-fast), transform var(--d-press);
+}
+.fp-bar-main .sw { width: 6px; height: 6px; flex: none; background: var(--core); }
+.fp-bar-main .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-bar-main .st { flex: none; font-size: var(--t-micro); letter-spacing: var(--ls-wide); color: var(--ink-dim); white-space: nowrap; }
+.fp-bar-main:hover { background: var(--fill-2); }
+.fp-bar-main:active { transform: translateY(1px); transition-duration: var(--d-press); }
+.fp-bar-main:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }
+.fp-bar .fp-train-btn { flex: none; }
+
+/* Развёрнутый список на вертикали: строка «выбран» сворачивает его обратно. */
+.fp-collapse {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  padding: var(--sp-2) 0; font: inherit; font-size: var(--t-micro); letter-spacing: var(--ls-wide);
+  text-transform: uppercase; color: var(--ink-dim); background: none; border: 0; cursor: pointer;
+}
+.fp-collapse:hover { color: var(--ink); }
+.fp-collapse:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: 2px; }
+
+/* ⚠️ TRAIN В СПИСКЕ ПРИКОЛОЧЕНА К ВЕРХУ ПРОКРУТКИ и видна при любом её положении;
+   scroll-padding оставляет ей место, когда выбранную строку подводят в поле зрения.
+   Фон — вуаль стекла: строки, уходящие под кнопку, не должны просвечивать.
+   ТОЛЬКО ВЕРТИКАЛЬ: лёжа список выглядит как раньше, ни пикселем иначе. */
+@media (orientation: portrait) {
+  .fp--list .fp-scroll { scroll-padding-top: calc(var(--h-btn-sm) + var(--sp-3)); }
+  .fp--list .fp-train {
+    /* top: −отступ прокрутки — кнопка встаёт вплотную к верху области, и строки не
+       выглядывают над ней */
+    position: sticky; top: calc(var(--sp-3) * -1); z-index: 1;
+    padding: var(--sp-1) 0;
+    background: color-mix(in srgb, var(--void) 80%, transparent);
+  }
+}
+
 /* ── phone, upright: a band along the BOTTOM ─────────────────────────────
       The head and the way out stay put; the tree and the roster share what is
       left and scroll. The band's height is what the camera framing reserves

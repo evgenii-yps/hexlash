@@ -46,6 +46,8 @@
         class="fp--list"
         :class="{ 'is-beside': beside }"
         section="roster"
+        :compact="listCompact"
+        :collapsible="listCollapsible"
         :show-train="!menuOpen"
         :fighters="fighters"
         :picked-id="pickedId"
@@ -62,6 +64,8 @@
         :light-why="lightWhy"
         :quench-why="quenchWhy"
         @pick="onListPick"
+        @expand="listExpanded = true"
+        @collapse="listExpanded = false"
         @new-fighter="onNewFighter"
         @train="onTrain"
         @cancel-train="onCancelTrain"
@@ -244,6 +248,15 @@ const menuOpen = computed(() => (statsOpen.value && !!picked.value) || !!openSec
 // СПИСОК ПОСТОЯННЫЙ. Уходит только пока открыто меню — и только там, где рядом с
 // ним нет места. На широкой горизонтали остаётся и сдвигается левее карточки граней.
 const listOn = computed(() => !menuOpen.value || wide.value);
+
+// СВЁРТКА НА ВЕРТИКАЛИ (30.09.2026). Полоса развёрнутого списка на 390×844 закрывала
+// предметы TRAINING и SPAR (под рядом остаётся 48 точек, списку нужно 174 — числа в
+// docs/forge/REPORT_hall_cleanup.md). Поэтому стоя список по умолчанию — одна
+// строка «боец + TRAIN», а по нажатию на имя раскрывается целиком. Лёжа он
+// развёрнут всегда. Пустой ростер не сворачивается: в нём нужна кнопка «новый боец».
+const listExpanded = ref(false);
+const listCompact = computed(() => portrait.value && !listExpanded.value && fighters.value.length > 0);
+const listCollapsible = computed(() => portrait.value && listExpanded.value);
 const beside = computed(() => wide.value && menuOpen.value);
 
 // ПРЕДМЕТ ГЛАВНЕЕ БОЙЦА: тот, что уводит с плиты, закрывает открытое меню.
@@ -488,6 +501,7 @@ function onRetry() {
 }
 function exitWork() {
   statsOpen.value = false;
+  listExpanded.value = false;
   // Карточка граней тоже закрывается: без выбранного бойца ей нечего показывать, а
   // пока она открыта, список на узких экранах не возвращается (menuOpen).
   openSection.value = null;
@@ -524,6 +538,9 @@ function onNewFighter() {
   const f = store.dispatch('roster/recruit', null);
   Promise.resolve(f).then((made) => { if (made && made.id) onPick(made.id); });
 }
+
+// Открылось меню бойца или снят выбор — при возвращении список снова свёрнутый.
+watch(menuOpen, (open) => { if (open) listExpanded.value = false; });
 
 // Dismissed from somewhere else (the shop's roster list) while he is open →
 // fall back to the overview instead of showing a card for nobody.

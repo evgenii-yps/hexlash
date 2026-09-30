@@ -36,7 +36,7 @@
      change leaves as an event. Whose roster it is and where it is stored is the
      hall's business (PveView → the roster store). -->
 <template>
-  <aside class="fp" :class="{ 'is-guest': isGuest, 'is-core': showTree }" :style="coreVars">
+  <aside ref="rootEl" class="fp" :class="{ 'is-guest': isGuest, 'is-core': showTree, 'is-compact': compact }" :style="coreVars">
 
     <!-- ── 1 · head — who is selected ─────────────────────────────────────
          ШАПКА ГАСНЕТ, КОГДА РЯДОМ СТОИТ БЛОК СТАТОВ (24.09.2026). Лёжа нажатие
@@ -54,8 +54,36 @@
          экрана вне её. Для блока статов слева обёртка невидима (display: contents),
          он устроен как раньше. -->
     <div class="fp-card">
+    <!-- ── 0 · СВЁРНУТЫЙ СПИСОК — только вертикаль (30.09.2026) ─────────────
+         Одна строка: выбранный боец и TRAIN. На 390×844 под рядом предметов остаётся
+         48 точек экрана, а полосе списка нужно минимум 174 (шапка, TRAIN, строка):
+         развёрнутая она закрывала TRAINING и SPAR (замер в отчёте). Нажатие по имени
+         раскрывает полный список. TRAIN здесь та же кнопка, тот же обработчик. -->
+    <div v-if="compact" class="fp-bar">
+      <button
+        type="button" class="fp-bar-main"
+        :aria-label="t.forge.rosterLabel" aria-expanded="false"
+        @click="$emit('expand')"
+      >
+        <span class="sw" aria-hidden="true"></span>
+        <span class="nm">{{ picked ? picked.callsign : t.forge.headNoPick }}</span>
+        <span v-if="picked && pickedState !== 'free'" class="st" :class="'is-' + pickedState">{{ stateWord(pickedState) }}</span>
+      </button>
+      <button
+        type="button" class="fp-train-btn"
+        :class="{ 'is-cancel': pickedState === 'busy' }"
+        :disabled="trainDisabled"
+        @click="onTrainTap"
+      >{{ pickedState === 'busy' ? t.forge.trainCancel : t.forge.trainStart }}</button>
+    </div>
+    <template v-else>
     <header v-if="showHead && !showTree" class="fp-head">
-      <p class="fp-kicker">{{ t.forge.selected }}</p>
+      <!-- Развёрнутый список на вертикали сворачивается нажатием по этой строке. -->
+      <button v-if="collapsible" type="button" class="fp-kicker fp-collapse" aria-expanded="true" @click="$emit('collapse')">
+        <span>{{ t.forge.selected }}</span>
+        <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5l4 4 4-4" /></svg>
+      </button>
+      <p v-else class="fp-kicker">{{ t.forge.selected }}</p>
 
       <!-- a fighter, and his data is here -->
       <template v-if="status === 'ready' && picked">
@@ -254,6 +282,7 @@
         </div>
       </section>
     </div>
+    </template>
     </div>
 
     <!-- ── 6 · guest ─────────────────────────────────────────────────────
@@ -270,7 +299,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { t, interpolate } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import { AXIS_IDS } from '@/data/behavior.js';
@@ -290,6 +319,11 @@ const props = defineProps({
   // Показывать ли строку-вход в грани: она нужна только стоя, где два блока
   // рядом не встают. Решает зал, а не панель: ориентацию знает он.
   canOpenTree: { type: Boolean, default: false },
+  // СВЁРТКА СПИСКА НА ВЕРТИКАЛИ (30.09.2026): решает зал, панель только рисует.
+  //   compact     — вместо списка одна строка «боец + TRAIN»
+  //   collapsible — развёрнутый список показывает кнопку «свернуть»
+  compact: { type: Boolean, default: false },
+  collapsible: { type: Boolean, default: false },
   // Показывать ли кнопку занятия. Зал гасит её у карточки ядра, пока стоит блок
   // статов: он несёт ту же кнопку, а на экране должна быть ровно одна.
   showTrain: { type: Boolean, default: true },
@@ -319,9 +353,20 @@ const props = defineProps({
   quenchWhy: { type: String, default: null },
 });
 
-const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train', 'open-tree', 'expand-core']);
+const emit = defineEmits(['pick', 'toggle', 'new-fighter', 'retry', 'train', 'cancel-train', 'open-tree', 'expand-core', 'expand', 'collapse']);
 
 const treeRef = ref(null);
+const rootEl = ref(null);
+
+// ВЫБРАННЫЙ БОЕЦ ВИДЕН В СПИСКЕ БЕЗ ПРОКРУТКИ (30.09.2026): при показе списка и при
+// смене выбранного строку подводим в поле зрения. scroll-padding в forge.css оставляет
+// место под приколотую кнопку TRAIN.
+function revealPicked() {
+  if (props.section !== 'roster' || props.compact) return;
+  nextTick(() => rootEl.value?.querySelector('.fp-row.on')?.scrollIntoView({ block: 'nearest' }));
+}
+watch(() => [props.pickedId, props.compact], revealPicked);
+onMounted(revealPicked);
 
 // Что из блоков сейчас на экране. Голова видна почти всегда: без неё не понять,
 // о ком речь, — гаснет она ровно в одном случае, когда рядом уже стоит блок

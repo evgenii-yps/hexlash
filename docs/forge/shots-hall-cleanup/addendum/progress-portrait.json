@@ -1,0 +1,32 @@
+{
+ "v": 1,
+ "roster": {
+  "fighters": [
+   {
+    "id": "f0",
+    "callsign": "TEST-0",
+    "core": "natisk",
+    "createdAt": 1000,
+    "lit": {
+     "a": [
+      1
+     ]
+    }
+   },
+   {
+    "id": "f1",
+    "callsign": "TEST-1",
+    "core": "skala",
+    "createdAt": 1001
+   },
+   {
+    "id": "f2",
+    "callsign": "TEST-2",
+    "core": "zasada",
+    "createdAt": 1002
+   }
+  ],
+  "picked": "f0",
+  "seeded": true
+ }
+}

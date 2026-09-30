@@ -81,7 +81,8 @@ async function open({ w = 390, h = 844, s, wait = WAIT, clock = false } = {}) {
   p.on('pageerror', (e) => pageErrors.push(e.message));
   p.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) pageErrors.push(m.text().slice(0, 200)); });
   await p.goto(`${BASE}/play/pve?dev=1`, { waitUntil: 'commit', timeout: 60_000 });
-  await p.waitForTimeout(wait);
+  await p.waitForFunction(() => typeof window.__forgeProbe === 'function', null, { timeout: 120_000 });
+  await p.waitForTimeout(Math.min(wait, 4000));
   return { ctx, p };
 }
 const probe = (p) => p.evaluate(() => window.__forgeProbe && window.__forgeProbe());
@@ -102,45 +103,65 @@ const ui = (p) => p.evaluate(() => {
     stats: !!stats, tree: !!tree,
     overlay: !!document.querySelector('.fco'),
     train: [...document.querySelectorAll('.fp-train-btn')].filter(vis).length,
+    bar: !!document.querySelector('.fp--list .fp-bar'),
+    barBox: document.querySelector('.fp--list .fp-bar') ? rect(document.querySelector('.fp--list .fp-bar')) : null,
+    collapse: !!document.querySelector('.fp--list .fp-collapse'),
+    scrollBox: document.querySelector('.fp--list .fp-scroll') ? rect(document.querySelector('.fp--list .fp-scroll')) : null,
+    trainBox: document.querySelector('.fp--list .fp-train-btn') ? rect(document.querySelector('.fp--list .fp-train-btn')) : null,
+    selBox: document.querySelector('.fp--list .fp-row.on') ? rect(document.querySelector('.fp--list .fp-row.on')) : null,
     rows: [...document.querySelectorAll('.fp--list .fp-row')].map((e) => ({ on: e.classList.contains('on'), t: e.textContent.trim() })),
     state: (document.querySelector('.fp-state .v') || {}).textContent || null,
   };
 });
-const clickRow = async (p, i) => { await p.locator('.fp--list .fp-row').nth(i).click(); await p.waitForTimeout(900); };
+// На вертикали список свёрнут в одну строку: перед работой со строками раскрываем.
+const ensureRows = async (p) => {
+  if (!(await p.locator('.fp--list .fp-row').count()) && (await p.locator('.fp--list .fp-bar-main').count())) {
+    await p.locator('.fp--list .fp-bar-main').click(); await p.waitForTimeout(700);
+  }
+};
+const clickRow = async (p, i) => { await ensureRows(p); await p.locator('.fp--list .fp-row').nth(i).click(); await p.waitForTimeout(900); };
 
 // ───────────────────────── 7. ПРОГОН ПРОГРЕССА ─────────────────────────
-async function progressRun(label) {
-  console.log(`\n── прогон прогресса: назначить → READY → зажечь кристалл (${label}) ──`);
-  // 1280×720: обе панели меню стоят рядом, список прячется — путь один и тот же
-  // на старом коде и на новом (нажатие по телу).
-  const { ctx, p } = await open({ w: 1280, h: 720, s: save(3, { picked: 0 }), clock: true });
+async function progressRun(label, [W, H] = [1280, 720]) {
+  const port = H > W;
+  console.log(`\n── прогон прогресса ${W}×${H}: назначить → READY → зажечь кристалл (${label}) ──`);
+  // Горизонталь: путь один и тот же на старом коде и на новом (нажатие по телу).
+  // Вертикаль (новый код): занятие назначается кнопкой TRAIN свёрнутого списка.
+  const { ctx, p } = await open({ w: W, h: H, s: save(3, { picked: 0 }), clock: true });
   const pr = await probe(p);
-  const t = pr.taps.f0;
-  await p.mouse.click(t.sx * 1280, t.sy * 720);
-  await p.waitForTimeout(1500);
-  let u = await ui(p);
-  ok(u.stats, 'нажатие по телу открыло статы', JSON.stringify({ stats: u.stats, tree: u.tree, train: u.train }));
+  let u;
+  if (!port) {
+    await p.mouse.click(pr.taps.f0.sx * W, pr.taps.f0.sy * H);
+    await p.waitForTimeout(1500);
+    u = await ui(p);
+    ok(u.stats, 'нажатие по телу открыло статы', JSON.stringify({ stats: u.stats, tree: u.tree, train: u.train }));
+  }
   await p.evaluate(() => { window.__T = 1_700_000_000_000; window.__frozen = true; });
-  await p.locator('.fp--stats .fp-train-btn').click();
+  await p.locator(port ? '.fp--list .fp-bar .fp-train-btn' : '.fp--stats .fp-train-btn').click();
   await p.waitForTimeout(1500);
   const busy = await p.evaluate(() => JSON.parse(sessionStorage.getItem('hexlash_progress')).roster.fighters[0].tr);
   ok(!!busy, 'занятие начато (срок записан)', String(busy));
   await p.evaluate(() => { window.__T += 61_000; });
   await p.waitForTimeout(2500);
-  // Занятие кончилось — READY. Если часы зала не успели тикнуть, спросим ещё раз.
   let word = null;
-  for (let i = 0; i < 6 && word !== 'READY'; i++) {
+  for (let i = 0; i < 6 && !/ready/i.test(word || ''); i++) {
     await p.waitForTimeout(1500);
-    word = (await ui(p)).state;
+    word = await p.evaluate(() => ((document.querySelector('.fp--list .fp-bar-main .st') || document.querySelector('.fp-state .v') || {}).textContent || '').trim());
   }
   ok(/ready/i.test(word || ''), 'состояние бойца — READY', String(word));
   // Начало занятия закрывает меню (PveView.onTrain): открываем его заново нажатием по телу.
   const pr2 = await probe(p);
-  await p.mouse.click(pr2.taps.f0.sx * 1280, pr2.taps.f0.sy * 720);
+  await p.mouse.click(pr2.taps.f0.sx * W, pr2.taps.f0.sy * H);
   await p.waitForTimeout(1500);
   u = await ui(p);
-  ok(u.stats && u.tree, 'меню открыто заново после занятия', JSON.stringify({ stats: u.stats, tree: u.tree }));
-  // разворот ядра: по нажатию на фигуру в карточке граней
+  ok(u.stats, 'меню открыто заново после занятия', JSON.stringify({ stats: u.stats, tree: u.tree }));
+  if (port) {
+    // стоя грани — вторым шагом, строкой в статах
+    await p.locator('.fp--stats .fp-to-tree').click();
+    await p.waitForTimeout(1200);
+    u = await ui(p);
+    ok(u.tree, 'карточка граней открыта (вторым шагом)');
+  }
   await p.locator('.fc-stage').first().click({ force: true });
   await p.waitForTimeout(1200);
   u = await ui(p);
@@ -154,15 +175,14 @@ async function progressRun(label) {
   await p.locator('.fco .fc-light').click();
   await p.waitForTimeout(800);
   const snap = await p.evaluate(() => sessionStorage.getItem('hexlash_progress'));
-  const lit = /"lit"|state":"lit|lit/.test(snap || '');
-  ok(lit, 'грань зажжена (в записи есть lit)');
+  ok(/lit/.test(snap || ''), 'грань зажжена (в записи есть lit)');
   writeFileSync(`${OUT}/progress-${label}.json`, JSON.stringify(JSON.parse(snap), null, 1));
   await p.screenshot({ path: `${OUT}/progress-${label}.png` });
   await ctx.close();
 }
 
 if (SAVE_ONLY) {
-  await progressRun(process.env.LABEL || 'run');
+  await progressRun(process.env.LABEL || 'run', process.env.SIZE ? process.env.SIZE.split('x').map(Number) : [1280, 720]);
   await browser.close();
   console.log(failed ? `\nПРОВАЛОВ: ${failed}` : '\nВсё сошлось.');
   process.exit(failed ? 1 : 0);
@@ -200,7 +220,7 @@ for (const [w, h] of (TAIL ? [] : LAYOUTS)) {
 
 // ───────────────────────── 3. МЕТКА ─────────────────────────
 console.log('\n── метка выхода бойца не в полосе ряда, составы 1…10 ──');
-if (!TAIL) {
+if (!TAIL && process.env.SKIP_MARK !== '1') {
   const bad = [];
   for (let n = 1; n <= 10; n++) {
     const { ctx, p } = await open({ w: 390, h: 844, s: save(n), wait: 9000 });
@@ -219,10 +239,17 @@ for (const [w, h] of (TAIL ? [] : LAYOUTS)) {
   for (const n of [1, 3, 10]) {
     const tag = `${w}×${h} n=${n}`;
     const { ctx, p } = await open({ w, h, s: save(n) });
+    const port = h > w;
     let u = await ui(p);
     ok(u.list && u.listBox && u.listBox[0] >= 0 && u.listBox[2] <= w, `${tag}: список виден при входе`, JSON.stringify(u.listBox));
-    ok(u.rows.length === n, `${tag}: строк ${n}`, String(u.rows.length));
+    if (port) ok(u.bar && u.rows.length === 0, `${tag}: на вертикали свёрнут в одну строку`, JSON.stringify(u.barBox));
+    else ok(u.rows.length === n, `${tag}: строк ${n}`, String(u.rows.length));
     ok(u.train === 1, `${tag}: только список — TRAIN ровно одна`, `кнопок ${u.train}`);
+    // Лёжа список выглядит как в 17ba4777: рамка карточки та же (числа сняты с того коммита).
+    const BEFORE = { '844x390 n=10': [544, 48, 828, 342], '1280x720 n=1': [840, 180, 1264, 541], '1280x720 n=3': [840, 132, 1264, 589],
+      '1280x720 n=10': [840, 48, 1264, 672], '1920x1080 n=3': [1480, 312, 1904, 769], '1920x1080 n=10': [1480, 144, 1904, 937] };
+    const was = BEFORE[`${w}x${h} n=${n}`];
+    if (was && !port) ok(JSON.stringify(u.listBox) === JSON.stringify(was), `${tag}: рамка списка не изменилась относительно 17ba4777`, `${JSON.stringify(u.listBox)} против ${JSON.stringify(was)}`);
     await p.screenshot({ path: `${OUT}/list-${w}x${h}-n${n}.png` });
 
     if (n === 3) {
@@ -261,6 +288,68 @@ for (const [w, h] of (TAIL ? [] : LAYOUTS)) {
     }
     await ctx.close();
   }
+}
+
+// ───────────────────────── ВЕРТИКАЛЬ: список и ряд предметов ─────────────────────────
+// Дополнение к ТЗ (30.09.2026): полоса списка не заходит на полосу ряда предметов ни при
+// каком составе; по ASCENSION, TRAINING и SPAR можно нажать; выбранный виден без прокрутки,
+// TRAIN видна при любом положении прокрутки.
+if (!TAIL && LAYOUTS.some(([w]) => w === 390)) {
+console.log('\n── вертикаль 390×844: полосы не пересекаются, предметы нажимаются ──');
+const [W, H] = [390, 844];
+for (const n of [1, 3, 4, 5, 7, 8, 10]) {
+  const tag = `${W}×${H} n=${n}`;
+  const { ctx, p } = await open({ w: W, h: H, s: save(n) });
+  const pr = await probe(p);
+  const labBot = Math.max(...['ascension', 'bags', 'spar'].map((k) => pr.box[k].label.b * H));
+  const rowTop = Math.min(...['ascension', 'bags', 'spar'].map((k) => pr.box[k].t * H));
+  let u = await ui(p);
+  const barTop = u.barBox ? u.barBox[1] : null;
+  console.log(`    полоса ряда y ${rowTop.toFixed(0)}…${labBot.toFixed(0)}; свёрнутый список y ${u.barBox ? u.barBox[1] + '…' + u.barBox[3] : '—'}`);
+  ok(u.bar && barTop >= labBot, `${tag}: свёрнутый список не заходит на полосу ряда`, `верх списка ${barTop}, низ подписей ${labBot.toFixed(1)}, зазор ${(barTop - labBot).toFixed(1)}`);
+  ok(u.train === 1, `${tag}: TRAIN ровно одна (в свёрнутой строке)`, `кнопок ${u.train}`);
+  await p.screenshot({ path: `${OUT}/vert-compact-n${n}.png` });
+  if (n === 10 || n === 3) {
+    // развёрнутый: выбранный виден без прокрутки, TRAIN приколота
+    await p.locator('.fp--list .fp-bar-main').click(); await p.waitForTimeout(800);
+    u = await ui(p);
+    const inside = (a, b) => a && b && a[1] >= b[1] - 1 && a[3] <= b[3] + 1;
+    ok(u.collapse && u.rows.length === n, `${tag}: развёрнут, есть кнопка «свернуть»`, `строк ${u.rows.length}`);
+    ok(inside(u.selBox, u.scrollBox), `${tag}: выбранный боец виден без прокрутки`, `строка ${JSON.stringify(u.selBox)} в прокрутке ${JSON.stringify(u.scrollBox)}`);
+    ok(u.train === 1, `${tag}: развёрнут — TRAIN ровно одна`, `кнопок ${u.train}`);
+    await p.screenshot({ path: `${OUT}/vert-expanded-n${n}.png` });
+    await p.evaluate(() => { const e = document.querySelector('.fp--list .fp-scroll'); e.scrollTop = e.scrollHeight; });
+    await p.waitForTimeout(400);
+    u = await ui(p);
+    ok(inside(u.trainBox, u.scrollBox), `${tag}: TRAIN видна и после прокрутки до конца`, `кнопка ${JSON.stringify(u.trainBox)} в прокрутке ${JSON.stringify(u.scrollBox)}`);
+    await p.screenshot({ path: `${OUT}/vert-expanded-scrolled-n${n}.png` });
+    await p.locator('.fp--list .fp-collapse').click(); await p.waitForTimeout(600);
+    u = await ui(p);
+    ok(u.bar, `${tag}: нажатие по «выбран» свернуло список обратно`);
+  }
+  await ctx.close();
+}
+// Нажатия по предметам сквозь свёрнутый список: на трёх составах.
+const camOf = async (p) => JSON.stringify((await probe(p)).cam.pos);
+for (const n of [1, 3, 10]) {
+  for (const key of ['ascension', 'bags', 'spar']) {
+    const tag = `${W}×${H} n=${n} ${key}`;
+    const { ctx, p } = await open({ w: W, h: H, s: save(n) });
+    const pr = await probe(p);
+    const t = pr.taps[key];
+    const before = await camOf(p);
+    await p.mouse.click(Math.round(t.sx * W), Math.round(t.sy * H));
+    await p.waitForTimeout(key === 'ascension' ? 4000 : 3500);
+    if (key === 'ascension') {
+      ok(new URL(p.url()).pathname === '/play/ascension', `${tag}: нажатие попало в предмет, ушли на ASCENSION`, p.url());
+    } else {
+      const after = await p.evaluate(() => window.__forgeProbe && JSON.stringify(window.__forgeProbe().cam.pos));
+      ok(after && after !== before, `${tag}: нажатие попало в предмет, камера улетела на остров`, `${before} → ${after}`);
+    }
+    await p.screenshot({ path: `${OUT}/vert-tap-${key}-n${n}.png` });
+    await ctx.close();
+  }
+}
 }
 
 // занятой: повторное нажатие по его строке меню НЕ открывает
