@@ -1,0 +1,407 @@
+{
+ "okA": 20,
+ "okB": 20,
+ "n": 20,
+ "rows": [
+  {
+   "i": 0,
+   "core": "natisk",
+   "foe": "nalet",
+   "seed": 11,
+   "A": "push",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "hold",
+    "need": 0,
+    "kid": "hold",
+    "kk": 1,
+    "range": 1.2683229299262164
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 1,
+   "core": "nalet",
+   "foe": "skala",
+   "seed": 12,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "strike",
+    "need": 0,
+    "kid": "push",
+    "kk": 1,
+    "range": 1.4859153087995947
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 2,
+   "core": "skala",
+   "foe": "zasada",
+   "seed": 13,
+   "A": "push",
+   "B": "fallback",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "strike",
+    "need": 0,
+    "kid": "fallback",
+    "kk": 1,
+    "range": 2.9095147073268888
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 3,
+   "core": "zasada",
+   "foe": "natisk",
+   "seed": 14,
+   "A": "fallback",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "catch",
+    "need": 1,
+    "kid": "hold",
+    "kk": 1,
+    "range": 2.6496508325822647
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 4,
+   "core": "natisk",
+   "foe": "nalet",
+   "seed": 15,
+   "A": "push",
+   "B": "fallback",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "fallback",
+    "kk": 1,
+    "range": 2.8943257361277936
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 5,
+   "core": "nalet",
+   "foe": "skala",
+   "seed": 16,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "push",
+    "kk": 1,
+    "range": 1.4909884221665561
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 6,
+   "core": "skala",
+   "foe": "zasada",
+   "seed": 17,
+   "A": "push",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "catch",
+    "need": 1,
+    "kid": "hold",
+    "kk": 1,
+    "range": 1.6207107700407504
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 7,
+   "core": "zasada",
+   "foe": "natisk",
+   "seed": 18,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "catch",
+    "need": 1,
+    "kid": "push",
+    "kk": 1,
+    "range": 1.6269921514205576
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 8,
+   "core": "natisk",
+   "foe": "nalet",
+   "seed": 19,
+   "A": "push",
+   "B": "fallback",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "fallback",
+    "kk": 1,
+    "range": 2.880838992353529
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 9,
+   "core": "nalet",
+   "foe": "skala",
+   "seed": 20,
+   "A": "fallback",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "sting",
+    "need": 0,
+    "kid": "hold",
+    "kk": 1,
+    "range": 2.544378313490494
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 10,
+   "core": "skala",
+   "foe": "zasada",
+   "seed": 21,
+   "A": "push",
+   "B": "fallback",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "fallback",
+    "kk": 1,
+    "range": 2.7123785986316644
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 11,
+   "core": "zasada",
+   "foe": "natisk",
+   "seed": 22,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "catch",
+    "need": 1,
+    "kid": "push",
+    "kk": 1,
+    "range": 2.023094437997788
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 12,
+   "core": "natisk",
+   "foe": "nalet",
+   "seed": 23,
+   "A": "push",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "hold",
+    "kk": 1,
+    "range": 1.0057678005658028
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 13,
+   "core": "nalet",
+   "foe": "skala",
+   "seed": 24,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "strike",
+    "need": 0,
+    "kid": "push",
+    "kk": 1,
+    "range": 0.9
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 14,
+   "core": "skala",
+   "foe": "zasada",
+   "seed": 25,
+   "A": "push",
+   "B": "fallback",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "strike",
+    "need": 0,
+    "kid": "fallback",
+    "kk": 1,
+    "range": 3.012784609813243
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 15,
+   "core": "zasada",
+   "foe": "natisk",
+   "seed": 26,
+   "A": "fallback",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "catch",
+    "need": 1,
+    "kid": "hold",
+    "kk": 1,
+    "range": 2.6507477040216325
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 16,
+   "core": "natisk",
+   "foe": "nalet",
+   "seed": 27,
+   "A": "push",
+   "B": "fallback",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "fallback",
+    "kk": 1,
+    "range": 2.876527803149074
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 17,
+   "core": "nalet",
+   "foe": "skala",
+   "seed": 28,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "press",
+    "need": 0,
+    "kid": "push",
+    "kk": 1,
+    "range": 1.5972344124130904
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 18,
+   "core": "skala",
+   "foe": "zasada",
+   "seed": 29,
+   "A": "push",
+   "B": "hold",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "hold",
+    "need": 0,
+    "kid": "hold",
+    "kk": 1,
+    "range": 1.0168601763807177
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  },
+  {
+   "i": 19,
+   "core": "zasada",
+   "foe": "natisk",
+   "seed": 30,
+   "A": "fallback",
+   "B": "push",
+   "decisionsBefore": 6,
+   "decisionsAfter": 7,
+   "firstAfter": {
+    "t": 11.116666666666799,
+    "act": "catch",
+    "need": 1,
+    "kid": "push",
+    "kk": 1,
+    "range": 2.009735157042742
+   },
+   "cleanA": true,
+   "sameAsOnlyB": true
+  }
+ ]
+}
