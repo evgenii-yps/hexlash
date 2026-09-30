@@ -337,7 +337,12 @@
    Подсветка под пальцем НЕЙТРАЛЬНАЯ — см. .fc-facet__glow. */
 .fp-tree { display: flex; flex-direction: column; min-width: 0; }
 
-.fc { display: flex; flex-direction: column; min-width: 0; }
+.fc {
+  display: flex; flex-direction: column; min-width: 0;
+  /* Высота кнопок карточки: было --h-btn-md (48), теперь на восемь точек выше —
+     надпись выросла на две ступени шкалы, кнопка растёт вместе с ней. */
+  --fc-btn-h: calc(var(--h-btn-md) + var(--sp-2));
+}
 
 /* Кто открыт — одной строкой. Имя заглавными, ядро своим цветом. */
 .fc-who {
@@ -345,12 +350,12 @@
   display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0;
 }
 .fc-who .nm {
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700;
   letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .fc-who .cr {
-  font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--core); white-space: nowrap;
 }
 
@@ -464,16 +469,16 @@
 .fc-read { margin-top: var(--sp-3); min-width: 0; flex: 0 0 auto; }
 .fc-head { display: flex; flex-direction: column; gap: var(--sp-1); }
 .fc-kicker {
-  font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--ink-off);
 }
 .fc-name {
-  margin: 0; font-family: var(--font-display); font-size: var(--t-sm);
+  margin: 0; font-family: var(--font-display); font-size: var(--t-md);
   font-weight: 700; letter-spacing: var(--ls-title);
   text-transform: uppercase; color: var(--ink);
 }
 .fc-hint {
-  margin: 0; font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  margin: 0; font-size: var(--t-sm); letter-spacing: var(--ls-title);
   text-transform: uppercase; color: var(--ink-off); text-align: center;
 }
 .fc-hint--left { text-align: left; }
@@ -498,14 +503,14 @@
 /* ⚠️ Предложения переносятся, а не обрезаются: ни одного обрезающего правила
    здесь быть не должно. Длинное слово ломается, чтобы не распирать колонку. */
 .fc-line, .fc-char__text {
-  margin: 0; font-family: var(--font-display); font-size: var(--t-xs);
+  margin: 0; font-family: var(--font-display); font-size: var(--t-base);
   line-height: 1.45; color: var(--ink-dim);
   overflow-wrap: anywhere; hyphens: none;
 }
 .fc-char { margin: var(--sp-2) 0 0; }
 /* Подпись строки характера — лейбл, потому моно и заглавными. */
 .fc-char__label {
-  display: block; font-family: var(--font-mono); font-size: var(--t-micro);
+  display: block; font-family: var(--font-mono); font-size: var(--t-sm);
   letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
 }
 .fc-char__text { display: block; margin-top: var(--sp-1); }
@@ -515,14 +520,14 @@
   gap: var(--sp-3); flex-wrap: wrap;
 }
 .fc-why {
-  margin: 0; font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  margin: 0; font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--ink-off);
 }
 /* Зажечь — главное действие экрана, потому розовое. Оно тут одно. */
 .fc-light {
-  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  min-height: var(--fc-btn-h); padding: 0 var(--sp-5);
   border: 0; border-radius: var(--r-none); background: var(--pink);
-  color: var(--ink); font-family: var(--font-display); font-size: var(--t-xs);
+  color: var(--ink); font-family: var(--font-display); font-size: var(--t-base);
   font-weight: 700; letter-spacing: var(--ls-title);
   text-transform: uppercase; cursor: pointer;
   transition: opacity var(--d-hover) var(--e-settle);
@@ -534,10 +539,10 @@
 /* Погасить — не главное действие, поэтому не розовое: семья .fc-back, а размер и
    отступы — как у «зажечь», чтобы кнопка стояла ровно на его месте. */
 .fc-out {
-  min-height: var(--h-btn-md); padding: 0 var(--sp-4);
+  min-height: var(--fc-btn-h); padding: 0 var(--sp-5);
   border: 1px solid var(--line); border-radius: var(--r-none);
   background: var(--fill-1); color: var(--ink-soft);
-  font-family: var(--font-display); font-size: var(--t-xs);
+  font-family: var(--font-display); font-size: var(--t-base);
   font-weight: 700; letter-spacing: var(--ls-title);
   text-transform: uppercase; cursor: pointer;
   transition: border-color var(--d-hover) var(--e-settle),
@@ -560,7 +565,7 @@
   flex: 0 0 100%; display: flex; justify-content: center; flex-wrap: nowrap;
   gap: var(--sp-2); margin-top: var(--sp-3);
 }
-.fc-pip { display: block; flex: none; height: 26px; width: auto; overflow: visible; }
+.fc-pip { display: block; flex: none; height: 32px; width: auto; overflow: visible; }
 .fc-pip polygon { vector-effect: non-scaling-stroke; }
 .fc-pip__hex {
   fill: none; stroke: var(--ink-dim); stroke-width: 1.5px; stroke-linejoin: miter;
@@ -585,14 +590,14 @@
 /* Строка «нет места» — читаемым тоном (--ink-soft), а не серым в ноль. */
 .fc-noroom {
   flex: 0 0 100%; margin: 0; text-align: center;
-  font-size: var(--t-xs); letter-spacing: var(--ls-meta);
+  font-size: var(--t-base); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--ink-soft);
 }
 .fc-back {
   min-height: var(--h-btn-sm); padding: 0 var(--sp-3);
   border: 1px solid var(--line); border-radius: var(--r-none);
   background: var(--fill-1); color: var(--ink-soft);
-  font: inherit; font-size: var(--t-micro); letter-spacing: var(--ls-meta);
+  font: inherit; font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; cursor: pointer;
   transition: border-color var(--d-hover) var(--e-settle),
               color var(--d-hover) var(--e-settle);
