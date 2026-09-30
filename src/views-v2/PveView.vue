@@ -30,11 +30,44 @@
     <!-- THE PANEL — always there, in every layout. It used to be two things
          floating over the hall (a card in one corner, the tree pinned to the
          other edge) and it had no way out of the room at all. -->
-    <!-- ПАНЕЛЬ БОЛЬШЕ НЕ СТОИТ В ЭКРАНЕ ВСЕГДА (встраивание v1, решение владельца
-         23.09.2026). Её начинку открывают ПРЕДМЕТЫ на плите: планшет зовёт список
-         бойцов, наковальня — дерево граней. Сама панель не переписана: те же блоки,
-         та же механика, просто показываются по требованию и по одному — за это
-         отвечает `section`. -->
+    <!-- ПЛАНШЕТА И НАКОВАЛЬНИ В ЗАЛЕ БОЛЬШЕ НЕТ (30.09.2026). Список бойцов —
+         постоянная панель: стоит всегда, пока игрок в зале, и открывать её нечем и
+         незачем. Карточку граней открывает нажатие по бойцу — по телу или вторым
+         нажатием по его строке. Сами блоки не переписаны: те же, что были.
+
+         ГДЕ СПИСОК ПРЯЧЕТСЯ (решение владельца 30.09.2026). Пока открыто меню бойца,
+         на вертикали и на узкой горизонтали места на список нет — он уходит и сам
+         возвращается, когда меню закрыли. На широкой горизонтали (WIDE_MIN, ниже)
+         три блока стоят рядом: статы слева, карточка граней справа, список между
+         ней и центром экрана. -->
+    <Transition name="fp-fade" appear>
+      <ForgePanel
+        v-if="listOn"
+        class="fp--list"
+        :class="{ 'is-beside': beside }"
+        section="roster"
+        :show-train="!menuOpen"
+        :fighters="fighters"
+        :picked-id="pickedId"
+        :picked="picked"
+        :spent="spent"
+        :resource="resource"
+        :is-guest="isGuest"
+        :status="status"
+        :tree-status="treeStatus"
+        :load-step="loadStep"
+        :retrying="retrying"
+        :states="states"
+        :assign-why="assignWhy"
+        :light-why="lightWhy"
+        :quench-why="quenchWhy"
+        @pick="onListPick"
+        @new-fighter="onNewFighter"
+        @train="onTrain"
+        @cancel-train="onCancelTrain"
+      />
+    </Transition>
+
     <!-- БЛОК СТАТОВ — левая половина того, что открывает нажатие по бойцу.
          Кто выбран, его оси (именами, без цифр) и его действие. Лёжа стоит
          одновременно с карточкой граней справа; стоя — один, и ведёт в грани
@@ -76,7 +109,7 @@
         :picked="picked"
         :spent="spent"
         :resource="resource"
-        :is-guest="isGuest"
+        :is-guest="isGuest && !listOn"
         :status="status"
         :tree-status="treeStatus"
         :load-step="loadStep"
@@ -85,9 +118,7 @@
         :assign-why="assignWhy"
         :light-why="lightWhy"
         :quench-why="quenchWhy"
-        @pick="onPick"
         @toggle="onToggle"
-        @new-fighter="onNewFighter"
         @retry="onRetry"
         @train="onTrain"
         @cancel-train="onCancelTrain"
@@ -168,8 +199,8 @@ import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import ForgePanel from '@/components/forge/ForgePanel.vue';
 import ForgeCoreOverlay from '@/components/forge/ForgeCoreOverlay.vue';
 
-// Что сейчас открыто предметом: null — ничего, в экране только зал.
-// 'roster' — планшет, 'tree' — наковальня.
+// Открыта ли карточка граней: null — нет, 'tree' — да. Открывает её нажатие по
+// бойцу (лёжа — сразу, стоя — строкой из статов). Предметы её не открывают.
 const openSection = ref(null);
 // СТАТЫ ВЫБРАННОГО БОЙЦА — блок слева. Открывается нажатием ПО САМОМУ ТЕЛУ в
 // зале (и только им: строка в списке на планшете их не открывает, иначе список
@@ -184,14 +215,38 @@ const statsOpen = ref(false);
 const portrait = ref(false);
 let mq = null;
 function readOrientation(e) { portrait.value = e.matches; }
+
+// ШИРОКАЯ ГОРИЗОНТАЛЬ — там, где рядом умещаются три блока: статы слева (320),
+// карточка граней справа (440) и список между ней и центром (280), с полями и
+// с достаточным куском зала посередине. Порог одна настройка: от него зависит,
+// прячется ли список за меню бойца. Числа считаны на 1280 (остаётся ~230 точек
+// зала — мало) и на 1440 (~390 — хватает); поэтому 1440.
+const WIDE_MIN = 1440;
+const wide = ref(false);
+let mqWide = null;
+function readWide(e) { wide.value = e.matches; }
 onMounted(() => {
   mq = window.matchMedia('(orientation: portrait)');
   portrait.value = mq.matches;
   mq.addEventListener('change', readOrientation);
+  mqWide = window.matchMedia(`(orientation: landscape) and (min-width: ${WIDE_MIN}px)`);
+  wide.value = mqWide.matches;
+  mqWide.addEventListener('change', readWide);
 });
-onBeforeUnmount(() => mq?.removeEventListener('change', readOrientation));
+onBeforeUnmount(() => {
+  mq?.removeEventListener('change', readOrientation);
+  mqWide?.removeEventListener('change', readWide);
+});
 
-// ПРЕДМЕТ ГЛАВНЕЕ БОЙЦА: планшет и наковальня забирают экран себе, статы уходят.
+// МЕНЮ БОЙЦА ОТКРЫТО — статы, карточка граней или и то и другое. Условие то же, что
+// у самих блоков в шаблоне: статы без выбранного бойца не показываются.
+const menuOpen = computed(() => (statsOpen.value && !!picked.value) || !!openSection.value);
+// СПИСОК ПОСТОЯННЫЙ. Уходит только пока открыто меню — и только там, где рядом с
+// ним нет места. На широкой горизонтали остаётся и сдвигается левее карточки граней.
+const listOn = computed(() => !menuOpen.value || wide.value);
+const beside = computed(() => wide.value && menuOpen.value);
+
+// ПРЕДМЕТ ГЛАВНЕЕ БОЙЦА: тот, что уводит с плиты, закрывает открытое меню.
 function onPress(key) {
   // ПЕРЕХОД МЕЖДУ ОСТРОВАМИ. Камеру двигает сам зал — он ею и владеет; странице
   // остаётся убрать со стекла то, что загородило бы новый кадр.
@@ -229,10 +284,8 @@ function onPress(key) {
     router.push('/play/ascension');
     return;
   }
-  const want = key === 'roster' ? 'roster' : key === 'upgrade' ? 'tree' : null;
-  if (!want) return;
-  statsOpen.value = false;
-  openSection.value = openSection.value === want ? null : want;   // повторное нажатие закрывает
+  // Других предметов, которые что-то открывают, в зале нет (планшет и наковальню
+  // убрали 30.09.2026): всё прочее нажатие по предмету — молчит.
 }
 // Стоя: из статов в грани. Карточка граней — ТА ЖЕ, что открывает наковальня,
 // второй её формы не заводится; статы под ней убираются, места на двоих нет.
@@ -380,8 +433,8 @@ function onHover(payload) { tag.value = payload; }
 // ── picking ────────────────────────────────────────────────────────────────
 // Picking now comes from two places — a tap on a body in the hall, and a tap on
 // a row in the panel's list. Both land here, so the two never disagree.
-// `fromBody` — нажали по телу в зале, а не по строке в списке. Только тело
-// открывает статы: см. statsOpen выше.
+// `fromBody` — нажали по телу в зале (или повторно по строке уже выбранного, см.
+// onListPick), а не первый раз по строке. Только оно открывает меню: см. statsOpen.
 function onPick(id, fromBody = false) {
   store.dispatch('roster/pick', id);
   tag.value = null;
@@ -394,6 +447,21 @@ function onPick(id, fromBody = false) {
   if (states.value[id] === 'busy') { statsOpen.value = false; openSection.value = null; return; }
   statsOpen.value = true;
   openSection.value = portrait.value ? null : 'tree';
+}
+
+// СТРОКА В СПИСКЕ (30.09.2026). Первое нажатие — выбор, как всегда. Повторное по
+// УЖЕ выбранному — открывает его меню, то есть делает ровно то же, что нажатие по
+// его телу (onPick с fromBody). Окна времени и распознавания двойного тапа нет:
+// «повторное» — это просто «строка выбранного бойца».
+//
+// ЗАНЯТОМУ МЕНЮ НЕ ОТКРЫВАЕТСЯ — как и по телу: нажатие по нему по-прежнему уводит
+// камеру к грушам (select в сцене), больше ничего.
+function onListPick(id) {
+  if (id === pickedId.value && states.value[id] !== 'busy') { onPick(id, true); return; }
+  onPick(id);
+  // Меню (на широкой горизонтали оно бывает открыто, пока тапают по списку) не
+  // должно остаться висеть над занятым: по телу его тоже закрывает.
+  if (states.value[id] === 'busy') { statsOpen.value = false; openSection.value = null; }
 }
 
 // Building his tree is the one step that can fail, so it is the one step with a
@@ -420,6 +488,9 @@ function onRetry() {
 }
 function exitWork() {
   statsOpen.value = false;
+  // Карточка граней тоже закрывается: без выбранного бойца ей нечего показывать, а
+  // пока она открыта, список на узких экранах не возвращается (menuOpen).
+  openSection.value = null;
   store.dispatch('roster/pick', null);
   tag.value = null;
   sceneRef.value?.exitWork();
@@ -463,7 +534,7 @@ function onNewFighter() {
 // cannot do is put the hall's 3D back into the overview — that is this job.
 watch(picked, (now, was) => {
   if (!now) coreOpen.value = false;     // бойца не стало — разворачивать нечего
-  if (was && !now) { tag.value = null; statsOpen.value = false; sceneRef.value?.exitWork(); }
+  if (was && !now) { tag.value = null; statsOpen.value = false; openSection.value = null; sceneRef.value?.exitWork(); }
 });
 
 // Esc walks back: first up the tree, then out of the work state.

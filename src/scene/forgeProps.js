@@ -39,7 +39,7 @@
 //    Полосу кнопок собирает страница из уже существующих стилей зала (.hs-strip
 //    в src/styles/home.css) — второй такой полосы здесь не заводится.
 //
-// Экспортирует: FORGE_PROPS (настройки), buildRoster, buildUpgrade, buildPunchBag,
+// Экспортирует: FORGE_PROPS (настройки), buildPunchBag,
 //               buildLegendAnchor, buildBuffShelf, buildBagStand.
 import * as THREE from 'three';
 import { MATERIALS, leaderHue } from '../data/sceneTokens.js';
@@ -87,12 +87,11 @@ export const FORGE_PROPS = {
                    // `fit` в buildLabel): так короткое слово не занимает места
                    // длинного и не давит соседа по ряду.
     lift: 0.58,    // вынос вперёд от начала предмета — больше полуглубины самого
-                   // глубокого из пятерых (наковальня, 0.36), с зазором
+                   // глубокого предмета, с зазором. Глубже всех была наковальня
+                   // (0.36); её убрали из зала 30.09.2026, а число НЕ менялось —
+                   // подписи оставшихся не сдвинулись ни на волос.
     y: 0.02,       // над полом — ровно настолько, чтобы не мерцать с плитой
   },
-
-  roster:  { w: 0.72, d: 0.52, label: 'ROSTER' },
-  upgrade: { w: 0.86, d: 0.72, label: 'FORGE' },
 
   // ⚠️ РАЗМЕТКИ ЗОН БОЛЬШЕ НЕТ (правка v3). Она вводилась в v2, чтобы разнести
   //    слипшихся бойцов; слипание оказалось ошибкой макета и исправлено. Бродящему
@@ -399,100 +398,6 @@ function slabBox(w, h, d, kind = 'decor') {
 function ownBox(api, mesh) {
   api.own(() => { mesh.userData._geo?.dispose(); mesh.userData._mat?.dispose(); });
   return mesh;
-}
-
-// ═══════════════════════ РОСТЕР — блокнот с карандашом ═══════════════════════
-// Решение 18.09.2026: ростер — это блокнот с карандашом. Подпись ROSTER видна
-// ВСЕГДА (требование ТЗ), поэтому она не часть состояния, а часть предмета.
-//
-//   A · ПЛАНШЕТ на низкой подставке — лист лежит под наклоном, карандаш поперёк.
-//   B · ПЮПИТР — наклонная стойка, блокнот на ней, карандаш в держателе сбоку.
-//   C · СТОПКА — блокнот плашмя на приземистой тумбе, карандаш рядом, подпись
-//       выгравирована на передней грани тумбы.
-export function buildRoster() {
-  const R = FORGE_PROPS.roster;
-  const api = propShell(R.label, LBL.em, LBL.y, LBL.lift);
-  // Подпись лежит на полу перед предметом — читается с фронтальной камеры зала.
-  if (api.label) api.label.rotation.x = -Math.PI / 2;
-
-  const D = FORGE_PROPS.deskY;
-  const foot = ownBox(api, slabBox(R.w * 0.52, D * 0.55, R.d * 0.46, 'pedestal'));
-  foot.position.y = D * 0.275;
-  api.add(foot);
-  const arm = ownBox(api, slabBox(R.w * 0.14, D * 0.5, R.d * 0.14, 'dark'));
-  arm.position.set(0, D * 0.72, -0.02);
-  api.add(arm);
-  const board = ownBox(api, slabBox(R.w, 0.045, R.d, 'decor'));
-  board.position.set(0, D * 0.96, 0.04);
-  board.rotation.x = -0.62;
-  api.add(board);
-  const clip = ownBox(api, slabBox(R.w * 0.42, 0.05, 0.07, 'dark'));
-  clip.position.set(0, D * 0.96 + 0.16, -0.10);
-  clip.rotation.x = -0.62;
-  api.add(clip, { pickable: false });
-  const pencil = buildPencil();
-  pencil.group.position.set(0.02, D * 0.96 - 0.02, 0.12);
-  pencil.group.rotation.set(-0.62, 0.22, 0);
-  api.group.add(pencil.group);
-  api.own(pencil.dispose);
-  return api;
-}
-
-/** Карандаш — общий для всех трёх вариантов ростера. */
-function buildPencil() {
-  const group = new THREE.Group();
-  const bodyGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.30, 6);
-  const bodyM = bodyMat('decor');
-  const body = new THREE.Mesh(bodyGeo, bodyM);
-  body.rotation.z = Math.PI / 2;
-  group.add(body);
-  const tipGeo = new THREE.ConeGeometry(0.019, 0.06, 6);
-  const tipM = bodyMat('dark');
-  const tip = new THREE.Mesh(tipGeo, tipM);
-  tip.rotation.z = -Math.PI / 2;
-  tip.position.x = 0.18;
-  group.add(tip);
-  return { group, dispose: () => { bodyGeo.dispose(); bodyM.dispose(); tipGeo.dispose(); tipM.dispose(); } };
-}
-
-// ═══════════════════ ОБЪЕКТ ПРОКАЧКИ — куда приходят работать ═══════════════════
-//   A · НАКОВАЛЬНЯ — приземистый огранённый блок, на нём шестиугольная площадка.
-//   B · ВЕРСТАК — стол, над ним поднятая рама с тремя пустыми гнёздами граней.
-//   C · СТОЛБ — колонна с гранями, врезанными в её боковые стороны.
-//
-// ⚠️ Гнёзда ПУСТЫЕ и ничем не заполнены: заполнение — это и есть числа
-//    прокачки, а их в этой работе нет (ТЗ §3.4).
-export function buildUpgrade() {
-  const U = FORGE_PROPS.upgrade;
-  const api = propShell(U.label, LBL.em, LBL.y, LBL.lift);
-  if (api.label) api.label.rotation.x = -Math.PI / 2;
-  const D = FORGE_PROPS.deskY;
-
-  const hexPlate = (r, h, kind) => {
-    const geo = new THREE.CylinderGeometry(r, r, h, 6);
-    const mat = bodyMat(kind);
-    const m = new THREE.Mesh(geo, mat);
-    api.own(() => { geo.dispose(); mat.dispose(); });
-    return m;
-  };
-
-  const base = ownBox(api, slabBox(U.w * 0.62, 0.14, U.d * 0.62, 'dark'));
-  base.position.y = 0.07;
-  api.add(base, { pickable: false });
-  const waist = ownBox(api, slabBox(U.w * 0.34, D * 0.62, U.d * 0.34, 'pedestal'));
-  waist.position.y = 0.14 + D * 0.31;
-  api.add(waist);
-  const top = ownBox(api, slabBox(U.w, 0.17, U.d * 0.52, 'decor'));
-  top.position.y = D * 0.76;
-  api.add(top);
-  const horn = hexPlate(U.d * 0.20, 0.13, 'decor');
-  horn.position.set(U.w * 0.52, D * 0.76, 0);
-  horn.rotation.z = Math.PI / 2;
-  api.add(horn, { pickable: false });
-  const anvilHex = hexPlate(U.d * 0.21, 0.035, 'dark');
-  anvilHex.position.y = D * 0.76 + 0.10;
-  api.add(anvilHex, { pickable: false });
-  return api;
 }
 
 // ═══════════════════ РАЗМЕТКА ЗОНЫ НА ПЛИТЕ ═══════════════════

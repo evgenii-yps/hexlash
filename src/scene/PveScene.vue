@@ -55,7 +55,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildForgeSlab } from './forgeSlab.js';
-import { buildRoster, buildUpgrade, buildPunchBag, buildBagStand, buildBuffShelf, buildSparStand, buildAscensionStand } from './forgeProps.js';
+import { buildPunchBag, buildBagStand, buildBuffShelf, buildSparStand, buildAscensionStand } from './forgeProps.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildSoonWord } from './soonWord.js';
 import { buildFighter } from './buildFighter.js';
@@ -803,9 +803,11 @@ const PROP_ROW = {
     //    нажатий не принимает; шестой предмет в ряду заставлял ужимать остальные
     //    вдвое, и ни предмет, ни слово под ним не читались. Полка осталась в
     //    зале обстановкой и БЕЗ ПОДПИСИ — см. BUFFS_SPOT ниже.
-    { key: 'roster', make: buildRoster },          // ROSTER
+    // ⚠️ ПЛАНШЕТ (ROSTER) И НАКОВАЛЬНЯ (FORGE) В РЯДУ БОЛЬШЕ НЕТ (30.09.2026).
+    //    Список бойцов стал постоянной панелью экрана, а карточку граней открывает
+    //    нажатие по бойцу — предметам открывать было нечего. Раскладка ниже ничего
+    //    про них не знала и пересчитала ряд сама: три предмета вместо пяти.
     { key: 'ascension', make: buildAscensionStand },// ASCENSION
-    { key: 'upgrade', make: buildUpgrade },        // FORGE
     // Груша и SPAR стоят рядом намеренно (довод из работы про острова): оба
     // предмета уводят с плиты на свой остров, и рядом это правило читается
     // с одного взгляда.
@@ -857,7 +859,7 @@ const PROP_ROW = {
   //
   // Доля ПРОЛЁТА РЯДА на один просвет, а не точки экрана: точка экрана значит
   // разное на 390×844 и на 1920×1080 (разные пропорции кадра), а доля пролёта —
-  // одно и то же везде. Пять предметов — четыре просвета.
+  // одно и то же везде. n предметов — n−1 просвет (было пять и четыре, стало три и два).
   //
   // ⚠️ 0.026 — РЕШЕНИЕ ВЛАДЕЛЬЦА 29.09.2026: 10 точек на 390×844. Нижняя граница
   //    по предметам — 0.012 (5 точек; при 2 точках постаменты TRAINING и SPAR
@@ -877,6 +879,14 @@ const PROP_ROW = {
   //    вместе с ним: ширина в ряду берётся по тому, что шире — предмет или его
   //    слово.
   scaleMin: 0.30,   // ниже не опускаемся молча: см. предупреждение в solvePropRow
+
+  // ⚠️ ВЫШЕ СОБСТВЕННОГО РАЗМЕРА ПРЕДМЕТ НЕ РАСТЁТ (30.09.2026). Когда в ряду
+  //    остались три предмета, свободного пролёта хватило на ×1.29: замер показал,
+  //    что силуэт SPAR при этом вырастает до бойца ростом (читается вторым
+  //    бойцом, а не постаментом), груша и ASCENSION раздуваются вдвое против
+  //    привычного. Просвет по-прежнему равный и считается сам — просто лишнее
+  //    место остаётся ПРОСВЕТОМ, а не уходит в размер.
+  scaleMax: 1.0,
 
   // Ширина малой плиты — точка отсчёта для кегля подписи (см. nestLabel).
   // Числа кегля сняты на ней, на остальных ступенях слово пересчитывается.
@@ -907,6 +917,10 @@ const PROP_ROW = {
 const BUFFS_SPOT = {
   edge: 0.135,       // доля кадра, как у концов ряда
   backFromRow: 2.0,  // на сколько метров глубже ближнего края ряда
+  // ⚠️ РАЗМЕР У ПОЛКИ СВОЙ (30.09.2026). Раньше она брала размер ряда, и он был
+  //    ×0.748. Ряд из трёх предметов считает себе другой множитель, а полка от
+  //    этой работы не менялась — поэтому её размер закреплён на прежнем.
+  scale: 0.748,
 };
 
 /** Разложенное направление камеры — считается один раз, нужно везде ниже. */
@@ -1086,7 +1100,7 @@ function solvePropRow(built, slab, topY) {
   for (let pass = 0; pass < 2; pass++) {
     const wide = spanOf();
     if (!(wide > 0)) break;
-    scale = Math.max(PROP_ROW.scaleMin, scale * (room / wide));
+    scale = Math.min(PROP_ROW.scaleMax, Math.max(PROP_ROW.scaleMin, scale * (room / wide)));
     for (const it of built) it.obj.group.scale.setScalar(scale);
   }
   rowScale = scale;
@@ -1140,7 +1154,7 @@ function buildForgeProps(topY) {
 
   // Полка баффов — обстановка: своё место, свой (общий с рядом) размер, без слова.
   const shelf = buildBuffShelf({ label: false });
-  shelf.group.scale.setScalar(rowScale);
+  shelf.group.scale.setScalar(BUFFS_SPOT.scale);
   const b = camBasis(compose.slab.width, topY);
   const zShelf = rowBand.zMin - BUFFS_SPOT.backFromRow;
   shelf.group.position.set(camSolveX(b, BUFFS_SPOT.edge, topY, zShelf), topY, zShelf);
@@ -1936,7 +1950,7 @@ onMounted(() => {
       // changes — the finger has to see what it hit.
       emitHover(d.entry.entry);
       // ВТОРОЙ ДОВОД — «нажали по телу», и он здесь не косметика. Статы бойца
-      // открывает ТОЛЬКО тело: строка в списке на планшете их не открывает,
+      // открывает ТОЛЬКО тело (и повторное нажатие по строке выбранного, PveView.onListPick): первое нажатие по строке их не открывает,
       // иначе список и статы дрались бы за один и тот же угол экрана. Решает
       // это зал (PveView), поэтому отсюда уходит только сам факт.
       emit('pick', d.entry.entry.id, true);
@@ -2585,7 +2599,7 @@ function select(id) {
   workingId = id;
   hoveredId = null;
   // ЗАНИМАЮЩИЙСЯ — на соседнем острове, и туда летит камера. Вход сюда один и
-  // тот же и у нажатия по телу, и у строки в списке на планшете, поэтому оба
+  // тот же и у нажатия по телу, и у строки в списке, поэтому оба
   // ведут себя одинаково и разойтись не могут.
   //
   // Обратный переход НЕ трогаем: камера возвращается в зал тем же, чем и всегда —
