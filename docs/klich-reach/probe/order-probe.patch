@@ -1,0 +1,36 @@
+diff --git a/src/data/intentions.js b/src/data/intentions.js
+index 1f937303..8a7f16e8 100644
+--- a/src/data/intentions.js
++++ b/src/data/intentions.js
+@@ -127,7 +127,18 @@ export function chooseIntentionModel(self, foe, memory, fight) {
+    first, then the temperament-weighted score. Used directly when brain='spinal',
+    and as the safety net + fallback under brain='model'. */
+ export function chooseIntentionSpinal(self, foe, memory, fight) {
+-  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  // ЗОНД klich-reach (только копия дерева): журнал решений стороны 'player'. act — настоящий выбор; need — решила жёсткая нужда;
++  // nk — тот же выбор без клича (теги/резонанс на месте); nl — без клича и без наклонов граней.
++  const P = globalThis.__PROBE;
++  const run = (o) => hardNeed(o, foe, memory, fight) || spinalScore(o, foe, memory, fight);
++  const need = hardNeed(self, foe, memory, fight);
++  const act = need || spinalScore(self, foe, memory, fight);
++  if (P && P.on && P.log && self.side === 'player') {
++    const nk = self.klich ? run({ ...self, klich: null }) : act;
++    const nl = self.klich ? run({ ...self, klich: null, leans: null }) : act;
++    P.log.push({ t: fight.t, act, need: need ? 1 : 0, nk, nl, kid: self.klich ? self.klich.id : null, kk: self.klich ? self.klich.k : 0, range: self.range });
++  }
++  return act;
+ }
+ 
+ // HARD NEEDS — the state sets the FLOOR, the character bends where the floor sits and how the fighter answers
+diff --git a/src/scene/buildFighter.js b/src/scene/buildFighter.js
+index cc0cd186..9d61d513 100644
+--- a/src/scene/buildFighter.js
++++ b/src/scene/buildFighter.js
+@@ -913,6 +913,7 @@ export function buildFighter(
+         tempo: tempo01, weight: weight01, stick: stick01,
+         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
+       },
++      side, // ЗОНД klich-reach: сторона бойца (только копия дерева)
+       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
+       klich: klichId ? { id: klichId, k: klichStrength } : null, // действующий клич тренера и его сила — наклон к группе намерений (data/klichBalance.js)
+       hp01: hp / maxHp,
