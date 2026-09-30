@@ -1,0 +1,137 @@
+{
+ "seeds": 200,
+ "out": {
+  "natisk|push": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1599,
+   "actDiff": 0,
+   "meanDRange": 0.33211704684508,
+   "maxDRange": 0.4558229299262163,
+   "first": 200,
+   "firstAct": 0,
+   "firstRange": 200
+  },
+  "natisk|fallback": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 6,
+   "meanDRange": 1.4481255493171796,
+   "maxDRange": 1.7981250000000033,
+   "first": 200,
+   "firstAct": 0,
+   "firstRange": 200
+  },
+  "natisk|hold": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 0,
+   "meanDRange": 0.0820378173844107,
+   "maxDRange": 0.24587890752902453,
+   "first": 200,
+   "firstAct": 0,
+   "firstRange": 200
+  },
+  "nalet|push": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 594,
+   "meanDRange": 1.1012742820422492,
+   "maxDRange": 1.9359389876015483,
+   "first": 200,
+   "firstAct": 23,
+   "firstRange": 200
+  },
+  "nalet|fallback": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 185,
+   "meanDRange": 0.7089441672863606,
+   "maxDRange": 1.4081696699187176,
+   "first": 200,
+   "firstAct": 7,
+   "firstRange": 200
+  },
+  "nalet|hold": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 130,
+   "meanDRange": 0.10748417968750046,
+   "maxDRange": 0.9202083333333322,
+   "first": 200,
+   "firstAct": 3,
+   "firstRange": 200
+  },
+  "skala|push": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 364,
+   "meanDRange": 0.603315820458627,
+   "maxDRange": 0.8926330294460055,
+   "first": 200,
+   "firstAct": 29,
+   "firstRange": 200
+  },
+  "skala|fallback": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 581,
+   "meanDRange": 1.389861266956216,
+   "maxDRange": 1.850510535016656,
+   "first": 200,
+   "firstAct": 23,
+   "firstRange": 200
+  },
+  "skala|hold": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 107,
+   "meanDRange": 0.09172928011504691,
+   "maxDRange": 0.6872244261205195,
+   "first": 200,
+   "firstAct": 2,
+   "firstRange": 200
+  },
+  "zasada|push": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 64,
+   "meanDRange": 1.1278985210123946,
+   "maxDRange": 1.71690445324406,
+   "first": 200,
+   "firstAct": 3,
+   "firstRange": 200
+  },
+  "zasada|fallback": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 11,
+   "meanDRange": 0.38353057373235544,
+   "maxDRange": 0.9847870616801138,
+   "first": 200,
+   "firstAct": 0,
+   "firstRange": 200
+  },
+  "zasada|hold": {
+   "n": 1600,
+   "axDiff": 0,
+   "rangeDiff": 1600,
+   "actDiff": 5,
+   "meanDRange": 0.08138092447916594,
+   "maxDRange": 0.3901041666666587,
+   "first": 200,
+   "firstAct": 0,
+   "firstRange": 200
+  }
+ }
+}

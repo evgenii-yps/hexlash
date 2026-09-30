@@ -1,0 +1,642 @@
+{
+ "natisk|bare": {
+  "tab": {
+   "score": {
+    "n": 18610,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "press": 18610
+  },
+  "total": 18610,
+  "bouts": 200,
+  "body": {
+   "cadence_strike": 1860,
+   "block_opp": 8172,
+   "read_contra": 6473,
+   "block_raised": 3085,
+   "cadence_feint": 460,
+   "cadence_lunge": 467,
+   "read_sbiv": 380
+  }
+ },
+ "natisk|scatter7": {
+  "tab": {
+   "score": {
+    "n": 26351,
+    "all": 1460,
+    "ax": 68,
+    "ln": 1455
+   },
+   "need_breathe": {
+    "n": 8,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "press": 24767,
+   "strike": 1584,
+   "breathe": 8
+  },
+  "total": 26359,
+  "bouts": 600,
+  "body": {
+   "cadence_strike": 3309,
+   "block_opp": 11108,
+   "block_raised": 4606,
+   "read_contra": 7986,
+   "cadence_feint": 781,
+   "cadence_lunge": 723,
+   "read_sbiv": 452
+  }
+ },
+ "natisk|branch5": {
+  "tab": {
+   "score": {
+    "n": 26292,
+    "all": 15196,
+    "ax": 424,
+    "ln": 8597
+   },
+   "need_breathe": {
+    "n": 14,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "press": 10994,
+   "strike": 10345,
+   "breathe": 14,
+   "hold": 4953
+  },
+  "total": 26306,
+  "bouts": 600,
+  "body": {
+   "cadence_strike": 2345,
+   "block_opp": 11148,
+   "block_raised": 4749,
+   "cadence_lunge": 770,
+   "read_contra": 8263,
+   "read_sbiv": 489,
+   "cadence_feint": 568
+  }
+ },
+ "natisk|apex52": {
+  "tab": {
+   "score": {
+    "n": 26121,
+    "all": 17362,
+    "ax": 484,
+    "ln": 16537
+   },
+   "need_breathe": {
+    "n": 7,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "press": 8688,
+   "strike": 12462,
+   "breathe": 7,
+   "hold": 4971
+  },
+  "total": 26128,
+  "bouts": 600,
+  "body": {
+   "cadence_feint": 555,
+   "cadence_strike": 2338,
+   "block_opp": 10995,
+   "read_contra": 7984,
+   "block_raised": 4637,
+   "cadence_lunge": 840,
+   "read_sbiv": 472
+  }
+ },
+ "nalet|bare": {
+  "tab": {
+   "score": {
+    "n": 18065,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 126,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 535,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "sting": 4446,
+   "press": 1368,
+   "strike": 9528,
+   "break": 1901,
+   "catch": 948,
+   "breathe": 535
+  },
+  "total": 18726,
+  "bouts": 200,
+  "body": {
+   "cadence_lunge": 1034,
+   "block_opp": 5591,
+   "read_sbiv": 415,
+   "block_raised": 695,
+   "cadence_feint": 238,
+   "cadence_strike": 772,
+   "read_contra": 3808
+  }
+ },
+ "nalet|scatter7": {
+  "tab": {
+   "score": {
+    "n": 25795,
+    "all": 8000,
+    "ax": 1390,
+    "ln": 5836
+   },
+   "need_strike": {
+    "n": 1099,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 839,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "sting": 15157,
+   "strike": 11027,
+   "press": 409,
+   "breathe": 839,
+   "break": 301
+  },
+  "total": 27733,
+  "bouts": 600,
+  "body": {
+   "cadence_lunge": 1551,
+   "block_opp": 7609,
+   "read_contra": 5513,
+   "block_raised": 812,
+   "cadence_strike": 998,
+   "read_sbiv": 628,
+   "cadence_feint": 675
+  }
+ },
+ "nalet|branch5": {
+  "tab": {
+   "score": {
+    "n": 25369,
+    "all": 8274,
+    "ax": 754,
+    "ln": 6478
+   },
+   "need_strike": {
+    "n": 960,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 903,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "sting": 15571,
+   "strike": 10374,
+   "press": 370,
+   "breathe": 903,
+   "catch": 14
+  },
+  "total": 27232,
+  "bouts": 600,
+  "body": {
+   "block_opp": 7414,
+   "read_contra": 5343,
+   "cadence_lunge": 1509,
+   "block_raised": 743,
+   "read_sbiv": 732,
+   "cadence_strike": 1173,
+   "cadence_feint": 504
+  }
+ },
+ "nalet|apex52": {
+  "tab": {
+   "score": {
+    "n": 25353,
+    "all": 8240,
+    "ax": 881,
+    "ln": 6283
+   },
+   "need_strike": {
+    "n": 1016,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 758,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "sting": 15740,
+   "strike": 10301,
+   "press": 313,
+   "breathe": 758,
+   "catch": 15
+  },
+  "total": 27127,
+  "bouts": 600,
+  "body": {
+   "block_opp": 7351,
+   "read_contra": 5289,
+   "cadence_lunge": 1522,
+   "cadence_strike": 1045,
+   "read_sbiv": 701,
+   "block_raised": 724,
+   "cadence_feint": 613
+  }
+ },
+ "skala|bare": {
+  "tab": {
+   "score": {
+    "n": 13746,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_catch": {
+    "n": 12168,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 116,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 6,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "press": 2221,
+   "hold": 3762,
+   "catch": 14179,
+   "strike": 5868,
+   "breathe": 6
+  },
+  "total": 26036,
+  "bouts": 200,
+  "body": {
+   "read_contra": 8013,
+   "block_opp": 8364,
+   "block_raised": 4768,
+   "cadence_lunge": 776,
+   "read_sbiv": 953,
+   "cadence_strike": 407,
+   "cadence_feint": 130
+  }
+ },
+ "skala|scatter7": {
+  "tab": {
+   "score": {
+    "n": 19958,
+    "all": 7935,
+    "ax": 702,
+    "ln": 7086
+   },
+   "need_catch": {
+    "n": 18074,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 363,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 2,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "hold": 6792,
+   "catch": 23027,
+   "strike": 4944,
+   "press": 3632,
+   "breathe": 2
+  },
+  "total": 38397,
+  "bouts": 600,
+  "body": {
+   "block_opp": 12042,
+   "block_raised": 7481,
+   "read_contra": 11033,
+   "cadence_lunge": 653,
+   "cadence_feint": 222,
+   "read_sbiv": 1191,
+   "cadence_strike": 552
+  }
+ },
+ "skala|branch5": {
+  "tab": {
+   "score": {
+    "n": 19959,
+    "all": 9547,
+    "ax": 662,
+    "ln": 6039
+   },
+   "need_catch": {
+    "n": 17545,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 392,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "hold": 7591,
+   "catch": 22253,
+   "strike": 4155,
+   "press": 3897
+  },
+  "total": 37896,
+  "bouts": 600,
+  "body": {
+   "block_opp": 11694,
+   "block_raised": 6921,
+   "read_contra": 10460,
+   "read_sbiv": 1523,
+   "cadence_lunge": 658,
+   "cadence_feint": 208,
+   "cadence_strike": 541
+  }
+ },
+ "skala|apex52": {
+  "tab": {
+   "score": {
+    "n": 19829,
+    "all": 9287,
+    "ax": 465,
+    "ln": 6264
+   },
+   "need_catch": {
+    "n": 17748,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 359,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "hold": 7412,
+   "catch": 22467,
+   "press": 4042,
+   "strike": 4015
+  },
+  "total": 37936,
+  "bouts": 600,
+  "body": {
+   "block_opp": 11787,
+   "block_raised": 7331,
+   "read_contra": 10393,
+   "cadence_lunge": 662,
+   "read_sbiv": 1376,
+   "cadence_strike": 547,
+   "cadence_feint": 234
+  }
+ },
+ "zasada|bare": {
+  "tab": {
+   "score": {
+    "n": 12685,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 421,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_catch": {
+    "n": 6060,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 379,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "catch": 11598,
+   "sting": 3410,
+   "strike": 3549,
+   "breathe": 380,
+   "press": 608
+  },
+  "total": 19545,
+  "bouts": 200,
+  "body": {
+   "cadence_lunge": 874,
+   "block_opp": 4340,
+   "read_contra": 3206,
+   "block_raised": 1405,
+   "read_sbiv": 538,
+   "cadence_strike": 278,
+   "cadence_feint": 129
+  }
+ },
+ "zasada|scatter7": {
+  "tab": {
+   "score": {
+    "n": 20863,
+    "all": 8563,
+    "ax": 1652,
+    "ln": 6782
+   },
+   "need_catch": {
+    "n": 9691,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_strike": {
+    "n": 389,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 1096,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "catch": 14740,
+   "strike": 3055,
+   "press": 219,
+   "sting": 10401,
+   "breathe": 1096,
+   "break": 2528
+  },
+  "total": 32039,
+  "bouts": 600,
+  "body": {
+   "cadence_strike": 374,
+   "block_opp": 7018,
+   "read_sbiv": 1069,
+   "read_contra": 4734,
+   "block_raised": 2284,
+   "cadence_lunge": 1529,
+   "cadence_feint": 201
+  }
+ },
+ "zasada|branch5": {
+  "tab": {
+   "score": {
+    "n": 19525,
+    "all": 7960,
+    "ax": 1081,
+    "ln": 6075
+   },
+   "need_strike": {
+    "n": 585,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_catch": {
+    "n": 9295,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 816,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "catch": 14610,
+   "strike": 3155,
+   "sting": 8966,
+   "press": 165,
+   "breathe": 816,
+   "break": 2509
+  },
+  "total": 30221,
+  "bouts": 600,
+  "body": {
+   "cadence_strike": 339,
+   "read_contra": 4652,
+   "block_opp": 6634,
+   "block_raised": 2177,
+   "read_sbiv": 871,
+   "cadence_lunge": 1334,
+   "cadence_feint": 173
+  }
+ },
+ "zasada|apex52": {
+  "tab": {
+   "score": {
+    "n": 20057,
+    "all": 8084,
+    "ax": 1602,
+    "ln": 8297
+   },
+   "need_strike": {
+    "n": 457,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_catch": {
+    "n": 8924,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   },
+   "need_breathe": {
+    "n": 854,
+    "all": 0,
+    "ax": 0,
+    "ln": 0
+   }
+  },
+  "int": {
+   "catch": 13891,
+   "strike": 2982,
+   "sting": 9877,
+   "press": 148,
+   "breathe": 854,
+   "break": 2540
+  },
+  "total": 30292,
+  "bouts": 600,
+  "body": {
+   "cadence_strike": 326,
+   "block_opp": 6425,
+   "read_sbiv": 899,
+   "block_raised": 2015,
+   "read_contra": 4452,
+   "cadence_lunge": 1440,
+   "cadence_feint": 191
+  }
+ }
+}

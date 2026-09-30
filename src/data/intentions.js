@@ -21,6 +21,7 @@
 
 import { COMBAT_BALANCE } from './combatBalance.js';
 const GR = COMBAT_BALANCE.grani;
+const NEED = COMBAT_BALANCE.hardNeed;
 
 export const INTENTIONS = {
   PRESS: 'press',
@@ -128,22 +129,41 @@ export function chooseIntentionSpinal(self, foe, memory, fight) {
   return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
 }
 
-// HARD NEEDS — state overrides temperament, fires instantly (no model round-trip).
-// Returns an intention id or null. Shared by the spinal + model paths so the safety
-// net is identical in both. Deterministic.
+// HARD NEEDS — the state sets the FLOOR, the character bends where the floor sits and how the fighter answers
+// inside it (TZ_reflex_sees_character_v2). A real extreme still decides for ANY character (out of wind →
+// BREATHE; a live swing on a counter-minded fighter → a defensive reply; a loaded haymaker in reach → STRIKE),
+// but the threshold at which a need fires and the reply inside it now read the axes and the build — two builds
+// of one core no longer meet the same reflex. `NEED.bend` is the ONE new number: how hard the axes push the
+// existing situational thresholds (0 = the old flat rule). Every threshold keeps its old value at neutral axes
+// (0.5); while bend < 1 none can reach 0, so a truly empty tank always breathes. Returns an intention id or
+// null. Shared by the spinal + model paths. Deterministic.
 export function hardNeed(self, foe, memory, fight) {
   const a = self.ax01;
+  const K = NEED.bend;
+  // Out of wind → recover. Pushy (initiative) fighters fight on to a lower reserve, patient ones breathe earlier.
+  if (self.stamina01 < 0.22 * (1 - K * (2 * a.initiative - 1))) return INTENTIONS.BREATHE;
+  // Foe swing + counter-minded + in reach → answer the swing. A counter-minded fighter waits from farther out;
+  // the reply itself (CATCH / BREAK / HOLD) is picked by character and build, see swingReply.
   const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
-  if (self.stamina01 < 0.22) return INTENTIONS.BREATHE; // out of wind → must recover
-  if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8) return INTENTIONS.CATCH; // counter-puncher waits out the swing
-  if (self.charge01 >= 0.85 && foe.inStrike) return INTENTIONS.STRIKE; // haymaker loaded + foe in reach → land it
+  if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8 * (1 + K * (2 * a.counter - 1))) return swingReply(self, foe, memory, fight);
+  // Haymaker loaded + foe in reach → land it. Heavy hitters fire at a lower charge, light ones wait for more
+  // (never above a full charge: a full haymaker in reach always lands).
+  if (self.charge01 >= Math.min(1, 0.85 * (1 - K * (2 * a.weight - 1))) && foe.inStrike) return INTENTIONS.STRIKE;
   return null;
+}
+
+// The reply INSIDE the swing need: the SAME score the spinal cord uses (axes, situation, the build's leans),
+// restricted to the three defensive answers — wait it out (CATCH), slip off the line (BREAK), stand and trade
+// (HOLD). No new behaviour, no new numbers: three existing intentions, one existing score.
+const SWING_REPLIES = [INTENTIONS.CATCH, INTENTIONS.BREAK, INTENTIONS.HOLD];
+function swingReply(self, foe, memory, fight) {
+  return spinalScore(self, foe, memory, fight, SWING_REPLIES);
 }
 
 // SCORE — temperament gravity + the situation, deterministic argmax. Differently-
 // raised fighters (different cores / facets → different ax01) lean to different
 // intentions for free.
-export function spinalScore(self, foe, memory, fight) {
+export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
   const a = self.ax01;
   const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
   const closeBand = foe.has && foe.dist <= self.range + 0.5;
@@ -217,7 +237,7 @@ export function spinalScore(self, foe, memory, fight) {
   // Hysteresis: a small bonus to the held intention so it doesn't flip-flop every
   // tick (deterministic — no random). argmax, ties broken by INTENTION_IDS order.
   if (s[self.current] != null) s[self.current] += 0.08;
-  let best = INTENTION_IDS[0];
-  for (const id of INTENTION_IDS) if (s[id] > s[best]) best = id;
+  let best = only[0];
+  for (const id of only) if (s[id] > s[best]) best = id;
   return best;
 }
