@@ -1,160 +1,172 @@
 {
- "chosenWeight": 0.4,
- "sweep": [
-  {
-   "w": 0,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 1
+ "chosen": {
+  "push": 0.45,
+  "fallback": 0.75,
+  "hold": 0.3
+ },
+ "pickLabel": "final2",
+ "set1": {
+  "g1": {
+   "push": true,
+   "fallback": true,
+   "hold": true
   },
-  {
-   "w": 0.1,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 5
+  "g3": {
+   "push": {
+    "spread": 79.54815695600476,
+    "who": "PRESS: ONSLAUGHT / AMBUSH",
+    "pass": true
+   },
+   "fallback": {
+    "spread": 53.23889861531116,
+    "who": "BREAK: RAIDER / AMBUSH",
+    "pass": true
+   },
+   "hold": {
+    "spread": 99.81160512434062,
+    "who": "HOLD: ONSLAUGHT / AMBUSH",
+    "pass": true
+   }
   },
-  {
-   "w": 0.15,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 6
-  },
-  {
-   "w": 0.2,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 7
-  },
-  {
-   "w": 0.3,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 9
-  },
-  {
-   "w": 0.4,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 10
-  },
-  {
-   "w": 0.5,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 10
-  },
-  {
-   "w": 0.6,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 10
-  },
-  {
-   "w": 0.7,
-   "g1": false,
-   "g3": true,
-   "g4": true,
-   "combosPass": 11
-  },
-  {
-   "w": 0.8,
-   "g1": true,
-   "g3": true,
-   "g4": false,
-   "combosPass": 12
-  },
-  {
-   "w": 1,
-   "g1": true,
-   "g3": true,
-   "g4": false,
-   "combosPass": 12
+  "g4": {
+   "label": "зёрна 1–200",
+   "n": 9600,
+   "median": 51.94999999999833,
+   "over100": 0,
+   "over100Share": 0,
+   "capped": 0,
+   "per": {
+    "natisk": {
+     "median": 49.78333333333179,
+     "base": 49.999999999998444,
+     "shift": -0.21666666666665435,
+     "lo": -0.6416666666666302,
+     "hi": 0.17499999999999005,
+     "inCi": true
+    },
+    "nalet": {
+     "median": 49.40833333333181,
+     "base": 49.89999999999845,
+     "shift": -0.4916666666666387,
+     "lo": -0.9083333333332817,
+     "hi": 0.09166666666666146,
+     "inCi": true
+    },
+    "skala": {
+     "median": 58.19999999999798,
+     "base": 58.15833333333131,
+     "shift": 0.0416666666666643,
+     "lo": -0.649999999999963,
+     "hi": 0.6416666666666302,
+     "inCi": true
+    },
+    "zasada": {
+     "median": 52.24166666666498,
+     "base": 51.608333333331686,
+     "shift": 0.6333333333332973,
+     "lo": 0.01666666666666572,
+     "hi": 1.1499999999999346,
+     "inCi": false
+    }
+   },
+   "pass": true
   }
- ],
- "win|natisk|push": {
-  "before": -0.75,
-  "after": -0.75,
-  "ci": 4.466602405218971
  },
- "win|natisk|fallback": {
-  "before": -1.625,
-  "after": -1.625,
-  "ci": 4.630663940453006
- },
- "win|natisk|hold": {
-  "before": -2.875,
-  "after": -6.5,
-  "ci": 4.906863778440913
- },
- "win|nalet|push": {
-  "before": -1.875,
-  "after": -1.375,
-  "ci": 4.578848494509238
- },
- "win|nalet|fallback": {
-  "before": -0.25,
-  "after": -4,
-  "ci": 4.630217775203151
- },
- "win|nalet|hold": {
-  "before": 0.25,
-  "after": -0.375,
-  "ci": 4.566625373607764
- },
- "win|skala|push": {
-  "before": 1.375,
-  "after": 1.25,
-  "ci": 4.173909891184119
- },
- "win|skala|fallback": {
-  "before": 3.25,
-  "after": 2.375,
-  "ci": 3.72236601231824
- },
- "win|skala|hold": {
-  "before": -0.375,
-  "after": -1.625,
-  "ci": 3.576119476035961
- },
- "win|zasada|push": {
-  "before": -0.375,
-  "after": 0.625,
-  "ci": 4.605807860876748
- },
- "win|zasada|fallback": {
-  "before": -0.5,
-  "after": 1.625,
-  "ci": 4.485626575626871
- },
- "win|zasada|hold": {
-  "before": -0.625,
-  "after": 1.25,
-  "ci": 3.982326019508844
- },
- "changedAll": {
-  "before": 0.131640625,
-  "after": 0.4436328125
- },
- "changedCore": {
-  "before": {
-   "natisk": 0.0004166666666666667,
-   "nalet": 0.19416666666666665,
-   "skala": 0.19770833333333335,
-   "zasada": 0.13427083333333334
+ "set2": {
+  "g1": {
+   "push": true,
+   "fallback": true,
+   "hold": true
   },
-  "after": {
-   "natisk": 0.28432291666666665,
-   "nalet": 0.6627604166666666,
-   "skala": 0.36265625,
-   "zasada": 0.46479166666666666
+  "g3": {
+   "push": {
+    "spread": 79.15309446254072,
+    "who": "PRESS: ONSLAUGHT / AMBUSH",
+    "pass": true
+   },
+   "fallback": {
+    "spread": 51.709333757354116,
+    "who": "BREAK: RAIDER / AMBUSH",
+    "pass": true
+   },
+   "hold": {
+    "spread": 99.98113919275745,
+    "who": "HOLD: ONSLAUGHT / AMBUSH",
+    "pass": true
+   }
+  },
+  "g4": {
+   "label": "зёрна 201–400",
+   "n": 9600,
+   "median": 51.94999999999833,
+   "over100": 0,
+   "over100Share": 0,
+   "capped": 0,
+   "per": {
+    "natisk": {
+     "median": 49.86666666666512,
+     "base": 49.941666666665114,
+     "shift": -0.07499999999999574,
+     "lo": -0.6749999999999616,
+     "hi": 0.29999999999998295,
+     "inCi": true
+    },
+    "nalet": {
+     "median": 49.52499999999847,
+     "base": 49.5583333333318,
+     "shift": -0.03333333333333144,
+     "lo": -0.6166666666666316,
+     "hi": 0.42499999999997584,
+     "inCi": true
+    },
+    "skala": {
+     "median": 57.79166666666467,
+     "base": 57.2166666666647,
+     "shift": 0.5749999999999673,
+     "lo": -0.1666666666666572,
+     "hi": 1.2083333333332646,
+     "inCi": true
+    },
+    "zasada": {
+     "median": 52.18333333333165,
+     "base": 53.0583333333316,
+     "shift": -0.8749999999999503,
+     "lo": -1.5916666666665762,
+     "hi": -0.1833333333333229,
+     "inCi": false
+    }
+   },
+   "pass": true
+  }
+ },
+ "changed": {
+  "set1": {
+   "natisk|push": 0,
+   "nalet|push": 0.65640625,
+   "skala|push": 0.563125,
+   "zasada|push": 0.505,
+   "natisk|fallback": 0.87140625,
+   "nalet|fallback": 0.579375,
+   "skala|fallback": 0.88671875,
+   "zasada|fallback": 0.80546875,
+   "natisk|hold": 0.83109375,
+   "nalet|hold": 0.6921875,
+   "skala|hold": 0.2246875,
+   "zasada|hold": 0.27625
+  },
+  "set2": {
+   "natisk|push": 0,
+   "nalet|push": 0.660625,
+   "skala|push": 0.563125,
+   "zasada|push": 0.498125,
+   "natisk|fallback": 0.8725,
+   "nalet|fallback": 0.55921875,
+   "skala|fallback": 0.8915625,
+   "zasada|fallback": 0.7915625,
+   "natisk|hold": 0.830625,
+   "nalet|hold": 0.71375,
+   "skala|hold": 0.22,
+   "zasada|hold": 0.285625
   }
  },
  "ring": {
@@ -163,56 +175,46 @@
    "nalet": 0.189375,
    "skala": 0.21916666666666668,
    "zasada": 0.016666666666666666
-  },
-  "after": {
-   "natisk": 0.263125,
-   "nalet": 0.6845833333333333,
-   "skala": 0.4216666666666667,
-   "zasada": 0.3127083333333333
   }
  },
- "g4": {
-  "median": 51.966666666665,
-  "over100": 0,
-  "over100Share": 0,
-  "capped": 0,
-  "perCore": {
-   "natisk": {
-    "median": 49.86666666666512,
-    "base": 49.999999999998444
+ "tags": {
+  "total": {
+   "n": 307192,
+   "A": 98382,
+   "B": 32084,
+   "C": 102138,
+   "D": 51434,
+   "flipShare": 0.320262246412667,
+   "overturnedOfFlips": 0.326116566038503
+  },
+  "perKlich": {
+   "push": {
+    "n": 102393,
+    "A": 36346,
+    "B": 19355,
+    "C": 31175,
+    "D": 26157,
+    "flipShare": 0.3549656714814489,
+    "overturnedOfFlips": 0.5325207725746988
    },
-   "nalet": {
-    "median": 49.39999999999848,
-    "base": 49.89999999999845
+   "fallback": {
+    "n": 102400,
+    "A": 29661,
+    "B": 8294,
+    "C": 32154,
+    "D": 17665,
+    "flipShare": 0.289658203125,
+    "overturnedOfFlips": 0.279626445500826
    },
-   "skala": {
-    "median": 58.09999999999798,
-    "base": 58.15833333333131
-   },
-   "zasada": {
-    "median": 52.308333333331646,
-    "base": 51.608333333331686
+   "hold": {
+    "n": 102399,
+    "A": 32375,
+    "B": 4435,
+    "C": 38809,
+    "D": 7612,
+    "flipShare": 0.31616519692575124,
+    "overturnedOfFlips": 0.136988416988417
    }
-  },
-  "n": 9600,
-  "pass": true
- },
- "g1": false,
- "g3": {
-  "push": {
-   "spread": 84.61538461538461,
-   "who": "press: ONSLAUGHT vs AMBUSH",
-   "pass": true
-  },
-  "fallback": {
-   "spread": 100,
-   "who": "sting: ONSLAUGHT vs BULWARK",
-   "pass": true
-  },
-  "hold": {
-   "spread": 99.83458922992097,
-   "who": "hold: ONSLAUGHT vs AMBUSH",
-   "pass": true
   }
  }
 }

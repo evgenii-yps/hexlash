@@ -54,7 +54,7 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "strike",
+    "act": "breathe",
     "need": 0,
     "kid": "fallback",
     "kk": 1,
@@ -78,7 +78,7 @@
     "need": 1,
     "kid": "hold",
     "kk": 1,
-    "range": 2.6496508325822647
+    "range": 3.0871508325822647
    },
    "cleanA": true,
    "sameAsOnlyB": true
@@ -94,7 +94,7 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "press",
+    "act": "breathe",
     "need": 0,
     "kid": "fallback",
     "kk": 1,
@@ -154,8 +154,8 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "catch",
-    "need": 1,
+    "act": "strike",
+    "need": 0,
     "kid": "push",
     "kk": 1,
     "range": 1.6269921514205576
@@ -174,7 +174,7 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "press",
+    "act": "break",
     "need": 0,
     "kid": "fallback",
     "kk": 1,
@@ -214,7 +214,7 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "press",
+    "act": "sting",
     "need": 0,
     "kid": "fallback",
     "kk": 1,
@@ -278,7 +278,7 @@
     "need": 0,
     "kid": "push",
     "kk": 1,
-    "range": 0.9
+    "range": 1.366716619003564
    },
    "cleanA": true,
    "sameAsOnlyB": true
@@ -294,7 +294,7 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "strike",
+    "act": "breathe",
     "need": 0,
     "kid": "fallback",
     "kk": 1,
@@ -315,10 +315,10 @@
    "firstAfter": {
     "t": 11.116666666666799,
     "act": "catch",
-    "need": 1,
+    "need": 0,
     "kid": "hold",
     "kk": 1,
-    "range": 2.6507477040216325
+    "range": 3.0007477040216326
    },
    "cleanA": true,
    "sameAsOnlyB": true
@@ -334,7 +334,7 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "press",
+    "act": "sting",
     "need": 0,
     "kid": "fallback",
     "kk": 1,
@@ -394,11 +394,11 @@
    "decisionsAfter": 7,
    "firstAfter": {
     "t": 11.116666666666799,
-    "act": "catch",
-    "need": 1,
+    "act": "strike",
+    "need": 0,
     "kid": "push",
     "kk": 1,
-    "range": 2.009735157042742
+    "range": 1.9222351570427416
    },
    "cleanA": true,
    "sameAsOnlyB": true
