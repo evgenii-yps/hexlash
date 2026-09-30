@@ -1,0 +1,147 @@
+diff --git a/src/scene/PveScene.vue b/src/scene/PveScene.vue
+index e8182984..9ad7ea3e 100644
+--- a/src/scene/PveScene.vue
++++ b/src/scene/PveScene.vue
+@@ -197,6 +197,21 @@ const MARK_LEFT = {
+   wall: 0.30,    // м до левого ребра плиты сверх половины тела
+ };
+ 
++// МЕТКА В ВЕРТИКАЛИ — ВГЛУБЬ (30.09.2026, добавка 3). Слева от ряда на телефоне места нет
++// (10 точек до обреза при нужных 41–62), в сторону не двигаем — метка уходит вглубь плиты,
++// дальше от камеры, пока тело в кадре не окажется ВЫШЕ полосы ряда предметов. Ищется первая
++// (самая близкая) точка, где: нет перекрытия с предметами и подписями, тело целиком в кадре,
++// до дальнего ребра плиты не меньше `farEdge` метров, и от зон блуждающих бойцов — `clear`.
++const MARK_DEEP = {
++  farEdge: 1.0,   // м от задней грани тела до дальнего ребра плиты
++  clear: 0.30,    // м от тела до зон блуждающих бойцов (сверх их полуразмеров)
++  gapX: 0.015,    // зазор в кадре по горизонтали между телом и предметом (доля ширины кадра)
++  gapY: 0.008,    // и по вертикали (доля высоты кадра)
++  arms: 0.10,     // запас на размах рук и покачивание, м — тело меряется не по одной коробке
++  frame: 0.02,    // тело не ближе этой доли кадра к любому обрезу
++  step: 0.05,     // шаг поиска, м
++};
++
+ // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
+ // workplace, not a viewing platform (owner's call, 24.08). Two framings only.
+ // ─────────── ВСТРАИВАНИЕ v1, шаг 1: соседний остров и предметы ───────────
+@@ -498,7 +513,9 @@ function lampPositions() {
+   const e = fieldExtent(compose ? compose.maxCount : FIELD.maxCount);
+   const endX = Math.max(e.halfX + 0.9, FIELD.step);
+   const fieldZ = (compose ? compose.arcZ : 0) + (e.back + e.front) / 2;
+-  const markZ = mark ? mark.z : 2;
++  // ⚠️ Лампа над меткой висит там, где метка стояла ДО ухода вглубь (lampZ): освещение зала
++  // не должно зависеть от того, в какой раскладке его открыли.
++  const markZ = mark ? (mark.lampZ ?? mark.z) : 2;
+   return [
+     { x: -endX, z: fieldZ, drop: 0.0 },
+     { x: endX, z: fieldZ, drop: 0.7 },
+@@ -584,7 +601,84 @@ function markFor(count, arcZ) {
+   const zWant = frontZ + MARK.ahead;
+   const z = band ? Math.min(zWant, band.zMin - BODY.halfW) : zWant;
+   const left = markLeft(z);
+-  return { x: left != null ? left : x, z };
++  if (left != null) return { x: left, z, lampZ: z };
++  // Слева места нет (вертикаль) — вглубь. Нет и там — метка прежняя.
++  const deep = markDeep(x, z, count, arcZ);
++  return deep ? { x: deep.x, z: deep.z, lampZ: z } : { x, z, lampZ: z };
++}
++
++/**
++ * Экранная доля точки мира {sx, sy} (сверху вниз, 0…1) в домашнем кадре. Та же математика,
++ * что у camRatio (боковая доля = lateral / depth), плюс вертикаль: `up` — перпендикуляр к
++ * взгляду в вертикальной плоскости. `tanX`/`tanY` — полукадр по горизонтали/вертикали.
++ */
++function camScreen(b, x, y, z, tanX, tanY) {
++  const depth = b.deep0 - x * b.nx - y * b.ny - z * b.nz;
++  const h = Math.hypot(b.nx, b.nz);
++  const v = (-b.nx * b.ny * x + h * h * (y - b.ly) - b.nz * b.ny * z) / h;
++  return { sx: 0.5 + 0.5 * (b.rx * x + b.rz * z) / (depth * tanX), sy: 0.5 - 0.5 * v / (depth * tanY) };
++}
++
++/** Обвод предмета в кадре {l, r, t, b} по всем его видимым мешам вместе с подписью. */
++function propScreenBox(group, bs, tanX, tanY) {
++  const r = { l: 9, r: -9, t: 9, b: -9 };
++  group.updateMatrixWorld(true);
++  group.traverse((m) => {
++    if (!m.isMesh || !m.visible || !m.geometry || m.userData.pressGlow) return;
++    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
++    const bb = m.geometry.boundingBox;
++    for (let k = 0; k < 8; k++) {
++      _pc.set(k & 1 ? bb.max.x : bb.min.x, k & 2 ? bb.max.y : bb.min.y, k & 4 ? bb.max.z : bb.min.z);
++      _pc.applyMatrix4(m.matrixWorld);
++      const q = camScreen(bs, _pc.x, _pc.y, _pc.z, tanX, tanY);
++      if (q.sx < r.l) r.l = q.sx; if (q.sx > r.r) r.r = q.sx;
++      if (q.sy < r.t) r.t = q.sy; if (q.sy > r.b) r.b = q.sy;
++    }
++  });
++  return r;
++}
++
++/**
++ * Метка вглубь (вертикаль): ближайшая к камере точка, где тело в кадре стоит выше ряда
++ * предметов и ничего не закрывает. Перебор по глубине от прежней метки вглубь, на каждой
++ * глубине — по x от прежнего значения в обе стороны. Условия — см. MARK_DEEP. Нет такой точки
++ * → null (метка остаётся прежней, об этом узнаёт приёмка, а не тихая подгонка).
++ */
++function markDeep(x0, z0, count, arcZ) {
++  if (!rowBasis || !rowGroups.length || !slab || !compose || !viewH) return null;
++  const topY = slab.refs.topY, hw = BODY.halfW + MARK_DEEP.arms;
++  const tanY = Math.tan((FOV.forge / 2) * Math.PI / 180), tanX = tanY * (viewW / viewH);
++  const b = { ...rowBasis, ly: topY + CAM.lookLift };
++  const items = rowGroups.map((g) => propScreenBox(g, b, tanX, tanY));
++  const zones = layoutRoster(count, arcZ).map(zoneFor);
++  const zFar = -compose.slab.depth / 2 + MARK_DEEP.farEdge + BODY.halfW;   // задняя грань тела не ближе farEdge к ребру
++  const xLim = compose.slab.width / 2 - BODY.halfW - MARK_LEFT.wall;
++  const gx = MARK_DEEP.gapX, gy = MARK_DEEP.gapY, f = MARK_DEEP.frame;
++  const fits = (x, z) => {
++    if (Math.abs(x) > xLim) return false;
++    for (const zn of zones) {
++      if (Math.abs(x - (zn.xMin + zn.xMax) / 2) < (zn.xMax - zn.xMin) / 2 + hw + MARK_DEEP.clear
++        && Math.abs(z - (zn.zMin + zn.zMax) / 2) < (zn.zMax - zn.zMin) / 2 + hw + MARK_DEEP.clear) return false;
++    }
++    let l = 9, r = -9, t = 9, bt = -9;
++    for (const dx of [-hw, hw]) for (const dz of [-hw, hw]) for (const y of [topY, topY + BODY.height + MARK_DEEP.arms]) {
++      const q = camScreen(b, x + dx, y, z + dz, tanX, tanY);
++      if (q.sx < l) l = q.sx; if (q.sx > r) r = q.sx;
++      if (q.sy < t) t = q.sy; if (q.sy > bt) bt = q.sy;
++    }
++    if (l < f || r > 1 - f || t < f || bt > 1 - f) return false;
++    for (const it of items) {
++      if (!(r + gx <= it.l || it.r + gx <= l || bt + gy <= it.t || it.b + gy <= t)) return false;
++    }
++    return true;
++  };
++  for (let z = z0; z >= zFar; z -= MARK_DEEP.step) {
++    for (let k = 0; k <= 60; k++) {
++      const dx = Math.ceil(k / 2) * MARK_DEEP.step * (k % 2 ? 1 : -1);
++      if (fits(x0 + dx, z)) return { x: x0 + dx, z };
++    }
++  }
++  return null;
+ }
+ 
+ /**
+@@ -952,6 +1046,7 @@ function camBasis(slabWidth, topY) {
+     rx: nz / h, rz: -nx / h,                       // «вправо по кадру» в мире
+     // Глубина точки вдоль взгляда = deep0 − x·nx − y·ny − z·nz.
+     deep0: CAM.distPerWidth * slabWidth + (topY + CAM.lookLift) * ny,
++    ly: topY + CAM.lookLift,                       // высота точки, на которую смотрит камера
+   };
+ }
+ 
+@@ -1144,6 +1239,7 @@ function solvePropRow(built, slab, topY) {
+   rowLo = Infinity;
+   for (const it of built) rowLo = Math.min(rowLo, propRatioSpan(it.obj.group, b).lo);
+   rowBasis = b;
++  rowGroups = built.map((it) => it.obj.group);
+ 
+   // Полоса ряда по глубине — по фактическим габаритам вместе с подписями.
+   let zMin = Infinity, zMax = -Infinity;
+@@ -1549,6 +1645,7 @@ let mark = { x: 0, z: 0 };   // where the current fighter stands
+ let rowScale = 1;          // во сколько раз уменьшены предметы ряда — считается, см. solvePropRow
+ let rowLo = Infinity;      // левая кромка ряда в кадре (доля кадра, см. camRatio) вместе с подписями
+ let rowBasis = null;       // разложение камеры, по которому она посчитана — нужно метке (см. markLeft)
++let rowGroups = [];        // группы предметов ряда — метка в вертикали меряет по ним свободное место (см. markDeep)
+ // Множитель размера слова за ступень плиты — чтобы кегль в КАДРЕ не зависел от
+ // того, на какой плите стоит зал. Ставится расстановкой, читается nestLabel.
+ let labelWorldK = 1;
