@@ -72,7 +72,7 @@ async function verifySample(base, plan, first, { sz = size } = {}) {
   const fs = Object.keys(second.hashes);
   const bad = fs.filter((f) => first.hashes[f] !== undefined && first.hashes[f] !== second.hashes[f]);
   const compared = fs.filter((f) => first.hashes[f] !== undefined).length;
-  rmSync(dir, { recursive: true, force: true });
+  if (bad.length === 0) rmSync(dir, { recursive: true, force: true });   // при расхождении снимки второго рендера остаются для разбора
   return { compared, mismatched: bad.length, firstBad: bad[0] ?? null, net: second.net };
 }
 
