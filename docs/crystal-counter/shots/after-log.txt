@@ -1,0 +1,12 @@
+m lit0 core=natisk
+m lit7 light-button: {"disabled":true,"text":"LIGHT IT"}
+m lit7 noroom-line: ["NO ROOM — PUT ONE OUT FIRST"]
+m after-quench noroom: []
+m fighter 1 core=skala
+m fighter 2 core=zasada
+d lit0 core=natisk
+d lit7 light-button: {"disabled":true,"text":"LIGHT IT"}
+d lit7 noroom-line: ["NO ROOM — PUT ONE OUT FIRST"]
+d after-quench noroom: []
+d fighter 1 core=skala
+d fighter 2 core=zasada
