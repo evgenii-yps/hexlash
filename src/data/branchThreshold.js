@@ -82,13 +82,21 @@ export function resolveLeans(coreId, litFacets) {
       if (t) leans.push({ i: t[0], w: t[2] ? G.vertexLean : G.tagLean, when: t[1], tag });
     }
   }
-  for (const [b, n] of Object.entries(count)) {
-    if (n < G.threshold) continue;
-    const home = BRANCH_HOME[coreId] && BRANCH_HOME[coreId][b];
-    if (!home) continue;
+  // ПРАВИЛО ПОЛОВИНЫ (TZ_resonance_seven_v1). Потолок 7 кристаллов позволяет собрать порог дважды (3+3+1,
+  // 4+3): два резонанса складывались в очках полной силой. Первым считается резонанс той ветки, что собрана
+  // глубже; при равенстве — та, что выше по порядку веток ядра (a, b, c). Второй даёт `secondResonance` от
+  // величины. Третий при семи кристаллах невозможен (3 порога × 3 кристалла = 9 > 7); если потолок вырастет —
+  // все последующие резонансы получают ту же долю.
+  const ORDER = ['a', 'b', 'c'];
+  const hit = Object.entries(count)
+    .filter(([b, n]) => n >= G.threshold && BRANCH_HOME[coreId] && BRANCH_HOME[coreId][b])
+    .sort((x, y) => (y[1] - x[1]) || (ORDER.indexOf(x[0]) - ORDER.indexOf(y[0])));
+  hit.forEach(([b, n], rank) => {
+    const home = BRANCH_HOME[coreId][b];
+    const k = rank === 0 ? 1 : G.secondResonance;
     resonance[b] = n;
-    leans.push({ i: home[0], w: G.homeLean, when: 'always', tag: `branch:${b}` });
-    if (home[1]) leans.push({ i: home[1], w: G.homeLeanMinor, when: 'always', tag: `branch:${b}` });
-  }
+    leans.push({ i: home[0], w: G.homeLean * k, when: 'always', tag: `branch:${b}` });
+    if (home[1]) leans.push({ i: home[1], w: G.homeLeanMinor * k, when: 'always', tag: `branch:${b}` });
+  });
   return { leans, resonance, count };
 }
