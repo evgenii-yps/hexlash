@@ -19,6 +19,8 @@
       :ghost="ghost"
       :stage="stage"
       :legend="legend"
+      :fighters="homeFighters"
+      :picked-id="pickedId"
       @arrived="onArrived"
       @dive-start="onDiveStart"
       @pick="onPickMode"
@@ -137,28 +139,33 @@
       </div>
     </Transition>
 
-    <!-- Fighter identity "by approach": a 2D label anchored over the walking fighter
-         that surfaces when the player zooms the camera IN and fades when they zoom
-         out (HomeScene projects the head position + sets the show flag with
-         hysteresis; homeFighterTag carries it). Sharp DOM (not a 3D sprite) so the
-         text stays crisp. Core identity only — the callsign is account-gated and
-         parked to Этап 2, NOT invented here. Own scoped styles, never the shared
-         .hs-* chrome. Shown on the home surface only (not shop / arrange). -->
-    <div
-      v-if="view === 'home' && !arrange"
-      class="fighter-tag"
-      :style="{ transform: `translate3d(${homeFighterTag.x}px, ${homeFighterTag.y}px, 0)` }"
-      aria-hidden="true"
-    >
-      <div class="ft-card" :class="{ 'is-shown': homeFighterTag.near }">
-        <span class="ft-marker" :style="{ background: coreHue }" />
-        <span class="ft-txt">
-          <span class="ft-name">{{ coreName }}</span>
-          <span class="ft-sig">{{ coreSig }} {{ t.cabinet.coreSuffix }}</span>
-          <!-- callsign (account-gated, parked to Этап 2) plugs in above ft-name here -->
-        </span>
+    <!-- One label per standing fighter (up to six — see homeRoster.HOME_CEILING), each
+         anchored over its own head: HomeScene projects the head positions and writes
+         them to homeFighterTags. Sharp DOM (not a 3D sprite) so the text stays crisp.
+         The STATE WORD (FREE / TRAINING / READY) is always shown — it backs up what the
+         body is doing and is never the only signal; the identity card (core name) fades
+         in on zoom-in, as the single label always did. Core identity only — the callsign
+         is account-gated and parked to Этап 2, NOT invented here. Own scoped styles,
+         never the shared .hs-* chrome. Shown on the home surface only (not shop / arrange). -->
+    <template v-if="view === 'home' && !arrange">
+      <div
+        v-for="tag in homeFighterTags.items"
+        :key="tag.id"
+        :data-fighter="tag.id"
+        class="fighter-tag"
+        :style="{ transform: `translate3d(${tag.x}px, ${tag.y}px, 0)` }"
+        aria-hidden="true"
+      >
+        <div class="ft-card" :class="{ 'is-shown': tag.near && tag.shown }">
+          <span class="ft-marker" :style="{ background: tagCore(tag.id).hue }" />
+          <span class="ft-txt">
+            <span class="ft-name">{{ tagCore(tag.id).name }}</span>
+            <span class="ft-sig">{{ tagCore(tag.id).sig }} {{ t.cabinet.coreSuffix }}</span>
+          </span>
+        </div>
+        <div class="ft-state" :class="[`is-${tagState(tag.id)}`, { 'is-shown': tag.shown }]">{{ stateWord(tagState(tag.id)) }}</div>
       </div>
-    </div>
+    </template>
 
     <!-- ───────── mode-stage chrome ─────────
          The ARENA / FORGE fork is no longer a screen — it is a place in the same world,
@@ -250,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
@@ -259,7 +266,9 @@ import HomeScene from '@/scene/HomeScene.vue';
 import HomeShop from '@/components/home/HomeShop.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import { HexlashMark } from '@/components/brand/hexlashMark.js';
-import { homeFighterTag } from '@/scene/homeFighterTag.js';
+import { homeFighterTags } from '@/scene/homeFighterTag.js';
+import { homeState } from '@/scene/homeRoster.js';
+import { anyLesson, startClock, stopClock } from '@/services/training.js';
 import { modePlateTags } from '@/scene/modePlateTags.js';
 import { PERF_ON, perfState } from '@/scene/perfProbe.js';
 import { raiseCurtain, LOADING } from '@/services/sceneLoading.js';
@@ -409,6 +418,55 @@ const coreId = computed(() => store.getters['prefight/selectedCoreId'] || null);
 // тёмным силуэтом. Читает ВИД и передаёт вниз свойством, как читает и всё
 // остальное: сцена сама в хранилище не ходит.
 const legend = computed(() => store.getters['roster/legend']);
+
+// ───────── весь ростер на острове ─────────
+// Сцена в хранилище не ходит — ростер уходит ей свойством. Состояние каждого
+// выводится теми же правилами, что в зале и на панели (services/training.js через
+// homeRoster.homeState): второй копии правил здесь нет.
+const trainingTick = ref(0); // часы: без зависимости от них срок, вышедший без нас, не пересчитается
+const rosterFighters = computed(() => store.getters['roster/fighters'] || []);
+const pickedId = computed(() => store.getters['roster/pickedId'] || null);
+const homeFighters = computed(() => {
+  trainingTick.value;
+  return rosterFighters.value.map((f) => ({
+    id: f.id,
+    coreId: f.core,
+    hue: getCore(f.core).hue,
+    state: homeState(f),
+  }));
+});
+const stateOfTag = computed(() => {
+  const m = new Map();
+  for (const f of homeFighters.value) m.set(f.id, f.state);
+  return m;
+});
+const tagState = (id) => stateOfTag.value.get(id) || 'free';
+const tagCore = (id) => {
+  const f = rosterFighters.value.find((x) => x.id === id);
+  const c = f ? getCore(f.core) : null;
+  return { hue: c?.hue || '#FF0069', name: c?.name || '', sig: c?.sig || '' };
+};
+const stateWord = (st) => {
+  const w = t.value.forge;
+  return st === 'busy' ? w.stTraining : st === 'ready' ? w.stReady : w.stFree;
+};
+
+// Часы занятия — ровно как в зале (PveView): заведены, только пока кто-то занимается,
+// и сами встают, когда ждать некого. Единственное, что пишется, — переход «занят →
+// готов» по сроку, который и так неминуемо записал бы зал или панель.
+function settle() {
+  store.dispatch('roster/settleTraining');
+  trainingTick.value += 1;
+}
+function armClock() {
+  if (!anyLesson(rosterFighters.value)) { stopClock(); return; }
+  startClock(() => {
+    settle();
+    return anyLesson(rosterFighters.value);
+  });
+}
+onMounted(() => { settle(); armClock(); });
+onBeforeUnmount(stopClock);
 const core = computed(() => (coreId.value ? getCore(coreId.value) : null));
 const coreHue = computed(() => core.value?.hue || '#FF0069');
 const coreName = computed(() => core.value?.name || 'ONSLAUGHT');
@@ -503,8 +561,9 @@ function onArrangePlace() { arrange.value = false; }
 }
 .ft-card {
   position: absolute; left: 0; bottom: 0;
-  /* centred above the anchor (−14px gap); +6px lower while hidden → a soft rise */
-  transform: translate(-50%, calc(-100% - 14px + 6px));
+  /* centred above the anchor and above the state word under it (−32px gap); +6px
+     lower while hidden → a soft rise */
+  transform: translate(-50%, calc(-100% - 32px + 6px));
   display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap;
   padding: var(--sp-2) var(--sp-3) var(--sp-2);
   background: color-mix(in srgb, var(--void) 62%, transparent); backdrop-filter: blur(7px);
@@ -513,7 +572,24 @@ function onArrangePlace() { arrange.value = false; }
   transition: opacity var(--d-hover) var(--e-settle),
               transform var(--d-hover) var(--e-spring);
 }
-.ft-card.is-shown { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
+.ft-card.is-shown { opacity: 1; transform: translate(-50%, calc(-100% - 32px)); }
+/* The STATE WORD — one per fighter, always there (FREE / TRAINING / READY). One colour
+   for all three, like the hall's panel (forge.css .fp-state): the word carries the
+   state, brightness carries nothing. READY is bold, as there. No glow, no new colour. */
+.ft-state {
+  position: absolute; left: 0; bottom: 0;
+  transform: translate(-50%, calc(-100% - 4px));
+  padding: 1px var(--sp-2);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs); letter-spacing: var(--ls-title); text-transform: uppercase;
+  color: var(--ink-dim);
+  background: color-mix(in srgb, var(--void) 62%, transparent);
+  opacity: 0;
+  transition: opacity var(--d-hover) var(--e-settle);
+}
+.ft-state.is-shown { opacity: 1; }
+.ft-state.is-ready { font-weight: 700; }
 /* flat core-hue marker — NO box-shadow / glow (glows stay the core + FIGHT) */
 .ft-marker { width: 8px; height: 8px; border-radius: var(--r-none); flex: 0 0 auto; }
 .ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
