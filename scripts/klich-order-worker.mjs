@@ -18,6 +18,10 @@ const P = globalThis.__PROBE;
 const facet = (core, b, j) => CRYSTALS[core].find((x) => x.id === b).faces[j - 1];
 const build = (core, counts) => { const fs = []; for (const b of ['a', 'b', 'c']) for (let j = 1; j <= (counts[b] || 0); j++) fs.push(facet(core, b, j)); return fs; };
 const COMPS = { bare: null, a: { a: 5 }, b: { b: 5 }, c: { c: 5 }, s: { a: 2, b: 2, c: 1 } };
+// t — россыпь С ТЕГАМИ: те же 2+2+1 из разных веток (резонанса нет), но берутся первые кристаллы с тегом в ветке (a — 2, b — 2, c — 1), не с начала ветки.
+// Кристаллы с начала веток (россыпь s) тегов почти не несут. ⚠️ Годится ли в игре взять кристалл не подряд — не проверялось; замер, не сборка.
+const tagged = (core, b, n) => CRYSTALS[core].find((x) => x.id === b).faces.filter((f) => (f.conditionals || []).length + (f.effects || []).length).slice(0, n);
+const COMP_T = (core) => [...tagged(core, 'a', 2), ...tagged(core, 'b', 2), ...tagged(core, 'c', 1)];
 
 function bout(core, beh, foe, seed, klich) {
   P.log = []; let fired = false;
@@ -45,8 +49,10 @@ function tally(R, log, kid) {
 }
 const t0 = Date.now();
 const out = { job, comps: {} };
-for (const [cid, counts] of Object.entries(COMPS)) {
-  const beh = counts ? resolveBehavior(job.core, build(job.core, counts)) : null;
+const ids = job.only || Object.keys(COMPS).concat([]);
+for (const cid of ids) {
+  const counts = COMPS[cid];
+  const beh = cid === 't' ? resolveBehavior(job.core, COMP_T(job.core)) : (counts ? resolveBehavior(job.core, build(job.core, counts)) : null);
   const rec = out.comps[cid] = { foes: {} };
   for (const foe of CORE_IDS) {
     const F = rec.foes[foe] = { base: { w: [], sec: [], capped: 0 }, klich: {} };
@@ -61,6 +67,7 @@ for (const [cid, counts] of Object.entries(COMPS)) {
     }
   }
 }
+if (job.only) out.only = job.only;
 out.ms = Date.now() - t0; out.groups = grp;
 mkdirSync(dirname(job.out), { recursive: true });
 writeFileSync(job.out, JSON.stringify(out) + '\n');

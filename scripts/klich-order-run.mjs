@@ -7,11 +7,12 @@ const WT = process.env.WT; if (!WT) throw new Error('задайте WT=<копи
 const REPO = new URL('..', import.meta.url).pathname;
 const RAW = join(REPO, 'docs/klich-reach/out/order/raw');
 const SEEDS = ((process.argv.find((a) => a.startsWith('--seeds=')) || '--seeds=1-200').split('=')[1]).split('-').map(Number);
+const ONLY = (process.argv.find((a) => a.startsWith('--only=')) || '').split('=')[1];
 const JOBS = Number((process.argv.find((a) => a.startsWith('--jobs=')) || '--jobs=4').split('=')[1]);
 copyFileSync(join(REPO, 'scripts/klich-order-worker.mjs'), join(WT, 'scripts/klich-order-worker.mjs'));
 mkdirSync(RAW, { recursive: true });
 const todo = [];
-for (const core of ['natisk', 'nalet', 'skala', 'zasada']) { const out = join(RAW, `s${SEEDS[0]}-${core}.json`); if (!existsSync(out)) todo.push({ name: core, spec: { core, seedFrom: SEEDS[0], seedTo: SEEDS[1], out } }); }
+for (const core of ['natisk', 'nalet', 'skala', 'zasada']) { const out = join(RAW, `${ONLY ? ONLY + '-' : ''}s${SEEDS[0]}-${core}.json`); if (!existsSync(out)) todo.push({ name: core, spec: { only: ONLY ? ONLY.split(',') : undefined, core, seedFrom: SEEDS[0], seedTo: SEEDS[1], out } }); }
 let running = 0, failed = 0; const t0 = Date.now();
 await new Promise((resolve) => {
   const next = () => {

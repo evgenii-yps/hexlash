@@ -5,14 +5,16 @@ import { join } from 'node:path';
 const REPO = new URL('..', import.meta.url).pathname;
 const OUT = join(REPO, 'docs/klich-reach/out/order');
 const FROM = process.argv[2] || '1';
-const CORES = ['natisk', 'nalet', 'skala', 'zasada'], COMPS = ['bare', 'a', 'b', 'c', 's'], KL = ['push', 'fallback', 'hold'];
+const CORES = ['natisk', 'nalet', 'skala', 'zasada'], COMPS = ['bare', 'a', 'b', 'c', 's', 't'], KL = ['push', 'fallback', 'hold'];
 const CN = { natisk: 'ONSLAUGHT', nalet: 'RAIDER', skala: 'BULWARK', zasada: 'AMBUSH' };
 const KN = { push: 'ВПЕРЁД', fallback: 'ОТХОД', hold: 'ДЕРЖАТЬ' };
-const CPN = { bare: 'голое', a: 'ветвь A', b: 'ветвь B', c: 'ветвь C', s: 'россыпь 2+2+1' };
+const CPN = { bare: 'голое', a: 'ветвь A', b: 'ветвь B', c: 'ветвь C', s: 'россыпь 2+2+1', t: 'россыпь с тегами 2+2+1' };
 const INTENTS = ['press', 'strike', 'sting', 'hold', 'break', 'breathe', 'catch'];
 const GROUPS = { push: ['press', 'strike'], fallback: ['break', 'sting', 'breathe'], hold: ['hold', 'catch'] };
 const D = {};
-for (const c of CORES) { const f = join(OUT, `raw/s${FROM}-${c}.json`); if (!existsSync(f)) throw new Error('нет ' + f); D[c] = JSON.parse(readFileSync(f, 'utf8')); }
+for (const c of CORES) { const f = join(OUT, `raw/s${FROM}-${c}.json`); if (!existsSync(f)) throw new Error('нет ' + f); D[c] = JSON.parse(readFileSync(f, 'utf8'));
+  const ft = join(OUT, `raw/t-s${FROM}-${c}.json`); if (existsSync(ft)) Object.assign(D[c].comps, JSON.parse(readFileSync(ft, 'utf8')).comps); }
+if (!CORES.every((c) => D[c].comps.t)) COMPS.splice(COMPS.indexOf('t'), 1);
 const pc = (x, d = 1) => (100 * x).toFixed(d) + '%';
 const sum = (a) => a.reduce((x, y) => x + y, 0);
 const mean = (a) => sum(a) / a.length;
@@ -77,8 +79,8 @@ function g3block(title, comps) {
   }
 }
 g3block('голые ядра', ['bare']);
-g3block('собранные (A, B, C, россыпь вместе)', ['a', 'b', 'c', 's']);
-for (const cp of ['a', 'b', 'c', 's']) g3block(`собранные: ${CPN[cp]}`, [cp]);
+g3block('собранные (A, B, C, россыпи вместе)', ['a', 'b', 'c', 's', 't'].filter((x) => COMPS.includes(x)));
+for (const cp of ['a', 'b', 'c', 's', 't'].filter((x) => COMPS.includes(x))) g3block(`собранные: ${CPN[cp]}`, [cp]);
 sum_.g3 = g3;
 // ─── группа, которую выбирает каждый состав
 md += `\n## Какое намерение группы выбирает состав (4 ядра вместе, по очкам)\n\n| состав | клич | ${GROUPS.push.concat(GROUPS.fallback, GROUPS.hold).filter((x, i, a) => a.indexOf(x) === i).length ? '' : ''}намерения группы (доля) |\n|---|---|---|\n`;
