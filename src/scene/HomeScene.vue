@@ -28,13 +28,20 @@ import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { buildPropSet, buildSnapGrid, buildGhost, disposeGroup } from './homeProps.js';
-import { createHomeWanderDirector } from './homeWander.js';
-import { setHomeFighterTag, clearHomeFighterTag } from './homeFighterTag.js';
+// Режиссёр блужданий — ТОТ ЖЕ, что водит бойцов в зале FORGE (forgeWander.js), и груша
+// — та же (forgeProps.buildPunchBag): поведение на главном острове совпадает с залом,
+// а не повторяет его. Прежний одиночный homeWander.js остался в репозитории без
+// потребителя (долг, снимается отдельным словом владельца).
+import { createForgeWanderDirector } from './forgeWander.js';
+import { buildPunchBag } from './forgeProps.js';
+import { HOME_SLOTS, HOME_CEILING, chooseHomeSix, assignSlots } from './homeRoster.js';
+import { setHomeFighterTags, clearHomeFighterTags } from './homeFighterTag.js';
 import { buildModePlates, MODE_PLATES } from './modePlates.js';
 import { createTransitionFlight, FLIGHT } from './transitionFlight.js';
 import { createIslandDive, DIVE } from './islandDive.js';
 import { setModePlateTag, setModePlateHover, clearModePlateTags } from './modePlateTags.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { DEV_MODE } from '@/services/devMode.js';
 import { LIGHTING, FOV, CAMERA } from '@/data/sceneTokens.js';;
 import {
   PERF_ON, perfFrame, perfFlightStart, perfFlightEnd, setPerfCap, setPlateCost, countTriangles,
@@ -56,6 +63,13 @@ const props = defineProps({
   // или сама легенда с золотым сердцем. Читается при сборке плит один раз —
   // см. buildModePlates.
   legend: { type: Object, default: null },
+  // Весь ростер игрока: [{ id, coreId, hue, state }], где state — 'free' | 'busy' |
+  // 'ready' (то, что показывает главный остров, см. homeRoster.homeState). Сцена в
+  // хранилище не ходит, поэтому ростер приходит свойством. Показывает она не больше
+  // HOME_CEILING тел (состав — chooseHomeSix). Пусто → один боец выбранного ядра, как
+  // было до ростера.
+  fighters: { type: Array, default: () => [] },
+  pickedId: { type: String, default: null }, // выбранный боец — второй в очереди на место
 });
 
 // arrived('home'|'select') — the camera is on the final framing and the 2D chrome
@@ -70,7 +84,7 @@ const emit = defineEmits(['arrived', 'pick', 'dive-start']);
 const wrap = ref(null);
 const canvasEl = ref(null);
 
-let renderer, scene, camera, controls, arena, fighter, resizeObserver, clock;
+let renderer, scene, camera, controls, arena, resizeObserver, clock;
 let resizePending = 0;  // coalescing frame for the resize observer (see onMounted)
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (page-load) and the SPA transition cover can lift on real
@@ -81,19 +95,21 @@ let resizePending = 0;  // coalescing frame for the resize observer (see onMount
 // browser has composited it and before the resize observer has re-fitted us.
 let load = null;
 let onVisibility;
-let director = null;     // home wander director (drives the existing locomotion)
+let probeLast = 0;      // DEV_MODE only — frame-time samples for __homeProbe
+const probeMs = [];
+let director = null;     // forge wander director (drives the existing locomotion) — see forgeWander.js
 let prevWanderT = 0;     // last frame's elapsed time → per-frame dt for the director
 let viewW = 0;           // canvas CSS size — for projecting the fighter head → screen px
 let viewH = 0;
 let tagNear = false;     // identity-label show flag (hysteresis, set in the loop)
 const _tagV = new THREE.Vector3(); // scratch for the world→screen projection
+const _tagList = [];     // scratch: one record per standing fighter, handed to homeFighterTag
 let propGroup = null;
 let gridGroup = null;
 let ghostGroup = null;
 let arenaRefs = null;
 let lamps = null;
 let dust = null;       // warm drifting dust/haze in the lamp cone (one THREE.Points)
-let glow = null;       // soft warm "homely" pool on the slab under the fighter
 let backdrop = null;   // world-anchored background dome (dark gradient + faint hex weave)
 let lampHaze = null;   // soft warm haze halos at the lamp shades (additive sprites)
 let modePlates = null; // the PVE / PVP plates, far down -Z in the SAME world
@@ -291,6 +307,252 @@ function buildLampHaze(o, lampOpts) {
   return { group, dispose };
 }
 
+// ═══════════════════ РОСТЕР НА ОСТРОВЕ ═══════════════════
+// До шести тел (HOME_CEILING), по одному на место из HOME_SLOTS. Кто встаёт — решает
+// homeRoster.chooseHomeSix; здесь только строится, водится и убирается.
+//
+// КТО ЧТО ДЕЛАЕТ — ровно как в зале FORGE (forgeWander.js + PveScene.applyTraining):
+//   FREE     — бродит по своему пятну;
+//   TRAINING — стоит на месте лицом к своей груше и гоняет удары (режим 'drill');
+//   READY    — стоит смирно лицом к игроку (режим 'still').
+// Ничего из этого не светится: подпись — обычный DOM над головой, груша — матовая.
+//
+// ⚠️ ТЕЛО НЕ ПЕРЕСТРАИВАЕТСЯ без причины. Состав пересчитывается только когда
+//    изменился набор занятых (начало/конец занятия), и остающиеся остаются на своём
+//    месте — см. homeRoster.assignSlots.
+const BODY_GLOW = {
+  // GLOW.radius 1.9 был рассчитан на ОДНОГО бойца. Шесть таких пятен складываются
+  // (аддитивно) в сплошную засветку плиты, поэтому на каждого — своё, поменьше.
+  radius: 1.0,
+  opacity: 0.24,
+};
+// Пятно блуждания на этой плите — 0.2…0.5 м, а не зал в два метра, и прежние пороги
+// режиссёра (дойти «с допуском 0.30», ходка «не короче 0.40», расстояние до чужих
+// «1.45») при таких пятнах означали бы, что тело не ходит вовсе. Это ТЕ ЖЕ ручки
+// режиссёра, что и в зале (createForgeWanderDirector принимает их в opts); поведение
+// прежнее, масштаб другой.
+const DIRECTOR_OPTS = {
+  arrive: 0.06,
+  minLegDist: 0.14,
+  inset: 0.02,
+  leash: 0.30,
+  agentClearance: 0.70,
+  // Набор упражнений — прежний зальный БЕЗ ухода (dodge). Замер 30.09.2026: из одиннадцати
+  // клипов занятия сдвигает тело только он — на 0.40 м (и удар ногой у края — не
+  // более 0.18), а пятно здесь 0.2–0.5 м и соседи в 0.85 м. Остальные веса — как в зале
+  // (forgeWander.CONFIG.drillKindW), не пересчитаны: режиссёр сам нормирует сумму.
+  drillKindW: [
+    ['punch', 0.26], ['double', 0.18], ['hook', 0.12], ['uppercut', 0.10],
+    ['bodyShot', 0.09], ['combo', 0.07], ['knee', 0.06], ['teep', 0.05],
+    ['frontKick', 0.04], ['feint', 0.01],
+  ],
+};
+// Груша — ТА ЖЕ (buildPunchBag), но шесть полноразмерных на этой тесной плите заслоняют
+// соседей, которые стоят за ними: высота груши 2.25 м — выше бойца. Масштаб один на все
+// места и применяется к готовой группе, формы и пропорции груши не трогаются.
+const BAG_SCALE = 0.78;
+// ЗАНИМАЮЩИЙСЯ ДОЛЖЕН СТОЯТЬ НА СВОЁМ МЕСТЕ. Часть упражнений (уход, удар ногой, колено)
+// чуть смещает тело, и в зале это незаметно — пятно там два метра, а режим занятия
+// перецентровки не знает. Здесь пятно 0.2–0.5 м, и за минуту занятия тело уходило до
+// полуметра, на соседа и из кадра (замер 30.09.2026: 0.51 м за 48 с). Поэтому сцена сама
+// возвращает уплывшего на место — тем же режиссёрским `sendTo`, то есть ногами, и только
+// когда тело стоит и никакой клип не играет.
+const DRIFT = {
+  maxDev: 0.12,    // дальше этого от центра пятна — пора возвращаться
+  checkEvery: 0.5, // как часто спрашивать, секунд
+};
+const nextDriftCheck = new Map(); // место → время следующей проверки
+const DEFAULT_ID = '__default'; // одинокий боец выбранного ядра — когда ростер пуст
+
+const bodies = new Array(HOME_SLOTS.length).fill(null); // по месту: { id, coreId, hue, fighter, glow }
+const slotIdx = new Map();   // место → номер агента в режиссёре
+let assign = new Array(HOME_SLOTS.length).fill(null);   // место → id бойца
+let composedSig = '';        // для какого набора занятых и какого ростера собрана шестёрка
+const bags = new Map();      // место → груша (есть, только пока боец занимается)
+const hitPrev = new Map();   // место → где был клип бойца в прошлом кадре (момент удара)
+
+const rosterList = () => (props.fighters || []).map((f) => ({ id: f.id, state: f.state }));
+const stateById = (id) => {
+  const f = (props.fighters || []).find((x) => x.id === id);
+  return f ? f.state : 'free';
+};
+const recFor = (id) => {
+  const f = (props.fighters || []).find((x) => x.id === id);
+  return f
+    ? { id: f.id, coreId: f.coreId, hue: f.hue }
+    : { id: DEFAULT_ID, coreId: props.coreId, hue: props.coreHue };
+};
+const composeSig = () => {
+  const l = rosterList();
+  return l.map((f) => f.id).join(',') + '|' + l.filter((f) => f.state === 'busy').map((f) => f.id).join(',');
+};
+
+// Ease a standing body around to face (x, z). While a fighter is WALKING the
+// locomotion owns his rotation and this is not called (same rule as the forge hall).
+function turnTowards(group, x, z, k) {
+  const want = Math.atan2(-(x - group.position.x), -(z - group.position.z));
+  let d = (want - group.rotation.y) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  group.rotation.y += d * k;
+}
+
+function buildBody(slot, rec) {
+  const S = HOME_SLOTS[slot];
+  const behavior = resolveBehavior(rec.coreId, []);
+  // Display-only range cap — see the note on the old single fighter: a low value keeps
+  // every core close to its targets, so the body WALKS to them instead of swinging
+  // out on a wide orbit.
+  if (behavior && behavior.axes) behavior.axes.distance = 18;
+  const fighter = buildFighter(rec.hue, {
+    side: 'player',
+    coreId: rec.coreId,
+    behavior,
+    // Generous rail only (the body clamps itself to it); the personal patch is far
+    // inside this, so strolling never touches the rail.
+    bounds: { x: arena.refs.W / 2 - 0.35, z: arena.refs.totalDepth / 2 - 0.3 },
+    neutralColor: false,
+    getFoePos: () => {
+      const i = slotIdx.get(slot);
+      return (i === undefined || !director) ? null : director.foePos(i);
+    },
+  });
+  fighter.group.position.set(S.x, arena.refs.topY, S.z);
+  // Face the core toward the camera (a flattering 3/4 front). Forward is local -Z;
+  // facing dir (dx,dz) ⇒ rotation.y = atan2(-dx,-dz).
+  fighter.group.rotation.y = Math.atan2(-(CAM_BASE.x - S.x), -(CAM_BASE.z - S.z));
+  fighter.setReducedMotion(reduced);
+  // SUPPRESS the over-head HP plate (the only Sprite added DIRECTLY to the group).
+  fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
+  scene.add(fighter.group);
+
+  const glow = buildUnderGlow({ ...GLOW, ...BODY_GLOW, color: warmGlowColor(rec.hue) }, arena.refs.topY);
+  glow.mesh.position.set(S.x, arena.refs.topY + GLOW.yLift, S.z);
+  scene.add(glow.mesh);
+
+  bodies[slot] = { id: rec.id, coreId: rec.coreId, hue: rec.hue, fighter, glow };
+}
+
+function disposeBody(slot) {
+  const b = bodies[slot];
+  if (!b) return;
+  syncBag(slot, false);
+  scene.remove(b.fighter.group);
+  b.fighter.dispose();
+  scene.remove(b.glow.mesh);
+  b.glow.dispose();
+  bodies[slot] = null;
+}
+
+/** Груша этого места: появляется с началом занятия, уходит с его концом. */
+function syncBag(slot, on) {
+  const has = bags.has(slot);
+  if (on && !has) {
+    const bag = buildPunchBag();
+    const S = HOME_SLOTS[slot];
+    bag.group.position.set(S.bag.x, arena.refs.topY, S.bag.z);
+    bag.group.scale.setScalar(BAG_SCALE);
+    scene.add(bag.group);
+    bags.set(slot, bag);
+  } else if (!on && has) {
+    const bag = bags.get(slot);
+    scene.remove(bag.group);
+    bag.dispose?.();
+    bags.delete(slot);
+    hitPrev.delete(slot);
+  }
+}
+
+/**
+ * Качнуть грушу В МОМЕНТ УДАРА — момент берётся из самого клипа бойца (кадры касания),
+ * а не по таймеру сцены. Та же логика, что PveScene.pushBag; там она осталась своей —
+ * зал в этой работе не правился. Боя не касается: только читается, где клип.
+ */
+function pushBag(slot, fighter) {
+  const bag = bags.get(slot);
+  if (!bag) return;
+  const info = fighter.getClipInfo?.();
+  if (!info || info.feint) { hitPrev.set(slot, -1); return; }
+  let prev = hitPrev.get(slot);
+  if (prev === undefined || info.elapsed < prev) prev = -1; // новый клип
+  for (const im of info.impacts) {
+    if (prev < im && info.elapsed >= im) {
+      const p = fighter.group.position;
+      const S = HOME_SLOTS[slot].bag;
+      bag.hit(S.x - p.x, S.z - p.z, reduced);
+      break;
+    }
+  }
+  hitPrev.set(slot, info.elapsed);
+}
+
+/** Собрать режиссёра заново под текущие тела. Сперва dispose — он возвращает шаг. */
+function attachDirector() {
+  director.dispose(); // снимает переключённые походки с прежних агентов
+  slotIdx.clear();
+  const list = [];
+  bodies.forEach((b, slot) => {
+    if (!b) return;
+    const S = HOME_SLOTS[slot];
+    slotIdx.set(slot, list.length);
+    list.push({
+      fighter: b.fighter,
+      zone: { xMin: S.x - S.hx, xMax: S.x + S.hx, zMin: S.z - S.hz, zMax: S.z + S.hz },
+    });
+  });
+  director.attach(list, { reduced });
+}
+
+/**
+ * Поставить тела в согласие с состояниями. Зовётся, когда изменилось состояние
+ * кого-то из бойцов; повторный вызов с тем же состоянием ничего не делает.
+ * `fresh` — режиссёр только что собран заново: занятым надо снова встать на место.
+ */
+function applyStates(fresh) {
+  if (!director) return;
+  const canBag = !reduced; // без движения груша не нужна — бить некому
+  for (const [slot, i] of slotIdx) {
+    const b = bodies[slot];
+    if (!b) continue;
+    const st = stateById(b.id);
+    const S = HOME_SLOTS[slot];
+    if (st === 'busy' && canBag) {
+      // НАЧАЛО ЗАНЯТИЯ. Груша ставится ПЕРВОЙ, потом тело встаёт на место и бьёт.
+      const started = !bags.has(slot);
+      if (started) syncBag(slot, true);
+      if (started || fresh) director.sendTo(i, S.x, S.z);
+      director.setMode(i, 'drill');
+      continue;
+    }
+    // КОНЕЦ ЗАНЯТИЯ (или его отмена): груша уходит сразу.
+    syncBag(slot, false);
+    director.setMode(i, st === 'ready' ? 'still' : 'wander');
+  }
+}
+
+/** Пересчитать шестёрку и разложить по местам. Только при сборке и при смене занятых. */
+function recompose() {
+  const list = rosterList();
+  const chosen = list.length ? chooseHomeSix(list, props.pickedId) : [DEFAULT_ID];
+  const next = assignSlots(chosen, assign).slice(0, HOME_CEILING);
+  for (let slot = 0; slot < HOME_SLOTS.length; slot++) {
+    if (assign[slot] === next[slot] && (bodies[slot] || !next[slot])) continue;
+    if (bodies[slot]) disposeBody(slot);
+    if (next[slot]) buildBody(slot, recFor(next[slot]));
+  }
+  assign = next;
+  composedSig = composeSig();
+  attachDirector();
+  collectHomeGlow();
+  applyStates(true);
+}
+
+function onRosterChange() {
+  if (!scene || !director) return;
+  if (composeSig() !== composedSig) recompose();
+  else applyStates(false);
+}
+
 // Rebuild the decor / grid / ghost groups from the current props. Cheap — a
 // handful of faceted meshes; called on mount + whenever the state changes.
 function rebuildProps() {
@@ -311,39 +573,23 @@ function rebuildProps() {
     }
   }
 
-  // Hand the placed decor footprints to the wander director so the fighter routes
-  // its strolls AROUND props (not through them). Grid/ghost (arrange overlays) are
-  // not obstacles. propGroup sits at the origin → child positions are world XZ.
-  if (director) {
-    const obs = [];
-    if (propGroup) propGroup.children.forEach((c) => obs.push({ x: c.position.x, z: c.position.z }));
-    director.setObstacles(obs);
-  }
+  // ⚠️ Раньше здесь декор отдавался режиссёру как препятствия, чтобы прогулка огибала
+  //    предметы. У режиссёра зала такого входа нет (у каждого тела своё пятно, и оно
+  //    по построению не задевает соседей), а пятна главного острова стоят вне
+  //    стандартных предметов (HOME_SLOTS подобраны мимо corePlinth и banner).
 }
 
-// --- Lazy camera follow with a dead-zone. The orbit pivot (controls.target) holds
-//     still while the fighter wanders the central zone, and only lazily (heavily
-//     damped) trails when the fighter drifts past FOLLOW_DEADZONE toward the frame
-//     edge — so the fighter never leaves frame, but small steps don't shove the
-//     camera. All OrbitControls + clamps are untouched.
-const FOLLOW_DEADZONE = 0.75; // pivot holds while the fighter is within this (XZ) of it
-const FOLLOW_LERP = 1.3;      // catch-up rate past the dead-zone (1/s) — lazy, not snappy
-function followFighter(dt) {
-  if (!controls || !fighter || !arena) return;
-  const p = fighter.group.position;
-  const tx = controls.target.x;
-  const tz = controls.target.z;
-  const off = Math.hypot(p.x - tx, p.z - tz);
-  if (off <= FOLLOW_DEADZONE) return;
-  // Pull the pivot toward the fighter, but only the slack past the dead-zone, so it
-  // trails the fighter at ~FOLLOW_DEADZONE radius rather than centring on it.
-  const desiredX = p.x + (tx - p.x) * (FOLLOW_DEADZONE / off);
-  const desiredZ = p.z + (tz - p.z) * (FOLLOW_DEADZONE / off);
-  const k = 1 - Math.exp(-FOLLOW_LERP * Math.min(0.05, dt));
-  controls.target.x += (desiredX - tx) * k;
-  controls.target.z += (desiredZ - tz) * k;
-  controls.target.y = arena.refs.topY + 1.1;
-}
+// ─────────────── Пивот камеры: ЦЕНТР ПЛИТЫ, а не боец ───────────────
+// До ростера орбитальный пивот сидел на единственном бойце и лениво (с мёртвой зоной)
+// тянулся за ним. Теперь на острове до шести тел, следить не за кем — пивот стоит
+// НА МЕСТЕ и равен тому, куда камера смотрела на старте: (0, плита + 1.1, 1.0).
+//
+// ⚠️ ЭТО ТА САМАЯ ТОЧКА, по которой считается вывеска (signFitPoses ниже) и с которой
+//    камера стартовала раньше, — поэтому стартовый ракурс сохранён до пикселя, а
+//    вывеска не сдвигается. Ракурс НЕ подбирается под композицию (правило 23.09);
+//    если вывеска поехала — это не подгоняется, а докладывается числами.
+const PIVOT = { x: 0, z: 1.0, lift: 1.1 }; // z = 1.0 — середина переднего пояса плиты
+const pivotPoint = () => new THREE.Vector3(PIVOT.x, (arenaRefs ? arenaRefs.topY : 0.5) + PIVOT.lift, PIVOT.z);
 
 // ─────────────────────── The MODE stage: framing, orbit, picking ───────────────────────
 // Home and the two mode plates are ONE world (see modePlates.js / transitionFlight.js).
@@ -397,8 +643,8 @@ const _swaySph = new THREE.Spherical();
  * между тем, где покачивание должно быть сейчас, и тем, сколько уже внесено.
  *
  * Именно разницу, а не абсолютный угол: пивот дома не стоит на месте — он лениво
- * тянется за бродящим бойцом (followFighter). Выставлять азимут абсолютно означало
- * бы каждый кадр отменять этот увод и дёргать камеру.
+ * тянулся за бродящим бойцом (followFighter, снят с ростером — теперь пивот стоит на
+ * месте, см. PIVOT). Разница остаётся верным приёмом: орбиту крутит и игрок.
  *
  * ⚠️ И фаза идёт по dt, а не по `clock.getElapsedTime()`. Часы сцены не тикают,
  * пока вкладка в фоне, и первый же кадр после возвращения приносит всю паузу разом —
@@ -553,12 +799,7 @@ function homeFraming() {
   if (homeReturnPose) {
     return { position: homeReturnPose.position.clone(), target: homeReturnPose.target.clone() };
   }
-  const target = new THREE.Vector3(
-    fighter ? fighter.group.position.x : 0,
-    (arenaRefs ? arenaRefs.topY : 0.5) + 1.1,
-    fighter ? fighter.group.position.z : 1,
-  );
-  return { position: CAM_BASE.clone(), target };
+  return { position: CAM_BASE.clone(), target: pivotPoint() };
 }
 
 function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(); }
@@ -576,8 +817,9 @@ function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(
  * drifted to this frame: the word must not resize itself all day.
  *
  * ⚠️ And not the drift envelope either, which was tried and measured and does not
- * work. This camera does not hold still: the pivot trails the wandering fighter by up
- * to a unit either way (followFighter), it sways about the opening pose until the
+ * work. This camera does not hold still: (when this was measured the pivot trailed the
+ * wandering fighter by up to a unit either way — that follow is gone now, the pivot
+ * stands on PIVOT; the measurement is otherwise unchanged), it sways about the opening pose until the
  * player first touches it (HOME_SWAY), and after that the player owns it outright.
  * A unit of pivot at this distance swings the word some sixty screen pixels — against a word
  * forty-six pixels tall and a guard of twenty. Sizing for the worst corner of that
@@ -748,19 +990,22 @@ function homeGlowGate() {
 //
 // The fighter's core halo is rewritten by buildFighter.update() every frame, so the
 // gate is applied AFTER it in the loop; the rest are ours and hold their value.
-let homeGlowSprites = [];   // additive sprites inside the fighter (its core halo)
+let homeGlowSprites = [];   // additive sprites inside the fighters (their core halos)
 let homeGlowBases = null;   // resting opacities of the pieces we own
 function collectHomeGlow() {
   homeGlowSprites = [];
-  fighter.group.traverse((o) => {
-    if (o.isSprite && o.material && o.material.blending === THREE.AdditiveBlending) {
-      homeGlowSprites.push(o.material);
-    }
-  });
+  for (const b of bodies) {
+    if (!b) continue;
+    b.fighter.group.traverse((o) => {
+      if (o.isSprite && o.material && o.material.blending === THREE.AdditiveBlending) {
+        homeGlowSprites.push(o.material);
+      }
+    });
+  }
   homeGlowBases = {
     haze: lampHaze ? HAZE.opacity : 0,
     dust: DUST.opacity,
-    glow: GLOW.opacity,
+    glow: BODY_GLOW.opacity,
     bulb: LAMPS.bulbOpacity,
   };
 }
@@ -769,7 +1014,7 @@ function applyHomeGlowGate(k) {
   for (const m of homeGlowSprites) m.opacity *= k; // after fighter.update() — see above
   if (lampHaze) lampHaze.group.children.forEach((sp) => { sp.material.opacity = homeGlowBases.haze * k; });
   if (dust) dust.points.material.opacity *= k;     // dust.tick rewrites it each frame
-  if (glow) glow.mesh.material.opacity = homeGlowBases.glow * k;
+  for (const b of bodies) if (b) b.glow.mesh.material.opacity = homeGlowBases.glow * k;
   if (lamps?.bulbMat) lamps.bulbMat.opacity = homeGlowBases.bulb * k;
 }
 
@@ -1024,80 +1269,22 @@ onMounted(() => {
   scene.add(lampHaze.group);
   load.stage('atmosphere');
 
-  // --- Fighter: ONE idle construct on the slab. No foe (getFoePos → null) → it
-  //     idles (buildFighter idlePose path); AI is never enabled. Behaviour is
-  //     resolved from the picked core (or core-less default) purely so the build
-  //     is core-shaped; it never fights here.
-  const behavior = resolveBehavior(props.coreId, []);
-  // Cap the home fighter's preferred RANGE to a small, uniform value (display-only —
-  // it never fights here). `range` derives from the distance axis; a low value keeps
-  // every core close to its wander targets, so the body always WALKS to them and
-  // never swings out on a wide orbit (which would carry it onto the occluded seam).
-  if (behavior && behavior.axes) behavior.axes.distance = 18;
+  // --- Fighters: the roster, up to HOME_CEILING bodies (homeRoster.js). No foe
+  //     (getFoePos → a lure from the director or null) → they idle / stroll on their
+  //     own footwork; AI is never enabled. Behaviour is resolved from each fighter's
+  //     core purely so the build is core-shaped; nobody fights here.
+  //
+  // The wander director is the FORGE HALL's (forgeWander.js), not a copy: what a body
+  // does at home is what it does in the hall. Reduced-motion ⇒ it attaches inert
+  // (foePos stays null → the bodies just idle, calm).
+  director = createForgeWanderDirector(DIRECTOR_OPTS);
+  recompose();
 
-  // Home wander director — drives the EXISTING locomotion (see homeWander.js). It
-  // feeds a moving "lure" through getFoePos so the body strolls on its real footwork,
-  // and idles with varied waiting actions between strolls. Reduced-motion ⇒ inert.
-  // The wander zone is the central slab IN FRONT of the torn seam (positive Z),
-  // inset from the edges; the fighter's own bounds-clamp is the hard safety rail.
-  // The lure's zone IS the wander boundary (the body chases the lure, so it stays
-  // here). It is kept comfortably INSIDE the body's bounds below, so the body never
-  // pins on a wall while reaching the lure — pinning + a lure just past the wall is
-  // what tripped the body's contact-separation shove (the teleport). Front of the
-  // torn seam (z ≥ 0.8 > the ~0.55 seam band), inset from the edges.
-  director = createHomeWanderDirector({
-    zone: {
-      xMin: -(arena.refs.W / 2 - 1.2),
-      xMax: arena.refs.W / 2 - 1.2,
-      zMin: 0.9,
-      zMax: arena.refs.totalDepth / 2 - 0.6,
-    },
-  });
-
-  fighter = buildFighter(props.coreHue, {
-    side: 'player',
-    coreId: props.coreId,
-    behavior,
-    // Generous rail only: the body clamps its own position to these half-extents so
-    // it can never reach the plate edge. The wander zone above is well inside this,
-    // so under normal strolling the body never actually touches the rail (no snap).
-    bounds: { x: arena.refs.W / 2 - 0.35, z: arena.refs.totalDepth / 2 - 0.3 },
-    neutralColor: false,
-    getFoePos: () => director.foePos(), // moving lure while strolling, null while idle
-  });
-  fighter.group.position.set(0, arena.refs.topY, 1.0); // start inside the wander zone (off the seam)
-  // Face the core toward the camera (a flattering 3/4 front, since the camera is
-  // off-axis). Forward is local -Z; facing dir (dx,dz) ⇒ rotation.y = atan2(-dx,-dz).
-  {
-    const dx = CAM_BASE.x - fighter.group.position.x;
-    const dz = CAM_BASE.z - fighter.group.position.z;
-    fighter.group.rotation.y = Math.atan2(-dx, -dz);
-  }
-  fighter.setReducedMotion(reduced);
-  // SUPPRESS the over-head HP plate on the home stage — same external approach as
-  // the rift glow above (reach in after build, never touch the combat file). The
-  // HP plate is the only Sprite added DIRECTLY to the fighter group (buildFighter
-  // attaches hpUI.mesh to group; the core halo is a Sprite nested under torso, so
-  // it's untouched). Nothing in fighter.update() re-shows it, so visible=false
-  // sticks. In the arena the plate is built/shown as before.
-  fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
-  scene.add(fighter.group);
-
-  // Wake the wander director onto this fighter + camera. Under reduced-motion it
-  // attaches inert (foePos stays null → the body just idles, calm).
-  director.attach(fighter, camera, { reduced });
-
-  // Atmosphere — warm drifting dust in the lamp cone + a soft warm pool under the
-  // fighter (both in the lamp's amber family, low-intensity fill; the core stays the
-  // only bright/pink mark). reduced ⇒ the dust holds still (tick=null); the glow just
-  // tracks the (then-idle) fighter, no sudden motion.
+  // Atmosphere — warm drifting dust in the lamp cone (amber lamp family, low-intensity
+  // fill; the cores stay the only bright / pink marks). reduced ⇒ the dust holds still
+  // (tick=null). The soft warm pool under each fighter is built with its body.
   dust = buildDust(DUST, reduced);
   scene.add(dust.points);
-  // Glow tinted with a subtle mix of THIS fighter's core hue (props.coreHue = the
-  // hue that colours the 3D core); amber stays dominant, opacity unchanged.
-  glow = buildUnderGlow({ ...GLOW, color: warmGlowColor(props.coreHue) }, arena.refs.topY);
-  glow.mesh.position.set(fighter.group.position.x, arena.refs.topY + GLOW.yLift, fighter.group.position.z);
-  scene.add(glow.mesh);
 
   // Everything the far-distance glow gate touches now exists — cache it once.
   collectHomeGlow();
@@ -1108,7 +1295,7 @@ onMounted(() => {
   //     orbit, pinch = zoom (pan disabled). Soft damping.
   controls = new OrbitControls(camera, renderer.domElement);
   // Orbit pivot = the fighter's chest/core so it stays in focus while turning.
-  controls.target.set(fighter.group.position.x, arena.refs.topY + 1.1, fighter.group.position.z);
+  controls.target.copy(pivotPoint());
   controls.enableDamping = true;
   controls.dampingFactor = 0.08; // soft, not snappy
   controls.enablePan = false; // pivot stays locked on the fighter
@@ -1236,11 +1423,34 @@ onMounted(() => {
       controls.update(); // damping (покачивание уже внесено выше)
     }
     if (!reduced) director?.update(t, dt); // pick targets + feed the lure / idle actions
-    fighter?.update(t, camera); // the body walks the lure / idles (its own footwork)
-    if (!reduced && stage === 'home' && !flying) followFighter(dt); // lazy dead-zone follow
+    // The bodies walk the lure / idle (their own footwork). A body that is walking
+    // steers itself; one that is standing is turned to face the player — or, while
+    // training, the bag (same rule as the forge hall: PveScene's loop).
+    const turnK = reduced ? 1 : 1 - Math.exp(-2.2 * Math.min(0.05, dt));
+    for (let slot = 0; slot < bodies.length; slot++) {
+      const b = bodies[slot];
+      if (!b) continue;
+      b.fighter.update(t, camera);
+      b.glow.follow(b.fighter.group.position); // ease the warm pool under the fighter
+      const i = slotIdx.get(slot);
+      if (bags.has(slot) && director && !director.isWalking(i)) {
+        const S0 = HOME_SLOTS[slot];
+        if (t >= (nextDriftCheck.get(slot) || 0) && !b.fighter.getClipInfo?.()) {
+          nextDriftCheck.set(slot, t + DRIFT.checkEvery);
+          const p0 = b.fighter.group.position;
+          if (Math.hypot(p0.x - S0.x, p0.z - S0.z) > DRIFT.maxDev) director.sendTo(i, S0.x, S0.z);
+        }
+        const bs = HOME_SLOTS[slot].bag;
+        turnTowards(b.fighter.group, bs.x, bs.z, turnK);
+        pushBag(slot, b.fighter);
+      } else if (!director || director.isStill(i)) {
+        turnTowards(b.fighter.group, camera.position.x, camera.position.z, turnK);
+      }
+    }
+    // Bags sway only while they exist — an empty island hangs nothing.
+    for (const [, bag] of bags) bag.tick(dt, reduced);
     lamps?.tick?.(t); // gentle light flicker (null under reduced motion)
     if (!reduced) dust?.tick?.(t); // warm dust drift (null/static under reduced motion)
-    glow?.follow(fighter.group.position); // ease the warm pool under the fighter
     // Plates only respond (hover light / emblem life) once the camera has landed —
     // and they cost nothing at all while the home is on screen, where they are hidden.
     // Сторожит ТОЛЬКО перелёт. Плита, в которую летим, обязана держать свой свет до
@@ -1250,19 +1460,36 @@ onMounted(() => {
     applyHomeGlowGate(homeGlowGate());
     if (PERF_ON) perfFrame(dt, flying); // dev readout only — see perfProbe.js
 
-    // Identity label: project the point above the fighter's head to screen px and
-    // gate the show flag on zoom proximity (hysteresis). HomeView reads this to
-    // anchor + fade the 2D label. Works on touch too (pinch changes the distance).
-    if (fighter && stage === 'home' && !flying) {
+    // Labels: one per standing fighter. Project the point above each head to screen
+    // px; HomeView anchors the state word (FREE / TRAINING / READY) there, and fades
+    // the identity card in on zoom proximity (one hysteresis flag for the camera).
+    // Works on touch too (pinch changes the distance).
+    if (stage === 'home' && !flying) {
       const dist = camera.position.distanceTo(controls.target);
       if (!tagNear && dist < TAG.nearOn) tagNear = true;
       else if (tagNear && dist > TAG.nearOff) tagNear = false;
-      _tagV.set(fighter.group.position.x, arena.refs.topY + TAG.headY, fighter.group.position.z);
-      _tagV.project(camera); // → NDC
-      const inFront = _tagV.z < 1; // not behind the camera
-      setHomeFighterTag((_tagV.x * 0.5 + 0.5) * viewW, (-_tagV.y * 0.5 + 0.5) * viewH, tagNear && inFront);
-    } else if (fighter) {
-      setHomeFighterTag(0, 0, false); // the identity label belongs to the home stage only
+      _tagList.length = 0;
+      for (const b of bodies) {
+        if (!b || b.id === DEFAULT_ID) continue;
+        const p = b.fighter.group.position;
+        _tagV.set(p.x, arena.refs.topY, p.z);
+        _tagV.project(camera);
+        const feetY = (-_tagV.y * 0.5 + 0.5) * viewH;
+        _tagV.set(p.x, arena.refs.topY + TAG.headY, p.z);
+        _tagV.project(camera); // → NDC
+        const headPx = (-_tagV.y * 0.5 + 0.5) * viewH;
+        _tagList.push({
+          id: b.id,
+          x: (_tagV.x * 0.5 + 0.5) * viewW,
+          y: headPx,
+          size: Math.abs(feetY - headPx), // высота тела на экране — по ней HomeView размеряет подпись
+          near: tagNear,
+          shown: _tagV.z < 1, // not behind the camera
+        });
+      }
+      setHomeFighterTags(_tagList);
+    } else {
+      clearHomeFighterTags(); // the labels belong to the home stage only
     }
 
     // Mode-plate captions: 2D text over real 3D plates, same trick as the identity
@@ -1282,6 +1509,11 @@ onMounted(() => {
     }
 
     renderer.render(scene, camera);
+    if (DEV_MODE) {
+      const now = performance.now();
+      if (probeLast) { probeMs.push(now - probeLast); if (probeMs.length > 120) probeMs.shift(); }
+      probeLast = now;
+    }
 
     // One settled frame toward readiness. It only counts once every stage above
     // is in, and any re-fit (see applyResize) starts the count over — so the
@@ -1289,6 +1521,47 @@ onMounted(() => {
     load.frame();
   };
   renderer.setAnimationLoop(loop);
+
+  // Служебная линейка (только ?dev=1, как __forgeProbe в зале): кто и где стоит, какие
+  // груши висят, сколько стоит кадр. Нужна приёмке — числа без неё считались бы на
+  // глаз. Игроку недоступна и ничего не меняет в сцене.
+  if (DEV_MODE) {
+    // Сыграть клип бойца на месте (замер смещения упражнений, см. DRIFT) — только ?dev=1.
+    window.__homeClip = (slot, kind) => {
+      const b = bodies[slot];
+      const f = b && b.fighter[kind];
+      if (typeof f !== 'function') return false;
+      f();
+      return true;
+    };
+    window.__homeProbe = () => {
+      if (!renderer || !camera || !arena) return null;
+      const topY = arena.refs.topY;
+      const px = (v) => [Math.round((v.x * 0.5 + 0.5) * viewW), Math.round((-v.y * 0.5 + 0.5) * viewH)];
+      const at = (x, y, z) => px(new THREE.Vector3(x, y, z).project(camera));
+      const out = [];
+      bodies.forEach((b, slot) => {
+        if (!b) return;
+        const p = b.fighter.group.position;
+        const f = at(p.x, topY, p.z); const h = at(p.x, topY + 1.95, p.z);
+        out.push({
+          slot, id: b.id, coreId: b.coreId, x: +p.x.toFixed(3), z: +p.z.toFixed(3),
+          zone: HOME_SLOTS[slot], state: stateById(b.id), bag: bags.has(slot),
+          feet: f, head: h, left: at(p.x - 0.4, topY + 1.0, p.z)[0], right: at(p.x + 0.4, topY + 1.0, p.z)[0],
+        });
+      });
+      const ms = probeMs.length ? probeMs.reduce((a, c) => a + c, 0) / probeMs.length : 0;
+      const info = renderer.info;
+      return {
+        viewW, viewH, stage, bodies: out, bags: [...bags.keys()],
+        bagTilt: [...bags].map(([slot, b]) => ({ slot, tilt: +Math.hypot(b.group.children[0].rotation.x, b.group.children[0].rotation.z).toFixed(3) })),
+        frameMs: +ms.toFixed(1), calls: info.render.calls, tris: info.render.triangles,
+        geometries: info.memory.geometries, textures: info.memory.textures,
+        cam: camera.position.toArray().map((v) => +v.toFixed(3)),
+        target: controls.target.toArray().map((v) => +v.toFixed(3)),
+      };
+    };
+  }
 
   onVisibility = () => {
     if (document.hidden) renderer.setAnimationLoop(null);
@@ -1338,6 +1611,14 @@ onMounted(() => {
 // (the caller covers that swap with a short dim — see HomeView).
 watch(() => props.stage, (next) => goStage(next, true));
 
+// Состояние бойцов изменилось (началось или кончилось занятие) → состав пересчитывается,
+// только если изменился набор занятых; иначе тела лишь меняют режим. Ни камера, ни
+// раскладка, ни таймер сюда не ведут.
+watch(
+  () => (props.fighters || []).map((f) => `${f.id}:${f.state}`).join('|') + '#' + (props.pickedId || ''),
+  () => onRosterChange(),
+);
+
 // State changes (empty ↔ lived ↔ arrange, ghost moves) → rebuild decor.
 watch(
   () => [props.placements, props.arrange, props.gridCells, props.ghost],
@@ -1361,7 +1642,8 @@ onBeforeUnmount(() => {
     canvasEl.value.removeEventListener('pointerdown', onPointerDown);
     canvasEl.value.removeEventListener('pointerup', onPointerUp);
   }
-  clearHomeFighterTag(); // hide the identity label when the stage unmounts
+  if (DEV_MODE) { delete window.__homeProbe; delete window.__homeClip; }
+  clearHomeFighterTags(); // hide the labels when the stage unmounts
   clearModePlateTags();
   if (director) director.dispose();
   if (controls) controls.dispose();
@@ -1374,8 +1656,7 @@ onBeforeUnmount(() => {
   if (flight) flight.dispose(); // also hands the scene fog back to its resting value
   if (modePlates) { scene.remove(modePlates.group); modePlates.dispose(); }
   if (dust) { scene.remove(dust.points); dust.dispose(); }
-  if (glow) { scene.remove(glow.mesh); glow.dispose(); }
-  if (fighter) fighter.dispose();
+  for (let slot = 0; slot < bodies.length; slot++) disposeBody(slot); // bodies, their pools, their bags
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
 });
