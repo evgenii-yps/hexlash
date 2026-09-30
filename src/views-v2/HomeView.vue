@@ -153,7 +153,7 @@
         :key="tag.id"
         :data-fighter="tag.id"
         class="fighter-tag"
-        :style="{ transform: `translate3d(${tag.x}px, ${tag.y}px, 0)` }"
+        :style="{ transform: `translate3d(${tag.x}px, ${tag.y + tagFit(tag.id).dy}px, 0)`, '--ft-fs': tagFit(tag.id).fs + 'px' }"
         aria-hidden="true"
       >
         <div class="ft-card" :class="{ 'is-shown': tag.near && tag.shown }">
@@ -446,6 +446,38 @@ const tagCore = (id) => {
   const c = f ? getCore(f.core) : null;
   return { hue: c?.hue || '#FF0069', name: c?.name || '', sig: c?.sig || '' };
 };
+
+// Подпись размеряется по телу и расталкивается, если соседние сошлись.
+// Тела на экране бывают от 230 px (портрет) до 50–80 px (короткий альбом), а подпись
+// фиксированного размера на мелких телах налезала на соседей. Кегль следует за высотой
+// тела (но не меньше 9 px — ниже не читается), а те, что всё равно сошлись, разводятся
+// по вертикали: передние остаются на месте, задние поднимаются. Ширина оценивается по
+// числу букв — измерять DOM каждый кадр ради шести подписей дороже, чем ошибка в пару
+// пикселей.
+const TAG_FS = { max: 11, min: 9, bodyPx: 190 };
+const TAG_CHAR = 0.75; // ширина буквы в долях кегля (моноширинный, с разрядкой)
+const tagFits = computed(() => {
+  const items = homeFighterTags.items;
+  const fits = new Map();
+  const placed = [];
+  const order = [...items].sort((a, b) => b.y - a.y); // передние (ниже на экране) первыми
+  for (const tg of order) {
+    const fs = Math.max(TAG_FS.min, Math.min(TAG_FS.max, TAG_FS.max * (tg.size || TAG_FS.bodyPx) / TAG_FS.bodyPx));
+    const w = stateWord(tagState(tg.id)).length * TAG_CHAR * fs + fs * 1.6;
+    const h = fs + 6;
+    let dy = 0;
+    for (let k = 0; k < 6; k++) {
+      const box = [tg.x - w / 2, tg.y + dy - h, tg.x + w / 2, tg.y + dy];
+      const clash = placed.find((q) => !(box[2] <= q[0] || q[2] <= box[0] || box[3] <= q[1] || q[3] <= box[1]));
+      if (!clash) break;
+      dy -= h + 1;
+    }
+    placed.push([tg.x - w / 2, tg.y + dy - h, tg.x + w / 2, tg.y + dy]);
+    fits.set(tg.id, { fs: Math.round(fs * 10) / 10, dy });
+  }
+  return fits;
+});
+const tagFit = (id) => tagFits.value.get(id) || { fs: TAG_FS.max, dy: 0 };
 const stateWord = (st) => {
   const w = t.value.forge;
   return st === 'busy' ? w.stTraining : st === 'ready' ? w.stReady : w.stFree;
@@ -582,7 +614,7 @@ function onArrangePlace() { arrange.value = false; }
   padding: 1px var(--sp-2);
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: var(--t-xs); letter-spacing: var(--ls-title); text-transform: uppercase;
+  font-size: var(--ft-fs, var(--t-xs)); letter-spacing: var(--ls-title); text-transform: uppercase;
   color: var(--ink-dim);
   background: color-mix(in srgb, var(--void) 62%, transparent);
   opacity: 0;

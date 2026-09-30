@@ -30,7 +30,12 @@ const OUT = process.env.OUT || '/tmp/home-shots';
 const WAIT = Number(process.env.WAIT || 16000);
 mkdirSync(OUT, { recursive: true });
 
-const LAYOUTS = [[390, 844], [844, 390], [1280, 720], [1920, 1080]];
+// LAYOUTS=844x390,1280x720 — прогнать только эти раскладки; ONLY_LAYOUTS=1 — пропустить
+// разделы про состав, конец занятия и сейф (быстрый перепрогон после правки вёрстки).
+const LAYOUTS = (process.env.LAYOUTS
+  ? process.env.LAYOUTS.split(',').map((x) => x.split('x').map(Number))
+  : [[390, 844], [844, 390], [1280, 720], [1920, 1080]]);
+const ONLY_LAYOUTS = process.env.ONLY_LAYOUTS === '1';
 const CORES = ['natisk', 'skala', 'zasada', 'nalet'];
 
 let failed = 0;
@@ -89,6 +94,7 @@ const tags = (p) => p.evaluate(() => [...document.querySelectorAll('.fighter-tag
 const ids = (list) => list.map((t) => t.id).sort().join(',');
 const hit = (a, b, m = 0) => !(a[2] + m <= b[0] || b[2] + m <= a[0] || a[3] + m <= b[1] || b[3] + m <= a[1]);
 
+if (!ONLY_LAYOUTS) {
 // ───────────────────────── 1–2. состав ─────────────────────────
 console.log('\n── сколько тел и кто: портрет 390×844 ──');
 for (const n of [1, 3, 6, 10]) {
@@ -206,6 +212,8 @@ console.log('\n── начало занятия на лету (через хр
   await ctx.close();
 }
 
+}
+
 // ───────────────────────── 5–7. четыре раскладки ─────────────────────────
 console.log('\n── четыре раскладки × составы ──');
 for (const [w, h] of LAYOUTS) {
@@ -230,14 +238,39 @@ for (const [w, h] of LAYOUTS) {
       minD = Math.min(minD, Math.hypot(pr.bodies[i].x - pr.bodies[j].x, pr.bodies[i].z - pr.bodies[j].z));
     }
     ok(pr.bodies.length < 2 || minD >= 0.78, `${name}: тела не налезают (мир)`, `мин. расстояние ${minD.toFixed(2)} м`);
-    // пятно блуждания: боец не дальше 0.15 м за кромкой своего пятна
-    const inZone = pr.bodies.every((b) => Math.abs(b.x - b.zone.x) <= b.zone.hx + 0.15 && Math.abs(b.z - b.zone.z) <= b.zone.hz + 0.15);
+    // пятно блуждания: свободный — не дальше 0.15 м за кромкой своего пятна; занимающийся
+    // мгновенно может быть дальше (уход, удар ногой смещают тело до возврата на место —
+    // см. DRIFT в HomeScene), но не дальше 0.35 м
+    const inZone = pr.bodies.every((b) => {
+      const tol = b.state === 'busy' ? 0.35 : 0.15;
+      return Math.abs(b.x - b.zone.x) <= b.zone.hx + tol && Math.abs(b.z - b.zone.z) <= b.zone.hz + tol;
+    });
     ok(inZone, `${name}: тела в своих пятнах`);
     ok(pr.target[0] === 0 && pr.target[2] === 1 && Math.abs(pr.target[1] - 1.6) < 1e-6, `${name}: пивот камеры — центр плиты`, JSON.stringify(pr.target));
     if (tag === 'n10-train' || tag === 'n6-train') ok(pr.bags.length === 6, `${name}: груш шесть`, JSON.stringify(pr.bags));
     await p.screenshot({ path: `${OUT}/l-${w}x${h}-${tag}.png` });
     await ctx.close();
   }
+}
+
+if (!ONLY_LAYOUTS) {
+// ───────────────────────── занимающийся не уплывает ─────────────────────────
+console.log('\n── занимающийся стоит на своём месте всё занятие ──');
+{
+  const { ctx, p } = await open({ s: save(6, { busy: [0, 1, 2, 3, 4, 5], busySec: 58 }), wait: 3000 });
+  const mx = {};
+  let swing = 0;
+  for (let i = 0; i < 40; i++) {
+    const pr = await probe(p);
+    for (const b of pr.bodies) mx[b.slot] = Math.max(mx[b.slot] || 0, Math.hypot(b.x - b.zone.x, b.z - b.zone.z));
+    for (const t of pr.bagTilt || []) swing = Math.max(swing, t.tilt);
+    await p.waitForTimeout(1200);
+  }
+  const worst = Math.max(...Object.values(mx));
+  ok(worst <= 0.35, 'за 48 секунд занятия никто не ушёл от центра своего пятна дальше 0.35 м',
+    `макс. ${worst.toFixed(2)} м: ${JSON.stringify(Object.fromEntries(Object.entries(mx).map(([k, v]) => [k, +v.toFixed(2)])))}`);
+  ok(swing > 0.02, 'груши качаются от ударов', `макс. наклон ${swing.toFixed(3)}`);
+  await ctx.close();
 }
 
 // ───────────────────────── 8. уменьшить движение ─────────────────────────
@@ -266,6 +299,8 @@ for (const [label, s] of [['свободные и готовые', save(10, { re
   })();
   ok(same, `${label}: сейф не изменился`, same ? '' : snap.slice(0, 120));
   await ctx.close();
+}
+
 }
 
 ok(pageErrors.length === 0, 'на страницах ни одной ошибки', pageErrors[0] || '');

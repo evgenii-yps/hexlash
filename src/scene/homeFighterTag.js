@@ -14,7 +14,7 @@
 // меток, и пустые места в список не попадают.
 import { reactive } from 'vue';
 
-/** items: [{ id, x, y, near, shown }] — по одному на стоящее тело, в порядке мест. */
+/** items: [{ id, x, y, size, near, shown }]  (size — высота тела на экране, px) — по одному на стоящее тело, в порядке мест. */
 export const homeFighterTags = reactive({ items: [] });
 
 /**
@@ -28,10 +28,12 @@ export function setHomeFighterTags(list) {
     const x = Math.round(n.x);
     const y = Math.round(n.y);
     const cur = items[i];
-    if (!cur) { items.push({ id: n.id, x, y, near: n.near, shown: n.shown }); continue; }
+    if (!cur) { items.push({ id: n.id, x, y, size: Math.round(n.size || 0), near: n.near, shown: n.shown }); continue; }
     if (cur.id !== n.id) cur.id = n.id;
     if (cur.x !== x) cur.x = x;
     if (cur.y !== y) cur.y = y;
+    const size = Math.round(n.size || 0);
+    if (cur.size !== size) cur.size = size;
     if (cur.near !== n.near) cur.near = n.near;
     if (cur.shown !== n.shown) cur.shown = n.shown;
   }

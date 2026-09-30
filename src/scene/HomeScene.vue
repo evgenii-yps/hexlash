@@ -342,6 +342,17 @@ const DIRECTOR_OPTS = {
 // соседей, которые стоят за ними: высота груши 2.25 м — выше бойца. Масштаб один на все
 // места и применяется к готовой группе, формы и пропорции груши не трогаются.
 const BAG_SCALE = 0.78;
+// ЗАНИМАЮЩИЙСЯ ДОЛЖЕН СТОЯТЬ НА СВОЁМ МЕСТЕ. Часть упражнений (уход, удар ногой, колено)
+// чуть смещает тело, и в зале это незаметно — пятно там два метра, а режим занятия
+// перецентровки не знает. Здесь пятно 0.2–0.5 м, и за минуту занятия тело уходило до
+// полуметра, на соседа и из кадра (замер 30.09.2026: 0.51 м за 48 с). Поэтому сцена сама
+// возвращает уплывшего на место — тем же режиссёрским `sendTo`, то есть ногами, и только
+// когда тело стоит и никакой клип не играет.
+const DRIFT = {
+  maxDev: 0.12,    // дальше этого от центра пятна — пора возвращаться
+  checkEvery: 0.5, // как часто спрашивать, секунд
+};
+const nextDriftCheck = new Map(); // место → время следующей проверки
 const DEFAULT_ID = '__default'; // одинокий боец выбранного ядра — когда ростер пуст
 
 const bodies = new Array(HOME_SLOTS.length).fill(null); // по месту: { id, coreId, hue, fighter, glow }
@@ -1414,6 +1425,12 @@ onMounted(() => {
       b.glow.follow(b.fighter.group.position); // ease the warm pool under the fighter
       const i = slotIdx.get(slot);
       if (bags.has(slot) && director && !director.isWalking(i)) {
+        const S0 = HOME_SLOTS[slot];
+        if (t >= (nextDriftCheck.get(slot) || 0) && !b.fighter.getClipInfo?.()) {
+          nextDriftCheck.set(slot, t + DRIFT.checkEvery);
+          const p0 = b.fighter.group.position;
+          if (Math.hypot(p0.x - S0.x, p0.z - S0.z) > DRIFT.maxDev) director.sendTo(i, S0.x, S0.z);
+        }
         const bs = HOME_SLOTS[slot].bag;
         turnTowards(b.fighter.group, bs.x, bs.z, turnK);
         pushBag(slot, b.fighter);
@@ -1446,12 +1463,17 @@ onMounted(() => {
       for (const b of bodies) {
         if (!b || b.id === DEFAULT_ID) continue;
         const p = b.fighter.group.position;
+        _tagV.set(p.x, arena.refs.topY, p.z);
+        _tagV.project(camera);
+        const feetY = (-_tagV.y * 0.5 + 0.5) * viewH;
         _tagV.set(p.x, arena.refs.topY + TAG.headY, p.z);
         _tagV.project(camera); // → NDC
+        const headPx = (-_tagV.y * 0.5 + 0.5) * viewH;
         _tagList.push({
           id: b.id,
           x: (_tagV.x * 0.5 + 0.5) * viewW,
-          y: (-_tagV.y * 0.5 + 0.5) * viewH,
+          y: headPx,
+          size: Math.abs(feetY - headPx), // высота тела на экране — по ней HomeView размеряет подпись
           near: tagNear,
           shown: _tagV.z < 1, // not behind the camera
         });
