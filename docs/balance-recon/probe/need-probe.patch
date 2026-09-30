@@ -1,0 +1,79 @@
+diff --git a/src/data/intentions.js b/src/data/intentions.js
+index 1f937303..145968de 100644
+--- a/src/data/intentions.js
++++ b/src/data/intentions.js
+@@ -127,7 +127,18 @@ export function chooseIntentionModel(self, foe, memory, fight) {
+    first, then the temperament-weighted score. Used directly when brain='spinal',
+    and as the safety net + fallback under brain='model'. */
+ export function chooseIntentionSpinal(self, foe, memory, fight) {
+-  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  // ЗОНД balance-recon (только копия дерева, в игру не идёт). Решения стороны 'player' отдаются наблюдателю P.onDecision; выбор не меняется.
++  const P = globalThis.__BR;
++  if (!(P && P.on && self.side === 'player')) return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
++  P.kind = null; P.last = null;
++  const need = hardNeed(self, foe, memory, fight);
++  const needScore = P.last; // очки ответа на замах (если нужда — swing)
++  P.last = null;
++  const plain = spinalScore(self, foe, memory, fight); // обычный выбор по очкам (он же — контрфакт «без нужды»)
++  const plainScores = P.last;
++  const act = need || plain;
++  if (P.onDecision) P.onDecision({ self, foe, memory, fight, need, kind: P.kind, act, plain, plainScores, needScore }, { hardNeed, spinalScore });
++  return act;
+ }
+ 
+ // HARD NEEDS — the state sets the FLOOR, the character bends where the floor sits and how the fighter answers
+@@ -142,14 +153,14 @@ export function hardNeed(self, foe, memory, fight) {
+   const a = self.ax01;
+   const K = NEED.bend;
+   // Out of wind → recover. Pushy (initiative) fighters fight on to a lower reserve, patient ones breathe earlier.
+-  if (self.stamina01 < 0.22 * (1 - K * (2 * a.initiative - 1))) return INTENTIONS.BREATHE;
++  if (self.stamina01 < 0.22 * (1 - K * (2 * a.initiative - 1))) { if (globalThis.__BR) globalThis.__BR.kind = 'stam'; return INTENTIONS.BREATHE; }
+   // Foe swing + counter-minded + in reach → answer the swing. A counter-minded fighter waits from farther out;
+   // the reply itself (CATCH / BREAK / HOLD) is picked by character and build, see swingReply.
+   const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
+-  if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8 * (1 + K * (2 * a.counter - 1))) return swingReply(self, foe, memory, fight);
++  if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8 * (1 + K * (2 * a.counter - 1))) { if (globalThis.__BR) globalThis.__BR.kind = 'swing'; return swingReply(self, foe, memory, fight); }
+   // Haymaker loaded + foe in reach → land it. Heavy hitters fire at a lower charge, light ones wait for more
+   // (never above a full charge: a full haymaker in reach always lands).
+-  if (self.charge01 >= Math.min(1, 0.85 * (1 - K * (2 * a.weight - 1))) && foe.inStrike) return INTENTIONS.STRIKE;
++  if (self.charge01 >= Math.min(1, 0.85 * (1 - K * (2 * a.weight - 1))) && foe.inStrike) { if (globalThis.__BR) globalThis.__BR.kind = 'charge'; return INTENTIONS.STRIKE; }
+   return null;
+ }
+ 
+@@ -215,10 +226,14 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
+         default: return true;
+       }
+     };
++    const __fired = globalThis.__BR ? [] : null; // ЗОНД
+     for (const l of self.leans) {
+       if (s[l.i] == null) continue;
+-      if (String(l.when).split('&').every(holds)) s[l.i] += l.w;
++      const __on = String(l.when).split('&').every(holds);
++      if (__fired) __fired.push({ tag: l.tag, i: l.i, w: l.w, when: l.when, on: __on });
++      if (__on) s[l.i] += l.w;
+     }
++    if (__fired) globalThis.__BR.fired = __fired;
+   }
+   // накал (stalemate safeguard): a rising escalation01 (silence-without-exchange)
+   // pushes BOTH fighters toward the clash — lift the forward attacking intents, press
+@@ -243,6 +258,8 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
+   // Сила пошла на убыль (fadeSec) — ограничение снято. Тот же приём, что swingReply: argmax по подмножеству `only`. В ответе на замах
+   // подмножество — пересечение {CATCH, BREAK, HOLD} с группой; пустое пересечение (PUSH) — ответ как без клича. Жёсткие нужды
+   // (выдох при пустом запасе, удар полным зарядом) стоят выше очков и не затрагиваются.
++  if (globalThis.__BR) globalThis.__BR.last = { s: { ...s }, only, fired: globalThis.__BR.fired || [] }; // ЗОНД: очки до среза по группе клича
++  globalThis.__BR && (globalThis.__BR.fired = null);
+   let pool = only;
+   if (self.klich && self.klich.k >= 1) {
+     const grp = KLICH_BALANCE.groups[self.klich.id];
+diff --git a/src/scene/buildFighter.js b/src/scene/buildFighter.js
+index cc0cd186..159e6966 100644
+--- a/src/scene/buildFighter.js
++++ b/src/scene/buildFighter.js
+@@ -913,6 +913,7 @@ export function buildFighter(
+         tempo: tempo01, weight: weight01, stick: stick01,
+         resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
+       },
++      side, // ЗОНД balance-recon: сторона бойца (только копия дерева)
+       leans: (behavior && behavior.leans) || null, // наклоны тегов и резонанс веток (data/branchThreshold.js) — читает spinalScore
+       klich: klichId ? { id: klichId, k: klichStrength } : null, // действующий клич тренера и его сила — наклон к группе намерений (data/klichBalance.js)
+       hp01: hp / maxHp,

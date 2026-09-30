@@ -1,0 +1,1295 @@
+{
+ "axisCeiling": {
+  "natisk": {
+   "a": {
+    "distance": {
+     "start": 15,
+     "sum": -8,
+     "unclamped": 7,
+     "final": 7,
+     "loss": 0
+    },
+    "weight": {
+     "start": 55,
+     "sum": 38,
+     "unclamped": 93,
+     "final": 93,
+     "loss": 0
+    },
+    "resilience": {
+     "start": 60,
+     "sum": 14,
+     "unclamped": 74,
+     "final": 74,
+     "loss": 0
+    }
+   },
+   "b": {
+    "distance": {
+     "start": 15,
+     "sum": -28,
+     "unclamped": -13,
+     "final": 0,
+     "loss": 13
+    },
+    "initiative": {
+     "start": 90,
+     "sum": 6,
+     "unclamped": 96,
+     "final": 96,
+     "loss": 0
+    },
+    "stick": {
+     "start": 85,
+     "sum": 42,
+     "unclamped": 127,
+     "final": 100,
+     "loss": 27
+    }
+   },
+   "c": {
+    "tempo": {
+     "start": 80,
+     "sum": 42,
+     "unclamped": 122,
+     "final": 100,
+     "loss": 22
+    },
+    "stick": {
+     "start": 85,
+     "sum": 6,
+     "unclamped": 91,
+     "final": 91,
+     "loss": 0
+    }
+   }
+  },
+  "nalet": {
+   "a": {
+    "distance": {
+     "start": 55,
+     "sum": 26,
+     "unclamped": 81,
+     "final": 81,
+     "loss": 0
+    },
+    "initiative": {
+     "start": 70,
+     "sum": 16,
+     "unclamped": 86,
+     "final": 86,
+     "loss": 0
+    },
+    "tempo": {
+     "start": 65,
+     "sum": 14,
+     "unclamped": 79,
+     "final": 79,
+     "loss": 0
+    },
+    "slip": {
+     "start": 65,
+     "sum": 12,
+     "unclamped": 77,
+     "final": 77,
+     "loss": 0
+    }
+   },
+   "b": {
+    "tempo": {
+     "start": 65,
+     "sum": 28,
+     "unclamped": 93,
+     "final": 93,
+     "loss": 0
+    }
+   },
+   "c": {
+    "distance": {
+     "start": 55,
+     "sum": 12,
+     "unclamped": 67,
+     "final": 67,
+     "loss": 0
+    },
+    "initiative": {
+     "start": 70,
+     "sum": -2,
+     "unclamped": 68,
+     "final": 68,
+     "loss": 0
+    },
+    "counter": {
+     "start": 45,
+     "sum": 10,
+     "unclamped": 55,
+     "final": 55,
+     "loss": 0
+    }
+   }
+  },
+  "skala": {
+   "a": {
+    "distance": {
+     "start": 20,
+     "sum": -6,
+     "unclamped": 14,
+     "final": 14,
+     "loss": 0
+    },
+    "resilience": {
+     "start": 90,
+     "sum": 32,
+     "unclamped": 122,
+     "final": 100,
+     "loss": 22
+    }
+   },
+   "b": {
+    "stick": {
+     "start": 70,
+     "sum": 18,
+     "unclamped": 88,
+     "final": 88,
+     "loss": 0
+    },
+    "counter": {
+     "start": 60,
+     "sum": 42,
+     "unclamped": 102,
+     "final": 100,
+     "loss": 2
+    }
+   },
+   "c": {
+    "distance": {
+     "start": 20,
+     "sum": -12,
+     "unclamped": 8,
+     "final": 8,
+     "loss": 0
+    },
+    "weight": {
+     "start": 65,
+     "sum": 18,
+     "unclamped": 83,
+     "final": 83,
+     "loss": 0
+    },
+    "stick": {
+     "start": 70,
+     "sum": 40,
+     "unclamped": 110,
+     "final": 100,
+     "loss": 10
+    }
+   }
+  },
+  "zasada": {
+   "a": {
+    "distance": {
+     "start": 80,
+     "sum": 6,
+     "unclamped": 86,
+     "final": 86,
+     "loss": 0
+    },
+    "counter": {
+     "start": 90,
+     "sum": 24,
+     "unclamped": 114,
+     "final": 100,
+     "loss": 14
+    },
+    "slip": {
+     "start": 75,
+     "sum": 10,
+     "unclamped": 85,
+     "final": 85,
+     "loss": 0
+    }
+   },
+   "b": {
+    "distance": {
+     "start": 80,
+     "sum": 26,
+     "unclamped": 106,
+     "final": 100,
+     "loss": 6
+    },
+    "slip": {
+     "start": 75,
+     "sum": 44,
+     "unclamped": 119,
+     "final": 100,
+     "loss": 19
+    }
+   },
+   "c": {
+    "distance": {
+     "start": 80,
+     "sum": 24,
+     "unclamped": 104,
+     "final": 100,
+     "loss": 4
+    },
+    "initiative": {
+     "start": 15,
+     "sum": -12,
+     "unclamped": 3,
+     "final": 3,
+     "loss": 0
+    }
+   }
+  }
+ },
+ "axisInvisible": [
+  {
+   "core": "natisk",
+   "b": "b",
+   "j": 2,
+   "label": "ONSLAUGHT · MIND/TIMING (b2) · Run-Down",
+   "axisSame": true,
+   "shifts": "stick+8 distance-6",
+   "other": [
+    "тег chase_strike"
+   ]
+  },
+  {
+   "core": "natisk",
+   "b": "b",
+   "j": 3,
+   "label": "ONSLAUGHT · MIND/FEINT (b3) · Cut Off",
+   "axisSame": true,
+   "shifts": "stick+10",
+   "other": []
+  },
+  {
+   "core": "natisk",
+   "b": "b",
+   "j": 4,
+   "label": "ONSLAUGHT · MIND/ADAPT (b4) · Cling",
+   "axisSame": true,
+   "shifts": "stick+10 distance-6",
+   "other": []
+  },
+  {
+   "core": "natisk",
+   "b": "b",
+   "j": 5,
+   "label": "ONSLAUGHT · MIND/COLD (b5) · Lockdown",
+   "axisSame": true,
+   "shifts": "stick+14 distance-8",
+   "other": [
+    "тег lockdown"
+   ]
+  },
+  {
+   "core": "natisk",
+   "b": "c",
+   "j": 1,
+   "label": "ONSLAUGHT · WILL/HOLD (c1) · Long Combo",
+   "axisSame": true,
+   "shifts": "tempo+8",
+   "other": []
+  },
+  {
+   "core": "natisk",
+   "b": "c",
+   "j": 2,
+   "label": "ONSLAUGHT · WILL/SPITE (c2) · No Pause",
+   "axisSame": true,
+   "shifts": "tempo+10",
+   "other": []
+  },
+  {
+   "core": "natisk",
+   "b": "c",
+   "j": 3,
+   "label": "ONSLAUGHT · WILL/VOW (c3) · Building Momentum",
+   "axisSame": true,
+   "shifts": "tempo+6",
+   "other": [
+    "тег hit_accel"
+   ]
+  },
+  {
+   "core": "natisk",
+   "b": "c",
+   "j": 5,
+   "label": "ONSLAUGHT · WILL/STILL (c5) · Rampage",
+   "axisSame": true,
+   "shifts": "tempo+12",
+   "other": [
+    "тег rampage"
+   ]
+  },
+  {
+   "core": "skala",
+   "b": "a",
+   "j": 1,
+   "label": "BULWARK · BODY/ROOT (a1) · Tough Hide",
+   "axisSame": true,
+   "shifts": "resilience+8",
+   "other": [
+    "рамп toughness +4%"
+   ]
+  },
+  {
+   "core": "skala",
+   "b": "a",
+   "j": 2,
+   "label": "BULWARK · BODY/DRIVE (a2) · Steady Guard",
+   "axisSame": true,
+   "shifts": "resilience+10",
+   "other": [
+    "рамп toughness +7%"
+   ]
+  },
+  {
+   "core": "skala",
+   "b": "a",
+   "j": 3,
+   "label": "BULWARK · BODY/GRIND (a3) · Catch Breath",
+   "axisSame": true,
+   "shifts": "resilience+6",
+   "other": [
+    "рамп toughness +10%",
+    "staminaRegen +60%"
+   ]
+  },
+  {
+   "core": "skala",
+   "b": "a",
+   "j": 5,
+   "label": "BULWARK · BODY/ANVIL (a5) · Unbreakable",
+   "axisSame": true,
+   "shifts": "resilience+8",
+   "other": [
+    "рамп toughness +22%",
+    "blockMitigation +60%",
+    "тег fortress"
+   ]
+  },
+  {
+   "core": "skala",
+   "b": "c",
+   "j": 3,
+   "label": "BULWARK · WILL/VOW (c3) · No Way Around",
+   "axisSame": true,
+   "shifts": "stick+10",
+   "other": []
+  },
+  {
+   "core": "zasada",
+   "b": "a",
+   "j": 1,
+   "label": "AMBUSH · BODY/ROOT (a1) · Hard Counter",
+   "axisSame": true,
+   "shifts": "counter+8",
+   "other": []
+  },
+  {
+   "core": "zasada",
+   "b": "a",
+   "j": 3,
+   "label": "AMBUSH · BODY/GRIND (a3) · Punish Aggression",
+   "axisSame": true,
+   "shifts": "counter+8",
+   "other": [
+    "тег punish_aggression"
+   ]
+  },
+  {
+   "core": "zasada",
+   "b": "b",
+   "j": 1,
+   "label": "AMBUSH · MIND/WATCH (b1) · Long Slip",
+   "axisSame": true,
+   "shifts": "slip+10 distance+6",
+   "other": []
+  },
+  {
+   "core": "zasada",
+   "b": "b",
+   "j": 2,
+   "label": "AMBUSH · MIND/TIMING (b2) · Hard to Reach",
+   "axisSame": true,
+   "shifts": "slip+8 distance+6",
+   "other": []
+  },
+  {
+   "core": "zasada",
+   "b": "b",
+   "j": 4,
+   "label": "AMBUSH · MIND/ADAPT (b4) · Open Window",
+   "axisSame": true,
+   "shifts": "slip+8",
+   "other": [
+    "dodgeCounter +40%"
+   ]
+  },
+  {
+   "core": "zasada",
+   "b": "b",
+   "j": 5,
+   "label": "AMBUSH · MIND/COLD (b5) · Phantom",
+   "axisSame": true,
+   "shifts": "slip+12 distance+6",
+   "other": [
+    "тег phantom"
+   ]
+  }
+ ],
+ "lowDecisionCount": 41,
+ "low6": [
+  {
+   "label": "ONSLAUGHT · BODY/ROOT (a1) · Heavy Hit",
+   "axes": "weight+14",
+   "levers": "strikePower+4%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "strike +0.049",
+   "maxScoreMoveAbs": 0.049,
+   "decisionsChanged": 0.006432733785726899,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": -1.7500000000000002,
+   "outcome": false
+  },
+  {
+   "label": "ONSLAUGHT · BODY/DRIVE (a2) · Guard Crush",
+   "axes": "weight+8",
+   "levers": "strikePower+7% blockPenetration+40%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "strike +0.028",
+   "maxScoreMoveAbs": 0.027999999999999997,
+   "decisionsChanged": 0.0028528104037626257,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 11.625,
+   "outcome": true
+  },
+  {
+   "label": "ONSLAUGHT · BODY/GRIND (a3) · Unshaken",
+   "axes": "resilience+14",
+   "levers": "strikePower+10% interruptResist+70%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "hold +0.056",
+   "maxScoreMoveAbs": 0.05600000000000001,
+   "decisionsChanged": 0,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 38,
+   "outcome": true
+  },
+  {
+   "label": "ONSLAUGHT · MIND/WATCH (b1) · Hard Entry",
+   "axes": "distance-8 initiative+6",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press +0.046",
+   "maxScoreMoveAbs": 0.046,
+   "decisionsChanged": 0.02246318741861164,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": -0.625,
+   "outcome": false
+  },
+  {
+   "label": "ONSLAUGHT · MIND/TIMING (b2) · Run-Down",
+   "axes": "distance-6 stick+8",
+   "levers": "—",
+   "tag": "chase_strike→press [longFight] +0.12",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "press +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.024779874213836477,
+   "tagTrue": 0.39622641509433965,
+   "tagFlip": 0.0009308176100628931,
+   "win": -5.25,
+   "outcome": true
+  },
+  {
+   "label": "ONSLAUGHT · MIND/FEINT (b3) · Cut Off",
+   "axes": "stick+10",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press +0.030",
+   "maxScoreMoveAbs": 0.03,
+   "decisionsChanged": 0.023717595146166576,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": -2.625,
+   "outcome": false
+  },
+  {
+   "label": "ONSLAUGHT · MIND/ADAPT (b4) · Cling",
+   "axes": "distance-6 stick+10",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press +0.042",
+   "maxScoreMoveAbs": 0.041999999999999996,
+   "decisionsChanged": 0.023369305461223053,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": -5,
+   "outcome": true
+  },
+  {
+   "label": "ONSLAUGHT · MIND/COLD (b5) · Lockdown",
+   "axes": "distance-8 stick+14",
+   "levers": "—",
+   "tag": "lockdown→hold [close] +0.2",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "press +0.058",
+   "maxScoreMoveAbs": 0.058,
+   "decisionsChanged": 0.023773546892313892,
+   "tagTrue": 0.9146771431449582,
+   "tagFlip": 0.0003777576307041402,
+   "win": -1.125,
+   "outcome": false
+  },
+  {
+   "label": "ONSLAUGHT · WILL/HOLD (c1) · Long Combo",
+   "axes": "tempo+8",
+   "levers": "—",
+   "tag": "—",
+   "where": "в выбор намерения не входит (tempo/рычаги — только тело)",
+   "maxScoreMove": "0",
+   "maxScoreMoveAbs": 0,
+   "decisionsChanged": 0,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 1.625,
+   "outcome": false
+  },
+  {
+   "label": "ONSLAUGHT · WILL/SPITE (c2) · No Pause",
+   "axes": "tempo+10",
+   "levers": "—",
+   "tag": "—",
+   "where": "в выбор намерения не входит (tempo/рычаги — только тело)",
+   "maxScoreMove": "0",
+   "maxScoreMoveAbs": 0,
+   "decisionsChanged": 0,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 0.75,
+   "outcome": false
+  },
+  {
+   "label": "ONSLAUGHT · WILL/HUNGER (c4) · No Breather",
+   "axes": "tempo+6 stick+6",
+   "levers": "—",
+   "tag": "no_breather→press [foeHpLow] +0.12",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "press +0.018",
+   "maxScoreMoveAbs": 0.018,
+   "decisionsChanged": 0.01586981711925034,
+   "tagTrue": 0.13418812030832789,
+   "tagFlip": 0.000780895763010731,
+   "win": 1.125,
+   "outcome": false
+  },
+  {
+   "label": "RAIDER · BODY/DRIVE (a2) · Pinpoint Entry",
+   "axes": "initiative+6",
+   "levers": "accuracy+35%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press +0.030",
+   "maxScoreMoveAbs": 0.03,
+   "decisionsChanged": 0.03030457499681407,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 5.75,
+   "outcome": true
+  },
+  {
+   "label": "RAIDER · MIND/WATCH (b1) · Fake-In",
+   "axes": "tempo+4",
+   "levers": "feintChance+20%",
+   "tag": "—",
+   "where": "в выбор намерения не входит (tempo/рычаги — только тело)",
+   "maxScoreMove": "0",
+   "maxScoreMoveAbs": 0,
+   "decisionsChanged": 0,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": -6.125,
+   "outcome": true
+  },
+  {
+   "label": "RAIDER · MIND/TIMING (b2) · Punish Reaction",
+   "axes": "tempo+4",
+   "levers": "feintPayoff+50%",
+   "tag": "—",
+   "where": "в выбор намерения не входит (tempo/рычаги — только тело)",
+   "maxScoreMove": "0",
+   "maxScoreMoveAbs": 0,
+   "decisionsChanged": 0,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": -1.125,
+   "outcome": false
+  },
+  {
+   "label": "RAIDER · WILL/HOLD (c1) · Read the Tell",
+   "axes": "initiative-6",
+   "levers": "strikePower+4% accuracy+30%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press -0.030",
+   "maxScoreMoveAbs": 0.03,
+   "decisionsChanged": 0.04178180329546618,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 4.875,
+   "outcome": true
+  },
+  {
+   "label": "RAIDER · WILL/SPITE (c2) · Strike the Open",
+   "axes": "initiative+4",
+   "levers": "strikePower+7%",
+   "tag": "punish_exhausted→strike [foeWindLow] +0.12",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "press +0.020",
+   "maxScoreMoveAbs": 0.02,
+   "decisionsChanged": 0.026784797123780176,
+   "tagTrue": 0.06201848998459168,
+   "tagFlip": 0.0008217770929635337,
+   "win": 3.75,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · BODY/ROOT (a1) · Tough Hide",
+   "axes": "resilience+8",
+   "levers": "toughness+4%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "hold +0.032",
+   "maxScoreMoveAbs": 0.032,
+   "decisionsChanged": 0.006568387260285545,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 14.875,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · BODY/DRIVE (a2) · Steady Guard",
+   "axes": "resilience+10",
+   "levers": "toughness+7%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "hold +0.040",
+   "maxScoreMoveAbs": 0.04000000000000001,
+   "decisionsChanged": 0.007197121151539384,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 18.75,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · BODY/GRIND (a3) · Catch Breath",
+   "axes": "resilience+6",
+   "levers": "toughness+10% staminaRegen+60%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "hold +0.024",
+   "maxScoreMoveAbs": 0.024,
+   "decisionsChanged": 0.005149086521889004,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 14.000000000000002,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · BODY/ANVIL (a5) · Unbreakable",
+   "axes": "resilience+8",
+   "levers": "toughness+22% blockMitigation+60%",
+   "tag": "fortress→hold [selfHpLow] +0.2",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "hold +0.032",
+   "maxScoreMoveAbs": 0.032,
+   "decisionsChanged": 0.035412416205187994,
+   "tagTrue": 0.09049839696881376,
+   "tagFlip": 0.028937835699712703,
+   "win": 25.25,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · MIND/WATCH (b1) · Riposte",
+   "axes": "stick+6 counter+8",
+   "levers": "toughness+4% blockCounter+50%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.011167400881057268,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 3.6249999999999996,
+   "outcome": false
+  },
+  {
+   "label": "BULWARK · MIND/TIMING (b2) · Catch & Punish",
+   "axes": "counter+8",
+   "levers": "toughness+7% interruptBonus+50%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.007872284281818982,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 3.875,
+   "outcome": false
+  },
+  {
+   "label": "BULWARK · MIND/FEINT (b3) · Hard Meet",
+   "axes": "stick+6 counter+10",
+   "levers": "toughness+10%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "catch +0.045",
+   "maxScoreMoveAbs": 0.045000000000000005,
+   "decisionsChanged": 0.011106049760308887,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 0.8750000000000001,
+   "outcome": false
+  },
+  {
+   "label": "BULWARK · MIND/ADAPT (b4) · Retaliation",
+   "axes": "counter+8",
+   "levers": "toughness+14%",
+   "tag": "retaliate_ramp→strike [hpDropped] +0.12",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.008020581113801453,
+   "tagTrue": 0.11946558284330681,
+   "tagFlip": 0.00032428225527499137,
+   "win": 2.625,
+   "outcome": false
+  },
+  {
+   "label": "BULWARK · MIND/COLD (b5) · Sea Wall",
+   "axes": "stick+6 counter+8",
+   "levers": "toughness+22% blockCounter+100% interruptBonus+100%",
+   "tag": "counter_trap→catch [longFight] +0.2",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.021188276884479416,
+   "tagTrue": 0.4526171741361615,
+   "tagFlip": 0.009784468012316114,
+   "win": 12.75,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · WILL/HOLD (c1) · Body Shove",
+   "axes": "distance-6 stick+8",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.012202006166138347,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 2.125,
+   "outcome": false
+  },
+  {
+   "label": "BULWARK · WILL/SPITE (c2) · Heavy Slam",
+   "axes": "weight+10",
+   "levers": "blockPenetration+35%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "strike +0.035",
+   "maxScoreMoveAbs": 0.034999999999999996,
+   "decisionsChanged": 0.007284285808886829,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 8.875,
+   "outcome": true
+  },
+  {
+   "label": "BULWARK · WILL/VOW (c3) · No Way Around",
+   "axes": "stick+10",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press +0.030",
+   "maxScoreMoveAbs": 0.03,
+   "decisionsChanged": 0.011242039596239657,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 2.625,
+   "outcome": false
+  },
+  {
+   "label": "AMBUSH · BODY/ROOT (a1) · Hard Counter",
+   "axes": "counter+8",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.020470383275261322,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 4.625,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · BODY/DRIVE (a2) · Slip Counter",
+   "axes": "slip+6",
+   "levers": "dodgeCounter+50%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "break +0.030",
+   "maxScoreMoveAbs": 0.03,
+   "decisionsChanged": 0.0049378511833815765,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 11,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · BODY/GRIND (a3) · Punish Aggression",
+   "axes": "counter+8",
+   "levers": "—",
+   "tag": "punish_aggression→catch [hpDropped] +0.12",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.022847610067454848,
+   "tagTrue": 0.17327917603539567,
+   "tagFlip": 0.0025144459756775706,
+   "win": 3.6249999999999996,
+   "outcome": false
+  },
+  {
+   "label": "AMBUSH · BODY/BREAK (a4) · Punish Whiff",
+   "axes": "distance+6",
+   "levers": "missCounter+50%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "sting +0.027",
+   "maxScoreMoveAbs": 0.027,
+   "decisionsChanged": 0.013310945636832628,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 1,
+   "outcome": false
+  },
+  {
+   "label": "AMBUSH · BODY/ANVIL (a5) · Perfect Trap",
+   "axes": "counter+8 slip+4",
+   "levers": "dodgeCounter+100% missCounter+100%",
+   "tag": "perfect_trap→strike [foeHpLow&foeQuiet] +0.2",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "catch +0.036",
+   "maxScoreMoveAbs": 0.036000000000000004,
+   "decisionsChanged": 0.022891087140229655,
+   "tagTrue": 0.015757816771884477,
+   "tagFlip": 0.0022617686533777403,
+   "win": 20.75,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · MIND/WATCH (b1) · Long Slip",
+   "axes": "distance+6 slip+10",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "sting +0.057",
+   "maxScoreMoveAbs": 0.056999999999999995,
+   "decisionsChanged": 0.041239992552597284,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 9.625,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · MIND/TIMING (b2) · Hard to Reach",
+   "axes": "distance+6 slip+8",
+   "levers": "—",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "sting +0.051",
+   "maxScoreMoveAbs": 0.051000000000000004,
+   "decisionsChanged": 0.03990340655991372,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 8.625,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · MIND/ADAPT (b4) · Open Window",
+   "axes": "slip+8",
+   "levers": "dodgeCounter+40%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "break +0.040",
+   "maxScoreMoveAbs": 0.04,
+   "decisionsChanged": 0.010147981302526097,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 12.125,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · WILL/HOLD (c1) · Loaded Hit",
+   "axes": "distance+6",
+   "levers": "strikePower+4% chargePower+50%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "sting +0.027",
+   "maxScoreMoveAbs": 0.027,
+   "decisionsChanged": 0.013345502984853718,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 5.375,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · WILL/SPITE (c2) · Long Charge",
+   "axes": "distance+6 initiative-6",
+   "levers": "strikePower+7% chargeMax+60%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "press -0.042",
+   "maxScoreMoveAbs": 0.041999999999999996,
+   "decisionsChanged": 0.014991117276289212,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 3.75,
+   "outcome": false
+  },
+  {
+   "label": "AMBUSH · WILL/VOW (c3) · Hit the Opening",
+   "axes": "initiative-6",
+   "levers": "strikePower+10%",
+   "tag": "vulnerable_strike→strike [foeOpen] +0.12",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "press -0.030",
+   "maxScoreMoveAbs": 0.03,
+   "decisionsChanged": 0.016202155332590115,
+   "tagTrue": 0.22930756843800323,
+   "tagFlip": 0.0027499070977331846,
+   "win": 5.5,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · WILL/HUNGER (c4) · Pierce",
+   "axes": "distance+6",
+   "levers": "strikePower+14% chargePen+60%",
+   "tag": "—",
+   "where": "очки: только оси",
+   "maxScoreMove": "sting +0.027",
+   "maxScoreMoveAbs": 0.027,
+   "decisionsChanged": 0.013524264120922832,
+   "tagTrue": 0,
+   "tagFlip": 0,
+   "win": 9.625,
+   "outcome": true
+  },
+  {
+   "label": "AMBUSH · WILL/STILL (c5) · Execution",
+   "axes": "distance+6",
+   "levers": "strikePower+22% chargePower+80%",
+   "tag": "execute→strike [foeHpLow] +0.2",
+   "where": "очки: оси + наклон тега",
+   "maxScoreMove": "sting +0.027",
+   "maxScoreMoveAbs": 0.027,
+   "decisionsChanged": 0.021644689767964836,
+   "tagTrue": 0.13211693754472043,
+   "tagFlip": 0.008126341613002146,
+   "win": 16.875,
+   "outcome": true
+  }
+ ],
+ "absorbedVertices": [
+  {
+   "label": "ONSLAUGHT · BODY/ANVIL (a5) · Breakthrough",
+   "what": [
+    "РЕШЕНИЯ"
+   ],
+   "soloShift": 31.125000000000004,
+   "soloDec": 0.1346888308833631,
+   "branchShift": 2.75,
+   "branchDec": 0.00041317435957974265,
+   "axisAbsorbed": false,
+   "homeHit": true,
+   "sameIntent": [
+    "a4 close_damage_ramp [close]"
+   ],
+   "cause": [
+    "тег дублирует резонанс ветви (дом ветви: strike + press; +0.3/0.15 «всегда» против +0.2 «по условию»)",
+    "тег перекрыт соседним наклоном к тому же намерению: a4 close_damage_ramp [close]"
+   ]
+  },
+  {
+   "label": "ONSLAUGHT · WILL/STILL (c5) · Rampage",
+   "what": [
+    "ИСХОД",
+    "РЕШЕНИЯ"
+   ],
+   "soloShift": 4.5,
+   "soloDec": 0.10895347653466354,
+   "branchShift": 0.75,
+   "branchDec": 0.005516715393415533,
+   "axisAbsorbed": true,
+   "homeHit": true,
+   "sameIntent": [
+    "c3 hit_accel [longFight]"
+   ],
+   "cause": [
+    "ось на упоре (итог оси не меняется)",
+    "тег дублирует резонанс ветви (дом ветви: strike + press; +0.3/0.15 «всегда» против +0.2 «по условию»)",
+    "тег перекрыт соседним наклоном к тому же намерению: c3 hit_accel [longFight]"
+   ]
+  },
+  {
+   "label": "RAIDER · BODY/ANVIL (a5) · Perfect Prick",
+   "what": [
+    "РЕШЕНИЯ"
+   ],
+   "soloShift": 1.125,
+   "soloDec": 0.13163705711131185,
+   "branchShift": 3,
+   "branchDec": 0.02465936018957346,
+   "axisAbsorbed": false,
+   "homeHit": true,
+   "sameIntent": [
+    "a4 clean_chain [always]"
+   ],
+   "cause": [
+    "тег дублирует резонанс ветви (дом ветви: sting; +0.3/0.15 «всегда» против +0.2 «по условию»)",
+    "тег перекрыт соседним наклоном к тому же намерению: a4 clean_chain [always]"
+   ]
+  },
+  {
+   "label": "RAIDER · WILL/STILL (c5) · Killing Run",
+   "what": [
+    "РЕШЕНИЯ"
+   ],
+   "soloShift": 12,
+   "soloDec": 0.180923742449421,
+   "branchShift": 14.000000000000002,
+   "branchDec": 0.010584312019718718,
+   "axisAbsorbed": false,
+   "homeHit": false,
+   "sameIntent": [],
+   "cause": [
+    "резонанс ветви тянет к ДРУГОМУ намерению (дом: strike + sting «всегда» +0.3/0.15) и поднимает его над намерением тега (press); см. пункт 8 по очкам"
+   ]
+  },
+  {
+   "label": "BULWARK · WILL/STILL (c5) · Clinch",
+   "what": [
+    "РЕШЕНИЯ"
+   ],
+   "soloShift": 8,
+   "soloDec": 0.165141861951897,
+   "branchShift": 5.875,
+   "branchDec": 0.044422440758827106,
+   "axisAbsorbed": false,
+   "homeHit": true,
+   "sameIntent": [],
+   "cause": [
+    "тег дублирует резонанс ветви (дом ветви: hold + press; +0.3/0.15 «всегда» против +0.2 «по условию»)"
+   ]
+  },
+  {
+   "label": "AMBUSH · MIND/COLD (b5) · Phantom",
+   "what": [
+    "ИСХОД",
+    "РЕШЕНИЯ"
+   ],
+   "soloShift": 13.625000000000002,
+   "soloDec": 0.09321405395383332,
+   "branchShift": -1.375,
+   "branchDec": 0.0115601815967224,
+   "axisAbsorbed": true,
+   "homeHit": true,
+   "sameIntent": [],
+   "cause": [
+    "ось на упоре (итог оси не меняется)",
+    "тег дублирует резонанс ветви (дом ветви: break + sting; +0.3/0.15 «всегда» против +0.2 «по условию»)"
+   ]
+  }
+ ],
+ "fullBranches": [
+  {
+   "core": "natisk",
+   "b": "a",
+   "name": "RAM",
+   "win": 98.125,
+   "shift": 49.375,
+   "lo": 45.78897871526557,
+   "hi": 52.96102128473443,
+   "medSec": 42.166666666665556,
+   "over100": 0,
+   "maxSec": 69.06666666666403
+  },
+  {
+   "core": "natisk",
+   "b": "b",
+   "name": "CHASE",
+   "win": 46.375,
+   "shift": -2.375,
+   "lo": -7.119515439134992,
+   "hi": 2.369515439134992,
+   "medSec": 49.69999999999846,
+   "over100": 0,
+   "maxSec": 72.4833333333305
+  },
+  {
+   "core": "natisk",
+   "b": "c",
+   "name": "FRENZY",
+   "win": 54,
+   "shift": 5.25,
+   "lo": 0.3604673754428971,
+   "hi": 10.139532624557102,
+   "medSec": 49.23333333333182,
+   "over100": 0,
+   "maxSec": 68.93333333333071
+  },
+  {
+   "core": "nalet",
+   "b": "a",
+   "name": "JAB",
+   "win": 44,
+   "shift": 3.375,
+   "lo": -1.2250628192641217,
+   "hi": 7.975062819264122,
+   "medSec": 50.48333333333175,
+   "over100": 0,
+   "maxSec": 77.51666666666355
+  },
+  {
+   "core": "nalet",
+   "b": "b",
+   "name": "FEINT",
+   "win": 36.125,
+   "shift": -4.5,
+   "lo": -9.1019650262283,
+   "hi": 0.10196502622830028,
+   "medSec": 48.983333333331835,
+   "over100": 0,
+   "maxSec": 72.16666666666386
+  },
+  {
+   "core": "nalet",
+   "b": "c",
+   "name": "HUNT",
+   "win": 78.375,
+   "shift": 37.75,
+   "lo": 33.54653282451627,
+   "hi": 41.95346717548373,
+   "medSec": 44.258333333332104,
+   "over100": 0,
+   "maxSec": 63.39999999999768
+  },
+  {
+   "core": "skala",
+   "b": "a",
+   "name": "BASTION",
+   "win": 97.875,
+   "shift": 27.375,
+   "lo": 24.09462619750355,
+   "hi": 30.65537380249645,
+   "medSec": 58.98333333333127,
+   "over100": 1,
+   "maxSec": 106.49999999999524
+  },
+  {
+   "core": "skala",
+   "b": "b",
+   "name": "BREAKER",
+   "win": 92.125,
+   "shift": 21.625,
+   "lo": 17.95925152819057,
+   "hi": 25.29074847180943,
+   "medSec": 53.441666666664915,
+   "over100": 0,
+   "maxSec": 77.8333333333302
+  },
+  {
+   "core": "skala",
+   "b": "c",
+   "name": "VICE",
+   "win": 84,
+   "shift": 13.5,
+   "lo": 9.49101316174066,
+   "hi": 17.50898683825934,
+   "medSec": 55.566666666664794,
+   "over100": 0,
+   "maxSec": 88.88333333332957
+  },
+  {
+   "core": "zasada",
+   "b": "a",
+   "name": "TRAP",
+   "win": 71.5,
+   "shift": 29.375,
+   "lo": 25.017275660333073,
+   "hi": 33.73272433966693,
+   "medSec": 50.18333333333177,
+   "over100": 0,
+   "maxSec": 88.56666666666293
+  },
+  {
+   "core": "zasada",
+   "b": "b",
+   "name": "SHADOW",
+   "win": 67.625,
+   "shift": 25.5,
+   "lo": 20.88759907392273,
+   "hi": 30.11240092607727,
+   "medSec": 55.891666666664776,
+   "over100": 0,
+   "maxSec": 91.33333333332943
+  },
+  {
+   "core": "zasada",
+   "b": "c",
+   "name": "STING",
+   "win": 70.375,
+   "shift": 28.249999999999996,
+   "lo": 23.70205996376202,
+   "hi": 32.797940036237975,
+   "medSec": 48.64999999999852,
+   "over100": 0,
+   "maxSec": 78.93333333333014
+  }
+ ],
+ "weak": {
+  "cells": 17,
+  "flags": 23,
+  "deafCells": 17,
+  "deafFlags": 19,
+  "summaryPerFlag": {
+   "ПУСТОЙ": 0,
+   "МАЛЫЙ ВЕС": 23,
+   "ГЛУХОЙ КАНАЛ": 19
+  },
+  "summaryPerCell": {
+   "ПУСТОЙ": 0,
+   "МАЛЫЙ ВЕС": 16,
+   "ГЛУХОЙ КАНАЛ": 16,
+   "смешанный": 1
+  }
+ }
+}
