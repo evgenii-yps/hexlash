@@ -50,7 +50,7 @@ export const plans = [
     still: 100,
   },
   {
-    id: 's02-gate', title: '02 · Ворота: выбор бойца', kind: 'scene', route: '/play/gate?step=squad', len: 360, align: 420,
+    id: 's02-gate', title: '02 · Ворота: выбор бойца', kind: 'scene', route: '/play/gate?step=squad', len: 336, align: 420,
     world: { roster: [hero, ...others], squad: [], mode: 'duel', n: 1 },
     hide: ['.hs-strip'],
     actions: [
