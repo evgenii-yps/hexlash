@@ -122,7 +122,7 @@ export const KLICH_BALANCE = {
     fallback: ['break', 'sting', 'breathe'],
     hold:     ['hold', 'catch'],
   },
-  lean: 0.4,
+  lean: { push: 0.4, fallback: 0.4, hold: 0.4 },
 
   axes: {
     // ВПЕРЁД — идёт вперёд, чаще размен, меньше разрывов дистанции.

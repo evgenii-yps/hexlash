@@ -225,7 +225,7 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
   // тегов, и ДО накала. В ответе на замах (swingReply) читается этим же spinalScore — выбор там идёт среди трёх защитных намерений.
   if (self.klich && self.klich.k > 0) {
     const grp = KLICH_BALANCE.groups[self.klich.id];
-    if (grp) for (const id of grp) if (s[id] != null) s[id] += KLICH_BALANCE.lean * self.klich.k;
+    if (grp) for (const id of grp) if (s[id] != null) s[id] += KLICH_BALANCE.lean[self.klich.id] * self.klich.k;
   }
   // накал (stalemate safeguard): a rising escalation01 (silence-without-exchange)
   // pushes BOTH fighters toward the clash — lift the forward attacking intents, press
