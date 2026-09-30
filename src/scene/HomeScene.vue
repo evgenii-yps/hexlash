@@ -337,6 +337,15 @@ const DIRECTOR_OPTS = {
   inset: 0.02,
   leash: 0.30,
   agentClearance: 0.70,
+  // Набор упражнений — прежний зальный БЕЗ ухода (dodge). Замер 30.09.2026: из одиннадцати
+  // клипов занятия сдвигает тело только он — на 0.40 м (и удар ногой у края — не
+  // более 0.18), а пятно здесь 0.2–0.5 м и соседи в 0.85 м. Остальные веса — как в зале
+  // (forgeWander.CONFIG.drillKindW), не пересчитаны: режиссёр сам нормирует сумму.
+  drillKindW: [
+    ['punch', 0.26], ['double', 0.18], ['hook', 0.12], ['uppercut', 0.10],
+    ['bodyShot', 0.09], ['combo', 0.07], ['knee', 0.06], ['teep', 0.05],
+    ['frontKick', 0.04], ['feint', 0.01],
+  ],
 };
 // Груша — ТА ЖЕ (buildPunchBag), но шесть полноразмерных на этой тесной плите заслоняют
 // соседей, которые стоят за ними: высота груши 2.25 м — выше бойца. Масштаб один на все
@@ -1517,6 +1526,14 @@ onMounted(() => {
   // груши висят, сколько стоит кадр. Нужна приёмке — числа без неё считались бы на
   // глаз. Игроку недоступна и ничего не меняет в сцене.
   if (DEV_MODE) {
+    // Сыграть клип бойца на месте (замер смещения упражнений, см. DRIFT) — только ?dev=1.
+    window.__homeClip = (slot, kind) => {
+      const b = bodies[slot];
+      const f = b && b.fighter[kind];
+      if (typeof f !== 'function') return false;
+      f();
+      return true;
+    };
     window.__homeProbe = () => {
       if (!renderer || !camera || !arena) return null;
       const topY = arena.refs.topY;
@@ -1625,7 +1642,7 @@ onBeforeUnmount(() => {
     canvasEl.value.removeEventListener('pointerdown', onPointerDown);
     canvasEl.value.removeEventListener('pointerup', onPointerUp);
   }
-  if (DEV_MODE) delete window.__homeProbe;
+  if (DEV_MODE) { delete window.__homeProbe; delete window.__homeClip; }
   clearHomeFighterTags(); // hide the labels when the stage unmounts
   clearModePlateTags();
   if (director) director.dispose();

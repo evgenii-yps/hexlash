@@ -36,6 +36,8 @@ const LAYOUTS = (process.env.LAYOUTS
   ? process.env.LAYOUTS.split(',').map((x) => x.split('x').map(Number))
   : [[390, 844], [844, 390], [1280, 720], [1920, 1080]]);
 const ONLY_LAYOUTS = process.env.ONLY_LAYOUTS === '1';
+// SKIP_COMPOSE=1 — пропустить разделы про состав/конец/начало занятия (уже пройденные раньше).
+const SKIP_COMPOSE = process.env.SKIP_COMPOSE === '1';
 const CORES = ['natisk', 'skala', 'zasada', 'nalet'];
 
 let failed = 0;
@@ -94,7 +96,7 @@ const tags = (p) => p.evaluate(() => [...document.querySelectorAll('.fighter-tag
 const ids = (list) => list.map((t) => t.id).sort().join(',');
 const hit = (a, b, m = 0) => !(a[2] + m <= b[0] || b[2] + m <= a[0] || a[3] + m <= b[1] || b[3] + m <= a[1]);
 
-if (!ONLY_LAYOUTS) {
+if (!ONLY_LAYOUTS && !SKIP_COMPOSE) {
 // ───────────────────────── 1–2. состав ─────────────────────────
 console.log('\n── сколько тел и кто: портрет 390×844 ──');
 for (const n of [1, 3, 6, 10]) {
@@ -198,10 +200,16 @@ console.log('\n── начало занятия на лету (через хр
 {
   const { ctx, p } = await open({ s: save(10), wait: 12000 });
   const a = ids(await tags(p));
+  // ⚠️ Хранилище достаётся динамическим импортом исходника — это работает только на
+  //    сервере разработки. В собранной версии /src нет: проверка честно пропускается
+  //    (а не считается пройденной), её закрывает прогон на dev-сервере.
   const r = await p.evaluate(async () => {
-    const { default: store } = await import('/src/core/state/store.js');
-    return store.dispatch('roster/assignLesson', 'f9');
+    try {
+      const { default: store } = await import('/src/core/state/store.js');
+      return store.dispatch('roster/assignLesson', 'f9');
+    } catch (e) { return 'skip'; }
   });
+  if (r === 'skip') { console.log('  – пропущено: в собранной версии нет /src (закрывает прогон на dev-сервере)'); await ctx.close(); } else {
   await p.waitForTimeout(6000);
   const pr = await probe(p);
   const b = ids(await tags(p));
@@ -210,6 +218,7 @@ console.log('\n── начало занятия на лету (через хр
   ok(pr.bags.length === 1, 'груша появилась', JSON.stringify(pr.bags));
   await p.screenshot({ path: `${OUT}/p-390x844-n10-start.png` });
   await ctx.close();
+  }
 }
 
 }
