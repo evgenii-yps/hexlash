@@ -12,7 +12,7 @@ const { CRYSTAL_TEXTS, FACET_NAMES } = await load('/src/data/crystalTexts.js');
 const G = COMBAT_BALANCE.grani;
 const rd = (p) => JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8'));
 const oldH = rd(oldF.startsWith('/') ? 'file://' + oldF : oldF), newH = rd(newF.startsWith('/') ? 'file://' + newF : newF);
-const v1 = rd('../docs/grani-tags/out/v1/proof2.json'), v2 = rd('../docs/grani-tags/out/v2/proof2.json'), base = rd('../docs/grani-tags/out/before/base.json');
+const v1 = rd('../docs/grani-tags/out/v1/proof2.json'), v2 = rd('../docs/grani-tags/out/' + (process.env.FINAL || 'v2') + '/proof2.json'), base = rd('../docs/grani-tags/out/before/base.json');
 const NAME = Object.fromEntries(CORES.map((c) => [c.id, c.name]));
 const INT = { press: 'PRESS', strike: 'STRIKE', sting: 'STING', hold: 'HOLD', break: 'BREAK', catch: 'CATCH' };
 const WHEN = { always: 'всегда', close: 'враг в радиусе удара', far: 'враг далеко', foeOpen: 'враг открыт (восстановление/сбив)', foeSwing: 'враг замахивается или бил ≤1.5 с', charged: 'заряд ≥ 0.5', selfHpLow: `своё HP < ${G.selfHpLow * 100}%`, foeHpLow: `HP врага < ${G.foeHpLow * 100}%`, selfWindLow: `свои силы < ${G.selfWindLow * 100}%`, foeWindLow: `силы врага < ${G.foeWindLow * 100}%`, longFight: `бой дольше ${G.longFightSec} с`, foeQuiet: `враг не бил > ${G.foeQuietSec} с`, hpDropped: `своё HP упало ≥${G.hpDropFrac * 100}% за ${G.hpDropWindSec} с` };
