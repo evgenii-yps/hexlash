@@ -39,7 +39,7 @@ export const AXIS_NEUTRAL = 50;
 /* Core start profiles (tunable). coreId → an 8-axis snapshot. ids match
    upgradeData CORES (natisk/nalet/skala/zasada). Draft numbers — turn here. */
 export const CORE_PROFILES = {
-  natisk: { distance: 20, initiative: 90, tempo: 71, weight: 55, stick: 65, resilience: 60, counter: 30, slip: 20 },
+  natisk: { distance: 20, initiative: 90, tempo: 71, weight: 55, stick: 65, resilience: 66, counter: 30, slip: 20 },
   nalet: { distance: 55, initiative: 70, tempo: 65, weight: 35, stick: 15, resilience: 35, counter: 45, slip: 65 },
   skala: { distance: 20, initiative: 25, tempo: 30, weight: 65, stick: 60, resilience: 81, counter: 59, slip: 15 },
   zasada: { distance: 78, initiative: 15, tempo: 20, weight: 75, stick: 20, resilience: 35, counter: 84, slip: 67 },

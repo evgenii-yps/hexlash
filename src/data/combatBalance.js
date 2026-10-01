@@ -217,7 +217,7 @@ export const COMBAT_BALANCE = {
   //     (light jab → short/shallow · heavy combo → longer/deeper). Fits inside the
   //     existing ai.nextAt pause, so the bout rhythm doesn't stretch.
   exhale: {
-    lightDur: 0.3, heavyDur: 0.55, // settle length (s) by move weight (0 → light, 1 → heavy)
+    lightDur: 0.5, heavyDur: 0.9, // settle length (s) by move weight (0 → light, 1 → heavy) — было 0.3 / 0.55; удлинено на этапе Б, чтобы «свободное время» (нет клипа/блока/сбива/выдоха) встало ≤ 34%
     sink: 0.06, // hip drop at full settle (world units) — weight oseдает then recovers
     torsoEase: 0.07, // slight torso slump-back at full settle
     shoulderDrop: 0.1, // shoulders sag a touch as tension leaves
@@ -305,7 +305,7 @@ export const COMBAT_BALANCE = {
   //     Линейно: glass при resilience 0, wall при 100. Множитель 0.5 = боец получает половину нейтрального урона.
   resilience: {
     dmgMulGlass: 1.15, // входящий урон при resilience 0
-    dmgMulWall: 0.38, //  входящий урон при resilience 100
+    dmgMulWall: 0.7, //   входящий урон при resilience 100 (было 0.38: BULWARK выигрывал 69–76% против поля — этап Б, Ц1)
     stagMulGlass: 1.0, // оглушение при resilience 0
     stagMulWall: 0.15, // оглушение при resilience 100
   },
@@ -315,8 +315,8 @@ export const COMBAT_BALANCE = {
   //     связками), низкий — терпение (ловит, стоит). Вес — прибавка к очкам намерения за единицу темпа (0…1): `tempo`·w для «активных» и
   //     (1 − `tempo`)·w для «терпеливых». BREAK / BREATHE темпа не читают: уход и дыхание — про скольжение и запас сил, не про каденс.
   tempoLean: {
-    press: 0.2, //   давление идёт сериями
-    sting: 0.2, //   жалящие тычки — серия лёгких ударов
+    press: 0.1, //   давление идёт сериями
+    sting: 0.08, //  жалящие тычки — серия лёгких ударов
     strike: 0.1, //  тяжёлая связка чуть охотнее у быстрых
     catch: 0.2, //   ловит терпеливый: редкие, выверенные ответы
     hold: 0.1, //    стоит терпеливый
@@ -1058,7 +1058,7 @@ export const COMBAT_BALANCE = {
     openReactLow: 0.3, openReactHigh: 0.95, // chance to punish a READ opening (recovery / stagger)
     catchBoost: 1.35, // CATCH (засада) — the dedicated waiter, reads + pounces hardest
     holdBoost: 1.12, // HOLD leans into the read a little
-    reactCooldownSec: 1.65, // min gap between conscious read-reactions (anti-spam)
+    reactCooldownSec: 1.6, // min gap between conscious read-reactions (anti-spam)
     gatherSec: 0.16, // visible "собрался" coil beat before a контра lunge (the улов reads as a moment)
   },
 
