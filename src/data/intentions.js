@@ -258,6 +258,8 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
   // (выдох при пустом запасе, удар полным зарядом) стоят выше очков и не затрагиваются.
   let pool = only;
   if (self.klich && self.klich.k >= 1) {
+    const bias = KLICH_BALANCE.bias[self.klich.id]; // перекос внутри группы (этап Д)
+    if (bias) for (const id in bias) if (s[id] != null) s[id] += bias[id];
     const grp = KLICH_BALANCE.groups[self.klich.id];
     const cut = grp ? only.filter((id) => grp.includes(id)) : [];
     if (cut.length) pool = cut;
