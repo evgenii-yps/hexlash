@@ -1,0 +1,220 @@
+{
+ "combat": {
+  "fingerprint": "360b763cd8654e87"
+ },
+ "generated": "2026-10-01T15:58:08.574Z",
+ "fights": {
+  "duel": {
+   "seedBuild": 1,
+   "fightSeed": 9001,
+   "offset": 0,
+   "tried": 3,
+   "chosenIndex": 1,
+   "rule": "первое зерно, при котором за окно ролика герой наносит ≥2 удара, по герою проходит ≥1 и бой не кончается",
+   "cores": [
+    "natisk",
+    "zasada"
+   ],
+   "stats": {
+    "ok": true,
+    "heroHits": 2,
+    "foeHits": 3,
+    "ko": null,
+    "offset": 0,
+    "score": 5
+   },
+   "lines": [],
+   "windowLines": null,
+   "journalHash": "52b4d615ce27",
+   "table": [
+    {
+     "seed": 1,
+     "ok": true,
+     "heroHits": 2,
+     "foeHits": 3,
+     "ko": null,
+     "offset": 0,
+     "score": 5,
+     "cores": "natisk/zasada",
+     "frames": 695
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "heroHits": 2,
+     "foeHits": 2,
+     "ko": null,
+     "offset": 0,
+     "score": 4,
+     "cores": "natisk/nalet",
+     "frames": 695
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "heroHits": 2,
+     "foeHits": 5,
+     "ko": null,
+     "offset": 0,
+     "score": 7,
+     "cores": "natisk/natisk",
+     "frames": 695
+    }
+   ]
+  },
+  "squad": {
+   "seedBuild": 9,
+   "fightSeed": 9009,
+   "offset": 2022,
+   "tried": 9,
+   "chosenIndex": 9,
+   "rule": "из 20 прогнанных зёрен — то, где при включённом «ВЕДЁТ ЛЕГЕНДА» легенда сама действует ≥2 раз за окно ролика (окно начинается за 2 с до первого её действия, бой идёт всё окно) и делает это РАНЬШЕ всех остальных подходящих",
+   "cores": [
+    "natisk",
+    "skala",
+    "natisk",
+    "zasada"
+   ],
+   "stats": {
+    "ok": true,
+    "towel": false,
+    "lines": 2,
+    "inWindow": 2,
+    "offset": 2022,
+    "wipe": null,
+    "firstActive": "ELDER·PUSH → CINDER",
+    "shown": [
+     "ELDER·PUSH → CINDER",
+     "ELDER·HOLD → HAWK"
+    ]
+   },
+   "lines": [
+    {
+     "b": 2196,
+     "text": "ELDER·PUSH → CINDER"
+    },
+    {
+     "b": 2393,
+     "text": "ELDER·HOLD → HAWK"
+    }
+   ],
+   "windowLines": [
+    "ELDER·PUSH → CINDER",
+    "ELDER·HOLD → HAWK"
+   ],
+   "journalHash": "38ad9a61c7ef",
+   "table": [
+    {
+     "seed": 1,
+     "ok": false,
+     "towel": false,
+     "lines": 1,
+     "inWindow": 1,
+     "offset": 2062,
+     "wipe": null,
+     "firstActive": "ELDER·PUSH → HAWK",
+     "shown": [
+      "ELDER·PUSH → HAWK"
+     ],
+     "cores": "natisk/skala/zasada/zasada",
+     "frames": 2581
+    },
+    {
+     "seed": 2,
+     "ok": false,
+     "lines": 4,
+     "noActive": true,
+     "first": "ELDER·HOLD → HAWK",
+     "offset": null,
+     "cores": "natisk/skala/skala/natisk",
+     "frames": 3200
+    },
+    {
+     "seed": 3,
+     "ok": false,
+     "lines": 4,
+     "noActive": true,
+     "first": "ELDER·HOLD → HAWK",
+     "offset": null,
+     "cores": "natisk/skala/natisk/zasada",
+     "frames": 3200
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "towel": false,
+     "lines": 2,
+     "inWindow": 2,
+     "offset": 2061,
+     "wipe": null,
+     "firstActive": "ELDER·PUSH → CINDER",
+     "shown": [
+      "ELDER·PUSH → CINDER",
+      "ELDER·HOLD → HAWK"
+     ],
+     "cores": "natisk/skala/natisk/zasada",
+     "frames": 2581
+    },
+    {
+     "seed": 5,
+     "ok": false,
+     "lines": 3,
+     "noActive": true,
+     "first": "ELDER·HOLD → HAWK",
+     "offset": null,
+     "cores": "natisk/skala/zasada/skala",
+     "frames": 3200
+    },
+    {
+     "seed": 6,
+     "ok": false,
+     "towel": false,
+     "lines": 1,
+     "inWindow": 1,
+     "offset": 1985,
+     "wipe": null,
+     "firstActive": "ELDER·PUSH → HAWK",
+     "shown": [
+      "ELDER·PUSH → HAWK"
+     ],
+     "cores": "natisk/skala/zasada/skala",
+     "frames": 2521
+    },
+    {
+     "seed": 7,
+     "ok": false,
+     "lines": 4,
+     "noActive": true,
+     "first": "ELDER·HOLD → HAWK",
+     "offset": null,
+     "cores": "natisk/skala/skala/zasada",
+     "frames": 3200
+    },
+    {
+     "seed": 8,
+     "ok": false,
+     "excluded": true,
+     "offset": null,
+     "cores": "natisk/skala/natisk/skala",
+     "frames": 2521
+    },
+    {
+     "seed": 9,
+     "ok": true,
+     "towel": false,
+     "lines": 2,
+     "inWindow": 2,
+     "offset": 2022,
+     "wipe": null,
+     "firstActive": "ELDER·PUSH → CINDER",
+     "shown": [
+      "ELDER·PUSH → CINDER",
+      "ELDER·HOLD → HAWK"
+     ],
+     "cores": "natisk/skala/natisk/zasada",
+     "frames": 2551
+    }
+   ]
+  }
+ }
+}

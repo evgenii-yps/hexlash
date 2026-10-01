@@ -1,0 +1,100 @@
+{
+ "provenance": {
+  "head": "9e309955e5a2c957e9c0c35a08d1acf40fb6a3dc",
+  "headSubject": "showcase: правки v1, шаг 3 (2/2) — рамка 05a держит легенду на платформе и уводит бой из-под нижней панели (sx, lh), проверка: бой в кадре = подобранный (хэш журнала); main 5b0d765b влит",
+  "main": "5b0d765bff7a67ed4236ed8ef3c0cb6b15be6629",
+  "mainSubject": "feat(arena): легенда над боем летает на платформе как в зале FORGE (v1.1)",
+  "mergeBase": "5b0d765bff7a67ed4236ed8ef3c0cb6b15be6629",
+  "mainContainedInBranch": true,
+  "behindMain": 0,
+  "gameFilesChangedVsMain": 0,
+  "combatFingerprint": "360b763cd8654e87",
+  "combatFiles": 26,
+  "date": "2026-10-01T16:23:53.168Z"
+ },
+ "lock": {
+  "fingerprint": "360b763cd8654e87",
+  "fights": {
+   "duel": {
+    "seedBuild": 1,
+    "fightSeed": 9001,
+    "offset": 0,
+    "tried": 3,
+    "cores": [
+     "natisk",
+     "zasada"
+    ]
+   },
+   "squad": {
+    "seedBuild": 9,
+    "fightSeed": 9009,
+    "offset": 2022,
+    "tried": 9,
+    "cores": [
+     "natisk",
+     "skala",
+     "natisk",
+     "zasada"
+    ]
+   }
+  }
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "every": 2,
+ "timeline": [
+  {
+   "id": "s01-home",
+   "start": 0,
+   "len": 180
+  },
+  {
+   "id": "s02-gate",
+   "start": 180,
+   "len": 336
+  },
+  {
+   "id": "s03-duel",
+   "start": 516,
+   "len": 654
+  },
+  {
+   "id": "t1-title",
+   "start": 1170,
+   "len": 78
+  },
+  {
+   "id": "s05a-squad",
+   "start": 1248,
+   "len": 496
+  },
+  {
+   "id": "t2-title",
+   "start": 1744,
+   "len": 80
+  },
+  {
+   "id": "s05b-forge",
+   "start": 1824,
+   "len": 544
+  },
+  {
+   "id": "t3-title",
+   "start": 2368,
+   "len": 88
+  },
+  {
+   "id": "s09-finale",
+   "start": 2456,
+   "len": 520
+  },
+  {
+   "id": "s10-logo",
+   "start": 2976,
+   "len": 300
+  }
+ ],
+ "seconds": 1488
+}
