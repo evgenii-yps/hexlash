@@ -70,7 +70,7 @@ patch(I, "export function chooseIntentionSpinal(self, foe, memory, fight) {\n  r
 patch(I, "    for (const l of self.leans) {\n      if (s[l.i] == null) continue;", "    if (globalThis.__PROBE) globalThis.__PROBE.holds = holds; // ЗОНД\n    for (const l of self.leans) {\n      if (s[l.i] == null) continue;")
 B = f'{WT}/src/scene/buildFighter.js'
 patch(B, "      leans: (behavior && behavior.leans) || null,", "      side, // ЗОНД balance-fix (только копия дерева)\n      leans: (behavior && behavior.leans) || null,")
-for key, rel in [('cb', 'src/data/combatBalance.js'), ('bh', 'src/data/behavior.js'), ('ud', 'src/data/upgradeData.js'), ('kb', 'src/data/klichBalance.js'), ('bb', 'src/data/buffBalance.js'), ('it', 'src/data/intentions.js')]:
+for key, rel in [('cb', 'src/data/combatBalance.js'), ('bh', 'src/data/behavior.js'), ('ud', 'src/data/upgradeData.js'), ('kb', 'src/data/klichBalance.js'), ('bb', 'src/data/buffBalance.js'), ('it', 'src/data/intentions.js'), ('bt', 'src/data/branchThreshold.js')]:
     if key in OV:
         open(f'{WT}/{rel}', 'a').write('\n/* --- ПОДБОР ЧИСЕЛ (только копия) --- */\n' + OV[key] + '\n')
 print('копия готова:', WT, ('правки: ' + str(list(OV))) if OV else '')

@@ -62,6 +62,38 @@ if (job.type === 'naked') {
     out.pairs[`${a}|${b}`] = rec;
   }
 }
+if (job.type === 'spec') {
+  // spec { core, builds:[{name, spec:[[ветка, сколько]..]}|{name, spec:null}], field:'bare'|'bot', seedFrom, seedTo }
+  // Сборка зажигает кристаллы ветки СНИЗУ ВВЕРХ (1..k). 'bare' — четыре голых ядра (в т.ч. своё); 'bot' — бот по правилу foeCompose (ядро и число N случайны).
+  const { CRYSTALS } = await load('/src/data/upgradeData.js');
+  const { composeFoe } = await load('/src/data/foeCompose.js');
+  const mulberry = (a) => () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const facesOf = (core, spec) => (spec || []).flatMap(([br, k]) => CRYSTALS[core].find((x) => x.id === br).faces.slice(0, k));
+  out.builds = {};
+  const foeFor = (seed) => {
+    if (job.field === 'bare') return null;
+    const rnd = mulberry(seed * 7919 + 13);
+    const n = Math.floor(rnd() * 8); // N равномерно 0…7
+    const f = composeFoe({ litCount: n, rnd });
+    return { coreId: f.coreId, behavior: f.behavior, n };
+  };
+  for (const b of job.builds) {
+    const beh = b.spec ? resolveBehavior(job.core, facesOf(job.core, b.spec)) : null;
+    const rec = { w: [], sec: [], capped: 0, foes: [] };
+    for (let sd = job.seedFrom; sd <= job.seedTo; sd++) {
+      const foeList = job.field === 'bare' ? CORE_IDS : [null];
+      for (let fi = 0; fi < foeList.length; fi++) {
+        const seed = sd * 8 + fi; // независимые зёрна по врагам
+        const bot = foeFor(sd);
+        const coreB = bot ? bot.coreId : foeList[fi];
+        const r = duel({ seed, coreA: job.core, coreB, behA: beh, behB: bot ? bot.behavior : null, swap: swapOf(sd, job.swap) });
+        rec.w.push(r.winner === 'player' ? 1 : 0); rec.sec.push(Math.round(r.sec * 1e4) / 1e4); if (r.capped) rec.capped++;
+        rec.foes.push(coreB);
+      }
+    }
+    out.builds[b.name] = rec;
+  }
+}
 out.elapsedSec = (Date.now() - t0) / 1000;
 mkdirSync(dirname(job.out), { recursive: true });
 writeFileSync(job.out, JSON.stringify(out));

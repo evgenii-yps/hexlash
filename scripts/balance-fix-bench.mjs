@@ -20,7 +20,7 @@ const OUT = join(REPO, 'docs/balance-fix/out', tag);
 mkdirSync(OUT, { recursive: true });
 
 if (stage === 'naked') {
-  const ovs = args.filter((a) => /^--(cb|bh|ud|kb|bb|it)=/.test(a));
+  const ovs = args.filter((a) => /^--(cb|bh|ud|kb|bb|it|bt)=/.test(a));
   const r = spawnSync('python3', [join(REPO, 'scripts/balance-fix-wt.py'), WT, ...ovs], { stdio: 'inherit' });
   if (r.status) process.exit(1);
   const jobs = [];
