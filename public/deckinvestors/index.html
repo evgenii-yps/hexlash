@@ -13,6 +13,18 @@ a:hover{color:#F6F4F6}
 /* заглушка [В КВАДРАТНЫХ СКОБКАХ] — как прежний [XX K]: плашка, приглушённый цвет */
 .dk-ph{display:inline-block;padding:0 8px;border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;color:#5D5D66;font-weight:700;letter-spacing:.04em;white-space:nowrap}
 .heroline{display:block}
+/* RU-слой, шрифты (правка 02.10.2026): кириллица — JetBrains Mono, латиница — Saira Condensed.
+   У Saira Condensed кириллицы нет, и без запасного семейства в стеке заголовки на русском
+   падали на системный шрифт. Теперь везде, где в RU-слое стоит Saira, вторым в стеке
+   идёт JetBrains Mono: браузер берёт латиницу из Saira, а кириллицу — из него.
+   Заголовок первого экрана живёт в <h1> с общим шрифтом на оба слоя, поэтому правило
+   вешается на RU-строку внутри него. EN-слой не затронут. */
+[data-layer="ru"] [style*="Saira Condensed"],
+.heroline[data-layer="ru"]{font-family:'Saira Condensed','JetBrains Mono',monospace !important}
+/* Заголовок первого экрана, RU: JetBrains Mono втрое шире Saira, поэтому свой кегль и
+   своя ширина строки. ≤3 строк на десктопе, ≤5 на 390; три строки по смыслу:
+   «Ты растишь ИИ, / пока он не начнёт / растить других.» */
+.heroline[data-layer="ru"]{font-size:clamp(28px,7.4vw,84px);max-width:11.5em;margin:0 auto;letter-spacing:.02em}
 .heroline.off{display:none}
 .navlink{font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF;padding:8px 0}
 .navlink:hover{color:#F6F4F6}
@@ -1051,7 +1063,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">75,5%</div>
     <div>
       <p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:0;text-wrap:pretty">из 2 817 web3-игр, запущенных в 2018–2023, стали неактивны</p>
-      <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">COINGECKO · НОЯБРЬ 2023 · НЕАКТИВНА = АКТИВНОСТЬ УПАЛА НА 99%+ ОТ ПИКА</p>
+      <p style="font:500 10px/1.5 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0;text-wrap:balance">COINGECKO&nbsp;· НОЯБРЬ 2023&nbsp;· НЕАКТИВНА&nbsp;=&nbsp;АКТИВНОСТЬ УПАЛА НА&nbsp;99%+ ОТ&nbsp;ПИКА</p>
     </div>
   </div>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
@@ -1648,7 +1660,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">75.5%</div>
     <div>
       <p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:0;text-wrap:pretty">of 2,817 web3 games launched in 2018–2023 went inactive</p>
-      <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">COINGECKO · NOV 2023 · INACTIVE = ACTIVITY DOWN 99%+ FROM PEAK</p>
+      <p style="font:500 10px/1.5 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0;text-wrap:balance">COINGECKO&nbsp;· NOV 2023&nbsp;· INACTIVE&nbsp;=&nbsp;ACTIVITY DOWN 99%+ FROM&nbsp;PEAK</p>
     </div>
   </div>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
