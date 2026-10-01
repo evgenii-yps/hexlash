@@ -30,6 +30,16 @@
 //    Каждая из трёх идёт вверх без запаздывания (иначе зазор мигнул бы) и оседает
 //    назад плавно. Размер в мире не меняется никогда: 60% бойца.
 //
+// ⚠️ ПЛАТФОРМА И ПАРЕНИЕ — ТЕ ЖЕ, ЧТО У ЛЕГЕНДЫ В ЗАЛЕ FORGE (правка v1.1). Постамент, тёплое
+//    облако и дымовой след — это legendPresence.js, не копия: здесь он вызывается в
+//    «приглушённой» настройке (CONFIG.platform): свечение, облако и дым сведены ниже яркости
+//    тёмного тела, чтобы платформа не стала вторым пятном света над ареной. Большой круг спуска
+//    и подъёма отключён (для арены он велик) — остаётся то, что в зале лежит поверх него:
+//    мягкое парение вверх-вниз и лёгкий дрейф. Всё это живёт в одном узле, который
+//    масштабируется вместе с телом (60%), появляется и уходит одной анимацией с ним.
+//    Размах парения входит в расчёт зазора: ВЫСОТА считается так, чтобы самая нижняя точка
+//    платформы в нижней точке парения всё равно была выше самых высоких плашек здоровья.
+//
 // ⚠️ ВЫХОД ИЗ ТЕМНОТЫ — ЦВЕТОМ, А НЕ ПРОЗРАЧНОСТЬЮ. Тело затемняется в цвет фона и
 //    уходит в глубину; прозрачность включается только на последних ≈15% пути, иначе
 //    сквозь полупрозрачное тело просвечивали бы спаянные части.
@@ -37,6 +47,7 @@ import * as THREE from 'three';
 import store from '@/core/state/store.js';
 import { buildFighter } from './buildFighter.js';
 import { legendHue, heartHandle } from './ascensionRite.js';
+import { createLegendPresence } from './legendPresence.js';
 import { buildTree } from '@/data/upgradeTree.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { FOG_COLOR } from '@/data/sceneTokens.js';
@@ -48,8 +59,8 @@ const CONFIG = {
   sizeRatio: 0.6,       // рост легенды / рост бойца (решение владельца)
   backZ: 0.4,           // насколько «позади» середины плиты (мир, вдоль взгляда камеры на плиту)
   maxNdcX: 0.55,        // по горизонтали легенда не дальше этого от середины кадра
-  backMax: 30,          // на сколько ещё можно отъехать назад, если по высоте не помещается (мир)
-  clearNdc: 0.07,       // зазор между ногами легенды и самой высокой точкой плашек (доля кадра)
+  backMax: 12,          // на сколько ещё можно отъехать назад, если по высоте не помещается (мир)
+  clearNdc: 0.05,       // зазор между ногами легенды и самой высокой точкой плашек (доля кадра)
   maxNdcY: 0.88,        // голова не выше этого — иначе уйдёт за верх кадра
   minAbove: 1.0,        // ниже этого над плитой не опускаем
   maxAbove: 6.5,        // выше этого над плитой не поднимаем (иначе в почти вертикальном виде улетела бы к камере)
@@ -60,7 +71,18 @@ const CONFIG = {
   leaveSec: 0.8,
   edgeFrac: 0.15,       // прозрачность только на этой доле пути с краю анимации
   reducedFadeSec: 0.3,  // «уменьшить движение»: короткое растворение, без полёта
-  bobAmp: 0.05, bobSpeed: 0.9, // мягкое парение (мир, доля роста), в покое
+  // Парение — как у легенды в зале FORGE (там bob 0.18 поверх большого круга); на арене круга нет,
+  // поэтому вертикальный размах чуть живее (0.22 до масштаба), чтобы читался за пять секунд.
+  hover: { amp: 0.22, speed: 0.8, drift: 0.7 },
+  // Платформа в зале горит тёплым янтарём; здесь всё это сведено ниже яркости тёмного тела.
+  platform: {
+    glow: 0.12,          // блик на верху постамента (в зале 0.55)
+    edge: 0.35,          // множитель на грани постамента (в зале 1)
+    hazeOpacity: 0.09,   // облако (в зале 0.34)
+    hazeDensity: 60,     // частиц облака (в зале 90)
+    smokeOpacity: 0.09,  // дымовой след (в зале 0.30)
+    smokeRefDown: 0.2,   // скорость спуска «полного» дыма: парение медленнее зальной орбиты
+  },
   turn: 3.0,            // 1/с — как плавно разворачивается лицом к камере
 };
 
@@ -83,6 +105,7 @@ export function bindLegendArena({ scene, camera, renderer, field, topY = 0, redu
   ctx = {
     scene, camera, renderer, field, topY, reduced: !!reduced, lastBarTop: null,
     body: null, parts: null, snap: null, legH: 1.77, buildMs: 0,
+    anchor: null, pres: null, pedBottom: -0.26, pedRadius: 0.8, platLow: null,
     p: 0, lastTarget: 0, wasActive: false, hy: null, back: null, pull: null, yaw: null,
     forced: null, hold: null, clock: 0,
     rest: new THREE.Vector3(), _v: new THREE.Vector3(), _w: new THREE.Vector3(), _f: new THREE.Vector3(),
@@ -117,6 +140,35 @@ function build() {
   c.scene.add(body.group);
   c.body = body;
   c.parts = heartHandle(body, gold);
+  // ПЛАТФОРМА: legendPresence зала FORGE в приглушённой настройке, в узле, который масштабируется
+  // вместе с телом. Круг спуска/подъёма отключён; минимальный просвет над плитой снят (он считал бы
+  // от нуля узла, а не от плиты).
+  const P = CONFIG.platform;
+  const pres = createLegendPresence({
+    baseX: 0, baseZ: 0, floorY: 0,
+    driftSpeed: CONFIG.hover.speed, driftRadius: CONFIG.hover.drift, bobAmplitude: CONFIG.hover.amp,
+    hazeDensity: P.hazeDensity, hazeOpacity: P.hazeOpacity,
+    PEDESTAL: { glow: P.glow },
+    SMOKE: { opacity: P.smokeOpacity, refDown: P.smokeRefDown },
+    ORBIT: { highAboveTop: 0, lowAboveTop: 0, minClearance: -10, radiusCenter: 0, radiusRim: 0, cycleSpeed: 0, azSpeed: 0 },
+    reduced: c.reduced,
+  });
+  pres.group.traverse((o) => { if (o.isLineSegments) o.material.opacity *= P.edge; }); // грани постамента
+  // Размеры постамента берём с него самого — не дублируем числа зала.
+  pres.group.traverse((o) => {
+    if (o.isMesh && o.geometry && o.geometry.type === 'CylinderGeometry') {
+      const gp = o.geometry.parameters;
+      c.pedBottom = o.position.y - gp.height / 2; // низ постамента относительно ног (до масштаба)
+      c.pedRadius = gp.radiusBottom;
+    }
+  });
+  const anchor = new THREE.Group();
+  anchor.scale.setScalar(CONFIG.sizeRatio);
+  anchor.add(pres.group);
+  anchor.add(pres.trail);
+  anchor.visible = true;
+  c.scene.add(anchor);
+  c.anchor = anchor; c.pres = pres;
   // Рост считаем с самого тела, а не берём числом.
   body.group.updateMatrixWorld(true);
   // Только меши: спрайты (плашка, ореол сердца) растягивают коробку выше головы.
@@ -130,8 +182,9 @@ function build() {
   });
   if (box.max.y > box.min.y) c.legH = box.max.y - box.min.y; // уже со scale
   // Прогрев: шейдеры тела собираются сейчас, а не в кадре первого показа.
-  try { c.renderer?.compile?.(body.group, c.camera, c.scene); } catch (_) { /* прогрев — не обязательное */ }
+  try { c.renderer?.compile?.(body.group, c.camera, c.scene); c.renderer?.compile?.(anchor, c.camera, c.scene); } catch (_) { /* прогрев — не обязательное */ }
   body.group.visible = false;
+  anchor.visible = false;
   c.buildMs = performance.now() - t0;
 }
 
@@ -140,7 +193,7 @@ function takeSnapshot() {
   const c = ctx;
   const seen = new Set();
   const list = [];
-  c.body.group.traverse((o) => {
+  const grab = (o) => {
     const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
     for (const m of ms) {
       if (seen.has(m)) continue;
@@ -153,7 +206,9 @@ function takeSnapshot() {
         transparent: m.transparent,
       });
     }
-  });
+  };
+  c.body.group.traverse(grab);
+  if (c.anchor) c.anchor.traverse(grab); // платформа, облако и дым — вместе с телом, одной анимацией
   c.snap = list;
 }
 
@@ -245,8 +300,9 @@ export function legendTick(dt, t) {
   if (c.hold != null) c.p = c.hold; // служебная заморозка на заданной доле (проверка затемнения по ступеням)
 
   const g = c.body.group;
-  if (c.p <= 0) { g.visible = false; return; }
+  if (c.p <= 0) { g.visible = false; c.anchor.visible = false; return; }
   g.visible = true;
+  c.anchor.visible = true;
 
   const cam = c.camera;
   cam.updateMatrixWorld(); // камера уже доехала в этом кадре — считаем по её нынешней позе, а не вчерашней
@@ -259,6 +315,7 @@ export function legendTick(dt, t) {
     if (r.emissive) r.m.emissive.copy(r.emissive);
     r.m.opacity = r.opacity;
   }
+  c.pres.tick(t, k);            // парение, облако и дым платформы — как в зале FORGE
   c.body.update(t, cam);
   c.parts?.apply(1);
   if (!c.snap) takeSnapshot(); // первый кадр: основа = как тело выглядит в полную силу
@@ -297,19 +354,36 @@ export function legendTick(dt, t) {
   if (c.pull == null || c.reduced) c.pull = pullNeed;
   else c.pull = pullNeed > c.pull ? pullNeed : c.pull + (pullNeed - c.pull) * (1 - Math.exp(-CONFIG.settle * k));
   const bx = gx * c.pull, bz = gz * c.pull; // точка привязки на плите
-  const slack = (B) => {
+  // САМАЯ НИЖНЯЯ ТОЧКА — низ платформы в нижней точке парения, ближний к камере край её ободка.
+  // Зазор над плашками считается от неё, а не от ног: парение и сама платформа входят в расчёт.
+  const sc = CONFIG.sizeRatio;
+  const lowOff = -(CONFIG.hover.amp - c.pedBottom) * sc;   // вниз от ног (мир): размах + толщина платформы
+  const rim = c.pedRadius * sc;                             // радиус низа платформы (мир)
+  const topOff = c.legH + CONFIG.hover.amp * sc;            // вверх от ног: голова в верхней точке парения
+  // Где окажется ГОЛОВА, если платформа стоит ровно над плашками при отъезде B (+1 — верх кадра).
+  // Если не дотянуться до нужной точки экрана — «очень высоко» (2).
+  const headAt = (B) => {
     const d = CONFIG.backZ + B;
-    const nd = solveHeight(c, bx + ux * d, bz + uz * d, 0, wantFeet, lo, hi);
-    if (nd === Infinity) return -Infinity;                                       // выше потолка не достать
-    return Math.min(solveHeight(c, bx + ux * d, bz + uz * d, c.legH, CONFIG.maxNdcY, lo, hi), hi) - nd;
+    const nd = solveHeight(c, bx + ux * (d - rim), bz + uz * (d - rim), lowOff, wantFeet, lo, hi);
+    if (nd === Infinity) return 2;
+    return ndcYOf(c, bx + ux * d, nd + topOff, bz + uz * d);
   };
+  // Подбор непрерывный, без ступеней. Голова по отъезду имеет один минимум: дальше назад легенда
+  // меньше на экране, но точка уходит к горизонту. Берём наименьший отъезд, при котором голова в
+  // кадре; если не в кадре ни при каком — отъезд минимума (самое близкое к кадру из возможного).
   let backNeed = 0;
-  if (slack(0) < 0) {
-    if (slack(CONFIG.backMax) < 0) backNeed = CONFIG.backMax;
+  if (headAt(0) > CONFIG.maxNdcY) {
+    let b0 = 0, b1 = CONFIG.backMax;
+    for (let i = 0; i < 16; i++) {                    // тернарный поиск минимума
+      const m1 = b0 + (b1 - b0) / 3, m2 = b1 - (b1 - b0) / 3;
+      if (headAt(m1) < headAt(m2)) b1 = m2; else b0 = m1;
+    }
+    const bMin = (b0 + b1) / 2;
+    if (headAt(bMin) > CONFIG.maxNdcY) backNeed = bMin;
     else {
-      let b0 = 0, b1 = CONFIG.backMax;
-      for (let i = 0; i < 14; i++) { const m = (b0 + b1) / 2; if (slack(m) < 0) b0 = m; else b1 = m; }
-      backNeed = b1;
+      let l0 = 0, l1 = bMin;
+      for (let i = 0; i < 14; i++) { const m = (l0 + l1) / 2; if (headAt(m) > CONFIG.maxNdcY) l0 = m; else l1 = m; }
+      backNeed = l1;
     }
   }
   // отъезд — как высота: вперёд без запаздывания, обратно плавно
@@ -317,8 +391,8 @@ export function legendTick(dt, t) {
   else c.back = backNeed > c.back ? backNeed : c.back + (backNeed - c.back) * (1 - Math.exp(-CONFIG.settle * k));
   const dBack = CONFIG.backZ + c.back;
   const ax = bx + ux * dBack, az = bz + uz * dBack;
-  const need = Math.min(solveHeight(c, ax, az, 0, wantFeet, lo, hi), hi);              // ноги над плашками
-  const cap = Math.min(solveHeight(c, ax, az, c.legH, CONFIG.maxNdcY, lo, hi), hi);   // голова в кадре
+  const need = Math.min(solveHeight(c, ax - ux * rim, az - uz * rim, lowOff, wantFeet, lo, hi), hi); // низ платформы над плашками
+  const cap = Math.min(solveHeight(c, ax, az, topOff, CONFIG.maxNdcY, lo, hi), hi);                  // голова в кадре
   // вверх — без запаздывания (иначе зазор мигнул бы), вниз — плавно
   if (c.hy == null || c.reduced) c.hy = need;
   else c.hy = need > c.hy ? need : c.hy + (need - c.hy) * (1 - Math.exp(-CONFIG.settle * k));
@@ -335,9 +409,11 @@ export function legendTick(dt, t) {
     px += (c._w.x / len) * CONFIG.hiddenBack * away;
     pz += (c._w.z / len) * CONFIG.hiddenBack * away;
     py += CONFIG.hiddenUp * away;
-    py += Math.sin(t * CONFIG.bobSpeed * Math.PI * 2) * CONFIG.bobAmp * c.legH * e;
   }
-  g.position.set(px, py, pz);
+  // Узел платформы стоит в средней точке парения, тело — на ней (парение и дрейф дала платформа).
+  c.anchor.position.set(px, py, pz);
+  const pl = c.pres.position;
+  g.position.set(px + pl.x * sc, py + pl.y * sc, pz + pl.z * sc);
 
   // лицом к камере, плавно (модель смотрит в −Z, как в зале)
   const want = Math.atan2(-(cam.position.x - px), -(cam.position.z - pz));
@@ -364,13 +440,19 @@ export function legendTick(dt, t) {
     if (faded) { m.transparent = true; m.opacity *= alpha; }
     else m.transparent = r.transparent;
   }
-  if (DEV_MODE) c.probe = { barTop, need, cap, hy: c.hy, feetY, backNeed, legH: c.legH };
+  if (DEV_MODE) {
+    // нижняя точка платформы СЕЙЧАС (ближний к камере край ободка) и зазор над плашками
+    c.platLow = c._v.set(px + pl.x * sc - ux * rim, py + (pl.y + c.pedBottom) * sc, pz + pl.z * sc - uz * rim).project(cam).y;
+    c.probe = { barTop, need, cap, hy: c.hy, feetY, backNeed, legH: c.legH, platLow: c.platLow, platClear: c.platLow - barTop, hoverY: pl.y * sc };
+  }
 }
 
 export function unbindLegendArena() {
   const c = ctx;
   ctx = null;
   if (!c) return;
+  if (c.anchor) { c.scene.remove(c.anchor); }
+  if (c.pres) c.pres.dispose();
   if (c.body) { c.scene.remove(c.body.group); c.body.dispose(); }
 }
 
