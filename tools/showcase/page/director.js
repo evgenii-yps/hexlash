@@ -58,6 +58,7 @@
       const T = { on: false, f0: 0 };
       const actors = new Map();           // боец → { i, last:[x,y,z] }
       const lastPose = { v: null };
+      let frameSm = null;   // состояние сглаживания рамки (shot frame, sm)
 
       // ── бойцы арены ──
       function sense() {
@@ -96,17 +97,28 @@
         // legend: доля 0..1 — в рамку берётся и ЛЕГЕНДА НАД БОЕМ (если она сейчас в мире): точка взгляда сдвигается к ней на эту долю,
         // отъезд считается и от неё. Легенда висит позади плиты, и без этого кадр на бойцов оставлял её за краем.
         frame(sh, f, A) {
-          const L = alive(A); let cx = 0, cz = 0;
-          for (const a of L) { cx += a.pos[0]; cz += a.pos[2]; }
-          cx /= L.length; cz /= L.length;
+          const L = alive(A); let cx0 = 0, cz0 = 0;
+          for (const a of L) { cx0 += a.pos[0]; cz0 += a.pos[2]; }
+          cx0 /= L.length; cz0 /= L.length;
+          let sp0 = 0; for (const a of L) sp0 = Math.max(sp0, Math.hypot(a.pos[0] - cx0, a.pos[2] - cz0));
+          // sm — сглаживание (доля пути к новому значению за кадр): точка взгляда, разброс и направление «середина плиты → бой» плывут, а не рвутся
+          const sm = sh.sm || 0;
+          if (sm) {
+            const gf = window.__vt.frame;   // общий кадр: рамка зовётся дважды за кадр (в смешивании двух планов), шаг сглаживания — один
+            if (!frameSm || frameSm.f > gf) frameSm = { cx: cx0, cz: cz0, sp: sp0, f: gf };
+            if (frameSm.f !== gf) { frameSm.cx += (cx0 - frameSm.cx) * sm; frameSm.cz += (cz0 - frameSm.cz) * sm; frameSm.sp += (sp0 - frameSm.sp) * sm; frameSm.f = gf; }
+          }
+          const cx = sm ? frameSm.cx : cx0, cz = sm ? frameSm.cz : cz0, spread0 = sm ? frameSm.sp : sp0;
           const lg = sh.legend ? legendPos() : null;
           const w = lg ? sh.legend : 0;
           const tx = cx * (1 - w) + (lg ? lg[0] : 0) * w, tz = cz * (1 - w) + (lg ? lg[2] : 0) * w;
           // по высоте легенда (стоит на платформе, ноги на lg[1], рост ≈1,1) тоже тянет точку взгляда: середина её фигуры
           const ty = (sh.ly || 1.0) * (1 - w) + (lg ? lg[1] + (sh.lh ?? 0.6) : 0) * w;
-          let spread = 0; for (const a of L) spread = Math.max(spread, Math.hypot(a.pos[0] - tx, a.pos[2] - tz));
+          let spread = spread0;
           if (lg) spread = Math.max(spread, Math.hypot(Math.hypot(lg[0] - tx, lg[2] - tz), (lg[1] + (sh.lh ?? 0.6) - ty) * (sh.vk ?? 1)));
-          const ang = (sh.a0 || 0) + (sh.da || 0) * f, r = (sh.r || 3.4) + spread * (sh.k || 1.3);
+          // az:'center' — камера стоит на линии «середина плиты → середина боя» (+ a0 в радианах), тогда легенда над серединой плиты оказывается за боем
+          const c0 = sh.center || [0, 0];
+          const ang = (sh.az === 'center' ? Math.atan2(cx - c0[0], cz - c0[1]) : 0) + (sh.a0 || 0) + (sh.da || 0) * f, r = (sh.r || 3.4) + spread * (sh.k || 1.3) + (sh.dr || 0) * f;   // dr — наезд: метров на кадр (отрицательное — ближе)
           // sx — сдвиг кадра вправо в метрах (точка взгляда уходит влево на столько же вдоль «вправо» камеры): уводит бой из-под нижней панели игры
           const sx = sh.sx || 0, rx = Math.cos(ang), rz = -Math.sin(ang);
           const ux = tx - sx * rx, uz = tz - sx * rz;
@@ -242,7 +254,7 @@
         const f = window.__vt.frame - T.f0;
         if (f < 0 || (cfg.release && f >= cfg.release.at)) return;
         applyStage(f);
-        let p = cfg.kind === 'rel' ? relPose(f) : keyPose(f);
+        let p = cfg.kind === 'rel' ? relPose(f) : cfg.kind === 'dynamic' ? dynamicPose(f) : keyPose(f);
         p = applyPost(p, f);
         const c = st.controls;
         if (c) { c.minDistance = 0.1; c.maxDistance = 1e5; c.minPolarAngle = 0; c.maxPolarAngle = Math.PI; c.target.set(p.look[0], p.look[1], p.look[2]); }
@@ -253,7 +265,15 @@
       window.__vt.pre = driveFrame;
 
       renderer.render = (scene, camera) => {
-        if (!T.on || camera !== cam || cfg.drive) return orig(scene, camera);
+        if (!T.on || camera !== cam) return orig(scene, camera);
+        if (cfg.drive) {
+          // камера уже поставлена настоящей (до цикла игры), поэтому сцена (легенда над боем и т. п.) считает от неё; здесь только крен — на отрисовке
+          const fd = window.__vt.frame - T.f0, roll = (cfg.release && fd >= cfg.release.at) ? 0 : postVal(fd, 'roll');
+          if (!roll) return withPlates(fd, () => orig(scene, camera));
+          const sq = cam.quaternion.clone();
+          cam.rotateZ(roll * Math.PI / 180);
+          try { return withPlates(fd, () => orig(scene, camera)); } finally { cam.quaternion.copy(sq); }
+        }
         const f = window.__vt.frame - T.f0;
         const sp = cam.position.clone(), sq = cam.quaternion.clone(), sf = cam.fov;
         applyStage(f);

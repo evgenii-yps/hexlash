@@ -38,6 +38,22 @@ const STAGE_FIVE = [
   { id: 'f4', x: -1.3, z: 0.7 },   { id: 'f1', x: 0.0, z: 0.7 },                                      // передний ряд
 ].map((q) => ({ ...q, face: FACE }));
 
+// Три варианта камеры кадра 05a (кинокадр, замечания владельца к шагу 3). Все: камера 3/4, ниже и ближе прежней, стоит на линии
+// «середина плиты → середина боя» (az:'center'), чтобы легенда на платформе висела над серединой боя; сглаживание sm — без рывков;
+// плавный наезд dr; со 150-го кадра плана (строка ELDER·PUSH → CINDER — на 174-м) — более близкий план, смешивание blend 70 кадров.
+//   A — чуть правее линии (a0 +0,3), выше (h 3,6): самый «фронтальный», арена видна целиком;
+//   B — 3/4 справа (a0 +0,55), h 3,2;
+//   C — 3/4 слева (a0 −0,45), h 3,6: рекомендован — бой крупнее и по центру, арена читается диагональю.
+const cam05aShot = (a0, r, k, h, ly, fov, rc, kc, hc, lyc, fovc) => [
+  { from: 0, shot: 'frame', az: 'center', sm: 0.04, a0, r, k, h, ly, fov, dr: -0.002 },
+  { from: 150, shot: 'frame', az: 'center', sm: 0.04, a0, r: rc, k: kc, h: hc, ly: lyc, fov: fovc, dr: -0.002 },
+];
+export const cam05aOptions = {
+  A: cam05aShot(0.3, 4.4, 1.2, 3.6, 1.9, 42, 3.6, 1.1, 3.1, 1.7, 40),
+  B: cam05aShot(0.55, 4.2, 1.2, 3.2, 1.7, 44, 3.4, 1.1, 2.7, 1.5, 42),
+  C: cam05aShot(-0.45, 4.4, 1.2, 3.6, 1.9, 42, 3.6, 1.1, 3.1, 1.7, 40),
+};
+
 export const plans = [
   {
     id: 's01-home', title: '01 · Главный остров, FIGHT', kind: 'scene', route: '/play/home', len: 180, align: 420,
@@ -91,37 +107,14 @@ export const plans = [
     world: { roster: [hero], squad: [0], mode: 'duel', n: 1 },
     hide: [...DEV_UI, '.kfo', '.bfo', '.fso', '.cmd', '.arena-scrim'],
     camera: {
-      kind: 'dynamic', blend: 40,
-      platesOff: [[125, 654]],
-      post: [{ ch: 'roll', f0: 600, f1: 654, v0: 0, v1: 34, ease: 'smooth' }],
-      shots: [
-        { from: 0,   shot: 'frame', a0: 1.35, da: -0.0008, r: 6.2, k: 1.4, h: 3.4, ly: 1.0, fov: 42 },
-        { from: 150, shot: 'side',  r: 3.0, k: 1.0, h: 1.9, ly: 1.15, fov: 38 },
-        { from: 300, shot: 'side',  flip: true, r: 2.3, k: 0.85, h: 1.5, ly: 1.2, fov: 34, dr: -0.0006 },
-        { from: 450, shot: 'side',  r: 3.4, k: 1.0, h: 2.0, ly: 1.15, bias: 0.12, fov: 38 },
-      ],
-    },
-    marks: [{ f: 600, kind: 'transition', name: 'T1: крен нарастает, уход в чёрный на пике' }],
-    still: 330,
-  },
-  {
-    // SQUAD с легендой: голова перехода T1 (54 кадра: крен раскручивается в ноль, проявление) и
-    // хвост перехода T2 (28 кадров: рывок камеры вбок, чёрный).
-    id: 's05a-squad', title: '05a · SQUAD 2 на 2, ведёт легенда', kind: 'arena', route: '/play/arena', len: 502, win: 420, head: 54, tail: 28, offset: 0, fight: 'squad',
-    fadeIn: 24, fadeOut: 4,
-    trim: { head: 6 },   // шкала: съём головы ради титра T1 на доле (см. титры); сам план и его кадры не меняются
-    world: { roster: [hero, { callsign: 'CINDER', core: 'skala' }], squad: [0, 1], mode: 'squad', n: 2, legend: { callsign: 'ELDER', core: 'natisk' } },
-    // TOWEL (полотенце) читается как «сдаюсь» (решение владельца 29.09/01.10) — первая карта ряда баффов («TOWEL ×N») вне кадра; ряд сжимается
-    hide: [...DEV_UI, '.arena-scrim', '.bfo-cards .bc-card:first-child'],
-    actions: [{ b: 12, type: 'clickEl', sel: '.cmd-toggle', mark: 'тумблер: ВЕДЁТ ЛЕГЕНДА' }],
-    camera: {
-      kind: 'dynamic', blend: 40,
+      // drive: камера двигается НАСТОЯЩАЯ (до цикла игры), поэтому легенда над боем сама встаёт над серединой боя с честным
+      // параллаксом; крен перехода T1 и рывок T2 (post) накладываются на отрисовке.
+      kind: 'dynamic', drive: true, blend: 70,
       post: [
         { ch: 'roll', f0: 0, f1: 54, v0: 34, v1: 0, ease: 'smoother' },
         { ch: 'yaw', f0: 486, f1: 502, v0: 0, v1: 48, ease: 'smooth' },     // рывок ВЛЕВО; в зале вход продолжает то же движение
       ],
-      // легенда над боем стоит на платформе над плитой (v1.1) — рамка берёт и её (legend: 0,5; lh — середина фигуры над ногами) и стоит со стороны +z
-      shots: [{ from: 0, shot: 'frame', legend: 0.5, lh: 0.7, sx: 2.2, a0: 0.45, da: 0.0003, r: 3.4, k: 1.0, h: 4.2, ly: 1.2, fov: 46 }],
+      shots: cam05aOptions.C,
     },
     marks: [
       { f: 0,   kind: 'transition', name: 'T1: проявление, крен раскручивается в ноль' },
