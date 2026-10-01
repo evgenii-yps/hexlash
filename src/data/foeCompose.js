@@ -26,21 +26,31 @@ import { COMBAT_BALANCE, toughnessBonusFor } from './combatBalance.js';
  * N случайных граней дерева ядра в той форме, которую понимает buildTree
  * ({ ветка: [номера граней] }).
  *
- * Перемешиваем весь список и берём первые N. Оба потолка — запас очков и предел
- * ветки — накладывает сам buildTree, поэтому перебрать здесь нельзя даже ошибкой.
+ * Бот собирает КАК ИГРОК, а не вразброс: одну ветку набирает снизу вверх (до 5 граней),
+ * остаток кладёт во вторую ветку тоже снизу вверх. Третья ветка не затрагивается — N не
+ * больше запаса очков (7), поэтому две ветки вмещают всё. Раньше брались N случайных
+ * граней из 15 вперемешку: бот выходил «россыпью» без резонанса ветки и без вершины,
+ * то есть слабее любого игрока с тем же числом граней, а поле ботов не проверяло сборки
+ * игроков вообще (balance-fix, этап Г). Порядок веток случаен.
+ *
+ * Оба потолка — запас очков и предел ветки — накладывает сам buildTree.
  */
 export function randomLitIds(coreId, n, rnd = Math.random) {
   if (!(n > 0)) return null;
-  const all = [];
-  for (const cr of CRYSTALS[coreId] || []) {
-    for (const f of cr.faces || []) if (f.state === 'open') all.push({ cr: cr.id, f: f.id });
-  }
-  for (let i = all.length - 1; i > 0; i--) {
+  const crystals = (CRYSTALS[coreId] || []).filter((cr) => (cr.faces || []).some((f) => f.state === 'open'));
+  for (let i = crystals.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
-    [all[i], all[j]] = [all[j], all[i]];
+    [crystals[i], crystals[j]] = [crystals[j], crystals[i]];
   }
   const out = {};
-  for (const pick of all.slice(0, n)) (out[pick.cr] = out[pick.cr] || []).push(pick.f);
+  let left = n;
+  for (const cr of crystals) {
+    if (left <= 0) break;
+    const open = cr.faces.filter((f) => f.state === 'open'); // снизу вверх: 1, 2, 3 …
+    const take = Math.min(left, cr.limit || open.length, open.length);
+    out[cr.id] = open.slice(0, take).map((f) => f.id);
+    left -= take;
+  }
   return out;
 }
 
