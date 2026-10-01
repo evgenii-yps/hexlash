@@ -13,6 +13,20 @@
 //                    пошёл иначе, чем при подборе зерна.
 // release:{at,blend} — с кадра `at` плавно отпускаем камеру обратно сцене (нужно,
 // когда дальше едет собственный пролёт игры, например после нажатия FIGHT).
+//
+// Этап 3, добавочные каналы (работают поверх любого вида камеры):
+//   post:[{ ch:'roll'|'yaw'|'push'|'fov', f0, f1, v0, v1, ease }] — прибавка к позе: крен (°), поворот
+//        вида вокруг вертикали (°, «рывок»), подъезд вперёд (м), угол обзора (°). До f0 — v0, после f1 — v1;
+//   platesOff:[[f0,f1], …] — на эти кадры прячем плашки HP (YOU/FOE) над бойцами арены;
+//   anchor:'legend' — у ключей kind:'keys' поля off/loff считаются от позиции легенды зала (берётся
+//        один раз в момент старта плана, чтобы камера не качалась вместе с её парением);
+//   drive:true — камера двигается НАСТОЯЩАЯ (перед кадром игры), а не подменяется на отрисовке.
+//        Нужно воротам: подписи островов считает сама сцена по своей камере, подмена их бы
+//        оставила стоять на месте. С release.at управление отдаётся игре (её пролёт к кнопке
+//        стартует с того места, где мы оставили камеру);
+//   stage:{ fighters:[{ id, x, z, face:[x,z] }], gesture:{ f0, dur } } — постановка пятерых на главном
+//        острове и жест «рука-стрела». Всё делается ПОСЛЕ fighter.update() и ПЕРЕД render(),
+//        из обёртки: файл бойца не правится.
 (() => {
   const ease = {
     linear: (u) => u,
@@ -77,6 +91,17 @@
           const ang = (sh.a0 || 0) + (sh.da || 0) * f, r = (sh.r || 3.4) + spread * (sh.k || 1.3);
           return { pos: [cx + r * Math.sin(ang), sh.h || 2.6, cz + r * Math.cos(ang)], look: [cx, sh.ly || 1.0, cz], fov: sh.fov || 40 };
         },
+        // сбоку: камера ПЕРПЕНДИКУЛЯРНО линии «герой — ближайший чужой», оба в профиль и разведены
+        // на экране (силуэты не сливаются). r — отступ от середины; k — прибавка на каждый метр между
+        // бойцами; flip — с какой стороны; bias — смещение вдоль линии (в долях расстояния).
+        side(sh, f, A) {
+          const me = hero(A), other = nearestOther(A, me);
+          const dx = other.pos[0] - me.pos[0], dz = other.pos[2] - me.pos[2]; const d = Math.hypot(dx, dz) || 1;
+          const ux = dx / d, uz = dz / d, nx = -uz * (sh.flip ? -1 : 1), nz = ux * (sh.flip ? -1 : 1);
+          const mx = (me.pos[0] + other.pos[0]) / 2 + ux * d * (sh.bias || 0), mz = (me.pos[2] + other.pos[2]) / 2 + uz * d * (sh.bias || 0);
+          const r = (sh.r || 3) + d * (sh.k || 1) + (sh.dr || 0) * f;
+          return { pos: [mx + nx * r, sh.h || 1.6, mz + nz * r], look: [mx, sh.ly || 1.1, mz], fov: sh.fov || 38 };
+        },
         // через плечо: камера за бойцом `who`, смотрит на ближайшего чужого
         over(sh, f, A) {
           const me = sh.who === 'foe' ? nearestOther(A, hero(A)) : hero(A), other = nearestOther(A, me);
@@ -123,7 +148,7 @@
       }
 
       function keyPose(f) {
-        const keys = cfg.keys;
+        const keys = resolveKeys();
         if (f <= keys[0].f) return { ...keys[0], fov: keys[0].fov ?? cam.fov };
         const last = keys[keys.length - 1];
         if (f >= last.f) return { ...last, fov: last.fov ?? cam.fov };
@@ -133,11 +158,85 @@
         return { pos: lerp3(A.pos, B.pos, u), look: lerp3(A.look, B.look, u), roll: lerp(A.roll || 0, B.roll || 0, u), fov: lerp(A.fov ?? cam.fov, B.fov ?? cam.fov, u) };
       }
 
+      // ── добавочные каналы ──
+      const postVal = (f, ch) => {
+        let v = 0;
+        for (const q of cfg.post || []) {
+          if (q.ch !== ch) continue;
+          const u = f <= q.f0 ? 0 : f >= q.f1 ? 1 : ease[q.ease || 'smooth']((f - q.f0) / (q.f1 - q.f0));
+          v += lerp(q.v0, q.v1, u);
+        }
+        return v;
+      };
+      function applyPost(p, f) {
+        if (!cfg.post) return p;
+        const roll = postVal(f, 'roll'), yaw = postVal(f, 'yaw'), push = postVal(f, 'push'), fov = postVal(f, 'fov');
+        let pos = p.pos, look = p.look;
+        let dx = look[0] - pos[0], dy = look[1] - pos[1], dz = look[2] - pos[2];
+        if (yaw) { const a = yaw * Math.PI / 180, c = Math.cos(a), s2 = Math.sin(a); const nx = dx * c + dz * s2, nz = -dx * s2 + dz * c; dx = nx; dz = nz; look = [pos[0] + dx, look[1], pos[2] + dz]; }
+        if (push) { const d = Math.hypot(dx, dy, dz) || 1; pos = [pos[0] + dx / d * push, pos[1] + dy / d * push, pos[2] + dz / d * push]; look = [look[0], look[1], look[2]]; }
+        return { pos, look, roll: (p.roll || 0) + roll, fov: p.fov + fov };
+      }
+
+      // плашки HP над бойцами арены — единственные Sprite, добавленные прямо в группу бойца
+      function withPlates(f, fn) {
+        const off = (cfg.platesOff || []).some(([a, b]) => f >= a && f < b);
+        if (!off || !st.field || !st.field.units) return fn();
+        const hid = [];
+        for (const u of st.field.units()) for (const o of u.f.group.children) if (o.isSprite && o.visible) { o.visible = false; hid.push(o); }
+        try { return fn(); } finally { for (const o of hid) o.visible = true; }
+      }
+
+      // ── постановка пятерых и жест (главный остров) ──
+      function applyStage(f) {
+        const sg = cfg.stage; if (!sg || !st.bodies) return;
+        const g = sg.gesture ? (f <= sg.gesture.f0 ? 0 : f >= sg.gesture.f0 + sg.gesture.dur ? 1 : ease.smooth((f - sg.gesture.f0) / sg.gesture.dur)) : 0;
+        for (const spec of sg.fighters) {
+          const b = st.bodies.find((x) => x && x.id === spec.id); if (!b) continue;
+          const grp = b.fighter.group;
+          grp.position.x = spec.x; grp.position.z = spec.z;
+          grp.rotation.y = Math.atan2(-(spec.face[0] - spec.x), -(spec.face[1] - spec.z));
+          if (g > 0) {
+            const j = b.fighter.joints.armR;
+            j.shoulder.rotation.x = lerp(j.shoulder.rotation.x, sg.gesture.reach ?? 1.5, g);
+            j.elbow.rotation.x = lerp(j.elbow.rotation.x, 0.05, g);
+          }
+        }
+      }
+
+      // ключи с привязкой к якорю (off/loff от позиции легенды в момент старта)
+      let keysR = null;
+      function resolveKeys() {
+        if (keysR) return keysR;
+        let A = [0, 0, 0];
+        if (cfg.anchor === 'legend' && st.legend) { const q = st.legend.group.position; A = [q.x, q.y, q.z]; }
+        keysR = cfg.keys.map((k) => (k.off ? { ...k, pos: [A[0] + k.off[0], A[1] + k.off[1], A[2] + k.off[2]], look: [A[0] + (k.loff?.[0] ?? 0), A[1] + (k.loff?.[1] ?? 0), A[2] + (k.loff?.[2] ?? 0)] } : k));
+        return keysR;
+      }
+
+      // ── drive: двигаем настоящую камеру до цикла игры ──
+      function driveFrame() {
+        if (!T.on || !cfg.drive) return;
+        const f = window.__vt.frame - T.f0;
+        if (f < 0 || (cfg.release && f >= cfg.release.at)) return;
+        applyStage(f);
+        let p = cfg.kind === 'rel' ? relPose(f) : keyPose(f);
+        p = applyPost(p, f);
+        const c = st.controls;
+        if (c) { c.minDistance = 0.1; c.maxDistance = 1e5; c.minPolarAngle = 0; c.maxPolarAngle = Math.PI; c.target.set(p.look[0], p.look[1], p.look[2]); }
+        cam.position.set(p.pos[0], p.pos[1], p.pos[2]);
+        cam.lookAt(p.look[0], p.look[1], p.look[2]);
+        if (p.fov !== cam.fov) { cam.fov = p.fov; cam.updateProjectionMatrix(); }
+      }
+      window.__vt.pre = driveFrame;
+
       renderer.render = (scene, camera) => {
-        if (!T.on || camera !== cam) return orig(scene, camera);
+        if (!T.on || camera !== cam || cfg.drive) return orig(scene, camera);
         const f = window.__vt.frame - T.f0;
         const sp = cam.position.clone(), sq = cam.quaternion.clone(), sf = cam.fov;
+        applyStage(f);
         let p = cfg.kind === 'dynamic' ? dynamicPose(f) : cfg.kind === 'rel' ? relPose(f) : keyPose(f);
+        p = applyPost(p, f);
         // отпуск камеры обратно сцене: смешиваем с её собственной позой
         if (cfg.release && f >= cfg.release.at) {
           const u = Math.min(1, (f - cfg.release.at) / cfg.release.blend);
@@ -151,11 +250,11 @@
         cam.lookAt(p.look[0], p.look[1], p.look[2]);
         if (p.roll) cam.rotateZ(p.roll * Math.PI / 180);
         if (p.fov !== cam.fov) { cam.fov = p.fov; cam.updateProjectionMatrix(); }
-        orig(scene, camera);
+        withPlates(f, () => orig(scene, camera));
         cam.position.copy(sp); cam.quaternion.copy(sq);
         if (cam.fov !== sf) { cam.fov = sf; cam.updateProjectionMatrix(); }
       };
-      window.__director.start = (f0) => { T.f0 = f0; T.on = true; base = null; lastPose.v = null; };
+      window.__director.start = (f0) => { T.f0 = f0; T.on = true; base = null; lastPose.v = null; keysR = null; };
       window.__director.stop = () => { T.on = false; };
       window.__director.info = () => ({ fov: cam.fov, pos: cam.position.toArray(), aspect: cam.aspect });
       return { ok: true, info: window.__director.info() };

@@ -22,7 +22,8 @@ export const LOCK = path.join(HERE, '../plan/fights.lock.json');
 const SEARCH_SIZE = [480, 270];   // подбор идёт без снимков и в малом размере — быстрее в разы
 const PARALLEL = 3;
 const MAX_SEEDS = 60;
-const SQUAD_POOL = 9;   // SQUAD: смотрим ровно 9 зёрен и берём то, где легенда действует РАНЬШЕ всех (бой короче — рендер быстрее)
+const SQUAD_POOL = 20;   // сначала 1–9; если ничего не подошло — дальше до 20 (правка владельца этапа 3: зерно 8 исключено)
+const SQUAD_EXCLUDE = new Set([8]);   // SQUAD: смотрим ровно 9 зёрен и берём то, где легенда действует РАНЬШЕ всех (бой короче — рендер быстрее)
 
 export const readLock = () => (existsSync(LOCK) ? JSON.parse(readFileSync(LOCK, 'utf8')) : null);
 export const writeLock = (l) => writeFileSync(LOCK, JSON.stringify(l, null, 1) + '\n');
@@ -79,22 +80,34 @@ const journalHash = (journal, n) => createHash('md5').update(JSON.stringify(jour
 // ───────────────────────── критерии ─────────────────────────
 // DUEL: за окно ролика (10 с) герой наносит ≥2 удара, по герою проходит ≥1, бой не кончился.
 const duelCheck = (a, plan) => {
-  const w = plan.len;
+  const w = plan.win ?? plan.len;   // окно, в котором ждём удары; хвост перехода (plan.len - win) бой тоже должен идти
   const heroHits = a.hits.filter((h) => h.onHero && h.b < w).length;
   const foeHits = a.hits.filter((h) => !h.onHero && h.b < w).length;
-  const alive = a.ko === null || a.ko.b > w + 30;
+  const alive = a.ko === null || a.ko.b > plan.len + 30;
   const ok = foeHits >= 2 && heroHits >= 1 && alive;
   return { ok, heroHits, foeHits, ko: a.ko?.b ?? null, offset: 0, score: foeHits + heroHits };
 };
-// SQUAD с легендой: тумблер включён, и в окне ролика (7 с) легенда сама нажимает ≥2 раза
-// (строк решений ≥2); окно начинается за 2 с до первого её действия; бой идёт всё окно.
+// SQUAD с легендой: тумблер включён; в окне плана легенда сама действует ЯВНОЙ командой
+// (натиск PUSH, ведро BUCKET или кубик DICE) — не меньше двух строк решений, и ни на одном
+// кадре плана на экране нет строки со словом TOWEL (полотенце читается как «сдаюсь», 29.09 → правка
+// владельца этапа 3). Окно начинается за 2 с до первой ЯВНОЙ команды, перед ним — голова
+// перехода (plan.head), после него — хвост (plan.tail); бой идёт весь план.
 const LEAD_IN = 120;
-const squadCheck = (a, plan) => {
+const ACTIVE = /\b(PUSH|BUCKET|DICE)\b/i;
+const verbOf = (t) => (t.split('·')[1] || '').split('→')[0].trim();
+const squadCheck = (a, plan, journal) => {
   if (a.togOn < 0 || a.lines.length === 0) return { ok: false, lines: a.lines.length, togOn: a.togOn, offset: null };
-  const offset = Math.max(0, a.lines[0].b - LEAD_IN);
+  const act = a.lines.find((l) => ACTIVE.test(verbOf(l.text)));
+  if (!act) return { ok: false, lines: a.lines.length, noActive: true, first: a.lines[0].text, offset: null };
+  const offset = Math.max(0, act.b - LEAD_IN - (plan.head || 0));
+  const span = journal.slice(offset, offset + plan.len);
+  const seen = []; let prev = '';
+  span.forEach((r, i) => { if (r.line && r.line !== prev) seen.push({ b: offset + i, text: r.line }); prev = r.line; });
+  const towel = span.some((r) => /TOWEL/i.test(r.line));
   const inWin = a.lines.filter((l) => l.b >= offset && l.b < offset + plan.len);
   const alive = a.wipe === null || a.wipe > offset + plan.len;
-  return { ok: inWin.length >= 2 && alive, lines: a.lines.length, inWindow: inWin.length, offset, wipe: a.wipe, first: a.lines[0].text };
+  const full = journal.length >= offset + plan.len;
+  return { ok: !towel && inWin.length >= 2 && alive && full, towel, lines: a.lines.length, inWindow: inWin.length, offset, wipe: a.wipe, firstActive: act.text, shown: seen.map((x) => x.text) };
 };
 
 async function simulate(base, plan, seed, frames, stopWhen) {
@@ -120,18 +133,19 @@ export async function searchFight(base, kind, log = console.log) {
       const a = (b % 30 === 0) ? analyze(j) : null;
       if (!a) return false;
       if (a.wipe !== null) return true;
-      if (a.lines.length && b >= a.lines[0].b + plan.len + 10) return true;
-      return b >= 2700;
+      const act = a.lines.find((l) => ACTIVE.test(verbOf(l.text)));
+      if (act && b >= act.b - LEAD_IN - (plan.head || 0) + plan.len + 10) return true;
+      return b >= 3200;
     };
-  const frames = kind === 'duel' ? plan.len + 60 : 2700;
+  const frames = kind === 'duel' ? plan.len + 60 : 3200;
   const table = []; let chosen = null;
   const pool = kind === 'squad' ? SQUAD_POOL : MAX_SEEDS;
-  for (let start = 1; start <= pool && (kind === 'squad' || !chosen); start += PARALLEL) {
+  for (let start = 1; start <= pool && (kind === 'duel' ? !chosen : !(chosen && start > 9)); start += PARALLEL) {
     const batch = Array.from({ length: PARALLEL }, (_, i) => start + i);
     const res = await Promise.all(batch.map((seed) => simulate(base, plan, seed, frames, stopWhen).then((r) => ({ seed, r }))));
     for (const { seed, r } of res) {
       const a = analyze(r.journal);
-      const c = check(a, plan);
+      const c = (kind === 'squad' && SQUAD_EXCLUDE.has(seed)) ? { ok: false, excluded: true, offset: null } : check(a, plan, r.journal);
       const row = { seed, ok: c.ok, ...c, cores: a.cores.join('/'), frames: r.journal.length };
       table.push(row);
       log(`  ${kind} зерно ${String(seed).padStart(2)}: ${c.ok ? 'ПОДХОДИТ' : 'нет'}  ${JSON.stringify({ ...c, ok: undefined })}  ядра ${row.cores}`);
@@ -147,7 +161,7 @@ export async function searchFight(base, kind, log = console.log) {
       ? 'первое зерно, при котором за окно ролика герой наносит ≥2 удара, по герою проходит ≥1 и бой не кончается'
       : `из ${SQUAD_POOL} прогнанных зёрен — то, где при включённом «ВЕДЁТ ЛЕГЕНДА» легенда сама действует ≥2 раз за окно ролика (окно начинается за 2 с до первого её действия, бой идёт всё окно) и делает это РАНЬШЕ всех остальных подходящих`,
     cores: chosen.a.cores, stats: chosen.c,
-    lines: chosen.a.lines.slice(0, 8),
+    lines: chosen.a.lines.slice(0, 8), windowLines: chosen.c.shown || null,
     journalHash: journalHash(chosen.journal, offset + plan.len),
     table,
   };

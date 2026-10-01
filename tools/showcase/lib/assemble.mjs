@@ -39,10 +39,14 @@ export function encodeTimeline({ root, every, out, crf = 16 }) {
     } else {
       inputs.push('-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=1280x720:r=${outFps}`);
     }
-    const fadeS = FADE / FPS;
     const len = p.len / FPS;
     let f = `[${i}:v]scale=1280:720,setsar=1,fps=${outFps}`;
-    if (p.plan) f += `,fade=t=in:st=0:d=${fadeS},fade=t=out:st=${Math.max(0, len - fadeS)}:d=${fadeS}`;
+    if (p.plan) {
+      // затемнения на стыках: по умолчанию FADE кадров; у планов переходов T1–T3 свои (fadeIn / fadeOut)
+      const fin = (p.plan.fadeIn ?? FADE) / FPS, fout = (p.plan.fadeOut ?? FADE) / FPS;
+      if (fin > 0) f += `,fade=t=in:st=0:d=${fin}`;
+      if (fout > 0) f += `,fade=t=out:st=${Math.max(0, len - fout)}:d=${fout}`;
+    }
     f += `[v${i}]`;
     filters.push(f); labels.push(`[v${i}]`);
   });
@@ -61,7 +65,7 @@ export function buildMarks({ results }) {
     marks.push({ t: p.start, time: fmt(p.start), name: p.plan ? `▶ ${p.plan.title}` : `переход ${p.id} (затемнение, пока чёрный)`, kind: 'segment' });
     if (!p.plan) continue;
     const r = results[p.plan.id] || {};
-    for (const m of r.marks || []) if (m.f >= 0 && m.f < p.len) marks.push({ t: p.start + m.f, time: fmt(p.start + m.f), name: m.name, kind: 'action' });
+    for (const m of [...(r.marks || []), ...((p.plan.marks || []).map((x) => ({ ...x })))]) if (m.f >= 0 && m.f < p.len) marks.push({ t: p.start + m.f, time: fmt(p.start + m.f), name: m.name, kind: m.kind || 'action' });
     for (const e of r.events || []) if (e.f >= 0 && e.f < p.len) marks.push({ t: p.start + e.f, time: fmt(p.start + e.f), name: e.name, kind: e.kind });
   }
   marks.sort((a, b) => a.t - b.t);

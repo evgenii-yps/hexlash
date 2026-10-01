@@ -107,6 +107,7 @@
       for (let i = 0; i < n; i++) {
         now += DT; frame++;
         fireTimers();
+        if (window.__vt.pre) { try { window.__vt.pre(frame); } catch (e) { console.error('[vt pre]', e); } }
         const q = rafQ; rafQ = [];
         for (const [, cb] of q) { try { cb(now); } catch (e) { console.error('[vt raf]', e); } }
         syncAnimations();

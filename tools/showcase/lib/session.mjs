@@ -172,6 +172,13 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
         if (stopWhen && row && stopWhen(row, b, journal)) break;
         const f = b - offset;
         if (capture && f >= 0 && f % every === 0) {
+          // BAM, шаг 1: кадр стягивается к центру в чёрный (план задаёт fx:[{kind:'squeeze', f0, f1}])
+          for (const fx of plan.fx || []) {
+            if (fx.kind === 'squeeze' && f >= fx.f0 && f < fx.f1) {
+              const u = (f - fx.f0 + 1) / (fx.f1 - fx.f0); const k = Math.max(0, 1 - Math.pow(u, 1.6));
+              await page.evaluate((k2) => { const e = document.documentElement; e.style.transformOrigin = '50% 50%'; e.style.transform = `scale(${k2})`; e.style.overflow = 'hidden'; }, k);
+            }
+          }
           const buf = await page.screenshot({ type: 'png' });
           writeFileSync(path.join(outDir, String(seq++).padStart(5, '0') + '.png'), buf);
           hashes[f] = md5(buf);
