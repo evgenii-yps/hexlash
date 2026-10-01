@@ -71,6 +71,16 @@
         }
         return [...actors.values()].map((a) => ({ i: a.i, pos: a.last, dead: !!a.u.dead, bot: !!a.u.isBot, side: a.u.sideId }));
       }
+      // легенда над боем (ЧИСТО картинка, группа в сцене, рост 0,6): ищем её среди детей сцены — не боец поля и не служебная группа
+      let legendObj = null;
+      function legendPos() {
+        if (!legendObj || !legendObj.parent) {
+          const us = new Set((st.field && st.field.units ? st.field.units() : []).map((u) => u.f.group));
+          legendObj = null;
+          for (const o of st.scene.children) if (o.type === 'Group' && Math.abs(o.scale.x - 0.6) < 0.01 && !us.has(o)) legendObj = o;
+        }
+        return legendObj && legendObj.visible ? legendObj.position.toArray() : null;
+      }
       const alive = (A) => { const l = A.filter((a) => !a.dead); return l.length ? l : A; };
       const hero = (A) => A.find((a) => !a.bot && !a.dead) || A.find((a) => !a.bot) || A[0];
       const nearestOther = (A, me) => { let best = null, bd = 1e9; for (const a of alive(A)) { if (a.i === me.i || a.side === me.side) continue; const d = Math.hypot(a.pos[0] - me.pos[0], a.pos[2] - me.pos[2]); if (d < bd) { bd = d; best = a; } } return best || A.find((a) => a.i !== me.i) || me; };
@@ -82,14 +92,20 @@
           const a = (sh.a0 || 0) + (sh.da || 0) * f, r = sh.r || 9, h = sh.h || 5.5;
           return { pos: [r * Math.sin(a), h, r * Math.cos(a)], look: sh.look || [0, 0.8, 0], fov: sh.fov || 42 };
         },
-        // рамка на всех живых: дальше расходятся — отъезжаем
+        // рамка на всех живых: дальше расходятся — отъезжаем.
+        // legend: доля 0..1 — в рамку берётся и ЛЕГЕНДА НАД БОЕМ (если она сейчас в мире): точка взгляда сдвигается к ней на эту долю,
+        // отъезд считается и от неё. Легенда висит позади плиты, и без этого кадр на бойцов оставлял её за краем.
         frame(sh, f, A) {
           const L = alive(A); let cx = 0, cz = 0;
           for (const a of L) { cx += a.pos[0]; cz += a.pos[2]; }
           cx /= L.length; cz /= L.length;
-          let spread = 0; for (const a of L) spread = Math.max(spread, Math.hypot(a.pos[0] - cx, a.pos[2] - cz));
+          const lg = sh.legend ? legendPos() : null;
+          const w = lg ? sh.legend : 0;
+          const tx = cx * (1 - w) + (lg ? lg[0] : 0) * w, tz = cz * (1 - w) + (lg ? lg[2] : 0) * w;
+          let spread = 0; for (const a of L) spread = Math.max(spread, Math.hypot(a.pos[0] - tx, a.pos[2] - tz));
+          if (lg) spread = Math.max(spread, Math.hypot(lg[0] - tx, lg[2] - tz));
           const ang = (sh.a0 || 0) + (sh.da || 0) * f, r = (sh.r || 3.4) + spread * (sh.k || 1.3);
-          return { pos: [cx + r * Math.sin(ang), sh.h || 2.6, cz + r * Math.cos(ang)], look: [cx, sh.ly || 1.0, cz], fov: sh.fov || 40 };
+          return { pos: [tx + r * Math.sin(ang), sh.h || 2.6, tz + r * Math.cos(ang)], look: [tx, sh.ly || 1.0, tz], fov: sh.fov || 40 };
         },
         // сбоку: камера ПЕРПЕНДИКУЛЯРНО линии «герой — ближайший чужой», оба в профиль и разведены
         // на экране (силуэты не сливаются). r — отступ от середины; k — прибавка на каждый метр между

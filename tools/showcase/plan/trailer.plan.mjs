@@ -111,7 +111,8 @@ export const plans = [
     fadeIn: 24, fadeOut: 4,
     trim: { head: 6 },   // шкала: съём головы ради титра T1 на доле (см. титры); сам план и его кадры не меняются
     world: { roster: [hero, { callsign: 'CINDER', core: 'skala' }], squad: [0, 1], mode: 'squad', n: 2, legend: { callsign: 'ELDER', core: 'natisk' } },
-    hide: [...DEV_UI, '.arena-scrim'],
+    // TOWEL (полотенце) читается как «сдаюсь» (решение владельца 29.09/01.10) — первая карта ряда баффов («TOWEL ×N») вне кадра; ряд сжимается
+    hide: [...DEV_UI, '.arena-scrim', '.bfo-cards .bc-card:first-child'],
     actions: [{ b: 12, type: 'clickEl', sel: '.cmd-toggle', mark: 'тумблер: ВЕДЁТ ЛЕГЕНДА' }],
     camera: {
       kind: 'dynamic', blend: 40,
@@ -119,10 +120,12 @@ export const plans = [
         { ch: 'roll', f0: 0, f1: 54, v0: 34, v1: 0, ease: 'smoother' },
         { ch: 'yaw', f0: 486, f1: 502, v0: 0, v1: 48, ease: 'smooth' },     // рывок ВЛЕВО; в зале вход продолжает то же движение
       ],
-      shots: [{ from: 0, shot: 'frame', a0: 1.3, da: 0.0005, r: 4.6, k: 0.9, h: 3.4, ly: 0.35, fov: 42 }],
+      // легенда над боем висит позади плиты — рамка берёт и её (legend: 0,5) и стоит со стороны +z, чтобы легенда была над бойцами
+      shots: [{ from: 0, shot: 'frame', legend: 0.5, a0: 0.45, da: 0.0003, r: 3.0, k: 1.0, h: 3.6, ly: 1.4, fov: 46 }],
     },
     marks: [
       { f: 0,   kind: 'transition', name: 'T1: проявление, крен раскручивается в ноль' },
+      { f: 60,  kind: 'action', name: 'легенда над боем в кадре: тёмная фигура, золотое сердце' },
       { f: 474, kind: 'transition', name: 'T2: рывок камеры' },
     ],
     still: 200,
