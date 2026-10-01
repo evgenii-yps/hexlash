@@ -126,8 +126,11 @@ const sha = (root) => execFileSync('git', ['-C', root, 'rev-parse', '--short', '
 
 // Побайтное сравнение снимков + разбор расхождения. Программный рендерер песочницы (SwiftShader)
 // изредка (≈1 из 6 прогонов одного и того же кода) даёт единичные пиксели на 1–2 уровня яркости;
-// поэтому для расхождений считаем: сколько пикселей и на сколько отличаются. «Совпало с допуском
-// шума» — не более 0,1 % пикселей и не более 3 уровней яркости. Побайтно и с допуском — отдельными числами.
+// поэтому для расхождений считаем: сколько пикселей и на сколько отличаются. «Совпало в допуске»
+// — не более GUARD_TOL.levels уровней яркости на канал И не более GUARD_TOL.share доли пикселей кадра;
+// больше — это расхождение, а не шум. Допуск зафиксирован решением владельца (01.10.2026) и действует
+// ТОЛЬКО для снимков игры «до/после»: повторяемость кадров ролика и контрольные суммы боя — строго побайтно.
+const GUARD_TOL = { levels: 2, share: 0.001 };
 function pixelDiff(a, b) {
   const { PNG } = require('playwright-core/lib/utilsBundle');
   const A = PNG.sync.read(a), B = PNG.sync.read(b);
@@ -151,11 +154,11 @@ async function guard(ref) {
     for (const k of keys) {
       if (A.hashes[k] === B.hashes[k]) { exact++; console.log(`  ✓ ${k}  ${A.hashes[k]} ${B.hashes[k]}`); continue; }
       const d = pixelDiff(A.bufs[k], B.bufs[k]);
-      const tol = d.share <= 0.001 && d.max <= 3;
+      const tol = d.share <= GUARD_TOL.share && d.max <= GUARD_TOL.levels;
       if (tol) noise++; else bad++;
       console.log(`  ${tol ? '≈' : '✗'} ${k}  ${A.hashes[k]} ${B.hashes[k]}  пикселей ${d.pixels} (${(d.share * 100).toFixed(3)} %), макс. разница ${d.max} из 255`);
     }
-    console.log(`побайтно совпало ${exact} из ${keys.length}; с допуском шума (≤0,1 % пикселей, ≤3 уровней) ещё ${noise}; настоящих расхождений ${bad}`);
+    console.log(`побайтно совпало ${exact} из ${keys.length}; в допуске (≤0,1 % пикселей и ≤2 уровней на канал) ещё ${noise}; настоящих расхождений ${bad}`);
     process.exitCode = bad ? 1 : 0;
   } finally { dropWorktree(wt); }
 }
