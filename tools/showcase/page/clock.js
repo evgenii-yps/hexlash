@@ -127,6 +127,10 @@
     async settle() {
       await new Promise((r) => realRAF(() => realRAF(r)));
       for (let i = 0; i < 100 && inflight > 0; i++) await new Promise((r) => realST(r, 10));
+      // Переходы CSS, созданные в ЭТИ два настоящих кадра (например, подписи ворот после выбора бойца), успели
+      // бы прожить сколько-то реального времени до снимка, а оно зависит от машины и частоты снимков.
+      // Ставим их на паузу в ноль сразу, до снимка.
+      syncAnimations();
     },
     realDelay(ms) { return new Promise((r) => realST(r, ms)); },
   };
