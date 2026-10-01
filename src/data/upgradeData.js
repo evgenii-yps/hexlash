@@ -275,16 +275,16 @@ export const CRYSTALS = {
     // splits it from ТАРАН (the chasing hammer). No counter.
     mkBranch('c', 'VICE', [
       // Shoves the foe with its body — presses in close.
-      { name: 'Body Shove', shifts: [s('stick', 7), s('distance', -6)] },
+      { name: 'Body Shove', shifts: [s('stick', 6), s('distance', -6)] },
       // A heavy, slow blow that's hard to block (weight + block pierce).
       { name: 'Heavy Slam', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceSlamPen)] },
       // Won't let the foe slip around it — holds it in front (stick, no chase).
-      { name: 'No Way Around', shifts: [s('stick', 8)] },
+      { name: 'No Way Around', shifts: [s('stick', 7)] },
       // Pins it: the closer it gets, the tighter the hold (pin — close-grip ramp;
       // conditional, approximated by stick + closing in until coded).
-      { name: 'Pin', shifts: [s('stick', 7), s('distance', -6)], conditionals: ['pin'] },
+      { name: 'Pin', shifts: [s('stick', 6), s('distance', -6)], conditionals: ['pin'] },
       // VERTEX — clinch: stick to the ceiling + a heavy grinding, piercing press.
-      { name: 'Clinch', shifts: [s('stick', 12), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },
+      { name: 'Clinch', shifts: [s('stick', 11), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },
     ]),
   ],
   zasada: [

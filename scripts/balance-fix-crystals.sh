@@ -9,6 +9,7 @@ export WT=/tmp/bf/wt-cr-$TAG
 mkdir -p $CR_OUT/raw
 python3 scripts/balance-fix-wt.py $WT
 for st in zero solo build; do node scripts/crystal-remeasure-run.mjs $st --jobs=4; done
+node scripts/crystal-remeasure-input.mjs
 node scripts/crystal-remeasure-report.mjs solo
 node scripts/crystal-remeasure-report.mjs build
 echo "ГОТОВО $CR_OUT"

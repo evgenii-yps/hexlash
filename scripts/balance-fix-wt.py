@@ -5,6 +5,7 @@
 import sys, os, subprocess, re
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WT = os.path.abspath(sys.argv[1])
+OV = {a.split('=',1)[0][2:]: a.split('=',1)[1] for a in sys.argv[2:] if a.startswith('--') and '=' in a}  # --cb='js' --bh='js' --ud='js' --kb='js' --bb='js': правки ТОЛЬКО в копии (быстрый подбор чисел)
 os.makedirs(WT, exist_ok=True)
 import shutil
 for d in ['src', 'scripts']:
@@ -68,4 +69,7 @@ patch(I, "export function chooseIntentionSpinal(self, foe, memory, fight) {\n  r
 patch(I, "    for (const l of self.leans) {\n      if (s[l.i] == null) continue;", "    if (globalThis.__PROBE) globalThis.__PROBE.holds = holds; // ЗОНД\n    for (const l of self.leans) {\n      if (s[l.i] == null) continue;")
 B = f'{WT}/src/scene/buildFighter.js'
 patch(B, "      leans: (behavior && behavior.leans) || null,", "      side, // ЗОНД balance-fix (только копия дерева)\n      leans: (behavior && behavior.leans) || null,")
-print('копия готова:', WT)
+for key, rel in [('cb', 'src/data/combatBalance.js'), ('bh', 'src/data/behavior.js'), ('ud', 'src/data/upgradeData.js'), ('kb', 'src/data/klichBalance.js'), ('bb', 'src/data/buffBalance.js'), ('it', 'src/data/intentions.js')]:
+    if key in OV:
+        open(f'{WT}/{rel}', 'a').write('\n/* --- ПОДБОР ЧИСЕЛ (только копия) --- */\n' + OV[key] + '\n')
+print('копия готова:', WT, ('правки: ' + str(list(OV))) if OV else '')

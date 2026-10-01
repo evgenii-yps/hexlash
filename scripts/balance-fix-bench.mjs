@@ -20,7 +20,8 @@ const OUT = join(REPO, 'docs/balance-fix/out', tag);
 mkdirSync(OUT, { recursive: true });
 
 if (stage === 'naked') {
-  const r = spawnSync('python3', [join(REPO, 'scripts/balance-fix-wt.py'), WT], { stdio: 'inherit' });
+  const ovs = args.filter((a) => /^--(cb|bh|ud|kb|bb|it)=/.test(a));
+  const r = spawnSync('python3', [join(REPO, 'scripts/balance-fix-wt.py'), WT, ...ovs], { stdio: 'inherit' });
   if (r.status) process.exit(1);
   const jobs = [];
   for (const [from, to] of sets) for (const a of CORES) jobs.push({ type: 'naked', need: NEED, swap: SWAP, seedFrom: from, seedTo: to, pairs: CORES.map((b) => [a, b]), out: join(OUT, `raw-naked-${a}-s${from}.json`) });
