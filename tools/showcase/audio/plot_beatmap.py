@@ -11,7 +11,7 @@ y, sr = sf.read(wav); y = y.mean(1) if y.ndim > 1 else y
 info = json.load(open(info_json)); dur = info['times']['dur']
 beats = [float(r['время в ролике, с'].replace(',', '.')) for r in csv.DictReader(open(beats_csv, encoding='utf8'), delimiter=';')]
 marks = list(csv.DictReader(open(marks_csv, encoding='utf8'), delimiter=';'))
-W, H, L, R = 3000, 980, 70, 40
+W, H, L, R = 3000, 640, 70, 40
 x = lambda t: L + (W - L - R) * t / dur
 img = Image.new('RGB', (W, H), (8, 8, 10)); d = ImageDraw.Draw(img)
 F = lambda n, b=False: ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans%s.ttf' % ('-Bold' if b else ''), n)
@@ -33,19 +33,25 @@ d.text((L, 376), 'доли трека (темп ≈99 уд/мин), в врем�
 for s in range(0, int(dur) + 1, 5):
     d.line([x(s), bot, x(s), bot + 6], fill=(150, 150, 160)); d.text((x(s) - 14, bot + 8), f'{s}', fill=(150, 150, 160), font=F(15))
 colors = {'title': (246, 244, 246), 'bam': (255, 0, 105), 'gesture': (212, 168, 67), 'transition': (130, 200, 130), 'segment': (90, 90, 100), 'action': (110, 110, 120), 'fight': (60, 60, 70), 'legend': (110, 110, 120)}
-sel = [m for m in marks if m['тип'] in ('title', 'bam', 'gesture', 'transition')]
+sel = [m for m in marks if m['тип'] in ('title', 'bam', 'gesture', 'transition') and ('щелчок' in m['метка'] or 'начинают' in m['метка'] or 'шаг 2' in m['метка'] or 'шаг 1' in m['метка'])]
 # события — колонкой по уровням, чтобы подписи не слипались
 last = {}
 ly = 420
 for m in sel:
     t = int(m['кадр']) / 60; c = colors[m['тип']]
     lvl = 0
-    while lvl in last and x(t) - last[lvl] < 330: lvl += 1
+    while lvl in last and x(t) - last[lvl] < 560: lvl += 1
     last[lvl] = x(t)
     yy = ly + lvl * 52
     d.line([x(t), top, x(t), yy], fill=c + (255,) if False else c, width=2 if m['тип'] in ('bam', 'title') else 1)
     sh = m['сдвиг, мс (метка − доля)']
-    nm = m['метка'][:44]
-    d.text((x(t) + 4, yy), nm, fill=c, font=F(14, m['тип'] in ('bam', 'title')))
+    nm = m['метка'][:40]
+    right = x(t) > W - 520
+    tx = (lambda s_, f_: x(t) - 6 - d.textlength(s_, font=f_)) if right else (lambda s_, f_: x(t) + 4)
+    f1 = F(14, m['тип'] in ('bam', 'title')); f2 = F(13)
+    s2 = f"{m['время']} · доля {m['ближайшая доля, с (ролик)']} · {('+' if int(sh) >= 0 else '')}{sh} мс"
+    d.text((tx(nm, f1), yy), nm, fill=c, font=f1)
+    d.text((tx(s2, f2), yy + 18), s2, fill=(150, 150, 160), font=f2)
+    continue
     d.text((x(t) + 4, yy + 18), f"{m['время']} · доля {m['ближайшая доля, с (ролик)']} · {('+' if int(sh) >= 0 else '')}{sh} мс", fill=(150, 150, 160), font=F(13))
 img.save(out)
