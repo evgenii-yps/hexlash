@@ -93,6 +93,7 @@ import { bindBuffArena, unbindBuffArena, buffStartFight, buffEndFight, buffTick 
 import { bindKlichArena, unbindKlichArena, klichStartFight, klichEndFight, klichTick } from '@/services/klich.js';
 import { bindSelectArena, unbindSelectArena, selectStartFight, selectEndFight, selectTick } from '@/services/fighterSelect.js';
 import { countLit } from '@/data/upgradeTree.js';
+import { bindLegendArena, unbindLegendArena, legendTick } from './arenaLegend.js';
 import { composeChainFoe, composeSquadFoes, composeRaid } from '@/data/foeCompose.js';
 import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
@@ -1864,6 +1865,7 @@ onMounted(() => {
   // Палец по бойцам теперь ловит ОДИН этот файл — до него это делали кличи и
   // баффы, каждый своим слушателем, одним и тем же кодом.
   if (!showcase) bindSelectArena({ camera, canvas: canvasEl.value, field });
+  bindLegendArena({ scene, camera, renderer, field, topY: arena.refs.topY, reduced: reducedMotion }); // легенда над боем: картинка, тумблер читает сама
 
   // FIGHT (key F / button): clean re-run — dispose both, respawn fresh at full
   // HP + neutral, then both fight autonomously until one is eliminated.
@@ -2551,6 +2553,7 @@ onMounted(() => {
       runSigFight();
     }
 
+    legendTick(frameMs / 1000, t); // легенда над боем (только картинка): после всех движений камеры, прямо перед кадром
     renderer.render(scene, camera);
 
     // One settled frame toward readiness — counted only once every stage above is
@@ -2650,6 +2653,7 @@ onBeforeUnmount(() => {
   unbindBuffArena();   // и баффы: палец ловить нечем, класть предметы некуда
   unbindKlichArena();  // и кличи: кричать некому
   unbindSelectArena(); // и выбор: палец ловить нечем, выбирать некого
+  unbindLegendArena(); // и легенда над боем
   load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
