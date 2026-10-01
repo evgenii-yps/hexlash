@@ -733,8 +733,9 @@ export function buildFighter(
   const rollMiss = () => Math.random() < missChance;
   // resilience → incoming-damage / stagger multipliers, derived in takeDamage
   // from the fighter's resilience axis (manner — constant this pass).
-  const dmgMulFor = (res01) => lerp(1.15, 0.38, res01); // glass takes more · floor 0.38 (was 0.6) so max resilience at peak ~halves incoming vs a neutral fighter
-  const stagMulFor = (res01) => lerp(1.0, 0.15, res01); // tough barely hitches
+  const RES = COMBAT_BALANCE.resilience; // 🔒 числа вынесены в combatBalance.resilience (TZ_balance_fix_v2, этап Б)
+  const dmgMulFor = (res01) => lerp(RES.dmgMulGlass, RES.dmgMulWall, res01); // glass takes more · wall takes less
+  const stagMulFor = (res01) => lerp(RES.stagMulGlass, RES.stagMulWall, res01); // tough barely hitches
   // Scale this fighter's movement bands by weight (local objects — safe to
   // mutate per fighter; a touch of jitter keeps two same-weight builds distinct).
   SLOW.speed *= speedMul * (1 + jit(0.05));
