@@ -178,7 +178,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
           for (const fx of plan.fx || []) {
             if (fx.kind === 'squeeze' && f >= fx.f0 && f < fx.f1) {
               const u = (f - fx.f0 + 1) / (fx.f1 - fx.f0); const k = Math.max(0, 1 - Math.pow(u, 1.6));
-              await page.evaluate((k2) => { const e = document.documentElement; e.style.height = '100vh'; e.style.width = '100vw'; e.style.transformOrigin = '50% 50%'; e.style.transform = `scale(${k2})`; e.style.overflow = 'hidden'; }, k);
+              await page.evaluate((k2) => { const h = document.documentElement, e = document.body; h.style.background = '#000'; e.style.margin = '0'; e.style.height = '100vh'; e.style.width = '100vw'; e.style.clipPath = 'inset(0)'; e.style.transformOrigin = '50% 50%'; e.style.transform = `scale(${k2})`; h.style.overflow = 'hidden'; }, k);
             }
           }
           const buf = await page.screenshot({ type: 'png' });

@@ -235,7 +235,7 @@ try {
     // шкала
     const dir = path.join(outRoot, 'trailer'); mkdirSync(dir, { recursive: true });
     if (!only) {
-      const mp4 = path.join(dir, `stage2-draft-${size[1]}p${FPS / every}.mp4`);
+      const mp4 = path.join(dir, `stage3-draft-${size[1]}p${FPS / every}.mp4`);
       encodeTimeline({ root: outRoot, every, out: mp4 });
       writeMarks(dir, buildMarks({ results }));
       const stills = copyStills({ root: outRoot, every, dir: path.join(dir, 'stills') });
