@@ -215,3 +215,12 @@ export const timeline = [
   { plan: 's10-logo' },
 ];
 export const FADE = 12;   // кадров затемнения на стыках кусков по умолчанию
+
+// Отрывки для просмотра в 1080p (команда `cli.mjs excerpts`): переходы T1–T3 и финал. Каждая часть —
+// кусок плана [from, to) в кадрах плана или чёрная пауза (gap). Совпадает со шкалой выше.
+export const excerpts = [
+  { id: 'T1', title: 'T1 · дуэль → SQUAD: крен нарастает, чёрный, крен раскручивается', parts: [{ plan: 's03-duel', from: 560, to: 654 }, { gap: 36 }, { plan: 's05a-squad', from: 0, to: 100 }] },
+  { id: 'T2', title: 'T2 · SQUAD → зал FORGE: рывок, чёрный, вход и спуск к легенде', parts: [{ plan: 's05a-squad', from: 440, to: 502 }, { gap: 4 }, { plan: 's05b-forge', from: 0, to: 120 }] },
+  { id: 'T3', title: 'T3 · зал FORGE → главный остров: отъезд, затемнение, проявление пятерых', parts: [{ plan: 's05b-forge', from: 480, to: 568 }, { gap: 20 }, { plan: 's09-finale', from: 0, to: 100 }] },
+  { id: 'FIN', title: 'Финал · жест, пауза, BAM, логотип', parts: [{ plan: 's09-finale', from: 400, to: 520 }, { plan: 's10-logo', from: 0, to: 150 }] },
+];

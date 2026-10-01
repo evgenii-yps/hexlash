@@ -94,3 +94,36 @@ export function copyStills({ root, every, dir }) {
   }
   return list;
 }
+
+/**
+ * Отрывок ролика (участки переходов и финала в 1080p): части — куски планов [from, to) и чёрные паузы.
+ * Кадры планов сняты `run({ranges})` (имя файла = номер кадра / every). Затемнения — как в шкале:
+ * вход применяется, только если кусок начинается с 0, выход — только если кончается на длине плана.
+ */
+export function encodeExcerpt({ root, every, size, parts, out, crf = 16 }) {
+  const ff = findFfmpeg();
+  const outFps = FPS / every; const [W, H] = size;
+  const inputs = []; const filters = []; const labels = [];
+  parts.forEach((p, i) => {
+    if (p.gap !== undefined) {
+      inputs.push('-f', 'lavfi', '-t', String(p.gap / FPS), '-i', `color=c=black:s=${W}x${H}:r=${outFps}`);
+      filters.push(`[${i}:v]setsar=1,fps=${outFps}[v${i}]`);
+    } else {
+      const plan = plans.find((x) => x.id === p.plan);
+      const n = Math.round((p.to - p.from) / every);
+      inputs.push('-framerate', String(outFps), '-start_number', String(Math.round(p.from / every)), '-i', path.join(root, p.plan, 'frames', '%05d.png'), '-frames:v', String(n));
+      let f = `[${i}:v]scale=${W}:${H},setsar=1,fps=${outFps}`;
+      const len = (p.to - p.from) / FPS;
+      const fin = p.from === 0 ? (plan.fadeIn ?? FADE) / FPS : 0, fout = p.to === plan.len ? (plan.fadeOut ?? FADE) / FPS : 0;
+      if (fin > 0) f += `,fade=t=in:st=0:d=${fin}`;
+      if (fout > 0) f += `,fade=t=out:st=${Math.max(0, len - fout)}:d=${fout}`;
+      filters.push(f + `[v${i}]`);
+    }
+    labels.push(`[v${i}]`);
+  });
+  filters.push(`${labels.join('')}concat=n=${parts.length}:v=1:a=0,format=yuv420p[vout]`);
+  const args = ['-y', '-hide_banner', '-loglevel', 'error', ...inputs, '-filter_complex', filters.join(';'), '-map', '[vout]',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', String(crf), '-movflags', '+faststart', out];
+  const r = spawnSync(ff, args, { stdio: 'inherit' });
+  if (r.status !== 0) throw new Error('ffmpeg не собрал отрывок');
+}

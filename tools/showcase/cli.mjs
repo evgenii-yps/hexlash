@@ -7,6 +7,7 @@
 //   node tools/showcase/cli.mjs fights [duel|squad]   подбор боёв заново (зёрна, окна) → plan/fights.lock.json
 //   node tools/showcase/cli.mjs plan <id> [опции]     один план
 //   node tools/showcase/cli.mjs verify <id>           ПОЛНАЯ сверка: второй рендер всех кадров и сравнение побайтно
+//   node tools/showcase/cli.mjs excerpts [--size 1920x1080]  отрывки переходов T1–T3 и финала (по умолчанию 1080p, 30 кадр/с)
 //   node tools/showcase/cli.mjs guard [ref]           снимки игры «до» (ref, по умолчанию origin/main) и «после» (рабочая копия)
 //   node tools/showcase/cli.mjs regress [ref]         регрессионный снимок боя и обе контрольные суммы: ref против рабочей копии
 //
@@ -23,8 +24,8 @@ import { openSession, warm } from './lib/session.mjs';
 import { encode } from './lib/ffmpeg.mjs';
 import { provenance } from './lib/provenance.mjs';
 import { lockStatus, refreshFights, resolvePlan, readLock, analyze } from './lib/fights.mjs';
-import { encodeTimeline, buildMarks, writeMarks, copyStills, layout, fmt } from './lib/assemble.mjs';
-import { plans, FPS } from './plan/trailer.plan.mjs';
+import { encodeTimeline, encodeExcerpt, buildMarks, writeMarks, copyStills, layout, fmt } from './lib/assemble.mjs';
+import { plans, excerpts, FPS } from './plan/trailer.plan.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const { values: o, positionals: [cmd = 'help', arg] } = parseArgs({
@@ -52,12 +53,12 @@ function fightEvents(journal, plan) {
   return ev;
 }
 
-async function renderPlan(base, planIn, dir, { from, to, every: ev = every, sz = size, capture = true } = {}) {
+async function renderPlan(base, planIn, dir, { ranges, every: ev = every, sz = size, capture = true } = {}) {
   const plan = resolvePlan(planIn);
   const t0 = Date.now();
   const s = await openSession({ base, plan, size: sz, log: () => {} });
   const { hashes, journal } = await s.run({
-    outDir: dir, every: ev, capture,
+    outDir: dir, every: ev, capture, ranges,
     onFrame: (f, n) => { if (f % 60 === 0) process.stdout.write(`  ${plan.id} кадр ${f}/${n}\r`); },
   });
   const net = s.net(); const marks = s.marks;
@@ -222,6 +223,21 @@ try {
     writeFileSync(path.join(dir, 'net-report.json'), JSON.stringify({ total: net, perPlan: Object.fromEntries(Object.entries(results).map(([k, v]) => [k, v.net])) }, null, 1));
     writeFileSync(path.join(dir, 'verify-report.json'), JSON.stringify(verify, null, 1));
     console.log(`✓ готово за ${info.seconds} с. Сеть за весь прогон: заблокировано ${net.blocked} запросов (из них аналитика ${net.analytics}), WebSocket ${net.ws}, УШЛО НАРУЖУ: ${net.sent}`);
+  } else if (cmd === 'excerpts') {
+    // каждый план рендерится один раз, снимаются только нужные куски всех отрывков
+    const sz = o.size === '1280x720' ? [1920, 1080] : size; const root = path.join(outRoot, 'excerpts');
+    const need = {};
+    for (const ex of excerpts) for (const p of ex.parts) if (p.plan) (need[p.plan] ||= []).push([p.from, p.to]);
+    await warm(srv.base, Object.keys(need).map((id) => resolvePlan(pick(id))).filter((p) => p.kind !== 'logo'), sz);
+    for (const [id, ranges] of Object.entries(need)) {
+      const r = await renderPlan(srv.base, pick(id), path.join(root, id, 'frames'), { ranges, sz });
+      console.log(`  ✓ ${id}: ${r.sec} с, кадров ${Object.keys(r.hashes).length}, сеть: ушло ${r.net.sentOutside}`);
+    }
+    for (const ex of excerpts) {
+      const out = path.join(root, `${ex.id}-${sz[1]}p${FPS / every}.mp4`);
+      encodeExcerpt({ root, every, size: sz, parts: ex.parts, out });
+      console.log('  →', out);
+    }
   } else if (cmd === 'guard') {
     await guard(arg || 'origin/main');
   } else if (cmd === 'regress') {

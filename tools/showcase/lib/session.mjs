@@ -162,7 +162,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
     page, t0, pump, frame, marks, offset,
     net: () => summarizeNet(net),
     /** Прогоняет кадры боя [0, offset+len) и сохраняет снимки окна. capture:false — только расчёт (подбор зёрен). */
-    async run({ outDir, every = 1, capture = true, frames, onFrame, stopWhen }) {
+    async run({ outDir, every = 1, capture = true, frames, onFrame, stopWhen, ranges }) {   // ranges: [[от, до), …] в кадрах плана — снимать только их (имя файла = номер кадра / every)
       if (capture) { rmSync(outDir, { recursive: true, force: true }); mkdirSync(outDir, { recursive: true }); }
       const hashes = {}; const journal = []; let seq = 0;
       const total = frames ?? (offset + plan.len);
@@ -173,7 +173,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
         if (row) journal.push(row);
         if (stopWhen && row && stopWhen(row, b, journal)) break;
         const f = b - offset;
-        if (capture && f >= 0 && f % every === 0) {
+        if (capture && f >= 0 && f % every === 0 && (!ranges || ranges.some(([a, z]) => f >= a && f < z))) {
           // BAM, шаг 1: кадр стягивается к центру в чёрный (план задаёт fx:[{kind:'squeeze', f0, f1}])
           for (const fx of plan.fx || []) {
             if (fx.kind === 'squeeze' && f >= fx.f0 && f < fx.f1) {
@@ -182,7 +182,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
             }
           }
           const buf = await page.screenshot({ type: 'png' });
-          writeFileSync(path.join(outDir, String(seq++).padStart(5, '0') + '.png'), buf);
+          writeFileSync(path.join(outDir, String(ranges ? f / every : seq++).padStart(5, '0') + '.png'), buf);
           hashes[f] = md5(buf);
           if (onFrame) onFrame(f, plan.len);
         }
