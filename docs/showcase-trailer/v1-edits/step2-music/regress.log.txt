@@ -1,0 +1,8 @@
+▶ fight-regression.mjs
+  origin/main b7515df7: checksum: ec148d29dba29092ab735e129779a37e60bcb1b124b79cc093da79ff9e86400c  (строк 51)
+  рабочая копия fcfa5de2: checksum: ec148d29dba29092ab735e129779a37e60bcb1b124b79cc093da79ff9e86400c  (строк 51)
+  ✓ вывод совпал построчно
+▶ fight-regression-builds.mjs
+  origin/main b7515df7: checksum: 5b0a65d4e0481cdc834c89a1dc89610e79011cd10695b11c679755bdb52bbd27  (строк 39)
+  рабочая копия fcfa5de2: checksum: 5b0a65d4e0481cdc834c89a1dc89610e79011cd10695b11c679755bdb52bbd27  (строк 39)
+  ✓ вывод совпал построчно
