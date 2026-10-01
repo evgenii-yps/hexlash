@@ -80,7 +80,7 @@ async function ready(page) {
 /** Запись кадров в странице: каждый кадр — состояние + время. */
 const startRec = (page) => page.evaluate(() => {
   window.__rec = []; window.__recOn = true;
-  const loop = () => { if (!window.__recOn) return; const r = window.__legendProbe?.read(); if (r) window.__rec.push({ ts: performance.now(), ...r }); requestAnimationFrame(loop); };
+  const loop = () => { if (!window.__recOn) return; const r = window.__legendProbe?.read(); if (r) window.__rec.push({ ts: performance.now(), platClear: r.dbg?.platClear, hoverY: r.dbg?.hoverY, ...r }); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 });
 const stopRec = (page) => page.evaluate(() => { window.__recOn = false; return window.__rec; });
@@ -251,7 +251,7 @@ if (want('E')) {
   await s.page.screenshot({ path: `${OUT}/E-freecam.png` });
   const rec = await stopRec(s.page);
   const v = rec.filter((r) => r.visible && r.pos && r.clearNdc != null);
-  const minClear = Math.min(...v.map((r) => r.clearNdc));
+  const minClear = Math.min(...v.filter((r) => r.platClear != null).map((r) => r.platClear)); // от НИЖНЕЙ точки платформы
   const maxHead = Math.max(...v.map((r) => r.headNdc));
   // параллакс: мировая точка (x, z) не едет, а экранное положение — едет
   const wx = v.map((r) => r.pos[0]), wz = v.map((r) => r.pos[2]);
@@ -282,7 +282,7 @@ if (want('F')) {
   await sleep(800);
   await s.page.screenshot({ path: `${OUT}/F-showcase.png` });
   const r = await readP(s.page);
-  ok(r.headNdc <= 1 && r.clearNdc > 0, 'принудительно показанная легенда в кадре над плашками', `(зазор ${r.clearNdc.toFixed(3)})`);
+  ok(r.headNdc <= 1 && r.dbg.platClear > 0, 'принудительно показанная легенда в кадре над плашками', `(зазор от низа платформы ${r.dbg.platClear.toFixed(3)})`);
   await s.page.evaluate(() => window.__legendProbe.force(false));
   await sleep(1500);
   await close(s, '05-showcase');
@@ -327,8 +327,58 @@ if (want('I')) {
     const r = await readP(s.page);
     await s.page.screenshot({ path: `${OUT}/I-${w}x${h}.png` });
     // легенда не закрывает плашки: ноги выше самой высокой точки плашек (либо упёрлись в верх кадра)
-    ok(r.headNdc <= 1 && (r.clearNdc > 0 || r.headNdc > 0.9), `${w}×${h}: в кадре, выше плашек`, `(зазор ${r.clearNdc.toFixed(3)}, голова ${r.headNdc.toFixed(2)})`);
+    ok(r.headNdc <= 1 && r.dbg.platClear > 0, `${w}×${h}: в кадре, платформа выше плашек`, `(зазор от низа платформы ${r.dbg.platClear.toFixed(3)}, голова ${r.headNdc.toFixed(2)})`);
     await close(s);
+  }
+}
+
+if (want('P')) {
+  console.log('\n── P. ПЛАТФОРМА И ПАРЕНИЕ ───────────────────────────────────');
+  for (const [w, h] of [[1280, 720], [390, 844]]) {
+    const s = await open({ w, h, video: w === 1280 ? true : null });
+    await ready(s.page);
+    await toggle(s.page);
+    await s.page.waitForFunction(() => window.__legendProbe.read().p >= 0.999, null, { timeout: 10_000 });
+    await sleep(600);
+    await startRec(s.page);
+    await sleep(w === 1280 ? 12_000 : 6_000);                        // парение: больше одного полупериода
+    const rec = await stopRec(s.page);
+    const v = rec.filter((r) => r.visible && r.platClear != null);
+    const hy = v.map((r) => r.hoverY);
+    const swing = Math.max(...hy) - Math.min(...hy);
+    const minClear = Math.min(...v.map((r) => r.platClear));
+    const maxHead = Math.max(...v.map((r) => r.headNdc));
+    ok(swing > 0.15, `${w}×${h}: легенда с платформой парит вверх-вниз`, `(размах в мире ${swing.toFixed(2)}, за ${(v[v.length - 1].clock - v[0].clock).toFixed(1)} с сцены)`);
+    ok(minClear > 0.02, `${w}×${h}: зазор над плашками от НИЖНЕЙ точки платформы в нижней точке парения`, `(наименьший ${minClear.toFixed(3)} доли кадра = ${(minClear * h / 2).toFixed(0)} px)`);
+    ok(maxHead <= 1.0, `${w}×${h}: голова в кадре на всём парении`, `(наибольшая ${maxHead.toFixed(3)})`);
+    // яркость: платформа не ярче тела (среднее по окну; сердце в окно тела не входит)
+    const pr = await readP(s.page);
+    await s.page.screenshot({ path: `${OUT}/P-${w}x${h}.png` });
+    // окна в пикселях: платформа (передняя половина — ног там нет) и ноги легенды (сердце выше)
+    const buf = await s.page.screenshot();
+    const L = await s.page.evaluate(async ({ b64, pos, sc, legH, cam }) => {
+      const T = window.__legendProbe.toPixel;
+      const R = 0.92 * sc, gap = 0.04 * sc, bot = -0.26 * sc;
+      let dx = cam[0] - pos[0], dz = cam[2] - pos[2]; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl; // к камере
+      const box = (pts) => { const q = pts.map((p) => T(p[0], p[1], p[2])); const x0 = Math.min(...q.map((a) => a.x)), x1 = Math.max(...q.map((a) => a.x)), y0 = Math.min(...q.map((a) => a.y)), y1 = Math.max(...q.map((a) => a.y)); return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; };
+      const front = (k) => [pos[0] + dx * R * k, pos[2] + dz * R * k];
+      const platPts = []; for (const k of [0.25, 1]) for (const sx of [-1, 1]) for (const yy of [pos[1] - gap, pos[1] + bot]) { const f = front(k); platPts.push([f[0] + sx * R * 0.7 * -dz, yy, f[1] + sx * R * 0.7 * dx]); }
+      const legPts = []; for (const sx of [-1, 1]) for (const yy of [pos[1] + 0.05, pos[1] + 0.4 * legH]) legPts.push([pos[0] + sx * 0.12, yy, pos[2]]);
+      const rects = [box(platPts), box(legPts)];
+      const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+      const g = cv.getContext('2d'); g.drawImage(img, 0, 0);
+      const kx = img.width / innerWidth, ky = img.height / innerHeight;
+      return rects.map((r) => {
+        const d = g.getImageData(Math.max(0, Math.round(r.x * kx)), Math.max(0, Math.round(r.y * ky)), Math.max(1, Math.round(r.w * kx)), Math.max(1, Math.round(r.h * ky))).data;
+        let sum = 0, max = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) { const l = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; sum += l; if (l > max) max = l; n += 1; }
+        return { mean: sum / n, max, w: r.w, h: r.h };
+      });
+    }, { b64: buf.toString('base64'), pos: pr.pos, sc: pr.scale, legH: pr.legH, cam: pr.cam });
+    console.log(`  яркость (0–255): платформа средн. ${L[0].mean.toFixed(1)}, макс. ${L[0].max.toFixed(0)} · ноги легенды средн. ${L[1].mean.toFixed(1)}, макс. ${L[1].max.toFixed(0)}`);
+    ok(L[0].mean <= L[1].mean * 1.25 + 2 && L[0].max <= Math.max(L[1].max * 1.25, 40), `${w}×${h}: платформа не ярче тела легенды`);
+    await close(s, w === 1280 ? '07-platform-hover' : null);
   }
 }
 
