@@ -13,7 +13,12 @@ import { plans, timeline, FPS, FADE } from '../plan/trailer.plan.mjs';
 export function layout() {
   let t = 0; const out = [];
   for (const item of timeline) {
-    if (item.plan) { const p = plans.find((x) => x.id === item.plan); out.push({ id: p.id, plan: p, start: t, len: p.len }); t += p.len; }
+    if (item.plan) {
+      // trim — съём кадров с головы/хвоста только в шкале (рендер плана не меняется): сцены подрезаются под окна титров на долях музыки
+      const p = plans.find((x) => x.id === item.plan); const head = p.trim?.head ?? 0, tail = p.trim?.tail ?? 0;
+      const len = p.len - head - tail;
+      out.push({ id: p.id, plan: p, start: t, len, head }); t += len;
+    }
     else { out.push({ id: item.label, plan: null, start: t, len: item.gap }); t += item.gap; }
   }
   return { parts: out, total: t };
@@ -35,7 +40,8 @@ export function encodeTimeline({ root, every, out, crf = 16 }) {
   parts.forEach((p, i) => {
     if (p.plan) {
       const dir = path.join(root, p.plan.id, 'frames');
-      inputs.push('-framerate', String(outFps), '-i', path.join(dir, '%05d.png'));
+      if (p.head % every) throw new Error(`trim.head плана ${p.id} должен быть кратен every=${every}`);
+      inputs.push('-framerate', String(outFps), '-start_number', String(p.head / every), '-t', String(p.len / FPS), '-i', path.join(dir, '%05d.png'));
     } else {
       inputs.push('-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=1280x720:r=${outFps}`);
     }
@@ -65,8 +71,10 @@ export function buildMarks({ results }) {
     marks.push({ t: p.start, time: fmt(p.start), name: p.plan ? `▶ ${p.plan.title}` : `переход ${p.id} (затемнение, пока чёрный)`, kind: 'segment' });
     if (!p.plan) continue;
     const r = results[p.plan.id] || {};
-    for (const m of [...(r.marks || []), ...((p.plan.marks || []).map((x) => ({ ...x })))]) if (m.f >= 0 && m.f < p.len) marks.push({ t: p.start + m.f, time: fmt(p.start + m.f), name: m.name, kind: m.kind || 'action' });
-    for (const e of r.events || []) if (e.f >= 0 && e.f < p.len) marks.push({ t: p.start + e.f, time: fmt(p.start + e.f), name: e.name, kind: e.kind });
+    // кадр плана → кадр шкалы: за вычетом съёмного куска головы; метки, попавшие в съём, — в начало куска только для переходов
+    const at = (f) => p.start + f - p.head;
+    for (const m of [...(r.marks || []), ...((p.plan.marks || []).map((x) => ({ ...x })))]) if (m.f >= p.head - (m.kind === 'transition' ? 1e9 : 0) && m.f - p.head < p.len) marks.push({ t: at(Math.max(m.f, p.head)), time: fmt(at(Math.max(m.f, p.head))), name: m.name, kind: m.kind || 'action' });
+    for (const e of r.events || []) if (e.f >= p.head && e.f - p.head < p.len) marks.push({ t: at(e.f), time: fmt(at(e.f)), name: e.name, kind: e.kind });
   }
   marks.sort((a, b) => a.t - b.t);
   return { fps: FPS, totalFrames: total, totalTime: fmt(total), marks };

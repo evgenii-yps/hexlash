@@ -109,6 +109,7 @@ export const plans = [
     // хвост перехода T2 (28 кадров: рывок камеры вбок, чёрный).
     id: 's05a-squad', title: '05a · SQUAD 2 на 2, ведёт легенда', kind: 'arena', route: '/play/arena', len: 502, win: 420, head: 54, tail: 28, offset: 0, fight: 'squad',
     fadeIn: 24, fadeOut: 4,
+    trim: { head: 6 },   // шкала: съём головы ради титра T1 на доле (см. титры); сам план и его кадры не меняются
     world: { roster: [hero, { callsign: 'CINDER', core: 'skala' }], squad: [0, 1], mode: 'squad', n: 2, legend: { callsign: 'ELDER', core: 'natisk' } },
     hide: [...DEV_UI, '.arena-scrim'],
     actions: [{ b: 12, type: 'clickEl', sel: '.cmd-toggle', mark: 'тумблер: ВЕДЁТ ЛЕГЕНДА' }],
@@ -132,6 +133,7 @@ export const plans = [
     // потом спуск к грушам, хвост — отъезд назад и вверх (T3, 60 кадров).
     id: 's05b-forge', title: '05b + 07 · Легенда над залом FORGE → груши', kind: 'scene', route: '/play/pve', len: 568, align: 420,
     fadeIn: 4, fadeOut: 30,
+    trim: { head: 8, tail: 16 },   // шкала: съём головы (титр T2 на доле) и хвоста (титр T3 на доле)
     world: {
       roster: [
         { ...hero, lesson: 55 }, { callsign: 'RAZOR', core: 'nalet', lesson: 55 },
@@ -169,7 +171,7 @@ export const plans = [
     hide: HOME_UI.concat(['.hs-dock']),
     camera: {
       kind: 'keys', ease: 'smooth',
-      stage: { fighters: STAGE_FIVE, yawOff: 30, gesture: { f0: 452, dur: 24, reach: 1.5, torsoTurn: -12 } },
+      stage: { fighters: STAGE_FIVE, yawOff: 30, gesture: { f0: 456, dur: 24, reach: 1.5, torsoTurn: -12 } },
       keys: [
         { f: 0,   pos: [7.6, 5.4, 9.6],  look: [-0.65, 1.0, 0.0], roll: 0, fov: 40 },
         { f: 120, pos: [5.0, 3.6, 8.8],  look: [-0.65, 1.2, 0.0], roll: 0, fov: 38 },
@@ -181,20 +183,22 @@ export const plans = [
     fx: [{ kind: 'squeeze', f0: 512, f1: 520 }],
     marks: [
       { f: 0,   kind: 'transition', name: 'T3: проявление общего плана пятерых' },
-      { f: 452, kind: 'gesture', name: 'жест «рука-стрела»: все пятеро начинают в один кадр' },
-      { f: 476, kind: 'gesture', name: 'жест: все пятеро в позе в один кадр' },
+      { f: 456, kind: 'gesture', name: 'жест «рука-стрела»: все пятеро начинают в один кадр (на доле)' },
+      { f: 480, kind: 'gesture', name: 'жест: все пятеро в позе в один кадр' },
       { f: 512, kind: 'bam', name: 'BAM, шаг 1: кадр стягивается к центру (8 кадров)' },
     ],
     still: 480,
   },
-  // ── Титры в чёрном кадре переходов (шаг 1 правок v1). Тексты, тайминг и вид — только здесь. ──
-  // 72 кадра: 6 чёрных, титр ≈1,0 с (60 кадров; «щелчок» масштаба 92 → 100 % за 4 кадра), срез в чёрный, 6 чёрных.
-  { id: 't1-title', title: 'T1 · титр', kind: 'title', len: 72, text: 'LEGEND TAKES COMMAND', delay: 6, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 20, world: { roster: [] },
-    marks: [{ f: 6, kind: 'title', name: 'титр T1: LEGEND TAKES COMMAND (щелчок масштаба)' }, { f: 66, kind: 'title', name: 'титр T1: срез в чёрный' }] },
-  { id: 't2-title', title: 'T2 · титр', kind: 'title', len: 72, text: 'TRAIN YOUR FIGHTERS', delay: 6, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 20, world: { roster: [] },
-    marks: [{ f: 6, kind: 'title', name: 'титр T2: TRAIN YOUR FIGHTERS (щелчок масштаба)' }, { f: 66, kind: 'title', name: 'титр T2: срез в чёрный' }] },
-  { id: 't3-title', title: 'T3 · титр', kind: 'title', len: 72, text: 'BUILD YOUR SQUAD', delay: 6, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 20, world: { roster: [] },
-    marks: [{ f: 6, kind: 'title', name: 'титр T3: BUILD YOUR SQUAD (щелчок масштаба)' }, { f: 66, kind: 'title', name: 'титр T3: срез в чёрный' }] },
+  // ── Титры в чёрном кадре переходов (шаг 1 правок v1), посажены на доли музыки (шаг 2). Тексты, тайминг и вид — только здесь. ──
+  // Титр ≈1,0 с (hold 60 кадров; «щелчок» масштаба 92 → 100 % за 4 кадра), срез в чёрный. delay — чёрные кадры до титра:
+  // титр появляется ровно на доле трека (19,25 / 28,85 / 39,07 с трека при задержке музыки 0,465 с), поэтому окна разной
+  // длины (len); соседние сцены подрезаны в шкале на столько же (trim у s05a/s05b), так что все остальные события остались на местах.
+  { id: 't1-title', title: 'T1 · титр', kind: 'title', len: 78, text: 'LEGEND TAKES COMMAND', delay: 12, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 30, world: { roster: [] },
+    marks: [{ f: 12, kind: 'title', name: 'титр T1: LEGEND TAKES COMMAND (щелчок масштаба)' }, { f: 72, kind: 'title', name: 'титр T1: срез в чёрный' }] },
+  { id: 't2-title', title: 'T2 · титр', kind: 'title', len: 80, text: 'TRAIN YOUR FIGHTERS', delay: 14, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 30, world: { roster: [] },
+    marks: [{ f: 14, kind: 'title', name: 'титр T2: TRAIN YOUR FIGHTERS (щелчок масштаба)' }, { f: 74, kind: 'title', name: 'титр T2: срез в чёрный' }] },
+  { id: 't3-title', title: 'T3 · титр', kind: 'title', len: 88, text: 'BUILD YOUR SQUAD', delay: 4, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 30, world: { roster: [] },
+    marks: [{ f: 4, kind: 'title', name: 'титр T3: BUILD YOUR SQUAD (щелчок масштаба)' }, { f: 64, kind: 'title', name: 'титр T3: срез в чёрный (тишина перед возвратом темы)' }] },
   {
     id: 's10-logo', title: '14–15 · BAM → логотип', kind: 'logo', len: 300, delay: 6, up: 6, down: 3, mark: 132, still: 200,
     fadeIn: 0,
@@ -209,7 +213,8 @@ export const plans = [
 
 // Порядок на шкале. gap — чёрные кадры между кусками (сейчас не используется: чёрные кадры переходов
 // заняты титрами). Переходы T1–T3 живут в хвостах и головах соседних планов (крен, рывок, отъезд),
-// а чёрный между ними — титр: T1 54+72+54, T2 28+72+28, T3 60+72+40 кадров. Итого 3276 кадров = 54,6 с.
+// а чёрный между ними — титр (окна 78 / 80 / 88 кадров; соседние сцены подрезаны в шкале через trim, чтобы события не уехали).
+// Итого 3276 кадров = 54,6 с.
 export const timeline = [
   { plan: 's01-home' },
   { plan: 's02-gate' },
@@ -232,3 +237,21 @@ export const excerpts = [
   { id: 'T3', title: 'T3 · зал FORGE → главный остров: отъезд, затемнение, проявление пятерых', parts: [{ plan: 's05b-forge', from: 480, to: 568 }, { plan: 't3-title', from: 0, to: 72 }, { plan: 's09-finale', from: 0, to: 100 }] },
   { id: 'FIN', title: 'Финал · жест, пауза, BAM, логотип', parts: [{ plan: 's09-finale', from: 400, to: 520 }, { plan: 's10-logo', from: 0, to: 150 }] },
 ];
+
+// Музыка (шаг 2 правок v1). Трек — Bertsz «Vintage montage music» (Pixabay), выбор владельца; карта долей и ударов —
+// audio/beatmap.json (`python3 audio/analyze.py`). Данные, не логика:
+//   anchors — момент трека (с) ↔ кадр шкалы {plan, f: кадр плана};
+//   cut     — кадр шкалы, где музыка обрывается (начало стягивания кадра, BAM шаг 1); после обрыва — провал,
+//             потом полнозвучный вход трека на кадре bam. Для этого берётся кусок трека с 74,18 с (тихая часть
+//             перед кодой), а не затухающий хвост громкой части. Всё — из самого трека, ничего не добавлено.
+export const music = {
+  file: 'audio/bertsz-vintage-montage-music-188528.mp3',
+  anchors: {
+    theme: { track: 40.468, at: { plan: 's09-finale', f: 0 } },   // возврат темы после затухания = первый кадр финала (проявление пятерых)
+    bam:   { track: 74.41,  at: { plan: 's10-logo', f: 6 } },     // полнозвучный вход после провала = первый кадр логотипа
+  },
+  cut: { plan: 's09-finale', f: 512 },
+  fadeIn: 1.0,      // с: плавный вход (отсчёт от начала музыки)
+  fadeOut: 3.0,     // с: затухание под удержанием логотипа, заканчивается за 0,1 с до конца
+  lufs: -14, tp: -1.5, bitrate: '192k',
+};
