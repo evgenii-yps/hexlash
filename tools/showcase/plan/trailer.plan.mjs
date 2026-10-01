@@ -169,7 +169,7 @@ export const plans = [
     hide: HOME_UI.concat(['.hs-dock']),
     camera: {
       kind: 'keys', ease: 'smooth',
-      stage: { fighters: STAGE_FIVE, gesture: { f0: 452, dur: 24, reach: 1.5 } },
+      stage: { fighters: STAGE_FIVE, yawOff: 30, gesture: { f0: 452, dur: 24, reach: 1.5, torsoTurn: -12 } },
       keys: [
         { f: 0,   pos: [7.6, 5.4, 9.6],  look: [-0.65, 1.0, 0.0], roll: 0, fov: 40 },
         { f: 120, pos: [5.0, 3.6, 8.8],  look: [-0.65, 1.2, 0.0], roll: 0, fov: 38 },

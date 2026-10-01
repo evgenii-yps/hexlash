@@ -197,6 +197,7 @@
           grp.position.x = spec.x; grp.position.z = spec.z;
           grp.rotation.y = Math.atan2(-(spec.face[0] - spec.x), -(spec.face[1] - spec.z)) + (sg.yawOff || 0) * Math.PI / 180;
           if (g > 0) {
+            if (sg.gesture.torsoTurn) b.fighter.joints.torso.rotation.y += sg.gesture.torsoTurn * Math.PI / 180 * g;
             const j = b.fighter.joints.armR;
             j.shoulder.rotation.x = lerp(j.shoulder.rotation.x, sg.gesture.reach ?? 1.5, g);
             j.elbow.rotation.x = lerp(j.elbow.rotation.x, 0.05, g);
