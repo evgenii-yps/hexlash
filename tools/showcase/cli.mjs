@@ -32,7 +32,7 @@ const { values: o, positionals: [cmd = 'help', arg] } = parseArgs({
   allowPositionals: true,
   options: {
     range: { type: 'string' }, size: { type: 'string', default: '1280x720' }, every: { type: 'string', default: '2' },
-    out: { type: 'string' }, only: { type: 'string' }, 'no-verify': { type: 'boolean', default: false },
+    out: { type: 'string' }, only: { type: 'string' }, 'no-verify': { type: 'boolean', default: false }, reuse: { type: 'boolean', default: false },
   },
 });
 const size = o.size.split('x').map(Number);
@@ -171,9 +171,9 @@ try {
     const dir = path.join(outRoot, plan.id, 'frames');
     const [a, b] = o.range ? o.range.split('-').map(Number) : [0, plan.len];
     await warm(srv.base, [resolvePlan(plan)], size);
-    const r = await renderPlan(srv.base, plan, dir, {});
+    const r = await renderPlan(srv.base, plan, dir, { ranges: o.range ? [[a, b]] : undefined });
     const out = path.join(outRoot, plan.id, `${plan.id}.mp4`);
-    encode({ frames: path.join(dir, '%05d.png'), out, fps: FPS / every });
+    if (!o.range) encode({ frames: path.join(dir, '%05d.png'), out, fps: FPS / every });
     console.log(`  ${plan.id}: ${r.sec} с, сеть: заблокировано ${r.net.blockedTotal}, аналитика ${r.net.analyticsBlocked}, ушло ${r.net.sentOutside}  → ${out}`);
   } else if (cmd === 'verify') {
     const plan = pick(arg);
@@ -228,8 +228,8 @@ try {
     const sz = o.size === '1280x720' ? [1920, 1080] : size; const root = path.join(outRoot, 'excerpts');
     const need = {};
     for (const ex of excerpts) for (const p of ex.parts) if (p.plan) (need[p.plan] ||= []).push([p.from, p.to]);
-    await warm(srv.base, Object.keys(need).map((id) => resolvePlan(pick(id))).filter((p) => p.kind !== 'logo'), sz);
-    for (const [id, ranges] of Object.entries(need)) {
+    if (!o.reuse) await warm(srv.base, Object.keys(need).map((id) => resolvePlan(pick(id))).filter((p) => p.kind !== 'logo'), sz);
+    for (const [id, ranges] of o.reuse ? [] : Object.entries(need)) {   // --reuse: кадры уже сняты, только собрать видео
       const r = await renderPlan(srv.base, pick(id), path.join(root, id, 'frames'), { ranges, sz });
       console.log(`  ✓ ${id}: ${r.sec} с, кадров ${Object.keys(r.hashes).length}, сеть: ушло ${r.net.sentOutside}`);
     }

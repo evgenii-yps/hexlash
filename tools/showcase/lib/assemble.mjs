@@ -111,7 +111,7 @@ export function encodeExcerpt({ root, every, size, parts, out, crf = 16 }) {
     } else {
       const plan = plans.find((x) => x.id === p.plan);
       const n = Math.round((p.to - p.from) / every);
-      inputs.push('-framerate', String(outFps), '-start_number', String(Math.round(p.from / every)), '-i', path.join(root, p.plan, 'frames', '%05d.png'), '-frames:v', String(n));
+      inputs.push('-framerate', String(outFps), '-start_number', String(Math.round(p.from / every)), '-t', String(n / outFps), '-i', path.join(root, p.plan, 'frames', '%05d.png'));
       let f = `[${i}:v]scale=${W}:${H},setsar=1,fps=${outFps}`;
       const len = (p.to - p.from) / FPS;
       const fin = p.from === 0 ? (plan.fadeIn ?? FADE) / FPS : 0, fout = p.to === plan.len ? (plan.fadeOut ?? FADE) / FPS : 0;
