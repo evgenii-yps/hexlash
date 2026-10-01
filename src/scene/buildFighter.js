@@ -14,6 +14,7 @@ import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
 import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { motionFor } from '../data/intentionMotion.js';
+import { KLICH_BALANCE } from '../data/klichBalance.js';
 import { COMBAT_BALANCE, readDelaySec, readMissChance, readFalseChance, readWindupReactChance, readOpenReactChance } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
 // Материал тела и яркости ядра — из общего файла токенов сцены (ТЗ-01 §9).
@@ -716,7 +717,7 @@ export function buildFighter(
   // × УСТАЛОСТЬ × джиттер (low stamina weakens the hit, evaluated at impact time).
   // The defender multiplies by ITS OWN maxHp and softens by toughness / block /
   // dodge on its side (takeDamage).
-  const strikeDamage = (c) => B.damageFracBase * (stats.strikePower / B.strikePower) * (c.dmgMult || 0) * staminaPowerMul() * (1 + jit(B.jitter));
+  const strikeDamage = (c) => B.damageFracBase * (stats.strikePower / B.strikePower) * (c.dmgMult || 0) * staminaPowerMul() * klichFx('dmgDealtMul') * (1 + jit(B.jitter));
   // Toughness softening — PERCENT mitigation, saturating, never to zero (a weak
   // hit still chips through). Constant per fighter this pass (stats don't change
   // mid-bout yet); incoming damage is multiplied by (1 − toughSoft) in takeDamage.
@@ -831,6 +832,8 @@ export function buildFighter(
   let klichFade = 0;  // сколько секунд длится сход на нет в конце
   let klichId = null;     // id действующего клича (push|fallback|hold) — читает выбор намерения (TZ_klich_v2); null = клича нет
   let klichStrength = 0;  // его текущая сила 0…1 по тем же часам, что сдвиг осей: полная, затем линейно в ноль
+  // Эффекты клича на ПОЛНОЙ силе (весь holdSec): множитель из KLICH_BALANCE.effects[id][key], иначе 1 (balance-fix, этап Д). В сход на нет — снимаются сразу.
+  const klichFx = (key) => { if (!klichId || klichStrength < 1) return 1; const e = KLICH_BALANCE.effects[klichId]; return (e && e[key]) || 1; };
   const clearKlich = () => {
     klichUntil = 0; klichFade = 0;
     klichId = null; klichStrength = 0;
@@ -1615,9 +1618,9 @@ export function buildFighter(
     // BREATHE recovers wind even on the move (TZ_combat_distance_v1): its retreat is now a real FAST run
     // and the disengage gate stops it from striking — without this a winded fighter drained faster than it
     // regained (regen was stationary-only), sat in BREATHE at 0 stamina forever and stalled the bout (188 s).
-    if (intentionId === INTENTIONS.BREATHE && !clip) stamina += staminaRegenRate * dt;
+    if (intentionId === INTENTIONS.BREATHE && !clip) stamina += staminaRegenRate * klichFx('regenMul') * dt;
     else if (prevMag > 0.05) stamina -= B.staminaMoveDrainPerSec * THREE.MathUtils.clamp(prevMag / FAST.speed, 0, 1) * dt;
-    else if (!clip) stamina += staminaRegenRate * dt; // rest/stance → recover (БАСТИОН-3 «дыхание» seam)
+    else if (!clip) stamina += staminaRegenRate * klichFx('regenMul') * dt; // rest/stance → recover (БАСТИОН-3 «дыхание» seam)
     stamina = THREE.MathUtils.clamp(stamina, 0, staminaMax);
   };
 
@@ -2090,7 +2093,7 @@ export function buildFighter(
     // hits to a kill. Then soften by resilience / toughness / block (all
     // multiplicative ratios, independent of the HP scale).
     const before = hp;
-    hp = Math.max(0, hp - dmg * maxHp * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);
+    hp = Math.max(0, hp - dmg * maxHp * dmgMulFor(res01) * klichFx('dmgTakenMul') * (1 - toughSoft) * blockMul * interruptMul);
     const lost = before - hp; // real HP dealt → a clean exchange (resets накал if > 0)
     updateBar();
     if (hp <= 0) { eliminate(); return lost; } // → dissolve; onEliminated raised on completion
@@ -2622,7 +2625,7 @@ export function buildFighter(
     // key moments only — no locomotion, no clip playback (reads without jitter).
     if (reduced) {
       if (ai.on && !clip && state === 'alive') { faceInstant(); if (!blocking) reducedAttack(t); }
-      stamina = THREE.MathUtils.clamp(stamina + staminaRegenRate * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack; БАСТИОН-3 seam)
+      stamina = THREE.MathUtils.clamp(stamina + staminaRegenRate * klichFx('regenMul') * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack; БАСТИОН-3 seam)
       tickCharge(dt); // charge builds under reduced too (numeric)
       hips.position.set(0, hipsBaseY, 0);
       if (blocking) {
