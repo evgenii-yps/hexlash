@@ -1,0 +1,100 @@
+{
+ "provenance": {
+  "head": "3823f0a82c40156fc34b329e3d4ae12d439f5278",
+  "headSubject": "showcase: этап 4 — найдена и устранена причина нестабильности снимка «главный остров» (фаза бесконечных CSS-анимаций зависит от кадра монтажа): rebase анимаций к общей точке перед планом и снимком",
+  "main": "702596addbe06484d7b1e7f86aa9a092fcca7cef",
+  "mainSubject": "Merge branch 'claude/compassionate-faraday-fnd8zs': баланс-фикс (ядра, грани, 60 кристаллов, клич, баффы)",
+  "mergeBase": "5b0d765bff7a67ed4236ed8ef3c0cb6b15be6629",
+  "mainContainedInBranch": false,
+  "behindMain": 29,
+  "gameFilesChangedVsMain": 47,
+  "combatFingerprint": "360b763cd8654e87",
+  "combatFiles": 26,
+  "date": "2026-10-01T21:35:10.815Z"
+ },
+ "lock": {
+  "fingerprint": "360b763cd8654e87",
+  "fights": {
+   "duel": {
+    "seedBuild": 1,
+    "fightSeed": 9001,
+    "offset": 0,
+    "tried": 3,
+    "cores": [
+     "natisk",
+     "zasada"
+    ]
+   },
+   "squad": {
+    "seedBuild": 9,
+    "fightSeed": 9009,
+    "offset": 2022,
+    "tried": 9,
+    "cores": [
+     "natisk",
+     "skala",
+     "natisk",
+     "zasada"
+    ]
+   }
+  }
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "every": 2,
+ "timeline": [
+  {
+   "id": "s01-home",
+   "start": 0,
+   "len": 180
+  },
+  {
+   "id": "s02-gate",
+   "start": 180,
+   "len": 336
+  },
+  {
+   "id": "s03-duel",
+   "start": 516,
+   "len": 654
+  },
+  {
+   "id": "t1-title",
+   "start": 1170,
+   "len": 78
+  },
+  {
+   "id": "s05a-squad",
+   "start": 1248,
+   "len": 496
+  },
+  {
+   "id": "t2-title",
+   "start": 1744,
+   "len": 80
+  },
+  {
+   "id": "s05b-forge",
+   "start": 1824,
+   "len": 544
+  },
+  {
+   "id": "t3-title",
+   "start": 2368,
+   "len": 88
+  },
+  {
+   "id": "s09-finale",
+   "start": 2456,
+   "len": 520
+  },
+  {
+   "id": "s10-logo",
+   "start": 2976,
+   "len": 300
+  }
+ ],
+ "seconds": 1359
+}

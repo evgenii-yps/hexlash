@@ -40,6 +40,8 @@ export function provenance({ fetch = true } = {}) {
   try { p.behindMain = p.main ? Number(git('rev-list', '--count', 'HEAD..origin/main')) : null; } catch (_) {}
   // правки игры в ветке: всё, что вне tools/ и docs/
   try { p.gameFilesChangedVsMain = p.main ? git('diff', '--name-only', 'origin/main', 'HEAD', '--', '.', ':!tools', ':!docs').split('\n').filter(Boolean).length : null; } catch (_) {}
+  // «ролик снят с коммита main X» = общий предок ветки и origin/main (main мог уйти вперёд после слияния): правок игры относительно него должно быть 0
+  try { p.gameFilesChangedVsMergeBase = p.mergeBase ? git('diff', '--name-only', p.mergeBase, 'HEAD', '--', '.', ':!tools', ':!docs').split('\n').filter(Boolean).length : null; } catch (_) {}
   p.combatFingerprint = combatFingerprint();
   p.combatFiles = COMBAT_FILES.length;
   p.date = new Date().toISOString();

@@ -39,7 +39,7 @@ const { values: o, positionals: [cmd = 'help', arg] } = parseArgs({
   allowPositionals: true,
   options: {
     range: { type: 'string' }, size: { type: 'string', default: '1280x720' }, every: { type: 'string', default: '2' },
-    out: { type: 'string' }, only: { type: 'string' }, name: { type: 'string' }, video: { type: 'string' }, bamgain: { type: 'string' }, 'no-verify': { type: 'boolean', default: false }, reuse: { type: 'boolean', default: false },
+    crf: { type: 'string' }, preset: { type: 'string' }, tag: { type: 'string' }, out: { type: 'string' }, only: { type: 'string' }, name: { type: 'string' }, video: { type: 'string' }, bamgain: { type: 'string' }, 'no-verify': { type: 'boolean', default: false }, reuse: { type: 'boolean', default: false },
   },
 });
 const size = o.size.split('x').map(Number);
@@ -60,12 +60,12 @@ function fightEvents(journal, plan) {
   return ev;
 }
 
-async function renderPlan(base, planIn, dir, { ranges, every: ev = every, sz = size, capture = true } = {}) {
+async function renderPlan(base, planIn, dir, { ranges, every: ev = every, sz = size, capture = true, blurSpan = 0.5 * every } = {}) {   // blurSpan: ширина затвора в кадрах симуляции — по ВЫХОДНОЙ частоте, а не по шагу сверки
   const plan = resolvePlan(planIn);
   const t0 = Date.now();
   const s = await openSession({ base, plan, size: sz, log: () => {} });
   const { hashes, journal } = await s.run({
-    outDir: dir, every: ev, capture, ranges,
+    outDir: dir, every: ev, capture, ranges, blurSpan, blur: !process.env.SHOWCASE_NOBLUR,
     onFrame: (f, n) => { if (f % 60 === 0) process.stdout.write(`  ${plan.id} кадр ${f}/${n}\r`); },
   });
   const net = s.net(); const marks = s.marks;
@@ -219,7 +219,7 @@ try {
   } else if (cmd === 'build') {
     const t0 = Date.now();
     const prov = provenance();
-    console.log(`▶ main ${prov.main?.slice(0, 8)} «${prov.mainSubject}» · ветка ${prov.head.slice(0, 8)} · правок игры в ветке: ${prov.gameFilesChangedVsMain} · цифры боя ${prov.combatFingerprint}`);
+    console.log(`▶ main ${prov.main?.slice(0, 8)} «${prov.mainSubject}» · ветка ${prov.head.slice(0, 8)} · снят с main ${prov.mergeBase?.slice(0, 8)}, правок игры относительно него: ${prov.gameFilesChangedVsMergeBase} (origin/main впереди: ${prov.behindMain} коммитов) · цифры боя ${prov.combatFingerprint}`);
     // одна команда: цифры боя изменились → бои пересобираются от нового журнала, зёрна подбираются заново
     const ls = lockStatus();
     if (!ls.fresh) { console.log(`⚠ ${ls.why} — подбираю бои заново`); await refreshFights(srv.base); }
@@ -250,7 +250,9 @@ try {
     const dir = path.join(outRoot, 'trailer'); mkdirSync(dir, { recursive: true });
     if (!only) {
       const mp4 = path.join(dir, `stage3-draft-${size[1]}p${FPS / every}.mp4`);
-      encodeTimeline({ root: outRoot, every, out: mp4 });
+      encodeTimeline({ root: outRoot, every, out: mp4, size, crf: Number(o.crf || 16), preset: o.preset || 'medium' });
+      // 60 кадр/с сняты → веб-версия 30 кадр/с собирается из тех же кадров (каждый кадр = среднее двух соседних, как затвор 180° при 30)
+      if (every === 1) encodeTimeline({ root: outRoot, every, out: path.join(dir, `stage3-draft-${size[1]}p30.mp4`), size, crf: Number(o.crf || 18), preset: o.preset || 'medium', blend30: true });
       writeMarks(dir, buildMarks({ results }));
       const stills = copyStills({ root: outRoot, every, dir: path.join(dir, 'stills') });
       writeFileSync(path.join(dir, 'stills.json'), JSON.stringify(stills, null, 1));
@@ -299,7 +301,8 @@ try {
       mix = buildContinuous({ ffmpeg: ffm, mp3, m0, dur: t.dur, music, boost: v.boost ? { ...v.boost, at: t.tBam } : null, outWav: wav });
     }
     const chk = checkLoudness({ ffmpeg: ffm, wav });
-    const outSound = path.join(dir, `${name}-music-draft-${size[1]}p${FPS / every}.mp4`), outSilent = path.join(dir, `${name}-silent-draft-${size[1]}p${FPS / every}.mp4`);
+    const tag = o.tag || `${size[1]}p${FPS / every}`;
+    const outSound = path.join(dir, `${name}-music-draft-${tag}.mp4`), outSilent = path.join(dir, `${name}-silent-draft-${tag}.mp4`);
     muxVideo({ ffmpeg: ffm, video, wav, outSound, outSilent, bitrate: music.bitrate, dur: t.dur });
     const rep = writeBeatReports({ dir, beatmap, t, marks, music, m0 });
     writeFileSync(path.join(dir, 'music-info.json'), JSON.stringify({ variant: vid, times: t, loudness: { measuredBeforeNorm: mix.measured, check: chk, target: { I: music.lufs, TP: music.tp } }, ...rep.info }, null, 1));

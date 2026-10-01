@@ -11,6 +11,8 @@
 import { chromium } from 'playwright';
 import { readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { buildSave } from './world.mjs';
@@ -32,6 +34,23 @@ const ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swif
   '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'];
 
 const md5 = (b) => createHash('md5').update(b).digest('hex');
+
+// Усреднение подкадров размытия движения — в ЛИНЕЙНОМ свете (как складывает свет настоящий затвор), результат — снова sRGB.
+const TO_LIN = new Float32Array(256).map((_, i) => { const v = i / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+function fromLin(x) { const v = x <= 0.0031308 ? x * 12.92 : 1.055 * Math.pow(x, 1 / 2.4) - 0.055; return Math.min(255, Math.max(0, Math.round(v * 255))); }
+export function averagePngs(bufs) {
+  const { PNG } = require('playwright-core/lib/utilsBundle');
+  const ims = bufs.map((b) => PNG.sync.read(b)); const { width, height } = ims[0];
+  const out = new PNG({ width, height }); const n = ims.length;
+  for (let i = 0; i < out.data.length; i += 4) {
+    for (let c = 0; c < 3; c++) { let a = 0; for (const im of ims) a += TO_LIN[im.data[i + c]]; out.data[i + c] = fromLin(a / n); }
+    out.data[i + 3] = 255;
+  }
+  return PNG.sync.write(out);
+}
+// Смещения подкадров (в кадрах симуляции) для затвора шириной span: центры четырёх равных долей, симметрично вокруг кадра
+export const BLUR_SUBFRAMES = 4;
+export const blurOffsets = (span) => Array.from({ length: BLUR_SUBFRAMES }, (_, k) => ((k + 0.5) / BLUR_SUBFRAMES - 0.5) * span);
 
 export async function openSession({ base, plan, size = [1280, 720], log = console.log }) {
   const net = createNetLog();
@@ -166,7 +185,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
     page, t0, pump, frame, marks, offset,
     net: () => summarizeNet(net),
     /** Прогоняет кадры боя [0, offset+len) и сохраняет снимки окна. capture:false — только расчёт (подбор зёрен). */
-    async run({ outDir, every = 1, capture = true, frames, onFrame, stopWhen, ranges }) {   // ranges: [[от, до), …] в кадрах плана — снимать только их (имя файла = номер кадра / every)
+    async run({ outDir, every = 1, capture = true, frames, onFrame, stopWhen, ranges, blur = true, blurSpan }) {   // ranges: [[от, до), …] в кадрах плана — снимать только их (имя файла = номер кадра / every)
       if (capture) { rmSync(outDir, { recursive: true, force: true }); mkdirSync(outDir, { recursive: true }); }
       const hashes = {}; const journal = []; let seq = 0;
       const total = frames ?? (offset + plan.len);
@@ -185,7 +204,18 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
               await page.evaluate((k2) => { const h = document.documentElement, e = document.body; h.style.background = '#000'; e.style.margin = '0'; e.style.height = '100vh'; e.style.width = '100vw'; e.style.clipPath = 'inset(0)'; e.style.transformOrigin = '50% 50%'; e.style.transform = `scale(${k2})`; h.style.overflow = 'hidden'; }, k);
             }
           }
-          const buf = await page.screenshot({ type: 'png' });
+          let buf;
+          // размытие движения: на быстрых участках плана (plan.blur — [[от, до), …]) кадр = среднее четырёх подкадров камеры, затвор 180° кадра ролика
+          if (blur && plan.camera && (plan.blur || []).some(([a, z]) => f >= a && f < z)) {
+            const shots = [];
+            for (const off of blurOffsets(blurSpan ?? 0.5 * every)) {
+              const ok = await page.evaluate((o) => window.__director.sub(o), off);
+              if (!ok) break;
+              await page.evaluate(() => window.__vt.settle());
+              shots.push(await page.screenshot({ type: 'png' }));
+            }
+            buf = shots.length === BLUR_SUBFRAMES ? averagePngs(shots) : await page.screenshot({ type: 'png' });
+          } else buf = await page.screenshot({ type: 'png' });
           writeFileSync(path.join(outDir, String(ranges ? f / every : seq++).padStart(5, '0') + '.png'), buf);
           hashes[f] = md5(buf);
           if (onFrame) onFrame(f, plan.len);

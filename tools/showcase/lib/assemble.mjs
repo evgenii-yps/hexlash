@@ -7,7 +7,13 @@ import { existsSync, mkdirSync, copyFileSync, writeFileSync, readdirSync, rmSync
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { findFfmpeg } from './ffmpeg.mjs';
-import { plans, timeline, FPS, FADE } from '../plan/trailer.plan.mjs';
+import { plans, timeline, FPS, FADE, grade } from '../plan/trailer.plan.mjs';
+import { gradeFilter } from './grade.mjs';
+
+// Цвет в файле: кадры RGB → YUV по BT.709 (HD), диапазон ТВ, и ЯВНЫЕ метки. Без них плеер сам решает, какую матрицу взять, и розовый уходит в оттенке
+// (замер на кнопке FIGHT: без меток G +20 у обычного плеера). Метки пишутся и в x264, и в контейнер.
+export const COLOR_TAGS = ['-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv'];
+const TO_YUV = 'scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv420p';
 
 /** Раскладывает шкалу: { id, plan|null, start, len } для каждого участка. */
 export function layout() {
@@ -32,33 +38,38 @@ export const fmt = (frames) => { const s = frames / FPS; return `${Math.floor(s 
  * @param {number} o.every       каждый n-й кадр снят (2 → 30 кадр/с)
  * @param {string} o.out         итоговый mp4
  */
-export function encodeTimeline({ root, every, out, crf = 16 }) {
+export function encodeTimeline({ root, every, out, crf = 16, preset = 'medium', size = [1280, 720], blend30 = false, doGrade = true }) {
   const ff = findFfmpeg();
   const { parts } = layout();
-  const outFps = FPS / every;
+  const [W, H] = size;
+  const outFps = (FPS / every) / (blend30 ? 2 : 1);   // blend30: снимали 60 кадр/с, в файл — 30, каждый кадр = среднее двух соседних (как затвор 180° при 30)
+  const inFps = FPS / every;
   const inputs = []; const filters = []; const labels = [];
   parts.forEach((p, i) => {
     if (p.plan) {
       const dir = path.join(root, p.plan.id, 'frames');
       if (p.head % every) throw new Error(`trim.head плана ${p.id} должен быть кратен every=${every}`);
-      inputs.push('-framerate', String(outFps), '-start_number', String(p.head / every), '-t', String(p.len / FPS), '-i', path.join(dir, '%05d.png'));
+      inputs.push('-framerate', String(inFps), '-start_number', String(p.head / every), '-t', String(p.len / FPS), '-i', path.join(dir, '%05d.png'));
     } else {
-      inputs.push('-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=1280x720:r=${outFps}`);
+      inputs.push('-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=${W}x${H}:r=${outFps}`);
     }
     const len = p.len / FPS;
-    let f = `[${i}:v]scale=1280:720,setsar=1,fps=${outFps}`;
+    let f = `[${i}:v]scale=${W}:${H},setsar=1,fps=${inFps}`;
     if (p.plan) {
+      // цветокоррекция — на игровые кадры; титры и логотип (графика бренда с заданными цветами) не трогаем
+      if (doGrade && p.plan.kind !== 'title' && p.plan.kind !== 'logo') f += gradeFilter(grade.params);
+      if (blend30) f += `,tmix=frames=2:weights='1 1',select='mod(n,2)',setpts=N/(${outFps}*TB)`;
       // затемнения на стыках: по умолчанию FADE кадров; у планов переходов T1–T3 свои (fadeIn / fadeOut)
       const fin = (p.plan.fadeIn ?? FADE) / FPS, fout = (p.plan.fadeOut ?? FADE) / FPS;
       if (fin > 0) f += `,fade=t=in:st=0:d=${fin}`;
       if (fout > 0) f += `,fade=t=out:st=${Math.max(0, len - fout)}:d=${fout}`;
     }
-    f += `[v${i}]`;
+    f += `,fps=${outFps}[v${i}]`;
     filters.push(f); labels.push(`[v${i}]`);
   });
-  filters.push(`${labels.join('')}concat=n=${parts.length}:v=1:a=0,format=yuv420p[vout]`);
+  filters.push(`${labels.join('')}concat=n=${parts.length}:v=1:a=0,${TO_YUV}[vout]`);
   const args = ['-y', '-hide_banner', '-loglevel', 'error', ...inputs, '-filter_complex', filters.join(';'), '-map', '[vout]',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', String(crf), '-movflags', '+faststart', out];
+    '-c:v', 'libx264', '-preset', preset, '-crf', String(crf), '-x264-params', 'colorprim=bt709:transfer=bt709:colormatrix=bt709:range=tv', ...COLOR_TAGS, '-movflags', '+faststart', out];
   const r = spawnSync(ff, args, { stdio: 'inherit' });
   if (r.status !== 0) throw new Error('ffmpeg не собрал шкалу');
 }

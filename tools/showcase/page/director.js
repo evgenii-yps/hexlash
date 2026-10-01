@@ -55,7 +55,7 @@
       if (!st) return { ok: false, err: 'setupState сцены не найден (нужен dev-сервер)' };
       const renderer = st.renderer, cam = st.camera;
       const orig = renderer.render.bind(renderer);
-      const T = { on: false, f0: 0 };
+      const T = { on: false, f0: 0, sub: 0 };   // sub — доля кадра для подкадров размытия движения (0 в обычном кадре)
       const actors = new Map();           // боец → { i, last:[x,y,z] }
       const lastPose = { v: null };
       let frameSm = null;   // состояние сглаживания рамки (shot frame, sm)
@@ -249,10 +249,8 @@
       }
 
       // ── drive: двигаем настоящую камеру до цикла игры ──
-      function driveFrame() {
-        if (!T.on || !cfg.drive) return;
-        const f = window.__vt.frame - T.f0;
-        if (f < 0 || (cfg.release && f >= cfg.release.at)) return;
+      // поза настоящей камеры на кадре f (дробном — для подкадров)
+      function drivePose(f) {
         applyStage(f);
         let p = cfg.kind === 'rel' ? relPose(f) : cfg.kind === 'dynamic' ? dynamicPose(f) : keyPose(f);
         p = applyPost(p, f);
@@ -262,19 +260,25 @@
         cam.lookAt(p.look[0], p.look[1], p.look[2]);
         if (p.fov !== cam.fov) { cam.fov = p.fov; cam.updateProjectionMatrix(); }
       }
+      function driveFrame() {
+        if (!T.on || !cfg.drive) return;
+        const f = window.__vt.frame - T.f0;
+        if (f < 0 || (cfg.release && f >= cfg.release.at)) return;
+        drivePose(f);
+      }
       window.__vt.pre = driveFrame;
 
       renderer.render = (scene, camera) => {
         if (!T.on || camera !== cam) return orig(scene, camera);
         if (cfg.drive) {
           // камера уже поставлена настоящей (до цикла игры), поэтому сцена (легенда над боем и т. п.) считает от неё; здесь только крен — на отрисовке
-          const fd = window.__vt.frame - T.f0, roll = (cfg.release && fd >= cfg.release.at) ? 0 : postVal(fd, 'roll');
+          const fd = window.__vt.frame - T.f0 + T.sub, roll = (cfg.release && fd >= cfg.release.at) ? 0 : postVal(fd, 'roll');
           if (!roll) return withPlates(fd, () => orig(scene, camera));
           const sq = cam.quaternion.clone();
           cam.rotateZ(roll * Math.PI / 180);
           try { return withPlates(fd, () => orig(scene, camera)); } finally { cam.quaternion.copy(sq); }
         }
-        const f = window.__vt.frame - T.f0;
+        const f = window.__vt.frame - T.f0 + T.sub;
         const sp = cam.position.clone(), sq = cam.quaternion.clone(), sf = cam.fov;
         applyStage(f);
         let p = cfg.kind === 'dynamic' ? dynamicPose(f) : cfg.kind === 'rel' ? relPose(f) : keyPose(f);
@@ -298,6 +302,25 @@
       };
       window.__director.start = (f0) => { T.f0 = f0; T.on = true; base = null; lastPose.v = null; keysR = null; };
       window.__director.stop = () => { T.on = false; };
+      // Подкадр размытия движения: ТОЛЬКО камера сдвигается на s кадров от текущего, всё остальное в сцене стоит как на этом кадре.
+      // Рисуем ещё раз прямо сейчас (после шага игры) и возвращаем камеру как была. Вернёт false, если камера в этот кадр отдана игре.
+      window.__director.sub = (s) => {
+        if (!T.on) return false;
+        const f = window.__vt.frame - T.f0;
+        if (f < 0 || (cfg.release && f + s >= cfg.release.at)) return false;
+        const sp = cam.position.clone(), sq = cam.quaternion.clone(), sf = cam.fov, c = st.controls, ct = c ? c.target.clone() : null;
+        T.sub = s;
+        try {
+          if (cfg.drive) drivePose(f + s);
+          renderer.render(st.scene, cam);
+        } finally {
+          T.sub = 0;
+          cam.position.copy(sp); cam.quaternion.copy(sq);
+          if (cam.fov !== sf) { cam.fov = sf; cam.updateProjectionMatrix(); }
+          if (c) c.target.copy(ct);
+        }
+        return true;
+      };
       window.__director.info = () => ({ fov: cam.fov, pos: cam.position.toArray(), aspect: cam.aspect });
       return { ok: true, info: window.__director.info() };
     },

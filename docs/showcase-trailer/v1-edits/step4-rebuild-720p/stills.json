@@ -1,0 +1,72 @@
+[
+ {
+  "plan": "s01-home",
+  "title": "01 · Главный остров, FIGHT",
+  "frame": 100,
+  "time": "0:01.67",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s01-home.png"
+ },
+ {
+  "plan": "s02-gate",
+  "title": "02 · Ворота: выбор бойца",
+  "frame": 12,
+  "time": "0:03.20",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s02-gate.png"
+ },
+ {
+  "plan": "s03-duel",
+  "title": "03 · DUEL 1 на 1",
+  "frame": 330,
+  "time": "0:14.10",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s03-duel.png"
+ },
+ {
+  "plan": "t1-title",
+  "title": "T1 · титр",
+  "frame": 30,
+  "time": "0:20.00",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/t1-title.png"
+ },
+ {
+  "plan": "s05a-squad",
+  "title": "05a · SQUAD 2 на 2, ведёт легенда",
+  "frame": 200,
+  "time": "0:24.13",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s05a-squad.png"
+ },
+ {
+  "plan": "t2-title",
+  "title": "T2 · титр",
+  "frame": 30,
+  "time": "0:29.57",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/t2-title.png"
+ },
+ {
+  "plan": "s05b-forge",
+  "title": "05b + 07 · Легенда над залом FORGE → груши",
+  "frame": 100,
+  "time": "0:32.07",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s05b-forge.png"
+ },
+ {
+  "plan": "t3-title",
+  "title": "T3 · титр",
+  "frame": 30,
+  "time": "0:39.97",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/t3-title.png"
+ },
+ {
+  "plan": "s09-finale",
+  "title": "09–13 · Главный остров, пятеро стоят, жест",
+  "frame": 480,
+  "time": "0:48.93",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s09-finale.png"
+ },
+ {
+  "plan": "s10-logo",
+  "title": "14–15 · BAM → логотип",
+  "frame": 200,
+  "time": "0:52.93",
+  "file": "/home/user/hexlash/tools/showcase/out/trailer/stills/s10-logo.png"
+ }
+]
