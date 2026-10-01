@@ -66,6 +66,8 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
   if (isLogo) {
     await pump(2);
     t0 = (await frame()) - 2;
+    // кадр плана f снимается после (f+1)-го шага от t0: связка отсчитывает свои кадры именно от него
+    await page.evaluate((t) => { window.__logoBase = t + 1; }, t0);
   } else {
     // ── ждём, пока игра готова по-настоящему ──
     const readyJs = () => !document.getElementById('hx-load') && !document.querySelector('.hx-loading')

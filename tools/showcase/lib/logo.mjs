@@ -33,7 +33,8 @@ export const logoHtml = (plan) => `<!doctype html><html><head><meta charset="utf
   };
   function tick(){
     if(F0===null) F0=window.__vt.frame;
-    const f=window.__vt.frame-F0-DELAY;
+    const base=(window.__logoBase!==undefined)?window.__logoBase:F0;
+    const f=window.__vt.frame-base-DELAY;
     el.style.transform='scale('+scaleAt(f)+')';
     const k=f-UP, sv=(k>=0&&k<SHOVE.length)?SHOVE[k]:[0,0], w=window.innerWidth;
     stage.style.transform='translate('+(sv[0]*w)+'px,'+(sv[1]*w)+'px)';
