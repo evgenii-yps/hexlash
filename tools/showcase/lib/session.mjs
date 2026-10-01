@@ -4,7 +4,8 @@
 //   'scene' — обычная сцена (дом, ворота, зал): старт через `align` кадров после
 //             постройки сцены;
 //   'arena' — бой на арене: старт плана — момент вызова runFight (+ plan.offset);
-//   'logo'  — финальная карточка (своя страница обвязки).
+//   'logo'  — финальная карточка (своя страница обвязки);
+//   'title' — титр в чёрном кадре перехода (своя страница обвязки, lib/title.mjs).
 // Кадры плана считаются от «нуля боя» t0: кадр b = frame - t0. Плановый кадр
 // f = b - offset (offset > 0 у боёв: снимаем окно из середины боя, но считается он с начала).
 import { chromium } from 'playwright';
@@ -16,6 +17,7 @@ import { buildSave } from './world.mjs';
 import { routeFonts } from './fonts.mjs';
 import { createNetLog, blockNetwork, summarizeNet } from './net.mjs';
 import { LOGO_PATH, logoHtml } from './logo.mjs';
+import { titleHtml } from './title.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PAGE = (f) => readFileSync(path.join(HERE, '../page', f), 'utf8');
@@ -37,8 +39,8 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
   const ctx = await browser.newContext({ viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 1, reducedMotion: 'no-preference' });
   await routeFonts(ctx, net);
   await blockNetwork(ctx, net);
-  const isLogo = plan.kind === 'logo';
-  if (isLogo) await ctx.route(base + LOGO_PATH, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: logoHtml(plan) }));
+  const isLogo = plan.kind === 'logo' || plan.kind === 'title';   // страницы обвязки: карточка логотипа и титры переходов
+  if (isLogo) await ctx.route(base + LOGO_PATH, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: plan.kind === 'title' ? titleHtml(plan) : logoHtml(plan) }));
 
   // Порядок важен: сначала окружение, затем часы, затем мир.
   await ctx.addInitScript(() => {
@@ -66,8 +68,8 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
   if (isLogo) {
     await pump(2);
     t0 = (await frame()) - 2;
-    // кадр плана f снимается после (f+1)-го шага от t0: связка отсчитывает свои кадры именно от него
-    await page.evaluate((t) => { window.__logoBase = t + 1; }, t0);
+    // после pump(2) страница уже на кадре t0+2, а кадр плана f снимается после (f+1)-го шага, то есть на кадре t0+3+f: связка и титры отсчитывают свои кадры от t0+3
+    await page.evaluate((t) => { window.__logoBase = t + 3; }, t0);
   } else {
     // ── ждём, пока игра готова по-настоящему ──
     const readyJs = () => !document.getElementById('hx-load') && !document.querySelector('.hx-loading')

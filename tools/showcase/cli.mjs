@@ -221,7 +221,7 @@ try {
     const lock = readLock();
     const only = o.only ? o.only.split(',') : null;
     const list = plans.filter((p) => !only || only.includes(p.id));
-    await warm(srv.base, list.filter((p) => p.kind !== 'logo').map((p) => resolvePlan(p)), size);
+    await warm(srv.base, list.filter((p) => p.kind !== 'logo' && p.kind !== 'title').map((p) => resolvePlan(p)), size);
     const results = {}; const verify = {}; const nets = [];
     for (const plan of list) {
       const dir = path.join(outRoot, plan.id, 'frames');
@@ -257,7 +257,7 @@ try {
     const sz = o.size === '1280x720' ? [1920, 1080] : size; const root = path.join(outRoot, 'excerpts');
     const need = {};
     for (const ex of excerpts) for (const p of ex.parts) if (p.plan) (need[p.plan] ||= []).push([p.from, p.to]);
-    if (!o.reuse) await warm(srv.base, Object.keys(need).map((id) => resolvePlan(pick(id))).filter((p) => p.kind !== 'logo'), sz);
+    if (!o.reuse) await warm(srv.base, Object.keys(need).map((id) => resolvePlan(pick(id))).filter((p) => p.kind !== 'logo' && p.kind !== 'title'), sz);
     for (const [id, ranges] of o.reuse ? [] : Object.entries(need)) {   // --reuse: кадры уже сняты, только собрать видео
       const r = await renderPlan(srv.base, pick(id), path.join(root, id, 'frames'), { ranges, sz });
       console.log(`  ✓ ${id}: ${r.sec} с, кадров ${Object.keys(r.hashes).length}, сеть: ушло ${r.net.sentOutside}`);

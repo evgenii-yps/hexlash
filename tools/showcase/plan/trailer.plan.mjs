@@ -187,6 +187,14 @@ export const plans = [
     ],
     still: 480,
   },
+  // ── Титры в чёрном кадре переходов (шаг 1 правок v1). Тексты, тайминг и вид — только здесь. ──
+  // 72 кадра: 6 чёрных, титр ≈1,0 с (60 кадров; «щелчок» масштаба 92 → 100 % за 4 кадра), срез в чёрный, 6 чёрных.
+  { id: 't1-title', title: 'T1 · титр', kind: 'title', len: 72, text: 'LEGEND TAKES COMMAND', delay: 6, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 20, world: { roster: [] },
+    marks: [{ f: 6, kind: 'title', name: 'титр T1: LEGEND TAKES COMMAND (щелчок масштаба)' }, { f: 66, kind: 'title', name: 'титр T1: срез в чёрный' }] },
+  { id: 't2-title', title: 'T2 · титр', kind: 'title', len: 72, text: 'TRAIN YOUR FIGHTERS', delay: 6, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 20, world: { roster: [] },
+    marks: [{ f: 6, kind: 'title', name: 'титр T2: TRAIN YOUR FIGHTERS (щелчок масштаба)' }, { f: 66, kind: 'title', name: 'титр T2: срез в чёрный' }] },
+  { id: 't3-title', title: 'T3 · титр', kind: 'title', len: 72, text: 'BUILD YOUR SQUAD', delay: 6, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 20, world: { roster: [] },
+    marks: [{ f: 6, kind: 'title', name: 'титр T3: BUILD YOUR SQUAD (щелчок масштаба)' }, { f: 66, kind: 'title', name: 'титр T3: срез в чёрный' }] },
   {
     id: 's10-logo', title: '14–15 · BAM → логотип', kind: 'logo', len: 300, delay: 6, up: 6, down: 3, mark: 132, still: 200,
     fadeIn: 0,
@@ -199,18 +207,18 @@ export const plans = [
   },
 ];
 
-// Порядок на шкале. gap — чёрные кадры между кусками. Переходы T1–T3 живут в хвостах и головах
-// соседних планов (крен, рывок, отъезд), а чёрный между ними — только пик: T1 54+36+54, T2 28+4+28,
-// T3 60+20+40 кадров. Итого 3120 кадров = 52,0 с.
+// Порядок на шкале. gap — чёрные кадры между кусками (сейчас не используется: чёрные кадры переходов
+// заняты титрами). Переходы T1–T3 живут в хвостах и головах соседних планов (крен, рывок, отъезд),
+// а чёрный между ними — титр: T1 54+72+54, T2 28+72+28, T3 60+72+40 кадров. Итого 3276 кадров = 54,6 с.
 export const timeline = [
   { plan: 's01-home' },
   { plan: 's02-gate' },
   { plan: 's03-duel' },
-  { gap: 36, label: 'T1' },
+  { plan: 't1-title' },
   { plan: 's05a-squad' },
-  { gap: 4, label: 'T2' },
+  { plan: 't2-title' },
   { plan: 's05b-forge' },
-  { gap: 20, label: 'T3' },
+  { plan: 't3-title' },
   { plan: 's09-finale' },
   { plan: 's10-logo' },
 ];
@@ -219,8 +227,8 @@ export const FADE = 12;   // кадров затемнения на стыках
 // Отрывки для просмотра в 1080p (команда `cli.mjs excerpts`): переходы T1–T3 и финал. Каждая часть —
 // кусок плана [from, to) в кадрах плана или чёрная пауза (gap). Совпадает со шкалой выше.
 export const excerpts = [
-  { id: 'T1', title: 'T1 · дуэль → SQUAD: крен нарастает, чёрный, крен раскручивается', parts: [{ plan: 's03-duel', from: 560, to: 654 }, { gap: 36 }, { plan: 's05a-squad', from: 0, to: 100 }] },
-  { id: 'T2', title: 'T2 · SQUAD → зал FORGE: рывок, чёрный, вход и спуск к легенде', parts: [{ plan: 's05a-squad', from: 440, to: 502 }, { gap: 4 }, { plan: 's05b-forge', from: 0, to: 120 }] },
-  { id: 'T3', title: 'T3 · зал FORGE → главный остров: отъезд, затемнение, проявление пятерых', parts: [{ plan: 's05b-forge', from: 480, to: 568 }, { gap: 20 }, { plan: 's09-finale', from: 0, to: 100 }] },
+  { id: 'T1', title: 'T1 · дуэль → SQUAD: крен нарастает, чёрный, крен раскручивается', parts: [{ plan: 's03-duel', from: 560, to: 654 }, { plan: 't1-title', from: 0, to: 72 }, { plan: 's05a-squad', from: 0, to: 100 }] },
+  { id: 'T2', title: 'T2 · SQUAD → зал FORGE: рывок, чёрный, вход и спуск к легенде', parts: [{ plan: 's05a-squad', from: 440, to: 502 }, { plan: 't2-title', from: 0, to: 72 }, { plan: 's05b-forge', from: 0, to: 120 }] },
+  { id: 'T3', title: 'T3 · зал FORGE → главный остров: отъезд, затемнение, проявление пятерых', parts: [{ plan: 's05b-forge', from: 480, to: 568 }, { plan: 't3-title', from: 0, to: 72 }, { plan: 's09-finale', from: 0, to: 100 }] },
   { id: 'FIN', title: 'Финал · жест, пауза, BAM, логотип', parts: [{ plan: 's09-finale', from: 400, to: 520 }, { plan: 's10-logo', from: 0, to: 150 }] },
 ];
