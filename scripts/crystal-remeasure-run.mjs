@@ -16,7 +16,7 @@ import { join } from 'node:path';
 const WT = process.env.WT;
 if (!WT) throw new Error('задайте WT=<копия дерева с патчем зонда>');
 const REPO = new URL('..', import.meta.url).pathname;
-const RAW = join(REPO, 'docs/crystal-remeasure/out/raw');
+const RAW = join(REPO, process.env.CR_OUT || 'docs/crystal-remeasure/out', 'raw'); // CR_OUT — своя папка (TZ_balance_fix_v2)
 const stage = process.argv[2];
 const JOBS = Number((process.argv.find((a) => a.startsWith('--jobs=')) || '--jobs=4').split('=')[1]);
 const SEEDS = 200;

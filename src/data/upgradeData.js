@@ -151,15 +151,15 @@ export const CRYSTALS = {
     // (cling, cut escape) through the tip. Stays light/quick — no weight; no counter.
     mkBranch('b', 'CHASE', [
       // Explodes into range — a sharp entry that closes the gap.
-      { name: 'Hard Entry', shifts: [s('distance', -8), s('initiative', 6)] },
+      { name: 'Hard Entry', shifts: [s('distance', -6), s('initiative', 6)] },
       // Runs down a retreating foe: presses + keeps closing (chase_strike conditional).
-      { name: 'Run-Down', shifts: [s('stick', 8), s('distance', -6)], conditionals: ['chase_strike'] },
+      { name: 'Run-Down', shifts: [s('stick', 5), s('distance', -4)], conditionals: ['chase_strike'] },
       // Cuts off the angles / escape routes — pure cling.
-      { name: 'Cut Off', shifts: [s('stick', 10)] },
+      { name: 'Cut Off', shifts: [s('stick', 6)] },
       // Clings on, won't be shaken off, and stays glued in close.
-      { name: 'Cling', shifts: [s('stick', 10), s('distance', -6)] },
+      { name: 'Cling', shifts: [s('stick', 6), s('distance', -4)] },
       // VERTEX — pins the foe in close: stick to the ceiling, almost no disengage.
-      { name: 'Lockdown', shifts: [s('stick', 14), s('distance', -8)], effects: ['lockdown'] },
+      { name: 'Lockdown', shifts: [s('stick', 8), s('distance', -6)], effects: ['lockdown'] },
     ]),
     // FRENZY — accelerating, relentless TEMPO. Number/movement: tempo across the
     // whole branch — longer strings, shorter gaps, ramps as it lands. No weight,
@@ -168,16 +168,16 @@ export const CRYSTALS = {
     // now. Rampage ramps with no ceiling, the escalate safeguard as the backstop.
     mkBranch('c', 'FRENZY', [
       // Longer strings of blows.
-      { name: 'Long Combo', shifts: [s('tempo', 8)] },
+      { name: 'Long Combo', shifts: [s('tempo', 6)] },
       // Shorter gaps between attacks.
-      { name: 'No Pause', shifts: [s('tempo', 10)] },
+      { name: 'No Pause', shifts: [s('tempo', 7)] },
       // Speeds up as it lands (hit_accel — conditional, accruing accel later).
-      { name: 'Building Momentum', shifts: [s('tempo', 6)], conditionals: ['hit_accel'] },
+      { name: 'Building Momentum', shifts: [s('tempo', 4)], conditionals: ['hit_accel'] },
       // Never lets the foe recover (no_breather — REQUIRES a cross-fighter regen-
       // suppression seam; tagged + approximated by tempo+stick pressure for now).
-      { name: 'No Breather', shifts: [s('tempo', 6), s('stick', 6)], conditionals: ['no_breather'] },
+      { name: 'No Breather', shifts: [s('tempo', 4), s('stick', 6)], conditionals: ['no_breather'] },
       // VERTEX — ramps with no ceiling.
-      { name: 'Rampage', shifts: [s('tempo', 12)], effects: ['rampage'] },
+      { name: 'Rampage', shifts: [s('tempo', 8)], effects: ['rampage'] },
     ]),
   ],
   nalet: [
@@ -239,16 +239,16 @@ export const CRYSTALS = {
     // resilience (holds steady / digs in close). No counter (not its home).
     mkBranch('a', 'BASTION', [
       // Takes the blow better — shrugs more off (toughness ramp), holds steady.
-      { name: 'Tough Hide', shifts: [s('resilience', 8)] },
+      { name: 'Tough Hide', shifts: [s('resilience', 5)] },
       // Rarely knocked off its rhythm by incoming hits (resilience holds the beat).
-      { name: 'Steady Guard', shifts: [s('resilience', 10)] },
+      { name: 'Steady Guard', shifts: [s('resilience', 6)] },
       // Catches its breath in the lulls — recovers stamina faster (regen seam).
-      { name: 'Catch Breath', shifts: [s('resilience', 6)], bonuses: [b('staminaRegen', COMBAT_BALANCE.bastionBreathRegen)] },
+      { name: 'Catch Breath', shifts: [s('resilience', 3)], bonuses: [b('staminaRegen', COMBAT_BALANCE.bastionBreathRegen)] },
       // The longer it holds ground, the harder it gets (dig_in — time-ramp of
       // toughness; conditional, approximated by planting close until it's coded).
       { name: 'Dig In', shifts: [s('distance', -6)], conditionals: ['dig_in'] },
       // VERTEX — unbreakable: a held guard cuts incoming damage in spades (block).
-      { name: 'Unbreakable', shifts: [s('resilience', 8)], bonuses: [b('blockMitigation', COMBAT_BALANCE.bastionFortressMitigation)], effects: ['fortress'] },
+      { name: 'Unbreakable', shifts: [s('resilience', 5)], bonuses: [b('blockMitigation', COMBAT_BALANCE.bastionFortressMitigation)], effects: ['fortress'] },
     ], 'toughness'),
     // BREAKER (ВОЛНОЛОМ) — a close-range block-counter wall. Number: toughness
     // ramp + the REAL onBlock riposte (sb.blockCounter) + the interrupt-catch
@@ -264,7 +264,7 @@ export const CRYSTALS = {
       { name: 'Hard Meet', shifts: [s('counter', 10), s('stick', 6)] },
       // The more it has eaten, the harder it answers (retaliate_ramp — damage-taken
       // ramp of the counter; conditional, approximated by counter until coded).
-      { name: 'Retaliation', shifts: [s('counter', 8)], conditionals: ['retaliate_ramp'] },
+      { name: 'Retaliation', shifts: [s('counter', 7)], conditionals: ['retaliate_ramp'] },
       // VERTEX — sea-wall trap: a foe's flurry turns into a heavy counter (max
       // block-riposte + interrupt-catch + counter).
       { name: 'Sea Wall', shifts: [s('counter', 8), s('stick', 6)], bonuses: [b('blockCounter', COMBAT_BALANCE.breakerTrapRiposte), b('interruptBonus', COMBAT_BALANCE.breakerTrapInterrupt)], effects: ['counter_trap'] },
@@ -275,16 +275,16 @@ export const CRYSTALS = {
     // splits it from ТАРАН (the chasing hammer). No counter.
     mkBranch('c', 'VICE', [
       // Shoves the foe with its body — presses in close.
-      { name: 'Body Shove', shifts: [s('stick', 8), s('distance', -6)] },
+      { name: 'Body Shove', shifts: [s('stick', 7), s('distance', -6)] },
       // A heavy, slow blow that's hard to block (weight + block pierce).
       { name: 'Heavy Slam', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceSlamPen)] },
       // Won't let the foe slip around it — holds it in front (stick, no chase).
-      { name: 'No Way Around', shifts: [s('stick', 10)] },
+      { name: 'No Way Around', shifts: [s('stick', 8)] },
       // Pins it: the closer it gets, the tighter the hold (pin — close-grip ramp;
       // conditional, approximated by stick + closing in until coded).
-      { name: 'Pin', shifts: [s('stick', 8), s('distance', -6)], conditionals: ['pin'] },
+      { name: 'Pin', shifts: [s('stick', 7), s('distance', -6)], conditionals: ['pin'] },
       // VERTEX — clinch: stick to the ceiling + a heavy grinding, piercing press.
-      { name: 'Clinch', shifts: [s('stick', 14), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },
+      { name: 'Clinch', shifts: [s('stick', 12), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },
     ]),
   ],
   zasada: [
@@ -295,33 +295,33 @@ export const CRYSTALS = {
     // (slip 15, stands & blocks). Both counter, but at opposite ranges.
     mkBranch('a', 'TRAP', [
       // Bites back harder on the foe's attack — more punishing counter.
-      { name: 'Hard Counter', shifts: [s('counter', 8)] },
+      { name: 'Hard Counter', shifts: [s('counter', 6)] },
       // Off the line, instant counter — a slipped hit arms the riposte (dodge-counter).
       { name: 'Slip Counter', shifts: [s('slip', 6)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)] },
       // The harder the foe presses, the harder the answer (punish_aggression —
       // counter-ramp by foe aggression; conditional, approximated by counter).
-      { name: 'Punish Aggression', shifts: [s('counter', 8)], conditionals: ['punish_aggression'] },
+      { name: 'Punish Aggression', shifts: [s('counter', 5)], conditionals: ['punish_aggression'] },
       // Punishes a whiff — the foe's miss opens the counter window (onMiss seam).
       { name: 'Punish Whiff', shifts: [s('distance', 6)], bonuses: [b('missCounter', COMBAT_BALANCE.trapMissCounter)] },
       // VERTEX — perfect trap: a dodge OR a whiff is a guaranteed heavy counter.
-      { name: 'Perfect Trap', shifts: [s('counter', 8), s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },
+      { name: 'Perfect Trap', shifts: [s('counter', 5), s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },
     ]),
     // SHADOW (ТЕНЬ) — an untouchable that wears the foe down with distance. Number/
     // movement: high slip + distance (elusive, far). No counter (not its home).
     mkBranch('b', 'SHADOW', [
       // Slips further / sharper away.
-      { name: 'Long Slip', shifts: [s('slip', 10), s('distance', 6)] },
+      { name: 'Long Slip', shifts: [s('slip', 8), s('distance', 5)] },
       // Harder to reach — holds the distance more cunningly.
-      { name: 'Hard to Reach', shifts: [s('slip', 8), s('distance', 6)] },
+      { name: 'Hard to Reach', shifts: [s('slip', 6), s('distance', 5)] },
       // Wears the foe ragged: the distance forces a chase, and chasing already
       // drains the foe's stamina (move-drain). EMERGENT — approximated by distance;
       // an amplified version wants a foe-stamina-drain seam (see report).
-      { name: "Run 'Em Ragged", shifts: [s('distance', 8), s('slip', 6)], conditionals: ['exhaust'] },
+      { name: "Run 'Em Ragged", shifts: [s('distance', 7), s('slip', 4)], conditionals: ['exhaust'] },
       // After a slip, the window for its OWN entry opens wider (shared dodge-counter
       // channel — the dodge sets up the next strike).
-      { name: 'Open Window', shifts: [s('slip', 8)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.shadowDodgeWindow)] },
+      { name: 'Open Window', shifts: [s('slip', 6)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.shadowDodgeWindow)] },
       // VERTEX — phantom: slips a whole series, then a clean answer (very high slip).
-      { name: 'Phantom', shifts: [s('slip', 12), s('distance', 6)], effects: ['phantom'] },
+      { name: 'Phantom', shifts: [s('slip', 9), s('distance', 5)], effects: ['phantom'] },
     ]),
     // STING (ЖАЛО) — a standing charge bomb. Number: strikePower (ramp) + the REAL
     // charge seams — power (Loaded / Execution), ceiling (Long Charge), pierce. Anchor:
@@ -332,7 +332,7 @@ export const CRYSTALS = {
       { name: 'Loaded Hit', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingLoadedPower)] },
       // Waits longer for a bigger charge — a higher ceiling, and stands to load it
       // (low initiative, far distance — patient spacing, not a lunge).
-      { name: 'Long Charge', shifts: [s('initiative', -6), s('distance', 6)], bonuses: [b('chargeMax', COMBAT_BALANCE.stingLongChargeMax)] },
+      { name: 'Long Charge', shifts: [s('initiative', -6), s('distance', 5)], bonuses: [b('chargeMax', COMBAT_BALANCE.stingLongChargeMax)] },
       // Strikes at the foe's vulnerable moment (vulnerable_strike — reads the foe's
       // stamina for the opening; conditional, REQUIRES a foe-state seam, see report).
       { name: 'Hit the Opening', shifts: [s('initiative', -6)], conditionals: ['vulnerable_strike'] },
@@ -340,7 +340,7 @@ export const CRYSTALS = {
       { name: 'Pierce', shifts: [s('distance', 6)], bonuses: [b('chargePen', COMBAT_BALANCE.stingPiercePen)] },
       // VERTEX — execution: a full charge ends it in one run (max release power; the
       // escalate safeguard keeps it from being a start one-shot — the bout finishes).
-      { name: 'Execution', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingExecutionPower)], effects: ['execute'] },
+      { name: 'Execution', shifts: [s('distance', 5)], bonuses: [b('chargePower', COMBAT_BALANCE.stingExecutionPower)], effects: ['execute'] },
     ], 'strikePower'),
   ],
 };

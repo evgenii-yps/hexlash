@@ -23,6 +23,7 @@ import { COMBAT_BALANCE } from './combatBalance.js';
 import { KLICH_BALANCE } from './klichBalance.js';
 const GR = COMBAT_BALANCE.grani;
 const NEED = COMBAT_BALANCE.hardNeed;
+const TL = COMBAT_BALANCE.tempoLean;
 
 export const INTENTIONS = {
   PRESS: 'press',
@@ -139,24 +140,35 @@ export function chooseIntentionSpinal(self, foe, memory, fight) {
 // (0.5); while bend < 1 none can reach 0, so a truly empty tank always breathes. Returns an intention id or
 // null. Shared by the spinal + model paths. Deterministic.
 export function hardNeed(self, foe, memory, fight) {
+  const n = hardNeedKind(self, foe, memory, fight);
+  if (!n) return null;
+  return n === 'swing' ? swingReply(self, foe, memory, fight) : n === 'stamina' ? INTENTIONS.BREATHE : INTENTIONS.STRIKE;
+}
+
+// Какая нужда сработала: 'stamina' | 'swing' | 'charge' | null. Отдельно от hardNeed, чтобы замеры (и отладка) видели ВИД нужды, не
+// пересчитывая её. Пороги — combatBalance.hardNeed (TZ_balance_fix_v2, А1); здесь только логика.
+export function hardNeedKind(self, foe, memory, fight) {
   const a = self.ax01;
   const K = NEED.bend;
   // Out of wind → recover. Pushy (initiative) fighters fight on to a lower reserve, patient ones breathe earlier.
-  if (self.stamina01 < 0.22 * (1 - K * (2 * a.initiative - 1))) return INTENTIONS.BREATHE;
-  // Foe swing + counter-minded + in reach → answer the swing. A counter-minded fighter waits from farther out;
-  // the reply itself (CATCH / BREAK / HOLD) is picked by character and build, see swingReply.
-  const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
-  if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8 * (1 + K * (2 * a.counter - 1))) return swingReply(self, foe, memory, fight);
+  if (self.stamina01 < NEED.staminaBelow * (1 - K * (2 * a.initiative - 1))) return 'stamina';
+  // Foe swing + in reach → answer the swing. The need stays on for `windowMax · counter^curve` s after the foe's last swing: the
+  // higher the counter axis, the longer the fighter stays in the answering stance (smooth in the axis — no on/off gate). A counter-minded
+  // fighter also waits from farther out. The reply itself is picked by character and build, see swingReply.
+  const SW = NEED.swing;
+  const window = SW.windowMax * Math.pow(a.counter, SW.curve);
+  let lastSwing = -Infinity;
+  for (const e of memory) if (e.type === 'attack' && e.t > lastSwing) lastSwing = e.t;
+  if (fight.t - lastSwing < window && foe.has && foe.dist < self.range + SW.reach * (1 + K * (2 * a.counter - 1))) return 'swing';
   // Haymaker loaded + foe in reach → land it. Heavy hitters fire at a lower charge, light ones wait for more
   // (never above a full charge: a full haymaker in reach always lands).
-  if (self.charge01 >= Math.min(1, 0.85 * (1 - K * (2 * a.weight - 1))) && foe.inStrike) return INTENTIONS.STRIKE;
+  if (self.charge01 >= Math.min(1, NEED.chargeAt * (1 - K * (2 * a.weight - 1))) && foe.inStrike) return 'charge';
   return null;
 }
 
 // The reply INSIDE the swing need: the SAME score the spinal cord uses (axes, situation, the build's leans),
-// restricted to the three defensive answers — wait it out (CATCH), slip off the line (BREAK), stand and trade
-// (HOLD). No new behaviour, no new numbers: three existing intentions, one existing score.
-const SWING_REPLIES = [INTENTIONS.CATCH, INTENTIONS.BREAK, INTENTIONS.HOLD];
+// restricted to the answers listed in combatBalance.hardNeed.swing.replies — no new behaviour, no new numbers beyond the list.
+const SWING_REPLIES = NEED.swing.replies;
 function swingReply(self, foe, memory, fight) {
   return spinalScore(self, foe, memory, fight, SWING_REPLIES);
 }
@@ -177,13 +189,13 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
   const readPounce = (foe.phase === 'recovery' || foe.phase === 'stagger') ? 0.35 * a.counter
     : foe.phase === 'windup' ? 0.22 * a.counter : 0;
   const s = {
-    [INTENTIONS.PRESS]:   0.50 * a.initiative + 0.30 * a.stick + 0.20 * (1 - a.distance) + (far ? 0.20 : 0),
-    [INTENTIONS.STRIKE]:  0.35 * a.weight + 0.30 * a.initiative + 0.35 * self.charge01 + (foe.inStrike ? 0.25 : -0.35),
-    [INTENTIONS.STING]:   0.45 * a.distance + 0.30 * a.slip + 0.20 * (1 - a.weight) + (far ? 0.20 : 0),
-    [INTENTIONS.HOLD]:    0.40 * a.resilience + 0.30 * a.stick + (closeBand ? 0.20 : 0),
+    [INTENTIONS.PRESS]:   0.50 * a.initiative + 0.30 * a.stick + 0.20 * (1 - a.distance) + TL.press * a.tempo + (far ? 0.20 : 0),
+    [INTENTIONS.STRIKE]:  0.35 * a.weight + 0.30 * a.initiative + 0.35 * self.charge01 + TL.strike * a.tempo + (foe.inStrike ? 0.25 : -0.35),
+    [INTENTIONS.STING]:   0.45 * a.distance + 0.30 * a.slip + 0.20 * (1 - a.weight) + TL.sting * a.tempo + (far ? 0.20 : 0),
+    [INTENTIONS.HOLD]:    0.40 * a.resilience + 0.30 * a.stick + TL.hold * (1 - a.tempo) + (closeBand ? 0.20 : 0),
     [INTENTIONS.BREAK]:   0.50 * a.slip + 0.20 * (1 - a.stick) + (foeThreat ? 0.20 : 0),
     [INTENTIONS.BREATHE]: 0.70 * lowStam + 0.10 * a.distance,
-    [INTENTIONS.CATCH]:   0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + (foeThreat ? 0.25 : 0) + readPounce,
+    [INTENTIONS.CATCH]:   0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + TL.catch * (1 - a.tempo) + (foeThreat ? 0.25 : 0) + readPounce,
   };
   // ГРАНИ И ТЕГИ (TZ_grani_tags_v1): наклоны из зажжённых кристаллов и резонанс веток. Раньше теги
   // нигде не читались. Ложатся ДО накала — предохранитель от гляделок сильнее любого наклона.

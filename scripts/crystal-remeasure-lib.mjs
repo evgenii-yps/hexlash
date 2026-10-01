@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const REPO = new URL('..', import.meta.url).pathname;
-export const OUT = join(REPO, 'docs/crystal-remeasure/out/');
+export const OUT = process.env.CR_OUT ? join(REPO, process.env.CR_OUT, '/') : join(REPO, 'docs/crystal-remeasure/out/'); // CR_OUT — своя папка (TZ_balance_fix_v2)
 export const RAW = OUT + 'raw/';
 export const CORES = ['natisk', 'nalet', 'skala', 'zasada'];
 export const CORE_NAME = { natisk: 'ONSLAUGHT', nalet: 'RAIDER', skala: 'BULWARK', zasada: 'AMBUSH' };
