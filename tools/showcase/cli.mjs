@@ -18,6 +18,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 import { execFileSync } from 'node:child_process';
 import { startServer, REPO } from './lib/server.mjs';
 import { openSession, warm } from './lib/session.mjs';
@@ -93,18 +95,20 @@ const GUARD_SCENES = [
 const GUARD_LAYOUTS = [[390, 844], [844, 390], [1280, 720], [1920, 1080]];
 async function shootAll(root, port) {
   const s = await startServer({ root, port });
-  const hashes = {};
+  const hashes = {}; const bufs = {};
   try {
     await warm(s.base, GUARD_SCENES.map((x) => x[1]), [1280, 720]);
     for (const [id, pl] of GUARD_SCENES) for (const lay of GUARD_LAYOUTS) {
       const sess = await openSession({ base: s.base, plan: pl, size: lay, log: () => {} });
       if (pl.kind === 'arena') await sess.run({ capture: false, frames: 300 }); else await sess.pump(30);
-      hashes[`${id}@${lay.join('x')}`] = createHash('md5').update(await sess.snapshot()).digest('hex').slice(0, 12);
+      const png = await sess.snapshot();
+      bufs[`${id}@${lay.join('x')}`] = png;
+      hashes[`${id}@${lay.join('x')}`] = createHash('md5').update(png).digest('hex').slice(0, 12);
       await sess.close();
       process.stdout.write(`  ${id}@${lay.join('x')}\r`);
     }
   } finally { await s.stop(); }
-  return hashes;
+  return { hashes, bufs };
 }
 function refWorktree(ref) {
   const wt = path.join(HERE, '.cache/ref-worktree');
@@ -120,6 +124,22 @@ function dropWorktree(wt) {
 }
 const sha = (root) => execFileSync('git', ['-C', root, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
 
+// Побайтное сравнение снимков + разбор расхождения. Программный рендерер песочницы (SwiftShader)
+// изредка (≈1 из 6 прогонов одного и того же кода) даёт единичные пиксели на 1–2 уровня яркости;
+// поэтому для расхождений считаем: сколько пикселей и на сколько отличаются. «Совпало с допуском
+// шума» — не более 0,1 % пикселей и не более 3 уровней яркости. Побайтно и с допуском — отдельными числами.
+function pixelDiff(a, b) {
+  const { PNG } = require('playwright-core/lib/utilsBundle');
+  const A = PNG.sync.read(a), B = PNG.sync.read(b);
+  if (A.width !== B.width || A.height !== B.height) return { pixels: Infinity, max: 255, share: 1 };
+  let n = 0, mx = 0;
+  for (let i = 0; i < A.data.length; i += 4) {
+    const d = Math.max(Math.abs(A.data[i] - B.data[i]), Math.abs(A.data[i + 1] - B.data[i + 1]), Math.abs(A.data[i + 2] - B.data[i + 2]));
+    if (d) { n++; if (d > mx) mx = d; }
+  }
+  return { pixels: n, max: mx, share: n / (A.width * A.height) };
+}
+
 async function guard(ref) {
   const wt = refWorktree(ref);
   try {
@@ -127,10 +147,16 @@ async function guard(ref) {
     const A = await shootAll(wt, 5198);
     console.log('▶ рабочая копия', sha(REPO));
     const B = await shootAll(REPO, 5199);
-    const keys = Object.keys(A); const bad = keys.filter((k) => A[k] !== B[k]);
-    for (const k of keys) console.log(`  ${A[k] === B[k] ? '✓' : '✗'} ${k}  ${A[k]} ${B[k]}`);
-    console.log(bad.length ? `✗ разошлись: ${bad.length} из ${keys.length}` : `✓ все ${keys.length} снимков совпали`);
-    process.exitCode = bad.length ? 1 : 0;
+    const keys = Object.keys(A.hashes); let exact = 0, noise = 0, bad = 0;
+    for (const k of keys) {
+      if (A.hashes[k] === B.hashes[k]) { exact++; console.log(`  ✓ ${k}  ${A.hashes[k]} ${B.hashes[k]}`); continue; }
+      const d = pixelDiff(A.bufs[k], B.bufs[k]);
+      const tol = d.share <= 0.001 && d.max <= 3;
+      if (tol) noise++; else bad++;
+      console.log(`  ${tol ? '≈' : '✗'} ${k}  ${A.hashes[k]} ${B.hashes[k]}  пикселей ${d.pixels} (${(d.share * 100).toFixed(3)} %), макс. разница ${d.max} из 255`);
+    }
+    console.log(`побайтно совпало ${exact} из ${keys.length}; с допуском шума (≤0,1 % пикселей, ≤3 уровней) ещё ${noise}; настоящих расхождений ${bad}`);
+    process.exitCode = bad ? 1 : 0;
   } finally { dropWorktree(wt); }
 }
 
