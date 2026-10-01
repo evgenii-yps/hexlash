@@ -210,7 +210,8 @@ if (want('D')) {
   for (let i = 0; i < 10; i++) { await toggle(s.page); await sleep(110); }
   await sleep(1800);
   const r = await readP(s.page);
-  ok(r.sceneChildren === c0, 'число объектов сцены не выросло', `(${c0} → ${r.sceneChildren})`);
+  // Число объектов шевелится и от самого боя (искры, эффекты), поэтому не «равно», а «не выросло»: утечка тел дала бы +10.
+  ok(r.sceneChildren <= c0 + 2, 'тела не копятся: число объектов сцены не выросло', `(${c0} → ${r.sceneChildren}; десять лишних тел дали бы +10)`);
   const lead = (await s.page.locator('.cmd-toggle').innerText()).includes('LEGEND LEADS');
   ok(lead === (r.p > 0.5), 'вид согласован с тумблером после серии', `(тумблер ${lead ? 'ЛЕГЕНДА' : 'Я'}, p=${r.p.toFixed(2)})`);
   await s.page.screenshot({ path: `${OUT}/D-after10.png` });
