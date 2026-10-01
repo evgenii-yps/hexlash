@@ -31,12 +31,13 @@ patch(I, "export function chooseIntentionSpinal(self, foe, memory, fight) {\n  r
   // ЗОНД balance-fix (только копия дерева). Решения стороны 'player': вид нужды (__BF) и контрфакты (__PROBE).
   const BF = globalThis.__BF;
   const P = globalThis.__PROBE;
-  if (!(self.side === 'player' && ((BF && BF.on) || (P && P.on)))) return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
+  if (!(self.side === 'player' && ((BF && (BF.on || BF.snap)) || (P && P.on)))) return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
   P && (P.holds = null);
   const kind = hardNeedKind(self, foe, memory, fight);
   const need = kind ? hardNeed(self, foe, memory, fight) : null;
   const act = need || spinalScore(self, foe, memory, fight);
   if (BF && BF.on) BF.onDecision(kind, act);
+  if (BF && BF.snap) BF.snap(self, foe, memory, fight, act, kind);
   if (P && P.on) {
     if (!P.holds && self.leans && self.leans.length) spinalScore(self, foe, memory, fight);
     const holds = P.holds;
