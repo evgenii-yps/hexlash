@@ -1,0 +1,134 @@
+{
+ "total": {
+  "blocked": 186,
+  "analytics": 174,
+  "ws": 0,
+  "sent": 0,
+  "hosts": {
+   "www.googletagmanager.com": 12,
+   "sr-client-cfg.amplitude.com": 108,
+   "api2.amplitude.com": 66
+  }
+ },
+ "perPlan": {
+  "s01-home": {
+   "blockedTotal": 16,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 6
+   },
+   "analyticsBlocked": 15,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 6,
+   "sentOutside": 0,
+   "sentList": []
+  },
+  "s02-gate": {
+   "blockedTotal": 16,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 6
+   },
+   "analyticsBlocked": 15,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 6,
+   "sentOutside": 0,
+   "sentList": []
+  },
+  "s03-duel": {
+   "blockedTotal": 15,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 5
+   },
+   "analyticsBlocked": 14,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 5,
+   "sentOutside": 0,
+   "sentList": []
+  },
+  "s05a-squad": {
+   "blockedTotal": 16,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 6
+   },
+   "analyticsBlocked": 15,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 6,
+   "sentOutside": 0,
+   "sentList": []
+  },
+  "s05b-forge": {
+   "blockedTotal": 15,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 5
+   },
+   "analyticsBlocked": 14,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 5,
+   "sentOutside": 0,
+   "sentList": []
+  },
+  "s09-finale": {
+   "blockedTotal": 15,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 5
+   },
+   "analyticsBlocked": 14,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 6,
+   "sentOutside": 0,
+   "sentList": []
+  },
+  "s10-logo": {
+   "blockedTotal": 0,
+   "blockedByHost": {},
+   "analyticsBlocked": 0,
+   "analyticsHosts": [],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 2,
+   "sentOutside": 0,
+   "sentList": []
+  }
+ }
+}

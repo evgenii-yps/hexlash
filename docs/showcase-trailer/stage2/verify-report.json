@@ -1,0 +1,37 @@
+{
+ "s01-home": {
+  "compared": 18,
+  "mismatched": 0,
+  "firstBad": null
+ },
+ "s02-gate": {
+  "compared": 34,
+  "mismatched": 0,
+  "firstBad": null
+ },
+ "s03-duel": {
+  "compared": 60,
+  "mismatched": 0,
+  "firstBad": null
+ },
+ "s05a-squad": {
+  "compared": 42,
+  "mismatched": 0,
+  "firstBad": null
+ },
+ "s05b-forge": {
+  "compared": 48,
+  "mismatched": 0,
+  "firstBad": null
+ },
+ "s09-finale": {
+  "compared": 48,
+  "mismatched": 0,
+  "firstBad": null
+ },
+ "s10-logo": {
+  "compared": 30,
+  "mismatched": 0,
+  "firstBad": null
+ }
+}

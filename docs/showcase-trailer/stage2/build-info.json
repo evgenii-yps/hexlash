@@ -1,0 +1,100 @@
+{
+ "provenance": {
+  "head": "2bbdc8c6de448e585a3cbb33f0abc690aad69ec9",
+  "headSubject": "showcase: при расхождении сверки снимки второго рендера сохраняются для разбора",
+  "main": "b7515df7085ccca648ac572409bd34069699fc0e",
+  "mainSubject": "feat(loading): случайная фраза бойцов на экране загрузки вместо одной NEVER GIVE UP",
+  "mergeBase": "b7515df7085ccca648ac572409bd34069699fc0e",
+  "mainContainedInBranch": true,
+  "behindMain": 0,
+  "gameFilesChangedVsMain": 0,
+  "combatFingerprint": "a3627ca755770eec",
+  "combatFiles": 26,
+  "date": "2026-09-30T23:53:09.163Z"
+ },
+ "lock": {
+  "fingerprint": "a3627ca755770eec",
+  "fights": {
+   "duel": {
+    "seedBuild": 1,
+    "fightSeed": 9001,
+    "offset": 0,
+    "tried": 3,
+    "cores": [
+     "natisk",
+     "zasada"
+    ]
+   },
+   "squad": {
+    "seedBuild": 8,
+    "fightSeed": 9008,
+    "offset": 1860,
+    "tried": 9,
+    "cores": [
+     "natisk",
+     "skala",
+     "natisk",
+     "skala"
+    ]
+   }
+  }
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "every": 2,
+ "timeline": [
+  {
+   "id": "s01-home",
+   "start": 0,
+   "len": 180
+  },
+  {
+   "id": "s02-gate",
+   "start": 180,
+   "len": 336
+  },
+  {
+   "id": "s03-duel",
+   "start": 516,
+   "len": 600
+  },
+  {
+   "id": "T1",
+   "start": 1116,
+   "len": 120
+  },
+  {
+   "id": "s05a-squad",
+   "start": 1236,
+   "len": 420
+  },
+  {
+   "id": "T2",
+   "start": 1656,
+   "len": 60
+  },
+  {
+   "id": "s05b-forge",
+   "start": 1716,
+   "len": 480
+  },
+  {
+   "id": "T3",
+   "start": 2196,
+   "len": 120
+  },
+  {
+   "id": "s09-finale",
+   "start": 2316,
+   "len": 480
+  },
+  {
+   "id": "s10-logo",
+   "start": 2796,
+   "len": 300
+  }
+ ],
+ "seconds": 1391
+}
