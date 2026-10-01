@@ -116,7 +116,7 @@ export const plans = [
       kind: 'dynamic', blend: 40,
       post: [
         { ch: 'roll', f0: 0, f1: 54, v0: 34, v1: 0, ease: 'smoother' },
-        { ch: 'yaw', f0: 486, f1: 502, v0: 0, v1: -48, ease: 'smooth' },
+        { ch: 'yaw', f0: 486, f1: 502, v0: 0, v1: 48, ease: 'smooth' },     // рывок ВЛЕВО; в зале вход продолжает то же движение
       ],
       shots: [{ from: 0, shot: 'frame', a0: 1.3, da: 0.0005, r: 4.6, k: 0.9, h: 3.4, ly: 0.35, fov: 42 }],
     },
@@ -142,10 +142,10 @@ export const plans = [
     hide: ['.forge-root > :not(:first-child)', '.hs-strip', '.perf-hud'],
     camera: {
       kind: 'keys', ease: 'smoother', anchor: 'legend',
-      post: [{ ch: 'yaw', f0: 0, f1: 16, v0: 48, v1: 0, ease: 'smoother' }],
+      post: [{ ch: 'yaw', f0: 0, f1: 16, v0: -48, v1: 0, ease: 'smoother' }],   // вход справа (слева в кадр лезет SOON) — движение влево продолжается
       keys: [
-        { f: 0,   off: [1.1, -3.1, 6.9], loff: [0.6, -1.55, 0], roll: 0, fov: 44 },
-        { f: 198, off: [0.9, -2.6, 5.2], loff: [0.5, -1.4, 0],  roll: 0.6, fov: 40 },
+        { f: 0,   off: [1.4, -3.0, 11.5], loff: [2.3, -1.3, 0], roll: 0, fov: 36 },
+        { f: 198, off: [1.2, -2.6, 8.6], loff: [2.0, -1.4, 0],  roll: 0.6, fov: 36 },
         { f: 338, pos: [11.6, 2.7, 4.8], look: [9.3, 1.0, -0.4], roll: 0, fov: 40, ease: 'smooth' },
         { f: 508, pos: [11.0, 2.0, 3.6], look: [9.4, 1.0, -0.6], roll: -0.6, fov: 36 },
         { f: 568, pos: [13.6, 4.8, 8.6], look: [9.4, 1.2, -0.4], roll: 0, fov: 40 },
