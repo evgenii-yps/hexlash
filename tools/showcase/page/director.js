@@ -102,10 +102,15 @@
           const lg = sh.legend ? legendPos() : null;
           const w = lg ? sh.legend : 0;
           const tx = cx * (1 - w) + (lg ? lg[0] : 0) * w, tz = cz * (1 - w) + (lg ? lg[2] : 0) * w;
+          // по высоте легенда (стоит на платформе, ноги на lg[1], рост ≈1,1) тоже тянет точку взгляда: середина её фигуры
+          const ty = (sh.ly || 1.0) * (1 - w) + (lg ? lg[1] + (sh.lh ?? 0.6) : 0) * w;
           let spread = 0; for (const a of L) spread = Math.max(spread, Math.hypot(a.pos[0] - tx, a.pos[2] - tz));
-          if (lg) spread = Math.max(spread, Math.hypot(lg[0] - tx, lg[2] - tz));
+          if (lg) spread = Math.max(spread, Math.hypot(Math.hypot(lg[0] - tx, lg[2] - tz), (lg[1] + (sh.lh ?? 0.6) - ty) * (sh.vk ?? 1)));
           const ang = (sh.a0 || 0) + (sh.da || 0) * f, r = (sh.r || 3.4) + spread * (sh.k || 1.3);
-          return { pos: [tx + r * Math.sin(ang), sh.h || 2.6, tz + r * Math.cos(ang)], look: [tx, sh.ly || 1.0, tz], fov: sh.fov || 40 };
+          // sx — сдвиг кадра вправо в метрах (точка взгляда уходит влево на столько же вдоль «вправо» камеры): уводит бой из-под нижней панели игры
+          const sx = sh.sx || 0, rx = Math.cos(ang), rz = -Math.sin(ang);
+          const ux = tx - sx * rx, uz = tz - sx * rz;
+          return { pos: [ux + r * Math.sin(ang), sh.h || 2.6, uz + r * Math.cos(ang)], look: [ux, ty, uz], fov: sh.fov || 40 };
         },
         // сбоку: камера ПЕРПЕНДИКУЛЯРНО линии «герой — ближайший чужой», оба в профиль и разведены
         // на экране (силуэты не сливаются). r — отступ от середины; k — прибавка на каждый метр между

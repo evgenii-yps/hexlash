@@ -75,7 +75,7 @@ export function analyze(journal) {
   return { hero, hits, ko, lines, togOn, wipe, cores: first.core, sides: first.side };
 }
 
-const journalHash = (journal, n) => createHash('md5').update(JSON.stringify(journal.slice(0, n))).digest('hex').slice(0, 12);
+export const journalHash = (journal, n) => createHash('md5').update(JSON.stringify(journal.slice(0, n))).digest('hex').slice(0, 12);
 
 // ───────────────────────── критерии ─────────────────────────
 // DUEL: за окно ролика (10 с) герой наносит ≥2 удара, по герою проходит ≥1, бой не кончился.

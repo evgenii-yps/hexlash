@@ -27,7 +27,7 @@ import { startServer, REPO } from './lib/server.mjs';
 import { openSession, warm } from './lib/session.mjs';
 import { encode } from './lib/ffmpeg.mjs';
 import { provenance } from './lib/provenance.mjs';
-import { lockStatus, refreshFights, resolvePlan, readLock, analyze } from './lib/fights.mjs';
+import { lockStatus, refreshFights, resolvePlan, readLock, analyze, journalHash } from './lib/fights.mjs';
 import { encodeTimeline, encodeExcerpt, buildMarks, writeMarks, copyStills, layout, fmt } from './lib/assemble.mjs';
 import { plans, excerpts, FPS, music } from './plan/trailer.plan.mjs';
 import { musicTimes, buildMix, checkLoudness, muxVideo, writeBeatReports } from './lib/audio.mjs';
@@ -233,6 +233,12 @@ try {
       const r = await renderPlan(srv.base, plan, dir, {});
       results[plan.id] = r; nets.push(r.net);
       console.log(`  ✓ ${plan.id}: ${r.sec} с, кадров снято ${Object.keys(r.hashes).length}, сеть: заблокировано ${r.net.blockedTotal}, ушло ${r.net.sentOutside}`);
+      // бой, снятый в ролик, — тот же, что подобран (подбор идёт в малом размере окна): хэш журнала снятого боя против замка
+      if (plan.kind === 'arena') {
+        const rp = resolvePlan(plan), want = lock.fights[plan.fight]?.journalHash, got = journalHash(r.journal, rp.offset + plan.len);
+        console.log(`    бой «${plan.fight}»: журнал ${got} ${got === want ? '= замку ✓' : `≠ замок ${want} ✗ (бой в кадре не тот, что подобран)`}`);
+        if (got !== want) process.exitCode = 1;
+      }
       if (!o['no-verify']) {
         const v = await verifySample(srv.base, plan, r);
         nets.push(v.net); verify[plan.id] = { compared: v.compared, mismatched: v.mismatched, firstBad: v.firstBad };
