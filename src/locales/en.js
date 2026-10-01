@@ -423,7 +423,7 @@ export default {
       "Throw-in items for the fight. Bought with LASH, which you earn by fighting — never with $HEX.",
     buffs: {
       towel: "Restores health. Faster get-up.",
-      bucket: "Moves faster. Closes distance sooner.",
+      bucket: "Sharper reflexes. Slips a swing and hits back.",
       dice: "Roll for bonus damage. Never a bad roll.",
     },
     buffHave: "You have",          // "You have ×3"
