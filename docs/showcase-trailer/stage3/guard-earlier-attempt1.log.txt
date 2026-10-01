@@ -1,0 +1,20 @@
+▶ эталон origin/main b7515df7
+  home@390x844  home@844x390  home@1280x720  home@1920x1080  gate@390x844  gate@844x390  gate@1280x720  gate@1920x1080  forge@390x844  forge@844x390  forge@1280x720  forge@1920x1080  arena-bout@390x844  arena-bout@844x390  arena-bout@1280x720  arena-bout@1920x1080▶ рабочая копия b984f0c5
+  home@390x844  home@844x390  home@1280x720  home@1920x1080  gate@390x844  gate@844x390  gate@1280x720  gate@1920x1080  forge@390x844  forge@844x390  forge@1280x720  forge@1920x1080  arena-bout@390x844  arena-bout@844x390  arena-bout@1280x720  arena-bout@1920x1080  ✗ home@390x844  1294d401609e d53fd821c11e
+  ✓ home@844x390  6de080e23eb7 6de080e23eb7
+  ✓ home@1280x720  2deea78b9c70 2deea78b9c70
+  ✓ home@1920x1080  866d7150268b 866d7150268b
+  ✓ gate@390x844  ab5d06477423 ab5d06477423
+  ✓ gate@844x390  0bec6b1ec6fb 0bec6b1ec6fb
+  ✓ gate@1280x720  4f9a0ce1550b 4f9a0ce1550b
+  ✓ gate@1920x1080  d39b0ccbc633 d39b0ccbc633
+  ✓ forge@390x844  72d1cf5675c8 72d1cf5675c8
+  ✓ forge@844x390  38064be7a431 38064be7a431
+  ✓ forge@1280x720  18f90da4548a 18f90da4548a
+  ✓ forge@1920x1080  efbdb2c7951a efbdb2c7951a
+  ✓ arena-bout@390x844  dea11fef9fc4 dea11fef9fc4
+  ✓ arena-bout@844x390  c02a23af19de c02a23af19de
+  ✓ arena-bout@1280x720  f21f2952a557 f21f2952a557
+  ✓ arena-bout@1920x1080  96d73a791c9b 96d73a791c9b
+✗ разошлись: 1 из 16
+EXIT 1

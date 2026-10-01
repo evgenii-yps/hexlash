@@ -1,0 +1,100 @@
+{
+ "provenance": {
+  "head": "42a5ee3c498cfedaa6889c4ff77fb8fa12b2c120",
+  "headSubject": "showcase: переходы CSS, созданные в настоящих кадрах после шага, ставятся в ноль до снимка (причина расхождения кадра 140 в воротах)",
+  "main": "b7515df7085ccca648ac572409bd34069699fc0e",
+  "mainSubject": "feat(loading): случайная фраза бойцов на экране загрузки вместо одной NEVER GIVE UP",
+  "mergeBase": "b7515df7085ccca648ac572409bd34069699fc0e",
+  "mainContainedInBranch": true,
+  "behindMain": 0,
+  "gameFilesChangedVsMain": 0,
+  "combatFingerprint": "a3627ca755770eec",
+  "combatFiles": 26,
+  "date": "2026-10-01T09:22:18.931Z"
+ },
+ "lock": {
+  "fingerprint": "a3627ca755770eec",
+  "fights": {
+   "duel": {
+    "seedBuild": 1,
+    "fightSeed": 9001,
+    "offset": 0,
+    "tried": 3,
+    "cores": [
+     "natisk",
+     "zasada"
+    ]
+   },
+   "squad": {
+    "seedBuild": 2,
+    "fightSeed": 9002,
+    "offset": 2002,
+    "tried": 9,
+    "cores": [
+     "natisk",
+     "skala",
+     "skala",
+     "natisk"
+    ]
+   }
+  }
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "every": 2,
+ "timeline": [
+  {
+   "id": "s01-home",
+   "start": 0,
+   "len": 180
+  },
+  {
+   "id": "s02-gate",
+   "start": 180,
+   "len": 336
+  },
+  {
+   "id": "s03-duel",
+   "start": 516,
+   "len": 654
+  },
+  {
+   "id": "T1",
+   "start": 1170,
+   "len": 36
+  },
+  {
+   "id": "s05a-squad",
+   "start": 1206,
+   "len": 502
+  },
+  {
+   "id": "T2",
+   "start": 1708,
+   "len": 4
+  },
+  {
+   "id": "s05b-forge",
+   "start": 1712,
+   "len": 568
+  },
+  {
+   "id": "T3",
+   "start": 2280,
+   "len": 20
+  },
+  {
+   "id": "s09-finale",
+   "start": 2300,
+   "len": 520
+  },
+  {
+   "id": "s10-logo",
+   "start": 2820,
+   "len": 300
+  }
+ ],
+ "seconds": 1513
+}
