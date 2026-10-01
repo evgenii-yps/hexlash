@@ -139,6 +139,8 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
     if (!inst.ok) throw new Error(inst.err);
     log('  камера сцены:', JSON.stringify(inst.info));
   }
+  // общая точка отсчёта для бесконечных CSS-анимаций (см. page/clock.js: rebase) — до первого кадра плана
+  if (!isLogo) await page.evaluate(() => window.__vt.rebase());
   // якорь плана: с этой точки случайность считается заново (кроме арены — там он в runFight)
   if (plan.kind !== 'arena') await page.evaluate((s) => window.__vt.seed(s), SEED_PLAN);
 
@@ -195,6 +197,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
     /** Снимок «как стоит», без шага времени. Снимаем, пока два подряд не совпадут:
      *  показ кадра GPU и съёмка страницы идут независимыми путями. */
     async snapshot() {
+      await page.evaluate(() => { window.__vt.rebase(); return window.__vt.settle(); });   // фаза бесконечных CSS-анимаций — от общей точки (иначе свечение кнопки плывёт на ≤4 уровня)
       let prev = await page.screenshot({ type: 'png' });
       for (let i = 0; i < 6; i++) {
         await page.evaluate(() => window.__vt.settle());

@@ -88,6 +88,21 @@
     }
   }
 
+  // Бесконечные CSS-анимации (пульс свечения кнопки FIGHT и т. п.) стартуют на том виртуальном кадре, когда интерфейс успел смонтироваться, а он
+  // зависит от скорости загрузки (реальное время): фаза у снимка плыла от запуска к запуску (≤4 уровней вокруг кнопки). Перед первым кадром
+  // плана / снимка переводим ВСЕ бесконечные анимации на общую точку отсчёта «сейчас». Конечные не трогаем: их перезапуск показал бы переход заново.
+  function rebaseAnimations() {
+    let list; try { list = document.getAnimations(); } catch (_) { return 0; }
+    let n = 0;
+    for (const a of list) {
+      let inf = false; try { inf = a.effect && a.effect.getComputedTiming().iterations === Infinity; } catch (_) {}
+      if (!inf) continue;
+      animBase.set(a, now); try { a.pause(); a.currentTime = 0; } catch (_) {}
+      n++;
+    }
+    return n;
+  }
+
   function fireTimers() {
     // по порядку срока, внутри кадра допускаем цепочки коротких таймеров
     for (let guard = 0; guard < 1000; guard++) {
@@ -116,6 +131,7 @@
     // Вызывается сразу после действия мыши: подхватить только что созданные переходы CSS
     // ДО того, как они проживут хоть сколько-то реального времени (и завершатся на медленной машине).
     sync() { syncAnimations(); },
+    rebase() { return rebaseAnimations(); },
     seed(s) { rs = s | 0; },
     setAnchorSeed(s) { anchorSeed = s | 0; },
     anchored: () => anchored,
