@@ -1,1 +1,1 @@
-{"branchBig": [{"dir": "g3branch", "cores": ["natisk", "zasada"]}, {"dir": "g4branch", "cores": ["nalet"]}, {"dir": "F3branch", "cores": ["skala"]}], "crystals1": "F2", "crystals2": "F2s2", "bench": "F1", "klichA": "k9a", "klichB": "k9b"}
+{"branchBig": [{"dir": "g3branch", "cores": ["natisk", "zasada"]}, {"dir": "F5rai-branch", "cores": ["nalet"]}, {"dir": "F3branch", "cores": ["skala"]}], "crystals1": "F7", "crystals2": "F7s2", "bench": "F1", "klichA": "k9a", "klichB": "k9b"}

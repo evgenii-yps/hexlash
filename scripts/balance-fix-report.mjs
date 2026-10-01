@@ -78,7 +78,7 @@ P(readFileSync(OUT + `${TAGS.crystals1}/crystals/vertices.md`, 'utf8').split('\n
 
 // ── Ц6 ──
 const bf = (dir, field, core, s) => (has(`${dir}/builds.json`) ? J(`${dir}/builds.json`)[`${field}|${core}|${s}`] : null);
-const SEVEN = { bare: { natisk: 'g3bare', nalet: 'g4seven', skala: 'F3seven', zasada: 'g3bare' }, bot: { natisk: 'g5bot', nalet: 'g4seven', skala: 'g4seven', zasada: 'g5bot' } };
+const SEVEN = { bare: { natisk: 'g3bare', nalet: 'F5rai-seven', skala: 'F3seven', zasada: 'g3bare' }, bot: { natisk: 'F7bot', nalet: 'F7bot', skala: 'F7bot', zasada: 'F7bot' } };
 P('## 6. Ц6: сборки из 7 кристаллов', '', 'Раскладки 5+2, 4+3, 3+3+1, 3+2+2, 5+1+1, 4+2+1 по всем порядкам веток (27 сборок на ядро), кристаллы зажигаются в ветке снизу вверх. Против поля из четырёх голых ядер (включая своё) и против ботов (ядро и число граней N случайны, N равномерно 0…7, бот собирает по правилу §9). Две выборки по 800 зёрен (зёрна 1–800 / 801–1600): против голых — 3200 боёв на сборку на выборку, против ботов — 800.', '');
 P('**Против поля голых ядер:**', '', '| ядро | голое ядро, % | максимум Δ, п.п. | минимум Δ, п.п. | лучшая выше среднего остальных | размах | значимо хуже голого |', '| --- | --- | --- | --- | --- | --- | --- |');
 for (const core of CORES) for (const sName of ['s1', 's801']) { const b = bf(SEVEN.bare[core], 'bare', core, sName); if (!b) continue; P(`| ${NAME[core]} (${sName === 's1' ? 'A' : 'B'}) | ${b.sum.base.toFixed(1)} | ${f1(b.sum.maxDelta)} (${b.sum.best}) | ${f1(b.sum.minDelta)} | ${b.sum.bestMinusMean.toFixed(1)} | ${b.sum.spread.toFixed(1)} | ${b.sum.worstSig.length ? b.sum.worstSig.join(', ') : 'нет'} |`); }
