@@ -15,6 +15,7 @@ import { resolveBehavior } from '../data/behavior.js';
 import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { motionFor } from '../data/intentionMotion.js';
 import { KLICH_BALANCE } from '../data/klichBalance.js';
+import { BUFF_BALANCE } from '../data/buffBalance.js';
 import { COMBAT_BALANCE, readDelaySec, readMissChance, readFalseChance, readWindupReactChance, readOpenReactChance } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
 // Материал тела и яркости ядра — из общего файла токенов сцены (ТЗ-01 §9).
@@ -1184,7 +1185,8 @@ export function buildFighter(
   //    невыполнимым без ускорения самой анимации удара — то есть без правки
   //    сердца моторики. Ведро теперь про ОДНО: боец быстрее двигается и раньше
   //    сходится. Ровно это написано и на карточке в магазине.
-  let buffPaceMul = 1; // ВЕДРО: >1 — двигается быстрее. 1 = баффа нет
+  let buffPaceMul = 1; // ВЕДРО: >1 — двигается быстрее. 1 = баффа нет (с этапа Е ведро шаг не ускоряет — paceMul = 1)
+  let buffReactOn = false; // ВЕДРО (этап Е): быстрая реакция на замах врага — чтение фазы быстрее и реже мимо, реакция чаще (buffBalance.bucket.react)
   let lastHitBlocked = false; // ОТМЕТКА ДЛЯ КУБИКА: последний прилетевший удар ушёл в блок
 
   // --- Charge (заряд) — built by patience, spent on one empowered strike. `charge`
@@ -2054,10 +2056,11 @@ export function buildFighter(
     // (combatBalance.dodgeChance*), capped BELOW 1 so a bout always finishes. Each
     // incoming impact calls takeDamage on its own, so a DOUBLE / COMBO rolls this
     // per hit. No resource / cooldown yet — fatigue may cap it in a later pass.
-    const dodgeChance = B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve);
+    // ВЕДРО (этап Е): быстрая реакция на замах = рефлекторный уворот чаще на dodgeAdd (потолок тот же dodgeChanceMax — бой обязан доигрываться).
+    const dodgeChance = Math.min(B.dodgeChanceMax, B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve) + (buffReactOn ? BUFF_BALANCE.bucket.react.dodgeAdd : 0));
     if (dodgeChance > 0 && Math.random() < dodgeChance) {
       play(DODGE); // slip the hit: no HP loss, no rhythm hitch
-      armRiposte(sb.dodgeCounter || 0); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window
+      armRiposte((sb.dodgeCounter || 0) + (buffReactOn ? BUFF_BALANCE.bucket.react.counterAdd : 0)); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window · ВЕДРО: уворот отвечает сильнее (counterAdd)
       return 0; // fully evaded → no exchange (накал keeps building on pure dodging)
     }
     // The hit LANDED (past miss + dodge). INTERRUPT: are we caught in the EARLY
@@ -2177,6 +2180,7 @@ export function buildFighter(
    * @param {number} mul 1 — баффа нет (и расчёт в точности прежний), 1.3 — на треть быстрее
    */
   const setBuffPace = (mul) => { buffPaceMul = Number.isFinite(mul) && mul > 0 ? mul : 1; };
+  const setBuffReact = (on) => { buffReactOn = !!on; };
 
   // --- TEMPORARY reflex: "decide to raise the guard" (spinal cord until the
   //     model supplies a real «brace» intent). The DECISION lives HERE and ONLY
@@ -2323,8 +2327,9 @@ export function buildFighter(
     const truePhase = getFoePhase ? getFoePhase() : 'neutral';
     if (truePhase !== truePhaseSeen) {
       truePhaseSeen = truePhase;
-      const delay = readDelaySec(counter01) * (0.75 + Math.random() * 0.5); // jittered latency
-      const missed = Math.random() < readMissChance(counter01); // failed to register this transition
+      const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: быстрее читает и реже пропускает
+      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + Math.random() * 0.5); // jittered latency
+      const missed = Math.random() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition
       readPendingAt = t + delay;
       readPendingPhase = missed ? null : truePhase; // null = miss → perception stays stale (didn't see it)
     }
@@ -2343,6 +2348,8 @@ export function buildFighter(
     if (!f) return false;
     const c = counter01;
     const boost = intentionId === INTENTIONS.CATCH ? B.read.catchBoost : intentionId === INTENTIONS.HOLD ? B.read.holdBoost : 1;
+    const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: чаще решается на сбив/контру, паузы между реакциями короче
+    const rx = BRX ? BRX.reactMul : 1;
     let phase = perceivedPhase;
     let phantom = false;
     // ложное чтение — believe in an opening that isn't there (rare; worse at low counter).
@@ -2350,8 +2357,8 @@ export function buildFighter(
     const dist = Math.hypot(f.x - group.position.x, f.z - group.position.z);
     if (phase === 'windup') {
       if (dist > STRIKE) return false; // must be in reach to land inside the foe's vuln window
-      if (Math.random() > readWindupReactChance(c) * boost) return false;
-      readReactUntil = t + B.read.reactCooldownSec;
+      if (Math.random() > Math.min(1, readWindupReactChance(c) * boost * rx)) return false;
+      readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);
       lastReadAction = 'sbiv'; lastReadActionAt = t;
       launchStrike(t, INTERCEPT); // fast intercept jab → catch the windup in time (→ staggerInterrupt in the foe)
       return true;
@@ -2359,8 +2366,8 @@ export function buildFighter(
     if (phase === 'recovery' || phase === 'stagger') {
       const reach = Math.min(character.range + RANGE_HYST, STRIKE);
       if (dist > reach) return false; // open but out of reach — let nav close in normally
-      if (Math.random() > readOpenReactChance(c) * boost) return false;
-      readReactUntil = t + B.read.reactCooldownSec;
+      if (Math.random() > Math.min(1, readOpenReactChance(c) * boost * rx)) return false;
+      readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);
       gatherUntil = t + B.read.gatherSec; // visible coil → the lunge fires on expiry (in update)
       lastReadAction = phantom ? 'contra?' : 'contra'; lastReadActionAt = t;
       return true;
@@ -2887,6 +2894,7 @@ export function buildFighter(
     heal,             // ПОЛОТЕНЦЕ: подлечить на долю полного здоровья
     shortenStagger,   // ПОЛОТЕНЦЕ: укоротить остаток сбива (звать раз на сбив)
     setBuffPace,      // ВЕДРО: множитель хода (1 = баффа нет)
+    setBuffReact,     // ВЕДРО (этап Е): быстрая реакция на замах (true/false)
     // КЛИЧ — два рычага. Выключены, пока их никто не зовёт.
     applyKlich,       // наложить временный сдвиг манеры (оси, сколько держать, сколько гаснуть)
     setKlichId,       // назвать клич для выбора намерения (id из data/klichBalance.js)
