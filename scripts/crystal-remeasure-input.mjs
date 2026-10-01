@@ -71,7 +71,7 @@ for (const core of CORE_IDS) {
     const tags = [...(face.conditionals || []), ...(face.effects || [])];
     const leans = tags.filter((t) => TAG_LEANS[t]).map((t) => ({ tag: t, intention: TAG_LEANS[t][0], when: TAG_LEANS[t][1], vertex: !!TAG_LEANS[t][2], weight: TAG_LEANS[t][2] ? G.vertexLean : G.tagLean }));
     cells.push({
-      core, branch: br, idx: i, label: `${FACET_NAMES[br]}/${CRYSTAL_TEXTS[br][i - 1].name} (${br}${i})`, dataName: face.name,
+      core, branch: br, idx: i, label: `${FACET_NAMES[br]}/${CRYSTAL_TEXTS[core][br][i - 1].name} (${br}${i})`, dataName: face.name,
       recordedShifts: recorded, actualShifts: axes, onStop, clampAt3: clamp3, branchAxesWithout,
       statBonuses: bonuses, invisibleLevers: invisible, dStats,
       tags, leans, deadTags: tags.filter((t) => !TAG_LEANS[t]),

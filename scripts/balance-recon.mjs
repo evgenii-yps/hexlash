@@ -189,7 +189,7 @@ function sectionBias() {
 // ── РАЗДЕЛ table: ядро × кристалл → фактическая дельта (4.1, 4.2) ─────────────
 // «Кристалл» здесь — словарь ТЗ: один из 5 шагов внутри грани (BODY/MIND/WILL).
 // В коде это `face` внутри `branch` (a|b|c), см. upgradeData.js. Показываемый
-// игроку текст — crystalTexts.js (общий на все 4 ядра); механика — upgradeData.js
+// игроку текст — crystalTexts.js (свой у каждого ядра с 02.10.2026; CLAIMS ниже написаны под прежний общий набор и не пересмотрены); механика — upgradeData.js
 // (своя у каждого ядра).
 function fighterStats(coreId, litFaces) {
   const behavior = resolveBehavior(coreId, litFaces);
@@ -297,7 +297,7 @@ function sectionTable() {
         for (const eb of face.extraBonuses || []) bonuses.push(`${seamLabel(eb.stat)} +${Math.round(eb.pct * 100)}%`);
         const liveSeam = (face.statBonus ? [face.statBonus.stat] : []).concat((face.extraBonuses || []).map((e) => e.stat)).some((k) => wiring[k] && wiring[k].wired);
         const tags = [...(face.conditionals || []), ...(face.effects || [])];
-        const text = CRYSTAL_TEXTS[br][i];
+        const text = CRYSTAL_TEXTS[coreId][br][i];
         const claim = CLAIMS[br + i];
         // Сверка обещанного с фактом. Только по осям, которые текст называет.
         const claimAxes = Object.keys(claim);
@@ -399,7 +399,7 @@ function sectionEffect() {
         const r = mirrorWr(coreId, resolveBehavior(coreId, [face]), SEEDS);
         const base = baseByCore[coreId];
         cells.push({
-          core: coreId, branch: br, idx: i, facet: FACET_NAMES[br], crystal: CRYSTAL_TEXTS[br][i].name, dataName: face.name,
+          core: coreId, branch: br, idx: i, facet: FACET_NAMES[br], crystal: CRYSTAL_TEXTS[coreId][br][i].name, dataName: face.name,
           wr: r.wr, wins: r.wins, dWr: r.wr - 50, dWrVsBase: r.wr - base.wr, medSec: r.med, dMed: r.med - base.med,
           identical: r.sigs.filter((x, i) => x === base.sigs[i]).length,
         });

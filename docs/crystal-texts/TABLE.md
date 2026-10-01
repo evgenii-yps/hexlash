@@ -3,11 +3,11 @@
 | ONSLAUGHT | BODY | 1 | Heavy Hit | Heavy Hit | оси: weight+14 · рамп: strikePower+0.01 | совпадает |
 | ONSLAUGHT | BODY | 2 | Guard Crush | Guard Crush | оси: weight+8 · рамп: strikePower+0.015 · рычаги: blockPenetration+0.12 · наклон: guard_crush→strike@foeGuard:0.12 | совпадает |
 | ONSLAUGHT | BODY | 3 | Unshaken | Unshaken | оси: resilience+5 · рамп: strikePower+0.025 · рычаги: interruptResist+0.1 · наклон: unshaken→hold@foeSwing:0.27 | совпадает |
-| ONSLAUGHT | BODY | 4 | Inside Work | Close Power | оси: distance-8 weight+6 · рамп: strikePower+0.035 · наклон: close_damage_ramp→strike@close:0.05 | ~ CHARACTER «Wants to be at arm's length» читается как «держит дистанцию», а кристалл тянет ВПЛОТНУЮ (distance −8) |
+| ONSLAUGHT | BODY | 4 | Inside Work | Close Power | оси: distance-8 weight+6 · рамп: strikePower+0.035 · наклон: close_damage_ramp→strike@close:0.05 | совпадает после правки: CHARACTER «Wants to be right up close.» — distance −8 |
 | ONSLAUGHT | BODY | 5 | Breakthrough | Breakthrough | оси: weight+10 · рамп: strikePower+0.04 · рычаги: blockPenetration+0.2 · наклон: overload_strike→strike@foeHpLow:0.45 | совпадает |
 | ONSLAUGHT | MIND | 1 | Hard Entry | Hard Entry | оси: distance-6 initiative+6 · рычаги: accuracy+0.2 · наклон: hard_entry→strike@always:0.05 | совпадает |
 | ONSLAUGHT | MIND | 2 | Run-Down | Run-Down | оси: stick+5 distance-4 · рычаги: strikePower+0.04 · наклон: chase_strike→strike@foeQuiet:0.14 | совпадает |
-| ONSLAUGHT | MIND | 3 | Sticky | Cut Off | оси: stick+6 · рычаги: blockPenetration+0.25 · наклон: cut_off→hold@close:0.27 | ~ CHARACTER «stays and trades»: HOLD не начинает удар (attack: none) — остаётся рядом и держит стойку, но не обменивается ударами |
+| ONSLAUGHT | MIND | 3 | Sticky | Cut Off | оси: stick+6 · рычаги: blockPenetration+0.25 · наклон: cut_off→hold@close:0.27 | совпадает после правки: CHARACTER «stays there and holds his ground» — наклон HOLD@close + stick+6 |
 | ONSLAUGHT | MIND | 4 | Cling | Cling | оси: stick+6 distance-4 · рычаги: interruptResist+0.3 · наклон: cling→hold@close:0.45 | совпадает |
 | ONSLAUGHT | MIND | 5 | Lockdown | Lockdown | оси: stick+8 distance-6 · рычаги: strikePower+0.04 blockPenetration+0.1 · наклон: lockdown→hold@close:0.27 | совпадает |
 | ONSLAUGHT | WILL | 1 | Long Combo | Long Combo | оси: tempo+3 · рычаги: strikePower+0.01 · наклон: long_combo→strike@close:0.05 | совпадает |
@@ -29,17 +29,17 @@
 | RAIDER | WILL | 2 | Seize the Open | Strike the Open | оси: initiative+4 · рамп: strikePower+0.035 · наклон: punish_exhausted→press@foeOpen:0.18 | совпадает |
 | RAIDER | WILL | 3 | Charged Run | Charged Run | оси: distance+6 · рамп: strikePower+0.045 · рычаги: chargeGain+0.3 · наклон: charged_run→sting@always:0.1 | совпадает |
 | RAIDER | WILL | 4 | Punish Aggression | Punish Aggression | оси: counter+10 · рамп: strikePower+0.05 · наклон: hunt_reply→strike@foeSwing:0.45 | совпадает |
-| RAIDER | WILL | 5 | Killing Run | Killing Run | оси: distance+6 · рамп: strikePower+0.06 · рычаги: chargePower+0.3 · наклон: lethal_entry→press@charged:0.45 | ~ EFFECT «lands at full power»: даёт +30% к силе заряженного удара, а не «полную» силу |
-| BULWARK | BODY | 1 | Tough Hide | Tough Hide | оси: resilience+3 · рамп: toughness+0.03 · рычаги: blockMitigation+0.03 · наклон: tough_hide→hold@close:0.25 | ~ CHARACTER «Stands and trades in close»: та же причина, что у ONSLAUGHT MIND 3 — HOLD не начинает удар |
+| RAIDER | WILL | 5 | Killing Run | Killing Run | оси: distance+6 · рамп: strikePower+0.06 · рычаги: chargePower+0.3 · наклон: lethal_entry→press@charged:0.45 | совпадает после правки: «His charged blow lands much harder.» — chargePower +30% и рамп силы 0.06 |
+| BULWARK | BODY | 1 | Tough Hide | Tough Hide | оси: resilience+3 · рамп: toughness+0.03 · рычаги: blockMitigation+0.03 · наклон: tough_hide→hold@close:0.25 | совпадает после правки: CHARACTER «Holds his ground in close.» — hold@close |
 | BULWARK | BODY | 2 | Steady Guard | Steady Guard | оси: resilience+2 · рамп: toughness+0.05 · рычаги: interruptResist+0.15 blockMitigation+0.05 · наклон: steady_guard→hold@foeSwing:0.31 | совпадает |
 | BULWARK | BODY | 3 | Catch Breath | Catch Breath | оси: resilience+3 · рамп: toughness+0.07 · рычаги: staminaRegen+0.7 blockMitigation+0.05 · наклон: catch_breath→hold@foeQuiet:0.27 | совпадает |
 | BULWARK | BODY | 4 | Dig In | Dig In | оси: distance-6 · рамп: toughness+0.09 · рычаги: blockMitigation+0.12 · наклон: dig_in→hold@close:0.25 | совпадает |
-| BULWARK | BODY | 5 | Unbreakable | Unbreakable | оси: resilience+2 · рамп: toughness+0.06 · рычаги: blockMitigation+0.15 · наклон: fortress→hold@always:0.15 | ~ EFFECT «stops most of the damage»: стойка режет базово 50%, кристалл добавляет +15% к её силе → 57,5%. «Больше половины» верно, «большую часть» читается сильнее |
+| BULWARK | BODY | 5 | Unbreakable | Unbreakable | оси: resilience+2 · рамп: toughness+0.06 · рычаги: blockMitigation+0.15 · наклон: fortress→hold@always:0.15 | совпадает после правки: «His guard stops even more of the damage.» — blockMitigation +15% к силе стойки (50% → 57,5%) |
 | BULWARK | MIND | 1 | Riposte | Riposte | оси: counter+8 stick+6 · рамп: toughness+0.04 · рычаги: blockCounter+0.5 · наклон: riposte→press@foeSwing:0.19 | совпадает |
 | BULWARK | MIND | 2 | Catch & Punish | Catch & Punish | оси: counter+8 · рамп: toughness+0.07 · рычаги: interruptBonus+0.4 · наклон: catch_punish→press@foeOpen:0.45 | совпадает |
 | BULWARK | MIND | 3 | Hard Meet | Hard Meet | оси: counter+10 stick+6 · рамп: toughness+0.1 · рычаги: interruptBonus+0.9 · наклон: hard_meet→press@close:0.17 | совпадает |
 | BULWARK | MIND | 4 | Retaliation | Retaliation | оси: counter+7 · рамп: toughness+0.14 · рычаги: blockCounter+0.3 · наклон: retaliate_ramp→strike@foeSwing:0.45 | совпадает |
-| BULWARK | MIND | 5 | Sea Wall | Sea Wall | оси: counter+8 stick+6 · рамп: toughness+0.14 · рычаги: blockCounter+0.6 interruptBonus+0.6 · наклон: counter_trap→catch@longFight:0.45 | ✗ EFFECT «strongest answers, after a block and after a caught swing»: ответ после блока (blockCounter 0.6) — действительно сильнейший в грани (Riposte 0.5, Retaliation 0.3); а вот ответ на пойманный замах (interruptBonus) у Sea Wall 0.6, у Hard Meet (№3) — 0.9, у Catch & Punish — 0.4. Сильнейший в грани — Hard Meet |
+| BULWARK | MIND | 5 | Sea Wall | Sea Wall | оси: counter+8 stick+6 · рамп: toughness+0.14 · рычаги: blockCounter+0.6 interruptBonus+0.6 · наклон: counter_trap→catch@longFight:0.45 | совпадает после правки: «His strongest answer after a block. A swing he catches hurts too.» — blockCounter 0.6 сильнейший в грани; interruptBonus 0.6 > 0 |
 | BULWARK | WILL | 1 | Body Shove | Body Shove | оси: stick+6 distance-6 · рычаги: blockPenetration+0.1 · наклон: body_shove→press@close:0.17 | совпадает |
 | BULWARK | WILL | 2 | Heavy Slam | Heavy Slam | оси: weight+10 · рычаги: blockPenetration+0.3 · наклон: heavy_slam→strike@close:0.26 | совпадает |
 | BULWARK | WILL | 3 | No Way Around | No Way Around | оси: stick+7 · наклон: no_way_around→hold@foeGuard:0.45 | совпадает |
@@ -49,7 +49,7 @@
 | AMBUSH | BODY | 2 | Slip Counter | Slip Counter | оси: slip+4 · рычаги: dodgeCounter+0.03 · наклон: slip_counter→strike@foeQuiet:0.45 | совпадает |
 | AMBUSH | BODY | 3 | Answer the Swing | Punish Aggression | оси: counter+5 · наклон: punish_aggression→strike@foeSwing:0.45 | совпадает |
 | AMBUSH | BODY | 4 | Punish Whiff | Punish Whiff | оси: counter+5 · рычаги: missCounter+0.4 · наклон: punish_whiff→strike@foeOpen:0.6 | совпадает |
-| AMBUSH | BODY | 5 | Perfect Trap | Perfect Trap | оси: counter+2 slip+2 · рычаги: dodgeCounter+0.05 missCounter+0.05 · наклон: perfect_trap→strike@foeQuiet:0.45 | ✗ EFFECT «strongest counters, after a slip and after a miss»: после уворота (dodgeCounter 0.05) — сильнейший в грани (Slip Counter 0.03); а после промаха (missCounter) у Perfect Trap 0.05, у Punish Whiff (№4) — 0.4. Сильнейший в грани — Punish Whiff |
+| AMBUSH | BODY | 5 | Perfect Trap | Perfect Trap | оси: counter+2 slip+2 · рычаги: dodgeCounter+0.05 missCounter+0.05 · наклон: perfect_trap→strike@foeQuiet:0.45 | совпадает после правки: «A slip arms his strongest counter. The opponent's misses are punished too.» — dodgeCounter 0.05 сильнейший в грани (0.03); missCounter 0.05 > 0 |
 | AMBUSH | MIND | 1 | Long Slip | Long Slip | оси: slip+8 distance+5 · наклон: long_slip→sting@foeSwing:0.45 | совпадает |
 | AMBUSH | MIND | 2 | Hard to Reach | Hard to Reach | оси: slip+6 distance+5 · наклон: hard_to_reach→sting@longFight:0.4 | совпадает |
 | AMBUSH | MIND | 3 | Long Game | Run 'Em Ragged | оси: distance+4 slip+4 · наклон: exhaust→sting@longFight:0.4 | совпадает |

@@ -19,7 +19,7 @@ const { TAG_LEANS, BRANCH_HOME, resolveLeans } = await load('/src/data/branchThr
 const { COMBAT_BALANCE } = await load('/src/data/combatBalance.js');
 const GR = COMBAT_BALANCE.grani;
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
-const label = (core, b, j) => `${CORE_NAME[core]} · ${BR_NAME[b]}/${CRYSTAL_TEXTS[b][j - 1].name} (${b}${j}) · ${CRYSTALS[core].find((x) => x.id === b).faces[j - 1].name}`;
+const label = (core, b, j) => `${CORE_NAME[core]} · ${BR_NAME[b]}/${CRYSTAL_TEXTS[core][b][j - 1].name} (${b}${j}) · ${CRYSTALS[core].find((x) => x.id === b).faces[j - 1].name}`;
 const clamp = (v) => Math.max(0, Math.min(100, v));
 const out = {};
 const md_ = [];

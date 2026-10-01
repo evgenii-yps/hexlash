@@ -480,7 +480,7 @@ const treeLoadingText = computed(() => interpolate(t.value.forge.treeLoading, {
 const litNames = computed(() => {
   const out = [];
   (props.picked?.upgrade || []).forEach((cr) => cr.faces.forEach((f, i) => {
-    if (f.state === 'lit') out.push(crystalTitle(cr.id, i) || f.name);
+    if (f.state === 'lit') out.push(crystalTitle(props.picked?.core, cr.id, i) || f.name);
   }));
   return out;
 });
