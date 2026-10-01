@@ -27,7 +27,7 @@ export const BUFF_META = {
   towel: { id: 'towel', name: 'TOWEL', mono: 'T',
            does: 'patches him up over a few seconds and shakes off a stagger' },
   bucket: { id: 'bucket', name: 'BUCKET', mono: 'B',
-            does: 'puts speed in his legs for a while' },
+            does: 'sharpens his reactions for a while: he reads the foe\'s swings sooner and answers them more often' },
   dice: { id: 'dice', name: 'DICE', mono: 'D',
           does: 'a gamble: it can swing his next exchange either way' },
 };
@@ -36,7 +36,7 @@ export const BUFF_BALANCE = {
   // ── ПОЛОТЕНЦЕ ── восстановление
   towel: {
     durationSec: 5,
-    healFracOfMax: 0.20,   // 20% полного здоровья за всё время действия
+    healFracOfMax: 0.07,   // 7% полного здоровья за всё время действия (было 20%: +7.9 п.п. к исходу, цель этапа Е +3…+8 для каждого предмета и ≤ +15 на набор)
     staggerRecoverMul: 0.5, // выход из сбива вдвое быстрее
   },
 
@@ -50,7 +50,11 @@ export const BUFF_BALANCE = {
   //    ходит и раньше сходится, ровно как написано на карточке в магазине.
   bucket: {
     durationSec: 5,
-    paceMul: 1.30,
+    paceMul: 1.0, // шаг ведро больше не ускоряет (balance-fix, этап Е): 1.30 давало ≈ 0 п.п. к исходу; ключ оставлен — его читают замеры
+    // БЫСТРАЯ РЕАКЦИЯ НА ЗАМАХ (этап Е): пока ведро действует, боец читает фазу врага быстрее, реже пропускает замах и чаще решается на сбив/контру.
+    // Множители к combatBalance.read: delayMul — задержка чтения, missMul — шанс пропустить, reactMul — шанс решиться (потолок 1), cooldownMul — пауза между реакциями.
+    // dodgeAdd — прибавка к шансу рефлекторного уворота (доля, потолок прежний combatBalance.dodgeChanceMax): реакция на замах, которая даёт исход.
+    react: { delayMul: 0.3, missMul: 0.3, reactMul: 1.4, cooldownMul: 0.5, dodgeAdd: 0.5, counterAdd: 1.5 }, // counterAdd — прибавка к ответному удару после уворота (как sb.dodgeCounter у КАПКАНА)
   },
 
   // ── КУБИК ── урон
@@ -59,12 +63,13 @@ export const BUFF_BALANCE = {
   // грани без действия и ни одной с множителем меньше единицы.
   dice: {
     faces: {
-      1: { hits: 1, mul: 1.5 },
-      2: { hits: 2, mul: 1.5 },
-      3: { hits: 2, mul: 2.0 },
-      4: { hits: 3, mul: 2.0 },
-      5: { hits: 3, mul: 2.5 },
-      6: { hits: 3, mul: 3.0 }, // + особая вспышка
+      // Было 1.5/1.5/2.0/2.0/2.5/3.0 с 1/2/2/3/3/3 ударами: от +4 до +38 п.п. к исходу (разброс ×9). Сжато этапом Е: от ≈ +1 до ≈ +11 (цель: худшая грань ≥ 0, лучшая ≤ +15).
+      1: { hits: 1, mul: 1.08 },
+      2: { hits: 1, mul: 1.2 },
+      3: { hits: 2, mul: 1.12 },
+      4: { hits: 2, mul: 1.25 },
+      5: { hits: 3, mul: 1.18 },
+      6: { hits: 3, mul: 1.3 }, // + особая вспышка
     },
     bigFace: 6, // на этой грани вспышка заметно сильнее
   },
@@ -82,6 +87,7 @@ export const BUFF_BALANCE = {
     diceFoeHpBelow: 0.50, // кубик: здоровье противника ниже этой доли…
     diceLateSec: 20,      // …или просто позже этой секунды боя
     minGapSec: 6,         // не чаще одного баффа за столько секунд
+    bucketAfterSec: 5,    // ведро не раньше этой секунды боя (этап Е): раньше бот бросал его на первой же секунде, пока никто ещё не замахивался
   },
 
   /**

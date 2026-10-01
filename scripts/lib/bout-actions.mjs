@@ -27,7 +27,7 @@ export function makeActions(H, mods) {
           const st = f.isStaggered(); if (st && !eff.sh) { f.shortenStagger(B.towel.staggerRecoverMul); eff.sh = true; } if (!st && eff.sh) eff.sh = false;
         }
         if (eff.id === 'dice' && !strike.diceChargeOf(f)) eff = null;
-        else if (eff && now >= eff.until) { if (eff.id === 'bucket') f.setBuffPace(1); if (eff.id === 'dice') strike.clearDiceCharge(f); eff = null; }
+        else if (eff && now >= eff.until) { if (eff.id === 'bucket') { f.setBuffPace(1); f.setBuffReact(false); } if (eff.id === 'dice') strike.clearDiceCharge(f); eff = null; }
       }
       if (!me || !other || eff || !items.length) return;
       const f = me.f;
@@ -36,7 +36,7 @@ export function makeActions(H, mods) {
       if (rule === 'bot') {
         if (now - lastThrow < B.bot.minGapSec) return;
         if (items.includes('towel') && hp01 < B.bot.towelHpBelow) pick = 'towel';
-        else if (items.includes('bucket') && gap < B.bot.bucketNearDist) pick = 'bucket';
+        else if (items.includes('bucket') && now >= B.bot.bucketAfterSec && gap < B.bot.bucketNearDist) pick = 'bucket';
         else if (items.includes('dice') && (foeHp01 < B.bot.diceFoeHpBelow || now >= B.bot.diceLateSec)) pick = 'dice';
       } else if (rule === 'fixed') { if (now >= fixedAt) pick = items[0]; }
       else if (rule === 'script') {
@@ -47,7 +47,7 @@ export function makeActions(H, mods) {
       items.splice(items.indexOf(pick), 1); lastThrow = now;
       const rec = { id: pick, t: Math.round(now * 100) / 100, hp01: Math.round(hp01 * 1000) / 1000 };
       if (pick === 'towel') { eff = { id: 'towel', until: now + B.towel.durationSec, rate: B.towel.healFracOfMax / B.towel.durationSec, sh: false }; if (f.isStaggered()) { f.shortenStagger(B.towel.staggerRecoverMul); eff.sh = true; } }
-      else if (pick === 'bucket') { f.setBuffPace(B.bucket.paceMul); eff = { id: 'bucket', until: now + B.bucket.durationSec }; }
+      else if (pick === 'bucket') { f.setBuffPace(B.bucket.paceMul); f.setBuffReact(true); eff = { id: 'bucket', until: now + B.bucket.durationSec }; }
       else { const fc = face || rollDie(); const row = B.dice.faces[fc]; strike.armDiceCharge(f, row.mul, row.hits); eff = { id: 'dice', until: Infinity }; rec.face = fc; }
       log.push(rec);
     };

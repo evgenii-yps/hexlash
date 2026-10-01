@@ -20,6 +20,9 @@ const { duel, CORE_IDS, load } = H;
 const klich = await load('/src/data/klichBalance.js');
 const buff = await load('/src/data/buffBalance.js');
 const { makeBuffDriver } = makeActions(H, { klich, buff });
+const BB = buff.BUFF_BALANCE;
+if (process.env.BB_OVERRIDE) { const o = JSON.parse(process.env.BB_OVERRIDE); const deep = (t, u) => { for (const k of Object.keys(u)) { if (u[k] && typeof u[k] === 'object' && !Array.isArray(u[k])) deep(t[k] = t[k] || {}, u[k]); else t[k] = u[k]; } }; deep(BB, o); } // подбор чисел без правки файла
+const ONLY = opt('only', '').split(',').filter(Boolean);
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 const cores = CORES_ARG.length ? CORES_ARG : CORE_IDS;
 // варианты: id → { kit, rule, plan?, face? }
@@ -42,6 +45,7 @@ for (const core of cores) {
   const base = []; const keys = [];
   for (let s = from; s <= to; s++) for (const foe of CORE_IDS) { const seed = s * 8 + CORE_IDS.indexOf(foe); keys.push([foe, seed]); base.push(bout(core, foe, seed, null)); }
   for (const [name, v] of Object.entries(VARIANTS)) {
+    if (ONLY.length && !ONLY.includes(name)) continue;
     const w = keys.map(([foe, seed]) => bout(core, foe, seed, v));
     const d = w.map((x, i) => x - base[i]); const md = mean(d); const sd = Math.sqrt(mean(d.map((x) => (x - md) ** 2)) / (d.length - 1));
     res[`${core}|${name}`] = { core, name, n: d.length, wrBare: 100 * mean(base), wrBuff: 100 * mean(w), delta: 100 * md, ciLo: 100 * (md - 1.96 * sd), ciHi: 100 * (md + 1.96 * sd) };
@@ -54,7 +58,7 @@ const f1 = (x) => (x >= 0 ? '+' : '') + x.toFixed(1);
 const L = ['| ядро | вариант | победы без/с, % | сдвиг п.п. [95%] |', '| --- | --- | --- | --- |'];
 for (const r of Object.values(res)) L.push(`| ${NAME[r.core]} | ${r.name} | ${r.wrBare.toFixed(1)} / ${r.wrBuff.toFixed(1)} | ${f1(r.delta)} [${f1(r.ciLo)}…${f1(r.ciHi)}] |`);
 // среднее по ядрам
-const names = Object.keys(VARIANTS); L.push('', '| вариант | среднее по ядрам, п.п. |', '| --- | --- |');
+const names = Object.keys(VARIANTS).filter((n) => !ONLY.length || ONLY.includes(n)); L.push('', '| вариант | среднее по ядрам, п.п. |', '| --- | --- |');
 for (const n of names) L.push(`| ${n} | ${f1(mean(cores.map((c) => res[`${c}|${n}`].delta)))} |`);
 writeFileSync(join(OUT, 'buffs.md'), L.join('\n'));
 console.log(L.join('\n'));

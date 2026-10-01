@@ -389,6 +389,7 @@ function applyBuff(id, unit, own) {
     const o = BUFF_BALANCE.bucket;
     e.until = nowT + o.durationSec;
     f.setBuffPace(o.paceMul);
+    f.setBuffReact(true);
   } else if (id === 'dice') {
     // Служебная грань — только под ?dev=1; у игрока здесь всегда честный бросок.
     const face = (DEV_MODE && devFace) || rollDie(); // ЕДИНСТВЕННЫЙ бросок на всю игру
@@ -408,7 +409,7 @@ function applyBuff(id, unit, own) {
 function endEffect(unit, e) {
   const f = unit && unit.f;
   if (!f) return;
-  if (e.id === 'bucket') f.setBuffPace(1);
+  if (e.id === 'bucket') { f.setBuffPace(1); f.setBuffReact(false); }
   if (e.id === 'dice') clearDiceCharge(f);
 }
 
@@ -440,7 +441,7 @@ function tickBot() {
 
     let pick = null;
     if (botKit.includes('towel') && hp01 < B.towelHpBelow) pick = 'towel';
-    else if (botKit.includes('bucket') && gap < B.bucketNearDist) pick = 'bucket';
+    else if (botKit.includes('bucket') && nowT >= B.bucketAfterSec && gap < B.bucketNearDist) pick = 'bucket';
     else if (botKit.includes('dice') && (foeHp01 < B.diceFoeHpBelow || nowT >= B.diceLateSec)) pick = 'dice';
     if (!pick) continue;
 
