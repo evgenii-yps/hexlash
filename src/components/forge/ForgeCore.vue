@@ -366,13 +366,15 @@ const facetLitCount = (f) => {
   return b ? b.faces.filter((x) => x.state === 'lit').length : 0;
 };
 
-/* ИМЕНА — ИЗ СЛОЯ ТЕКСТОВ, а не из игровых данных (ТЗ 24.09.2026 §4.3).
+/* ИМЕНА — ИЗ СЛОЯ ТЕКСТОВ, а не из игровых данных (ТЗ 24.09.2026 §4.3), и ЯДРО
+   БЕРЁТСЯ ТО, ЧЬЁ ДЕРЕВО ПОКАЗАНО (props.coreId): у каждого ядра свои пятнадцать
+   имён (ТЗ 02.10.2026). В SPAR у соперника это ядро соперника.
    В данных имя кристалла было и ключом содержания, и надписью на экране; теперь
    они разведены. Ключи (branch.id · face.id) не тронуты — они часть счёта.
    Запасной вариант — прежнее имя из данных: если слой текстов вдруг не знает
    этого места, гнездо покажет старую подпись, а не пустоту. */
 const facetName = (f) => (f ? (facetTitle(f.id) || branchOf(f)?.name || f.id.toUpperCase()) : '');
-const crystalName = (c) => (c ? (crystalTitle(c.facetId, c.index) || faceOf(c)?.name || '') : '');
+const crystalName = (c) => (c ? (crystalTitle(props.coreId, c.facetId, c.index) || faceOf(c)?.name || '') : '');
 
 const selFacet = computed(() => facets.find((f) => f.id === sel.value) || null);
 const selCrystals = computed(() => selFacet.value?.crystals || []);
@@ -383,7 +385,7 @@ const selCrystal = computed(() => (cry.value === null ? null : selCrystals.value
    прозы у кристаллов не было вовсе. Теперь она есть, и лежит отдельно от счёта.
    ⚠️ НИ ОДНОЙ ЦИФРЫ: ни процентов, ни остатка прав. Их отдельный проход позже. */
 const cryText = computed(() => (selCrystal.value
-  ? crystalText(selCrystal.value.facetId, selCrystal.value.index)
+  ? crystalText(props.coreId, selCrystal.value.facetId, selCrystal.value.index)
   : null));
 
 /* ── можно ли зажигать ─────────────────────────────────────────────────── */

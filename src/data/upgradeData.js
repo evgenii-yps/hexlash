@@ -130,21 +130,22 @@ function mkBranch(id, name, faces, stat = null, key = null) {
 export const CRYSTALS = {
   natisk: [
     // RAM — a slow, heavy fighter that breaks straight THROUGH the guard. Number:
-    // strikePower (whole-branch ramp = «бьёт тяжелее») + blockPenetration (Guard
-    // Crush / Breakthrough, the REAL pierce seam) + interrupt resistance (Unshaken).
+    // strikePower (the branch's OWN ramp, combatBalance.branchRamp['natisk.a'] — 1…4%,
+    // not the shared gradeBonusRamp) + blockPenetration (Guard Crush / Breakthrough,
+    // the REAL pierce seam) + interrupt resistance (Unshaken).
     // Movement: weight UP = a heavier, slower gait — manner, NOT damage (that's
     // strikePower). No counter (not RAM's home).
     mkBranch('a', 'RAM', [
       // Heavier, slower, more crushing blow: strikePower (ramp) + a weightier gait.
       { name: 'Heavy Hit', shifts: [s('weight', 14)] },
-      // Caves a raised guard: really pierces the block (blockPenetration seam).
+      // Caves a raised guard: really pierces part of the block (blockPenetration seam, +12%).
       { name: 'Guard Crush', shifts: [s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramGuardCrushPen)], conditionals: ['guard_crush'] },
-      // Can't be knocked off the swing: interrupt-resistance seam + holds steady.
+      // Hard to knock off the swing: interrupt-resistance seam (+10%) + holds steady.
       { name: 'Unshaken', shifts: [s('resilience', 5)], bonuses: [b('interruptResist', COMBAT_BALANCE.ramUnshakenInterruptResist)], conditionals: ['unshaken'] },
       // The closer it gets, the more it breaks (close_damage_ramp — conditional,
       // approximated by the close-in shift until the ramp mechanic is coded).
       { name: 'Close Power', shifts: [s('distance', -8), s('weight', 6)], conditionals: ['close_damage_ramp'] },
-      // VERTEX — straight through the guard: near-total block pierce + an overload hit.
+      // VERTEX — through the guard: the branch's strongest block pierce (+20%) + an overload hit.
       { name: 'Breakthrough', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramBreakthroughPen)], effects: ['overload_strike'] },
     ], 'strikePower', 'natisk.a'),
     // CHASE — a fast, clingy pursuer that captures distance and won't let go.
@@ -189,7 +190,7 @@ export const CRYSTALS = {
     mkBranch('a', 'JAB', [
       // Strike then bounce out fast — a quick in-out exchange.
       { name: 'Quick Out', shifts: [s('distance', 8), s('tempo', 6)], conditionals: ['quick_out'] },
-      // Pinpoint first strike: the entry rarely misses (accuracy seam).
+      // Pinpoint first strike: a better-aimed entry (accuracy seam, +20%).
       { name: 'Pinpoint Entry', shifts: [s('initiative', 9)], bonuses: [b('accuracy', COMBAT_BALANCE.jabPinpointAccuracy)], conditionals: ['pinpoint_entry'] },
       // Bounces out beyond the foe's counter-range, elusive on the way.
       { name: 'Far Bounce', shifts: [s('distance', 10), s('slip', 6)] },
@@ -203,7 +204,7 @@ export const CRYSTALS = {
     // real attack. Number: feintChance / feintPayoff seams + variable tempo. No
     // counter, no weight (light).
     mkBranch('b', 'FEINT', [
-      // Throws more fakes — the feint-frequency seam.
+      // Throws a few more fakes — the feint-frequency seam (a small lift).
       { name: 'Fake-In', shifts: [s('tempo', 4)], bonuses: [b('feintChance', COMBAT_BALANCE.feintFakeInChance)], conditionals: ['fake_in'] },
       // When the foe bites a feint, the punish strike bites harder (payoff seam).
       { name: 'Punish Reaction', shifts: [s('tempo', 4)], bonuses: [b('feintPayoff', COMBAT_BALANCE.feintPunishPayoff)], conditionals: ['punish_reaction'] },
@@ -212,15 +213,15 @@ export const CRYSTALS = {
       // Jolts the foe's swing with a fake (feint → interrupt). REQUIRES a seam —
       // a feint lands nothing, so it can't interrupt today (tagged, see report).
       { name: 'Feint to Interrupt', shifts: [s('tempo', 6)], conditionals: ['feint_interrupt'] },
-      // VERTEX — fake → opening → clean strike: the most reliable pierce (max payoff).
+      // VERTEX — fake → opening → clean strike: the branch's biggest feint payoff + some block pierce.
       { name: 'Setup Combo', shifts: [s('tempo', 6)], bonuses: [b('feintPayoff', COMBAT_BALANCE.feintSetupPayoff)], effects: ['feint_combo'] },
     ], null, 'nalet.b'),
     // HUNT (ОХОТА) — a patient hunter that loads a charged haymaker and reads the
-    // opening. Number: strikePower (ramp) + charge (Charged Run gain, Killing Run
+    // opening. Number: strikePower (own ramp, branchRamp['nalet.c']) + charge (Charged Run gain, Killing Run
     // power — REAL charge seams) + accuracy (Read the Tell). counter ONLY on
     // Punish Aggression. Light — no weight dump (was heavy; removed).
     mkBranch('c', 'HUNT', [
-      // Studies the foe (waits a touch longer), then a pinpoint entry (accuracy).
+      // Studies the foe (waits a touch longer), then answers with better aim (accuracy seam).
       { name: 'Read the Tell', shifts: [s('initiative', -6)], bonuses: [b('accuracy', COMBAT_BALANCE.huntReadAccuracy)], conditionals: ['read_tell'] },
       // Harder on a spent / open foe (punish_exhausted). REQUIRES a seam — needs to
       // read the foe's stamina for the damage bonus (tagged, see report).
@@ -234,8 +235,8 @@ export const CRYSTALS = {
     ], 'strikePower', 'nalet.c'),
   ],
   skala: [
-    // BASTION (БАСТИОН) — an unbreakable wall that recovers its wind. Number:
-    // toughness (whole-branch ramp) + blockMitigation (Unbreakable — REAL block
+    // BASTION (БАСТИОН) — a sturdy wall that recovers its wind. Number:
+    // toughness (the branch's OWN ramp, branchRamp['skala.a']) + blockMitigation (Unbreakable — REAL block
     // strength) + stamina regen (Catch Breath — REAL breathing seam). Movement:
     // resilience (holds steady / digs in close). No counter (not its home).
     mkBranch('a', 'BASTION', [
@@ -248,11 +249,11 @@ export const CRYSTALS = {
       // The longer it holds ground, the harder it gets (dig_in — time-ramp of
       // toughness; conditional, approximated by planting close until it's coded).
       { name: 'Dig In', shifts: [s('distance', -6)], conditionals: ['dig_in'] },
-      // VERTEX — unbreakable: a held guard cuts incoming damage in spades (block).
+      // VERTEX — a stronger held guard: +15% block strength on top of the base cut (blockMitigation).
       { name: 'Unbreakable', shifts: [s('resilience', 2)], bonuses: [b('blockMitigation', COMBAT_BALANCE.bastionFortressMitigation)], effects: ['fortress'] },
     ], 'toughness', 'skala.a'),
     // BREAKER (ВОЛНОЛОМ) — a close-range block-counter wall. Number: toughness
-    // ramp + the REAL onBlock riposte (sb.blockCounter) + the interrupt-catch
+    // (own ramp, branchRamp['skala.b']) + the REAL onBlock riposte (sb.blockCounter) + the interrupt-catch
     // reward (sb.interruptBonus) + counter (its HOME). Kept in the near zone: NO
     // slip (it stands and blocks, never weaves) — that splits it from the future
     // КАПКАН (a far-range slip-counter). High stick/resilience (core + stick adds).
@@ -266,8 +267,8 @@ export const CRYSTALS = {
       // The more it has eaten, the harder it answers (retaliate_ramp — damage-taken
       // ramp of the counter; conditional, approximated by counter until coded).
       { name: 'Retaliation', shifts: [s('counter', 7)], conditionals: ['retaliate_ramp'] },
-      // VERTEX — sea-wall trap: a foe's flurry turns into a heavy counter (max
-      // block-riposte + interrupt-catch + counter).
+      // VERTEX — sea wall: the branch's strongest post-block riposte (+60%) and a
+      // catch bonus (+60%; Hard Meet's +90% is higher) + counter.
       { name: 'Sea Wall', shifts: [s('counter', 8), s('stick', 6)], bonuses: [b('blockCounter', COMBAT_BALANCE.breakerTrapRiposte), b('interruptBonus', COMBAT_BALANCE.breakerTrapInterrupt)], effects: ['counter_trap'] },
     ], 'toughness', 'skala.b'),
     // VICE (ТИСКИ) — locks the foe in place with mass. Number/movement: stick (hold
@@ -297,14 +298,15 @@ export const CRYSTALS = {
     mkBranch('a', 'TRAP', [
       // Bites back harder on the foe's attack — more punishing counter.
       { name: 'Hard Counter', shifts: [s('counter', 6)], conditionals: ['hard_counter'] },
-      // Off the line, instant counter — a slipped hit arms the riposte (dodge-counter).
+      // Off the line, a counter — a slipped hit arms the riposte (dodge-counter, a small +3%).
       { name: 'Slip Counter', shifts: [s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)], conditionals: ['slip_counter'] },
       // The harder the foe presses, the harder the answer (punish_aggression —
       // counter-ramp by foe aggression; conditional, approximated by counter).
       { name: 'Punish Aggression', shifts: [s('counter', 5)], conditionals: ['punish_aggression'] },
       // Punishes a whiff — the foe's miss opens the counter window (onMiss seam).
       { name: 'Punish Whiff', shifts: [s('counter', 5)], bonuses: [b('missCounter', COMBAT_BALANCE.trapMissCounter)], conditionals: ['punish_whiff'] },
-      // VERTEX — perfect trap: a dodge OR a whiff is a guaranteed heavy counter.
+      // VERTEX — perfect trap: the branch's strongest post-dodge counter (+5%); the post-whiff
+      // counter is +5% too (Punish Whiff's +40% is higher).
       { name: 'Perfect Trap', shifts: [s('counter', 2), s('slip', 2)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },
     ], null, 'zasada.a'),
     // SHADOW (ТЕНЬ) — an untouchable that wears the foe down with distance. Number/
@@ -325,13 +327,14 @@ export const CRYSTALS = {
       { name: 'Phantom', shifts: [s('slip', 9), s('distance', 5)], effects: ['phantom'] },
     ], null, 'zasada.b'),
     // STING (ЖАЛО) — a standing charge bomb. Number: strikePower (ramp) + the REAL
-    // charge seams — power (Loaded / Execution), ceiling (Long Charge), pierce. Anchor:
+    // charge seams — power (Loaded / Execution), ceiling (Long Charge), pierce; strikePower
+    // rides the branch's OWN ramp (branchRamp['zasada.c']). Anchor:
     // LOW initiative + high distance (stands far and loads its moment) — this splits
     // it from ОХОТА (mobile, fast chargeGain). ЖАЛО waits LONGER for a BIGGER hit.
     mkBranch('c', 'STING', [
-      // The loaded blow lands heavy — more charge-release power.
+      // The loaded blow lands heavier — a little more charge-release power (+5%).
       { name: 'Loaded Hit', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingLoadedPower)], conditionals: ['loaded_hit'] },
-      // Waits longer for a bigger charge — a higher ceiling, and stands to load it
+      // Waits longer for a bigger charge — a higher ceiling (+60%), and stands to load it
       // (low initiative, far distance — patient spacing, not a lunge).
       { name: 'Long Charge', shifts: [s('distance', 4)], bonuses: [b('chargeMax', COMBAT_BALANCE.stingLongChargeMax)], conditionals: ['long_charge'] },
       // Strikes at the foe's vulnerable moment (vulnerable_strike — reads the foe's
@@ -339,8 +342,7 @@ export const CRYSTALS = {
       { name: 'Hit the Opening', shifts: [s('initiative', -6)], conditionals: ['vulnerable_strike'] },
       // One charged strike pierces any guard — charge-release block pierce.
       { name: 'Pierce', shifts: [s('distance', 6)], bonuses: [b('chargePen', COMBAT_BALANCE.stingPiercePen)], conditionals: ['pierce'] },
-      // VERTEX — execution: a full charge ends it in one run (max release power; the
-      // escalate safeguard keeps it from being a start one-shot — the bout finishes).
+      // VERTEX — the heaviest charged blow in the branch (+7% release power over Loaded Hit's +5%).
       { name: 'Execution', shifts: [s('distance', 5)], bonuses: [b('chargePower', COMBAT_BALANCE.stingExecutionPower)], effects: ['execute'] },
     ], 'strikePower', 'zasada.c'),
   ],

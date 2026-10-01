@@ -337,14 +337,14 @@ const myTree = computed(() => {
   if (!f) return null;
   return f.upgrade || buildTree(f.core, null);
 });
-const litNamesOf = (tree) => {
+const litNamesOf = (tree, coreId) => {
   const out = [];
   (tree || []).forEach((cr) => cr.faces.forEach((face, i) => {
-    if (face.state === 'lit') out.push(crystalTitle(cr.id, i) || face.name);
+    if (face.state === 'lit') out.push(crystalTitle(coreId, cr.id, i) || face.name);
   }));
   return out;
 };
-const myLit = computed(() => litNamesOf(myTree.value));
+const myLit = computed(() => litNamesOf(myTree.value, me.value?.core));
 
 /* Состояние занятия — тем же геттером, что и у зала. Своей копии проверки
    здесь нет: две копии разошлись бы в первый же день. */

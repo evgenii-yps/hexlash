@@ -1,0 +1,606 @@
+{
+ "total": 480,
+ "clippedH": 0,
+ "overlapText": 0,
+ "overlapNeighbour": 0,
+ "labelClip": 40,
+ "labelOverlap": 0,
+ "needScroll": 0,
+ "fontOk": true,
+ "sizes": {
+  "320x568": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "360x640": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "390x844": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "412x915": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "768x1024": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "1024x768": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "1280x800": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  },
+  "1920x1080": {
+   "n": 60,
+   "clippedH": 0,
+   "overlapText": 0,
+   "overlapNeighbour": 0,
+   "labelClip": 5,
+   "labelOverlap": 0,
+   "needScroll": 0,
+   "fonts": [
+    true,
+    true
+   ],
+   "errs": []
+  }
+ },
+ "bad": [
+  {
+   "W": 320,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 320,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 320,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 320,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 360,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 360,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 360,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 360,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 390,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 390,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 390,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 390,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 412,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 412,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 412,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 412,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 768,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 768,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 768,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 768,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 1024,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 1024,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 1024,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 1024,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 1280,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 1280,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 1280,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 1280,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  },
+  {
+   "W": 1920,
+   "ci": 1,
+   "fi": 1,
+   "kind": "labels",
+   "clip": 2,
+   "ov": 0,
+   "names": [
+    "FAKE-IN",
+    "PUNISH REACTION",
+    "BROKEN RHYTHM",
+    "STING THE SWING",
+    "SETUP COMBO"
+   ]
+  },
+  {
+   "W": 1920,
+   "ci": 1,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "READ THE TELL",
+    "SEIZE THE OPEN",
+    "CHARGED RUN",
+    "PUNISH AGGRESSION",
+    "KILLING RUN"
+   ]
+  },
+  {
+   "W": 1920,
+   "ci": 3,
+   "fi": 0,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "HARD COUNTER",
+    "SLIP COUNTER",
+    "ANSWER THE SWING",
+    "PUNISH WHIFF",
+    "PERFECT TRAP"
+   ]
+  },
+  {
+   "W": 1920,
+   "ci": 3,
+   "fi": 2,
+   "kind": "labels",
+   "clip": 1,
+   "ov": 0,
+   "names": [
+    "LOADED HIT",
+    "LONG CHARGE",
+    "HIT THE OPENING",
+    "PIERCE",
+    "EXECUTION"
+   ]
+  }
+ ]
+}

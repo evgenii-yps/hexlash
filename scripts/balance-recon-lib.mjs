@@ -69,7 +69,7 @@ export function buildByCounts(CRYSTALS, core, counts) {
 /** Подпись кристалла, как в перезамере: «ONSLAUGHT · BODY/ROOT (a1) · Heavy Hit» (BODY/ROOT — текст владельца из crystalTexts; Heavy Hit — имя в данных). */
 export function cellLabel(CRYSTALS, CRYSTAL_TEXTS, core, b, j) {
   const br = CRYSTALS[core].find((x) => x.id === b);
-  return `${CORE_NAME[core]} · ${BR_NAME[b]}/${CRYSTAL_TEXTS[b][j - 1].name} (${b}${j}) · ${br.faces[j - 1].name}`;
+  return `${CORE_NAME[core]} · ${BR_NAME[b]}/${CRYSTAL_TEXTS[core][b][j - 1].name} (${b}${j}) · ${br.faces[j - 1].name}`;
 }
 
 // ── чтение сырых данных и запись разделов отчёта ─────────────────────────────
