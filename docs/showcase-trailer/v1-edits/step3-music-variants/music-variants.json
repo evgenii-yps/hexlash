@@ -1,0 +1,35 @@
+{
+ "A": {
+  "title": "A — текущий: склейка",
+  "file": "v1-step3-music-A-720p30.mp4",
+  "desc": "куски трека 0:00,0–49.00 (в ролике с 0.47 с) и 74.18–79.31; склейка на 49.47 с ролика; BAM (49.70 с) — на вход коды 74,41 с трека",
+  "loudness": {
+   "integratedLUFS": -13.9,
+   "loudnessRange": 8.6,
+   "truePeakDBTP": -4.3,
+   "samplePeakDB": -4.33936
+  }
+ },
+ "B": {
+  "title": "B — без склейки: естественный возврат после провала",
+  "file": "v1-step3-music-B-720p30.mp4",
+  "desc": "сплошной кусок трека 24.71–79.31 с (видео t ↔ трек t + 24.71); BAM (49.70 с) — на 74.41 с трека",
+  "loudness": {
+   "integratedLUFS": -14,
+   "loudnessRange": 7.9,
+   "truePeakDBTP": -1.5,
+   "samplePeakDB": -1.500263
+  }
+ },
+ "C": {
+  "title": "C — энергичный отрезок, BAM на самую сильную долю",
+  "file": "v1-step3-music-C-720p30.mp4",
+  "desc": "сплошной кусок трека 14.56–69.16 с (видео t ↔ трек t + 14.56); BAM (49.70 с) — на 64.26 с трека",
+  "loudness": {
+   "integratedLUFS": -13.9,
+   "loudnessRange": 8.2,
+   "truePeakDBTP": -4.8,
+   "samplePeakDB": -5.005093
+  }
+ }
+}

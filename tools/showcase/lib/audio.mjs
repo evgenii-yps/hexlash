@@ -137,3 +137,36 @@ export function writeBeatReports({ dir, beatmap, t, marks, music }) {
   };
   return { rows, info };
 }
+
+// ───────────── варианты музыки на одном видео (шаг 3, замечания владельца) ─────────────
+// Сплошной кусок трека без склейки: видео t ↔ трек t + m0 (m0 ≥ 0). Вход — fadeIn от нуля, затухание — под удержанием логотипа.
+// boost — подъём уровня на BAM: boost.db дБ на ударе, линейно (в дБ) спадает до нуля за boost.sec; перед ударом — короткий нарост 30 мс.
+function continuousGraph({ m0, dur, music, boost }) {
+  const f = music.fadeIn, fo = music.fadeOut;
+  let bo = '';
+  if (boost) {
+    const a = boost.at - 0.03;
+    bo = `volume=volume='pow(10,(${boost.db}*clip((t-${n4(a)})/0.03,0,1)*max(0,1-(t-${n4(boost.at)})/${boost.sec}))/20)':eval=frame,alimiter=limit=0.9:attack=2:release=80:level=disabled,`;
+  }
+  return `[0:a]aresample=${SR},atrim=start=${n4(m0)}:end=${n4(m0 + dur)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=${n4(f)},${bo}afade=t=out:st=${n4(dur - fo - 0.1)}:d=${n4(fo)},apad=whole_dur=${n4(dur)},atrim=0:${n4(dur)},asetpts=PTS-STARTPTS[m]`;
+}
+
+/** Громкость двухпроходная — как в buildMix, но граф сплошного куска. */
+export function buildContinuous({ ffmpeg, mp3, m0, dur, music, boost, outWav }) {
+  const g = continuousGraph({ m0, dur, music, boost });
+  const I = music.lufs, TP = music.tp;
+  const r1 = ff(ffmpeg, ['-i', mp3, '-filter_complex', `${g};[m]loudnorm=I=${I}:TP=${TP}:LRA=11:print_format=json[o]`, '-map', '[o]', '-f', 'null', '-']);
+  const j = /\{[^{}]*"input_i"[^{}]*\}/s.exec(r1.stderr);
+  if (!j) throw new Error('loudnorm: не удалось измерить\n' + r1.stderr.slice(-800));
+  const m = JSON.parse(j[0]);
+  const ln = `loudnorm=I=${I}:TP=${TP}:LRA=11:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true:print_format=json,aresample=${SR}`;
+  const r2 = ff(ffmpeg, ['-y', '-i', mp3, '-filter_complex', `${g};[m]${ln}[o]`, '-map', '[o]', '-ac', '2', '-c:a', 'pcm_s16le', outWav]);
+  if (r2.status !== 0) throw new Error('loudnorm: второй проход упал\n' + r2.stderr.slice(-800));
+  return { measured: m };
+}
+
+/** Мультиплекс без повторного кодирования видео. */
+export function muxOnly({ ffmpeg, video, wav, out, bitrate, dur }) {
+  const a = ff(ffmpeg, ['-y', '-i', video, '-i', wav, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', bitrate, '-t', n4(dur), '-movflags', '+faststart', out]);
+  if (a.status !== 0) throw new Error('mux: не собрался ролик со звуком\n' + a.stderr.slice(-600));
+}

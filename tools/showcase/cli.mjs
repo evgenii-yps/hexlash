@@ -29,8 +29,8 @@ import { encode } from './lib/ffmpeg.mjs';
 import { provenance } from './lib/provenance.mjs';
 import { lockStatus, refreshFights, resolvePlan, readLock, analyze, journalHash } from './lib/fights.mjs';
 import { encodeTimeline, encodeExcerpt, buildMarks, writeMarks, copyStills, layout, fmt } from './lib/assemble.mjs';
-import { plans, excerpts, FPS, music } from './plan/trailer.plan.mjs';
-import { musicTimes, buildMix, checkLoudness, muxVideo, writeBeatReports } from './lib/audio.mjs';
+import { plans, excerpts, FPS, music, musicVariants } from './plan/trailer.plan.mjs';
+import { musicTimes, buildMix, checkLoudness, muxVideo, writeBeatReports, buildContinuous, muxOnly } from './lib/audio.mjs';
 import { findFfmpeg } from './lib/ffmpeg.mjs';
 import { readFileSync as readFile } from 'node:fs';
 
@@ -296,6 +296,31 @@ try {
     writeFileSync(path.join(dir, 'music-info.json'), JSON.stringify({ times: t, loudness: { measuredBeforeNorm: mix.measured, loudnormOut: mix.loudnorm, check: chk, target: { I: music.lufs, TP: music.tp } }, ...rep.info }, null, 1));
     console.log('  громкость готового звука:', JSON.stringify(chk));
     console.log('  →', outSound, '\n  →', outSilent);
+  } else if (cmd === 'music-variants') {
+    // три варианта музыки на ОДНОМ видео (без пересъёмки): --video <тихое видео> --out <папка>
+    const dir = o.out || path.join(outRoot, 'trailer'); mkdirSync(dir, { recursive: true });
+    const video = o.video; if (!video) throw new Error('нужно --video <mp4 без звука>');
+    const ffm = findFfmpeg(); const { parts, total } = layout();
+    const t = musicTimes(parts, total, music); const mp3 = path.join(HERE, music.file);
+    const report = {};
+    for (const [id, v] of Object.entries(musicVariants)) {
+      const wav = path.join(dir, `variant-${id}.wav`); const outMp4 = path.join(dir, `v1-step3-music-${id}-720p30.mp4`);
+      let desc;
+      if (v.kind === 'splice') {
+        buildMix({ ffmpeg: ffm, mp3, t, music, outWav: wav });
+        desc = `куски трека 0:00,0–${t.aEnd.toFixed(2)} (в ролике с ${t.d.toFixed(2)} с) и ${t.bStart.toFixed(2)}–${(t.bStart + t.bLen).toFixed(2)}; склейка на ${t.tCut.toFixed(2)} с ролика; BAM (${t.tBam.toFixed(2)} с) — на вход коды 74,41 с трека`;
+      } else {
+        const m0 = v.trackAtBam - t.tBam;
+        if (m0 < 0) throw new Error('m0 < 0');
+        buildContinuous({ ffmpeg: ffm, mp3, m0, dur: t.dur, music, boost: v.boost ? { ...v.boost, at: t.tBam } : null, outWav: wav });
+        desc = `сплошной кусок трека ${m0.toFixed(2)}–${(m0 + t.dur).toFixed(2)} с (видео t ↔ трек t + ${m0.toFixed(2)}); BAM (${t.tBam.toFixed(2)} с) — на ${v.trackAtBam.toFixed(2)} с трека`;
+      }
+      const chk = checkLoudness({ ffmpeg: ffm, wav });
+      muxOnly({ ffmpeg: ffm, video, wav, out: outMp4, bitrate: music.bitrate, dur: t.dur });
+      report[id] = { title: v.title, file: path.basename(outMp4), desc, loudness: chk };
+      console.log(`  ${id}: ${desc}\n     громкость ${JSON.stringify(chk)}`);
+    }
+    writeFileSync(path.join(dir, 'music-variants.json'), JSON.stringify(report, null, 1));
   } else if (cmd === 'guard') {
     await guard(arg || 'origin/main');
   } else if (cmd === 'regress') {
