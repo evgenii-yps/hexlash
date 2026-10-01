@@ -358,9 +358,9 @@ export const COMBAT_BALANCE = {
   branchRamp: {
     'natisk.a': [0.01, 0.015, 0.025, 0.035, 0.04],
     'nalet.c': [0.02, 0.035, 0.045, 0.05, 0.06],
-    'skala.a': [0.03, 0.05, 0.07, 0.09, 0.08],
+    'skala.a': [0.03, 0.05, 0.07, 0.09, 0.06],
     'skala.b': [0.04, 0.07, 0.1, 0.14, 0.14],
-    'zasada.c': [0.06, 0.09, 0.1, 0.11, 0.07],
+    'zasada.c': [0.04, 0.09, 0.1, 0.11, 0.07],
   },
   // Добавочные силовые рычаги кристаллов, не вшитые в текст: 'ядро.ветка.номер' → { стат: доля }. Складываются с `bonuses` кристалла
   // и идут тем же путём extraBonuses → statBonuses → sb.*. Карточка читает их сама (facetReadout), поэтому вранья нет.
@@ -380,20 +380,22 @@ export const COMBAT_BALANCE = {
     // RAI JAB
     // AMBUSH STING
     'zasada.c.2': { strikePower: 0.03 },
-    'nalet.a.1': { strikePower: 0.07 },
-    'nalet.a.4': { strikePower: 0.05 },
-    'nalet.a.5': { strikePower: 0.05 },
+    'nalet.a.1': { strikePower: 0.05 },
+    'nalet.a.3': { strikePower: 0.04 },
+    'nalet.a.4': { strikePower: 0.07 },
+    'nalet.a.5': { strikePower: 0.08 },
     // RAI FEINT
-    'nalet.b.1': { strikePower: 0.04 },
+    'nalet.b.1': { strikePower: 0.03 },
     'nalet.b.2': { strikePower: 0.06 },
-    'nalet.b.3': { strikePower: 0.04 },
-    'nalet.b.4': { strikePower: 0.05 },
+    'nalet.b.3': { strikePower: 0.05 },
+    'nalet.b.4': { strikePower: 0.06 },
     'nalet.b.5': { strikePower: 0.04, blockPenetration: 0.2 },
     // BULWARK BASTION
-    'skala.a.1': { blockMitigation: 0.05 },
+    'skala.a.1': { blockMitigation: 0.03 },
     'skala.a.2': { interruptResist: 0.15, blockMitigation: 0.05 },
     'skala.a.3': { blockMitigation: 0.03 },
-    'skala.b.3': { interruptBonus: 0.4 },
+    'skala.b.3': { interruptBonus: 0.9 },
+    'skala.b.4': { blockCounter: 0.3 },
     'skala.c.1': { blockPenetration: 0.1 },
     'skala.a.4': { blockMitigation: 0.12 },
   },
@@ -999,7 +1001,7 @@ export const COMBAT_BALANCE = {
   //   accuracy — УКОЛ-2 / ОХОТА-1 read the opening, the first strike misses less.
   //   feint    — ФИНТ-1 fakes more often; ФИНТ-2 / -5 make the punish bite harder.
   //   charge   — ОХОТА-3 fills the haymaker faster; ОХОТА-5 makes its release hurt.
-  jabPinpointAccuracy: 0.5, // УКОЛ-2 «точнее на входе» — +accuracy (miss ≈10% → ≈6.5%)
+  jabPinpointAccuracy: 0.2, // УКОЛ-2 «точнее на входе» — +accuracy (miss ≈10% → ≈6.5%)
   huntReadAccuracy: 0.16, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry
   feintFakeInChance: 0.05, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)
   feintPunishPayoff: 0.5, // ФИНТ-2 «наказывает раскрытие» — ×1.5 the feint payoff (pierce + dmg)
@@ -1018,13 +1020,13 @@ export const COMBAT_BALANCE = {
   //   block pierce — ТИСКИ-2/5: a heavy press is hard to block (blockPenetration).
   bastionBreathRegen: 0.7, // БАСТИОН-3 «восстанавливает дыхание» — +60% stamina regen в покое
   bastionFortressMitigation: 0.15, // БАСТИОН-5 «несокрушим» — +60% block strength (cut 0.50 → ~0.80, capped 0.90)
-  breakerRiposteBonus: 0.7, // ВОЛНОЛОМ-1 «ответный тычок» — +50% dmg on the strike after a block
-  breakerInterruptBonus: 0.7, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup
+  breakerRiposteBonus: 0.5, // ВОЛНОЛОМ-1 «ответный тычок» — +50% dmg on the strike after a block
+  breakerInterruptBonus: 0.4, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup
   breakerTrapRiposte: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% post-block riposte dmg
   breakerTrapInterrupt: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% interrupt-catch dmg
   riposteWindowSec: 1.5, // how long a defensive win (block / dodge / foe whiff) keeps the riposte armed (covers the counter-jab)
-  viceSlamPen: 0.35, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)
-  viceClinchPen: 0.45, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)
+  viceSlamPen: 0.3, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)
+  viceClinchPen: 0.4, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)
 
   // AMBUSH (заход 4 — финал). Fed via sb.* into the LIVE dodge / onMiss / charge
   // mechanics. КАПКАН counters from RANGE (dodge + foe whiff), ЖАЛО is the standing
@@ -1037,7 +1039,7 @@ export const COMBAT_BALANCE = {
   trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +50% dmg after the foe whiffs
   trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-dodge riposte
   trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-whiff riposte
-  shadowDodgeWindow: 0.2, // ТЕНЬ-4 «окно для своего захода шире» — +40% dmg after a dodge (own opening)
+  shadowDodgeWindow: 0.15, // ТЕНЬ-4 «окно для своего захода шире» — +40% dmg after a dodge (own opening)
   stingLoadedPower: 0.05, // ЖАЛО-1 «накопленный удар тяжёлый» — +50% charge-release power
   stingLongChargeMax: 0.6, // ЖАЛО-2 «дольше выжидает — сильнее» — +60% charge ceiling (loads longer, hits bigger)
   stingPiercePen: 0.8, // ЖАЛО-4 «пробивает любую защиту» — +60% charge-release block pierce

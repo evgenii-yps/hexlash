@@ -23,7 +23,7 @@ if (!existsSync(join(WT, 'scripts/balance-fix-worker.mjs')) || args.includes('--
 }
 const BR = ['a', 'b', 'c'];
 const perms = (n) => { const out = []; const rec = (cur, rest) => { if (cur.length === n) { out.push(cur); return; } for (const x of rest) rec([...cur, x], rest.filter((y) => y !== x)); }; rec([], BR); return out; };
-const shapes = [[5, 2], [4, 3], [3, 3, 1], [3, 2, 2], [5, 1, 1], [4, 2, 1]];
+const shapes = opt('shapes', 'seven') === 'branch' ? [[5]] : opt('shapes', 'seven') === 'single' ? [[1]] : [[5, 2], [4, 3], [3, 3, 1], [3, 2, 2], [5, 1, 1], [4, 2, 1]];
 const builds = [{ name: 'голое', spec: null }];
 for (const sh of shapes) {
   const seen = new Set();

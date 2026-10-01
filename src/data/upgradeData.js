@@ -240,9 +240,9 @@ export const CRYSTALS = {
     // resilience (holds steady / digs in close). No counter (not its home).
     mkBranch('a', 'BASTION', [
       // Takes the blow better — shrugs more off (toughness ramp), holds steady.
-      { name: 'Tough Hide', shifts: [s('resilience', 4)], conditionals: ['tough_hide'] },
+      { name: 'Tough Hide', shifts: [s('resilience', 3)], conditionals: ['tough_hide'] },
       // Rarely knocked off its rhythm by incoming hits (resilience holds the beat).
-      { name: 'Steady Guard', shifts: [s('resilience', 3)], conditionals: ['steady_guard'] },
+      { name: 'Steady Guard', shifts: [s('resilience', 2)], conditionals: ['steady_guard'] },
       // Catches its breath in the lulls — recovers stamina faster (regen seam).
       { name: 'Catch Breath', shifts: [s('resilience', 3)], bonuses: [b('staminaRegen', COMBAT_BALANCE.bastionBreathRegen)], conditionals: ['catch_breath'] },
       // The longer it holds ground, the harder it gets (dig_in — time-ramp of
