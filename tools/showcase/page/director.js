@@ -195,7 +195,7 @@
           const b = st.bodies.find((x) => x && x.id === spec.id); if (!b) continue;
           const grp = b.fighter.group;
           grp.position.x = spec.x; grp.position.z = spec.z;
-          grp.rotation.y = Math.atan2(-(spec.face[0] - spec.x), -(spec.face[1] - spec.z));
+          grp.rotation.y = Math.atan2(-(spec.face[0] - spec.x), -(spec.face[1] - spec.z)) + (sg.yawOff || 0) * Math.PI / 180;
           if (g > 0) {
             const j = b.fighter.joints.armR;
             j.shoulder.rotation.x = lerp(j.shoulder.rotation.x, sg.gesture.reach ?? 1.5, g);
