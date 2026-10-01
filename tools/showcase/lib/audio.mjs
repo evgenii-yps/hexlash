@@ -112,12 +112,13 @@ const ms = (x) => Math.round(x * 1000);
 const fmtT = (s) => `${Math.floor(s / 60)}:${(s % 60).toFixed(3).padStart(6, '0')}`;
 
 /** Карта долей рядом с дорожкой меток: на какую долю село каждое событие ролика. */
-export function writeBeatReports({ dir, beatmap, t, marks, music }) {
+export function writeBeatReports({ dir, beatmap, t, marks, music, m0 = null }) {
   mkdirSync(dir, { recursive: true });
-  const beats = beatsInVideo(beatmap, t);
+  // m0 — сплошной кусок трека без склейки (видео t ↔ трек t + m0); без m0 — прежний вариант со склейкой (A, только в истории)
+  const beats = m0 === null ? beatsInVideo(beatmap, t) : beatmap.beats.filter((b) => b.t >= m0 && b.t <= m0 + t.dur).map((b) => ({ ...b, video: b.t - m0, part: 'A' }));
   const near = (sec) => { let best = null; for (const b of beats) { const dlt = sec - b.video; if (best === null || Math.abs(dlt) < Math.abs(best.dlt)) best = { b, dlt }; } return best; };
   // карта долей (в треке и в ролике)
-  const csv1 = ['№;время в треке, с;время в ролике, с;кадр ролика (60/с);сила;кусок', ...beats.map((b, i) => `${i + 1};${b.t.toFixed(3)};${b.video.toFixed(3)};${Math.round(b.video * FPS)};${b.strength};${b.part === 'A' ? 'до обрыва' : 'после обрыва'}`)];
+  const csv1 = ['№;время в треке, с;время в ролике, с;кадр ролика (60/с);сила;кусок', ...beats.map((b, i) => `${i + 1};${b.t.toFixed(3)};${b.video.toFixed(3)};${Math.round(b.video * FPS)};${b.strength};${m0 !== null ? 'сплошной' : b.part === 'A' ? 'до обрыва' : 'после обрыва'}`)];
   writeFileSync(path.join(dir, 'beatmap.csv'), csv1.join('\n') + '\n');
   // метки ↔ доли
   const rows = [];
@@ -127,7 +128,7 @@ export function writeBeatReports({ dir, beatmap, t, marks, music }) {
   }
   const csv2 = ['кадр;время;тип;метка;ближайшая доля, с (ролик);сдвиг, мс (метка − доля);время доли в треке, с', ...rows.map((r) => `${r.t};${r.time};${r.kind};${r.name.replace(/;/g, ',')};${r.near ? r.near.b.video.toFixed(3) : ''};${r.near ? ms(r.near.dlt) : ''};${r.near ? r.near.b.t.toFixed(3) : ''}`)];
   writeFileSync(path.join(dir, 'marks-beats.csv'), csv2.join('\n') + '\n');
-  const info = {
+  const info = m0 !== null ? { variant: 'B', continuous: true, trackStartSec: Number(m0.toFixed(3)), trackEndSec: Number((m0 + t.dur).toFixed(3)), bamVideoSec: Number(t.tBam.toFixed(4)), bamTrackSec: Number((t.tBam + m0).toFixed(3)), pieces: [{ name: 'сплошной кусок', track: [Number(m0.toFixed(3)), Number((m0 + t.dur).toFixed(3))], video: [0, Number(t.dur.toFixed(3))] }], anchors: music.anchors } : {
     delayMusicSec: Number(t.d.toFixed(4)), cutVideoSec: Number(t.tCut.toFixed(4)), bamVideoSec: Number(t.tBam.toFixed(4)),
     pieces: [
       { name: 'кусок А', track: [0, Number(t.aEnd.toFixed(3))], video: [Number(t.d.toFixed(3)), Number(t.tCut.toFixed(3))] },

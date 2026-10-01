@@ -279,21 +279,30 @@ try {
       console.log('  →', out);
     }
   } else if (cmd === 'music') {
-    const dir = path.join(outRoot, 'trailer'); const name = o.name || 'v1-step2';
+    // звук под готовую шкалу: по умолчанию вариант B (выбор владельца) — сплошной кусок трека БЕЗ склейки, BAM на входе коды 74,41 с трека.
+    // Вариант A (со склейкой) оставлен в истории и доступен как --variant A, в выходе его нет.
+    const dir = path.join(outRoot, 'trailer'); const name = o.name || 'v1-final'; const vid = (o.variant || 'B').toUpperCase();
     const video = o.video || path.join(dir, `stage3-draft-${size[1]}p${FPS / every}.mp4`);
     const ffm = findFfmpeg(); const { parts, total } = layout();
     const t = musicTimes(parts, total, music);
-    const mp3 = path.join(path.dirname(fileURLToPath(import.meta.url)), music.file);
-    const beatmap = JSON.parse(readFile(path.join(path.dirname(fileURLToPath(import.meta.url)), 'audio/beatmap.json'), 'utf8'));
+    const mp3 = path.join(HERE, music.file);
+    const beatmap = JSON.parse(readFile(path.join(HERE, 'audio/beatmap.json'), 'utf8'));
     const marks = JSON.parse(readFile(path.join(dir, 'marks.json'), 'utf8'));
     const wav = path.join(dir, `${name}-mix.wav`);
-    console.log(`▶ музыка: задержка ${t.d.toFixed(3)} с · обрыв ${t.tCut.toFixed(3)} с · вход на BAM ${t.tBam.toFixed(3)} с · кусок Б с ${t.bStart.toFixed(3)} с трека`);
-    const mix = buildMix({ ffmpeg: ffm, mp3, t, music, outWav: wav, bamGain: Number(o.bamgain || 0) });
+    const v = musicVariants[vid]; let m0 = null, mix;
+    if (v.kind === 'splice') {
+      console.log(`▶ музыка (вариант A, со склейкой): задержка ${t.d.toFixed(3)} с · обрыв ${t.tCut.toFixed(3)} с · вход на BAM ${t.tBam.toFixed(3)} с`);
+      mix = buildMix({ ffmpeg: ffm, mp3, t, music, outWav: wav });
+    } else {
+      m0 = v.trackAtBam - t.tBam;
+      console.log(`▶ музыка (вариант ${vid}, сплошной кусок): трек ${m0.toFixed(3)}–${(m0 + t.dur).toFixed(3)} с · BAM ${t.tBam.toFixed(3)} с ролика ↔ ${v.trackAtBam.toFixed(2)} с трека`);
+      mix = buildContinuous({ ffmpeg: ffm, mp3, m0, dur: t.dur, music, boost: v.boost ? { ...v.boost, at: t.tBam } : null, outWav: wav });
+    }
     const chk = checkLoudness({ ffmpeg: ffm, wav });
     const outSound = path.join(dir, `${name}-music-draft-${size[1]}p${FPS / every}.mp4`), outSilent = path.join(dir, `${name}-silent-draft-${size[1]}p${FPS / every}.mp4`);
     muxVideo({ ffmpeg: ffm, video, wav, outSound, outSilent, bitrate: music.bitrate, dur: t.dur });
-    const rep = writeBeatReports({ dir, beatmap, t, marks, music });
-    writeFileSync(path.join(dir, 'music-info.json'), JSON.stringify({ times: t, loudness: { measuredBeforeNorm: mix.measured, loudnormOut: mix.loudnorm, check: chk, target: { I: music.lufs, TP: music.tp } }, ...rep.info }, null, 1));
+    const rep = writeBeatReports({ dir, beatmap, t, marks, music, m0 });
+    writeFileSync(path.join(dir, 'music-info.json'), JSON.stringify({ variant: vid, times: t, loudness: { measuredBeforeNorm: mix.measured, check: chk, target: { I: music.lufs, TP: music.tp } }, ...rep.info }, null, 1));
     console.log('  громкость готового звука:', JSON.stringify(chk));
     console.log('  →', outSound, '\n  →', outSilent);
   } else if (cmd === 'music-variants') {
