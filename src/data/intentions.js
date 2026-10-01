@@ -207,6 +207,7 @@ export function spinalScore(self, foe, memory, fight, only = INTENTION_IDS) {
         case 'far': return far;
         case 'foeOpen': return foe.phase === 'recovery' || foe.phase === 'stagger';
         case 'foeSwing': return foeThreat || foe.phase === 'windup' || foe.phase === 'commit';
+        case 'foeGuard': return !!foe.reacting; // враг сейчас закрылся блоком или уходит в уклон (TZ_balance_fix_v2): для «пробивающих» кристаллов
         case 'charged': return self.charge01 >= 0.5;
         // НОВЫЕ условия (TZ_tags_semantics_v2): читают состояние, что уже есть у бойца; пороги — combatBalance.grani.
         case 'selfHpLow': return self.hp01 < GR.selfHpLow;
