@@ -393,7 +393,7 @@ export const COMBAT_BALANCE = {
     // BULWARK BASTION
     'skala.a.1': { blockMitigation: 0.03 },
     'skala.a.2': { interruptResist: 0.15, blockMitigation: 0.05 },
-    'skala.a.3': { blockMitigation: 0.03 },
+    'skala.a.3': { blockMitigation: 0.05 },
     'skala.b.3': { interruptBonus: 0.9 },
     'skala.b.4': { blockCounter: 0.3 },
     'skala.c.1': { blockPenetration: 0.1 },
@@ -993,21 +993,21 @@ export const COMBAT_BALANCE = {
   //     in one place — upgradeData.js references these by name, no inline magic.
   //     The mechanics already exist (block pierce in takeDamage; the early-windup
   //     interrupt window in play()); these only FEED them from a grain. Fractions.
-  ramGuardCrushPen: 0.12, // ТАРАН-2 «хуже блокируется» — blockPenetration add (block cut 0.50 → 0.30)
-  ramBreakthroughPen: 0.2, // ТАРАН-5 «пролом насквозь» — near-total pierce (raised guard ≈ moot)
-  ramUnshakenInterruptResist: 0.1, // ТАРАН-3 «почти не сбивается» — shrinks the early-windup vuln window (×0.30 of base)
+  ramGuardCrushPen: 0.12, // ТАРАН-2 «хуже блокируется» — blockPenetration add (+12%; было 0.4: block cut 0.50 → 0.30, теперь ≈ 0.44; сила кристалла урезана этапом В)
+  ramBreakthroughPen: 0.2, // ТАРАН-5 «пролом насквозь» — blockPenetration +20% (было 0.95 — «почти полный пробой»; урезано этапом В: одиночка +32 → +8)
+  ramUnshakenInterruptResist: 0.1, // ТАРАН-3 «не сбивается» — окно уязвимости раннего замаха ×0.90 (было 0.7 → ×0.30; урезано этапом В)
 
   // RAIDER (заход 2). Fed via sb.* into the LIVE miss / feint / charge mechanics.
   //   accuracy — УКОЛ-2 / ОХОТА-1 read the opening, the first strike misses less.
   //   feint    — ФИНТ-1 fakes more often; ФИНТ-2 / -5 make the punish bite harder.
   //   charge   — ОХОТА-3 fills the haymaker faster; ОХОТА-5 makes its release hurt.
-  jabPinpointAccuracy: 0.2, // УКОЛ-2 «точнее на входе» — +accuracy (miss ≈10% → ≈6.5%)
+  jabPinpointAccuracy: 0.2, // УКОЛ-2 «точнее на входе» — +accuracy (+20%; было 0.35)
   huntReadAccuracy: 0.16, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry
   feintFakeInChance: 0.05, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)
   feintPunishPayoff: 0.5, // ФИНТ-2 «наказывает раскрытие» — ×1.5 the feint payoff (pierce + dmg)
   feintSetupPayoff: 1.2, // ФИНТ-5 «развод-связка» (vertex) — ×2.2 the feint payoff (guard ≈ moot on the punish)
-  huntChargedGain: 0.3, // ОХОТА-3 «копит в маневрировании» — +60% charge gain (full ≈5s vs ≈8s)
-  huntKillingPower: 0.3, // ОХОТА-5 «смертельный заход» (vertex) — +60% charge-release power
+  huntChargedGain: 0.3, // ОХОТА-3 «копит в маневрировании» — +30% charge gain (было +60%)
+  huntKillingPower: 0.3, // ОХОТА-5 «смертельный заход» (vertex) — +30% charge-release power (было +60%)
 
   // BULWARK (заход 3). Fed via sb.* into the LIVE toughness / block / breathing /
   // block-counter / interrupt mechanics.
@@ -1018,15 +1018,15 @@ export const COMBAT_BALANCE = {
   //   interrupt bonus — ВОЛНОЛОМ-2/5: catching the foe's windup punishes harder
   //                   (attacker-side interrupt reward, через onImpact — see report).
   //   block pierce — ТИСКИ-2/5: a heavy press is hard to block (blockPenetration).
-  bastionBreathRegen: 0.7, // БАСТИОН-3 «восстанавливает дыхание» — +60% stamina regen в покое
-  bastionFortressMitigation: 0.15, // БАСТИОН-5 «несокрушим» — +60% block strength (cut 0.50 → ~0.80, capped 0.90)
+  bastionBreathRegen: 0.7, // БАСТИОН-3 «восстанавливает дыхание» — +70% stamina regen в покое (было +60%)
+  bastionFortressMitigation: 0.15, // БАСТИОН-5 «несокрушим» — +15% block strength (было +60%; урезано этапом В: одиночка +23 → +9)
   breakerRiposteBonus: 0.5, // ВОЛНОЛОМ-1 «ответный тычок» — +50% dmg on the strike after a block
-  breakerInterruptBonus: 0.4, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup
-  breakerTrapRiposte: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% post-block riposte dmg
-  breakerTrapInterrupt: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% interrupt-catch dmg
+  breakerInterruptBonus: 0.4, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +40% dmg when this hit catches a windup (было +50%)
+  breakerTrapRiposte: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +60% post-block riposte dmg (было +100%)
+  breakerTrapInterrupt: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +60% interrupt-catch dmg (было +100%)
   riposteWindowSec: 1.5, // how long a defensive win (block / dodge / foe whiff) keeps the riposte armed (covers the counter-jab)
-  viceSlamPen: 0.3, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)
-  viceClinchPen: 0.4, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)
+  viceSlamPen: 0.3, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add +30% (было +35%)
+  viceClinchPen: 0.4, // ТИСКИ-5 «захват» (vertex) — blockPenetration add +40% (было +50%)
 
   // AMBUSH (заход 4 — финал). Fed via sb.* into the LIVE dodge / onMiss / charge
   // mechanics. КАПКАН counters from RANGE (dodge + foe whiff), ЖАЛО is the standing
@@ -1035,15 +1035,15 @@ export const COMBAT_BALANCE = {
   //                   (mirror of ВОЛНОЛОМ's blockCounter — same window, dodge trigger).
   //   miss-counter  — КАПКАН-4: the foe's whiff arms the riposte (activates onMiss).
   //   charge        — ЖАЛО: power (Loaded / Execution), ceiling (Long Charge), pierce.
-  trapDodgeCounter: 0.03, // КАПКАН-2 «уход + контр» — +50% dmg on the strike after a dodge
-  trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +50% dmg after the foe whiffs
-  trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-dodge riposte
-  trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-whiff riposte
-  shadowDodgeWindow: 0.15, // ТЕНЬ-4 «окно для своего захода шире» — +40% dmg after a dodge (own opening)
-  stingLoadedPower: 0.05, // ЖАЛО-1 «накопленный удар тяжёлый» — +50% charge-release power
+  trapDodgeCounter: 0.03, // КАПКАН-2 «уход + контр» — +3% dmg on the strike after a dodge (было +50%; урезано этапом В)
+  trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +40% dmg after the foe whiffs (было +50%)
+  trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-dodge riposte (было +100%)
+  trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-whiff riposte (было +100%)
+  shadowDodgeWindow: 0.15, // ТЕНЬ-4 «окно для своего захода шире» — +15% dmg after a dodge (own opening; было +40%)
+  stingLoadedPower: 0.05, // ЖАЛО-1 «накопленный удар тяжёлый» — +5% charge-release power (было +50%)
   stingLongChargeMax: 0.6, // ЖАЛО-2 «дольше выжидает — сильнее» — +60% charge ceiling (loads longer, hits bigger)
-  stingPiercePen: 0.8, // ЖАЛО-4 «пробивает любую защиту» — +60% charge-release block pierce
-  stingExecutionPower: 0.07, // ЖАЛО-5 «казнь» (vertex) — +80% charge-release power (with the escalate safeguard, not a start one-shot)
+  stingPiercePen: 0.8, // ЖАЛО-4 «пробивает любую защиту» — +80% charge-release block pierce (было +60%)
+  stingExecutionPower: 0.07, // ЖАЛО-5 «казнь» (vertex) — +7% charge-release power (было +80%; урезано этапом В)
 
   // --- Stalemate safeguard: rising накал (escalation by SILENCE, NOT fight time).
   //     The hole this closes: two patient cores (both CATCH / HOLD) могут встать в

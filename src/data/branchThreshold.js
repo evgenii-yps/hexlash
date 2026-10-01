@@ -44,7 +44,7 @@ export const TAG_LEANS = {
   rampage: [ST, 'always', true, 0.3],   // c5
   // RAIDER
   quick_out: [BR, 'close', false, 0.15],   // a1
-  pinpoint_entry: [P, 'foeQuiet', false, 0.18],   // a2
+  pinpoint_entry: [P, 'foeQuiet', false, 0.3],   // a2
   clean_chain: [SG, 'always', false, 0.10],   // a4
   perfect_jab: [SG, 'foeQuiet', true, 0.45],   // a5
   fake_in: [BR, 'foeSwing', false, 0.15],   // b1

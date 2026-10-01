@@ -190,7 +190,7 @@ export const CRYSTALS = {
       // Strike then bounce out fast — a quick in-out exchange.
       { name: 'Quick Out', shifts: [s('distance', 8), s('tempo', 6)], conditionals: ['quick_out'] },
       // Pinpoint first strike: the entry rarely misses (accuracy seam).
-      { name: 'Pinpoint Entry', shifts: [s('initiative', 6)], bonuses: [b('accuracy', COMBAT_BALANCE.jabPinpointAccuracy)], conditionals: ['pinpoint_entry'] },
+      { name: 'Pinpoint Entry', shifts: [s('initiative', 9)], bonuses: [b('accuracy', COMBAT_BALANCE.jabPinpointAccuracy)], conditionals: ['pinpoint_entry'] },
       // Bounces out beyond the foe's counter-range, elusive on the way.
       { name: 'Far Bounce', shifts: [s('distance', 10), s('slip', 6)] },
       // A clean trade speeds the next dart-in (clean_chain — conditional).
