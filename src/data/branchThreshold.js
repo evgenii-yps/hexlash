@@ -35,13 +35,13 @@ export const TAG_LEANS = {
   hard_entry: [ST, 'always', false, 0.05],   // b1
   chase_strike: [ST, 'foeQuiet', false, 0.14],   // b2
   cut_off: [H, 'close', false, 0.27],   // b3
-  cling: [H, 'foeGuard', false, 0.27],   // b4
+  cling: [H, 'close', false, 0.45],   // b4
   lockdown: [H, 'close', true, 0.27],   // b5
   long_combo: [ST, 'close', false, 0.05],   // c1
   no_pause: [ST, 'foeOpen', false, 0.09],   // c2
   hit_accel: [ST, 'longFight', false, 0.09],   // c3
   no_breather: [ST, 'foeQuiet', false, 0.14],   // c4
-  rampage: [ST, 'selfHpLow', true, 0.45],   // c5
+  rampage: [ST, 'always', true, 0.3],   // c5
   // RAIDER
   quick_out: [BR, 'close', false, 0.15],   // a1
   pinpoint_entry: [P, 'foeQuiet', false, 0.18],   // a2
@@ -56,7 +56,7 @@ export const TAG_LEANS = {
   punish_exhausted: [P, 'foeOpen', false, 0.18],   // c2
   charged_run: [SG, 'always', false, 0.10],   // c3
   hunt_reply: [ST, 'foeSwing', false, 0.45],   // c4
-  lethal_entry: [P, 'foeHpLow', true, 0.45],   // c5
+  lethal_entry: [P, 'charged', true, 0.45],   // c5
   // BULWARK
   tough_hide: [H, 'close', false, 0.25],   // a1
   steady_guard: [H, 'foeSwing', false, 0.31],   // a2
@@ -66,7 +66,7 @@ export const TAG_LEANS = {
   riposte: [P, 'foeSwing', false, 0.19],   // b1
   catch_punish: [P, 'foeOpen', false, 0.45],   // b2
   hard_meet: [P, 'close', false, 0.17],   // b3
-  retaliate_ramp: [ST, 'hpDropped', false, 0.45],   // b4
+  retaliate_ramp: [ST, 'foeSwing', false, 0.45],   // b4
   counter_trap: [C, 'longFight', true, 0.45],   // b5
   body_shove: [P, 'close', false, 0.17],   // c1
   heavy_slam: [ST, 'close', false, 0.26],   // c2
@@ -76,8 +76,8 @@ export const TAG_LEANS = {
   // AMBUSH
   hard_counter: [ST, 'foeSwing', false, 0.45],   // a1
   slip_counter: [ST, 'foeQuiet', false, 0.45],   // a2
-  punish_aggression: [ST, 'hpDropped', false, 0.45],   // a3
-  punish_whiff: [SG, 'foeQuiet', false, 0.26],   // a4
+  punish_aggression: [ST, 'foeSwing', false, 0.45],   // a3
+  punish_whiff: [ST, 'foeOpen', false, 0.6],   // a4
   perfect_trap: [ST, 'foeQuiet', true, 0.45],   // a5
   long_slip: [SG, 'foeSwing', false, 0.45],   // b1
   hard_to_reach: [SG, 'longFight', false, 0.40],   // b2
@@ -85,17 +85,17 @@ export const TAG_LEANS = {
   open_window: [ST, 'foeOpen', false, 0.45],   // b4
   phantom: [SG, 'hpDropped', true, 0.45],   // b5
   loaded_hit: [ST, 'charged', false, 0.45],   // c1
-  long_charge: [SG, 'charged', false, 0.37],   // c2
+  long_charge: [SG, 'charged', false, 0.3],   // c2
   vulnerable_strike: [ST, 'foeOpen', false, 0.45],   // c3
   pierce: [ST, 'foeGuard', false, 0.45],   // c4
-  execute: [ST, 'foeHpLow', true, 0.45],   // c5
+  execute: [ST, 'close', true, 0.35],   // c5
 };
 
 /* Резонанс ветки: [главное намерение, второстепенное|null]. Ключ: ядро → id ветки (a/b/c). */
 export const BRANCH_HOME = {
-  natisk: { a: [ST, P], b: [H, P], c: [ST, P] },   // RAM · CHASE · FRENZY (ядро и так давит в 99% тиков — PRESS главным был бы холостым: CHASE «пришивает» вплотную, FRENZY рубит сериями)
-  nalet: { a: [SG, null], b: [SG, BR], c: [ST, SG] }, // JAB · FEINT · HUNT
-  skala: { a: [H, C], b: [C, null], c: [H, P] },   // BASTION · BREAKER · VICE
+  natisk: { a: [ST, P], b: [P, ST], c: [ST, P] },   // RAM · CHASE · FRENZY (ядро и так давит в 99% тиков — PRESS главным был бы холостым: CHASE «пришивает» вплотную, FRENZY рубит сериями)
+  nalet: { a: [SG, null], b: [SG, P], c: [ST, SG] }, // JAB · FEINT · HUNT
+  skala: { a: [C, H], b: [C, null], c: [P, H] },   // BASTION · BREAKER · VICE
   zasada: { a: [C, null], b: [BR, SG], c: [SG, C] }, // TRAP · SHADOW · STING
 };
 
