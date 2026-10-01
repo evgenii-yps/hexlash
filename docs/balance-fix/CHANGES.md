@@ -1,0 +1,401 @@
+# Все изменения данных и кода боя: d9327e02..HEAD
+
+Формат: файл:строка (в новой версии) — было → стало. Пары собраны автоматически из `git diff -U0`; `+` без пары — новая запись, `−` без пары — удалённая.
+
+
+## src/data/combatBalance.js
+
+- `:220` — `lightDur: 0.3, heavyDur: 0.55, // settle length (s) by move weight (0 → light, 1 → heavy)` → `lightDur: 0.5, heavyDur: 0.9, // settle length (s) by move weight (0 → light, 1 → heavy) — было 0.3 / 0.55; удлинено на этапе Б, чтобы «свободное время» (нет клипа/блока/сбива/выдоха) встало ≤ 34%`
+- `:281` — `hardNeed: { bend: 0 },` → `hardNeed: {`
+- `:282` + `bend: 0,`
+- `:283` + `// ── ПОРОГИ ЖЁСТКИХ НУЖД. Раньше зашиты числами в data/intentions.js; вынесены сюда (TZ_balance_fix_v2, этап А1).`
+- `:284` + `// Три нужды, по убыванию срочности. Все пороги — доли 0…1, кроме секунд.`
+- `:285` + `// ЗАПАС СИЛ → BREATHE: запас ниже staminaBelow·(1 − bend·(2·инициатива − 1)).`
+- `:286` + `staminaBelow: 0.22,`
+- `:287` + `// ЗАРЯД → STRIKE: заряд хлёсткого удара ≥ min(1, chargeAt·(1 − bend·(2·вес − 1))) и враг в радиусе удара.`
+- `:288` + `chargeAt: 0.85,`
+- `:289` + `// ОТВЕТ НА ЗАМАХ: враг бил недавно и он в досягаемости → боец отвечает одним из `replies` (какой — решает характер, тем же счётом, что и`
+- `:290` + `// выбор по очкам). Раньше это был выключатель «counter > 0.55» (открыт только у BULWARK и AMBUSH, 45–50% их решений, ответ всегда CATCH).`
+- `:291` + `// Теперь зависимость плавная: нужда держится `windowMax · counter^curve` секунд после замаха врага — чем выше ось counter, тем дольше`
+- `:292` + `// боец «в стойке ответа» и тем чаще нужда перебивает выбор по очкам; у ONSLAUGHT она есть, но короткая.`
+- `:293` + `swing: {`
+- `:294` + `windowMax: 0.8, // с после замаха врага при counter = 100 (при counter 30 — 0.24 с)`
+- `:295` + `curve: 1.0, // 1 = линейно по counter; >1 — круче к высоким counter`
+- `:296` + `reach: 0.8, // досягаемость ответа: враг ближе, чем (желаемая дистанция бойца + reach·(1 + bend·(2·counter − 1)))`
+- `:297` + `// Ответные намерения: ловить (CATCH), уйти с линии (BREAK), стоять и меняться (HOLD), встретить напором (PRESS), ужалить с дистанции (STING).`
+- `:298` + `// НЕ входят STRIKE (тяжёлая серия посреди чужого замаха — не ответ, а самоубийство; он закрыт нуждой «заряд») и BREATHE (закрыт нуждой «запас сил»).`
+- `:299` + `replies: ['catch', 'break', 'hold', 'press', 'sting'],`
+- `:300` + `},`
+- `:301` + `},`
+- `:302` + ``
+- `:303` + `// --- СТОЙКОСТЬ → ВХОДЯЩИЙ УРОН (TZ_balance_fix_v2, этап Б). Главная ручка силы ядер: ось resilience (0 стекло … 100 скала) превращается в`
+- `:304` + `// множитель урона по бойцу (buildFighter.js dmgMulFor) и в множитель оглушения (stagMulFor). Раньше числа стояли в бойце; вынесены сюда.`
+- `:305` + `// Линейно: glass при resilience 0, wall при 100. Множитель 0.5 = боец получает половину нейтрального урона.`
+- `:306` + `resilience: {`
+- `:307` + `dmgMulGlass: 1.15, // входящий урон при resilience 0`
+- `:308` + `dmgMulWall: 0.7, // входящий урон при resilience 100 (было 0.38: BULWARK выигрывал 69–76% против поля — этап Б, Ц1)`
+- `:309` + `stagMulGlass: 1.0, // оглушение при resilience 0`
+- `:310` + `stagMulWall: 0.15, // оглушение при resilience 100`
+- `:311` + `},`
+- `:312` + ``
+- `:313` + `// --- ТЕМП В ВЫБОРЕ НАМЕРЕНИЯ (TZ_balance_fix_v2, А2). Ось tempo (0 редкие одиночные … 100 серии) раньше выбором намерения не читалась`
+- `:314` + `// вовсе — только телом (каденс ударов). Смысл по оси: высокий темп — непрерывная работа вперёд (давит, жалит сериями, рубит`
+- `:315` + `// связками), низкий — терпение (ловит, стоит). Вес — прибавка к очкам намерения за единицу темпа (0…1): `tempo`·w для «активных» и`
+- `:316` + `// (1 − `tempo`)·w для «терпеливых». BREAK / BREATHE темпа не читают: уход и дыхание — про скольжение и запас сил, не про каденс.`
+- `:317` + `tempoLean: {`
+- `:318` + `press: 0.1, // давление идёт сериями`
+- `:319` + `sting: 0.08, // жалящие тычки — серия лёгких ударов`
+- `:320` + `strike: 0.1, // тяжёлая связка чуть охотнее у быстрых`
+- `:321` + `catch: 0.2, // ловит терпеливый: редкие, выверенные ответы`
+- `:322` + `hold: 0.1, // стоит терпеливый`
+- `:323` + `},`
+- `:356` + `// Рамп жёсткой ветки по ядру/ветке (balance-fix, этап В): ветка берёт СВОЙ рамп, а не общий, чтобы вершина не давала`
+- `:357` + `// сольный скачок >12 п.п., а полная ветка выходила в +15…+25. Нет записи → общий gradeBonusRamp.`
+- `:358` + `branchRamp: {`
+- `:359` + `'natisk.a': [0.01, 0.015, 0.025, 0.035, 0.04],`
+- `:360` + `'nalet.c': [0.02, 0.035, 0.045, 0.05, 0.06],`
+- `:361` + `'skala.a': [0.03, 0.05, 0.07, 0.09, 0.06],`
+- `:362` + `'skala.b': [0.04, 0.07, 0.1, 0.14, 0.14],`
+- `:363` + `'zasada.c': [0.04, 0.09, 0.1, 0.11, 0.07],`
+- `:364` + `},`
+- `:365` + `// Добавочные силовые рычаги кристаллов, не вшитые в текст: 'ядро.ветка.номер' → { стат: доля }. Складываются с `bonuses` кристалла`
+- `:366` + `// и идут тем же путём extraBonuses → statBonuses → sb.*. Карточка читает их сама (facetReadout), поэтому вранья нет.`
+- `:367` + `facetBonus: {`
+- `:368` + `// ONS CHASE — «догоняет и не отпускает»: силу даёт то, о чём говорит текст кристалла`
+- `:369` + `'natisk.b.1': { accuracy: 0.2 },`
+- `:370` + `'natisk.b.2': { strikePower: 0.04 },`
+- `:371` + `'natisk.b.3': { blockPenetration: 0.25 },`
+- `:372` + `'natisk.b.4': { interruptResist: 0.3 },`
+- `:373` + `'natisk.b.5': { strikePower: 0.04, blockPenetration: 0.1 },`
+- `:374` + `// ONS FRENZY — нарастающий натиск`
+- `:375` + `'natisk.c.1': { strikePower: 0.01 },`
+- `:376` + `'natisk.c.2': { strikePower: 0.02 },`
+- `:377` + `'natisk.c.3': { strikePower: 0.02 },`
+- `:378` + `'natisk.c.4': { strikePower: 0.02 },`
+- `:379` + `'natisk.c.5': { strikePower: 0.07 },`
+- `:380` + `// RAI JAB`
+- `:381` + `// AMBUSH STING`
+- `:382` + `'zasada.c.2': { strikePower: 0.03 },`
+- `:383` + `'nalet.a.1': { strikePower: 0.05 },`
+- `:384` + `'nalet.a.3': { strikePower: 0.04 },`
+- `:385` + `'nalet.a.4': { strikePower: 0.07 },`
+- `:386` + `'nalet.a.5': { strikePower: 0.08 },`
+- `:387` + `// RAI FEINT`
+- `:388` + `'nalet.b.1': { strikePower: 0.03 },`
+- `:389` + `'nalet.b.2': { strikePower: 0.06 },`
+- `:390` + `'nalet.b.3': { strikePower: 0.05 },`
+- `:391` + `'nalet.b.4': { strikePower: 0.06 },`
+- `:392` + `'nalet.b.5': { strikePower: 0.04, blockPenetration: 0.2 },`
+- `:393` + `// BULWARK BASTION`
+- `:394` + `'skala.a.1': { blockMitigation: 0.03 },`
+- `:395` + `'skala.a.2': { interruptResist: 0.15, blockMitigation: 0.05 },`
+- `:396` + `'skala.a.3': { blockMitigation: 0.05 },`
+- `:397` + `'skala.b.3': { interruptBonus: 0.9 },`
+- `:398` + `'skala.b.4': { blockCounter: 0.3 },`
+- `:399` + `'skala.c.1': { blockPenetration: 0.1 },`
+- `:400` + `'skala.a.4': { blockMitigation: 0.12 },`
+- `:401` + `},`
+- `:996` — `ramGuardCrushPen: 0.4, // ТАРАН-2 «хуже блокируется» — blockPenetration add (block cut 0.50 → 0.30)` → `ramGuardCrushPen: 0.12, // ТАРАН-2 «хуже блокируется» — blockPenetration add (+12%; было 0.4: block cut 0.50 → 0.30, теперь ≈ 0.44; сила кристалла урезана этапом В)`
+- `:997` — `ramBreakthroughPen: 0.95, // ТАРАН-5 «пролом насквозь» — near-total pierce (raised guard ≈ moot)` → `ramBreakthroughPen: 0.2, // ТАРАН-5 «пролом насквозь» — blockPenetration +20% (было 0.95 — «почти полный пробой»; урезано этапом В: одиночка +32 → +8)`
+- `:998` — `ramUnshakenInterruptResist: 0.7, // ТАРАН-3 «почти не сбивается» — shrinks the early-windup vuln window (×0.30 of base)` → `ramUnshakenInterruptResist: 0.1, // ТАРАН-3 «не сбивается» — окно уязвимости раннего замаха ×0.90 (было 0.7 → ×0.30; урезано этапом В)`
+- `:1004` — `jabPinpointAccuracy: 0.35, // УКОЛ-2 «точнее на входе» — +accuracy (miss ≈10% → ≈6.5%)` → `jabPinpointAccuracy: 0.2, // УКОЛ-2 «точнее на входе» — +accuracy (+20%; было 0.35)`
+- `:1005` — `huntReadAccuracy: 0.3, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry` → `huntReadAccuracy: 0.16, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry`
+- `:1006` — `feintFakeInChance: 0.2, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)` → `feintFakeInChance: 0.05, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)`
+- `:1009` — `huntChargedGain: 0.6, // ОХОТА-3 «копит в маневрировании» — +60% charge gain (full ≈5s vs ≈8s)` → `huntChargedGain: 0.3, // ОХОТА-3 «копит в маневрировании» — +30% charge gain (было +60%)`
+- `:1010` — `huntKillingPower: 0.6, // ОХОТА-5 «смертельный заход» (vertex) — +60% charge-release power` → `huntKillingPower: 0.3, // ОХОТА-5 «смертельный заход» (vertex) — +30% charge-release power (было +60%)`
+- `:1021` — `bastionBreathRegen: 0.6, // БАСТИОН-3 «восстанавливает дыхание» — +60% stamina regen в покое` → `bastionBreathRegen: 0.7, // БАСТИОН-3 «восстанавливает дыхание» — +70% stamina regen в покое (было +60%)`
+- `:1022` — `bastionFortressMitigation: 0.6, // БАСТИОН-5 «несокрушим» — +60% block strength (cut 0.50 → ~0.80, capped 0.90)` → `bastionFortressMitigation: 0.15, // БАСТИОН-5 «несокрушим» — +15% block strength (было +60%; урезано этапом В: одиночка +23 → +9)`
+- `:1024` — `breakerInterruptBonus: 0.5, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup` → `breakerInterruptBonus: 0.4, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +40% dmg when this hit catches a windup (было +50%)`
+- `:1025` — `breakerTrapRiposte: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% post-block riposte dmg` → `breakerTrapRiposte: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +60% post-block riposte dmg (было +100%)`
+- `:1026` — `breakerTrapInterrupt: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% interrupt-catch dmg` → `breakerTrapInterrupt: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +60% interrupt-catch dmg (было +100%)`
+- `:1028` — `viceSlamPen: 0.35, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)` → `viceSlamPen: 0.3, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add +30% (было +35%)`
+- `:1029` — `viceClinchPen: 0.5, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)` → `viceClinchPen: 0.4, // ТИСКИ-5 «захват» (vertex) — blockPenetration add +40% (было +50%)`
+- `:1038` — `trapDodgeCounter: 0.5, // КАПКАН-2 «уход + контр» — +50% dmg on the strike after a dodge` → `trapDodgeCounter: 0.03, // КАПКАН-2 «уход + контр» — +3% dmg on the strike after a dodge (было +50%; урезано этапом В)`
+- `:1039` — `trapMissCounter: 0.5, // КАПКАН-4 «наказывает промах» — +50% dmg after the foe whiffs` → `trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +40% dmg after the foe whiffs (было +50%)`
+- `:1040` — `trapPerfectDodge: 1.0, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-dodge riposte` → `trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-dodge riposte (было +100%)`
+- `:1041` — `trapPerfectMiss: 1.0, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-whiff riposte` → `trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-whiff riposte (было +100%)`
+- `:1042` — `shadowDodgeWindow: 0.4, // ТЕНЬ-4 «окно для своего захода шире» — +40% dmg after a dodge (own opening)` → `shadowDodgeWindow: 0.15, // ТЕНЬ-4 «окно для своего захода шире» — +15% dmg after a dodge (own opening; было +40%)`
+- `:1043` — `stingLoadedPower: 0.5, // ЖАЛО-1 «накопленный удар тяжёлый» — +50% charge-release power` → `stingLoadedPower: 0.05, // ЖАЛО-1 «накопленный удар тяжёлый» — +5% charge-release power (было +50%)`
+- `:1045` — `stingPiercePen: 0.6, // ЖАЛО-4 «пробивает любую защиту» — +60% charge-release block pierce` → `stingPiercePen: 0.8, // ЖАЛО-4 «пробивает любую защиту» — +80% charge-release block pierce (было +60%)`
+- `:1046` — `stingExecutionPower: 0.8, // ЖАЛО-5 «казнь» (vertex) — +80% charge-release power (with the escalate safeguard, not a start one-shot)` → `stingExecutionPower: 0.07, // ЖАЛО-5 «казнь» (vertex) — +7% charge-release power (было +80%; урезано этапом В)`
+- `:1107` — `reactCooldownSec: 1.65, // min gap between conscious read-reactions (anti-spam)` → `reactCooldownSec: 1.6, // min gap between conscious read-reactions (anti-spam)`
+
+## src/data/behavior.js
+
+- `:42` — `natisk: { distance: 15, initiative: 90, tempo: 80, weight: 55, stick: 85, resilience: 60, counter: 30, slip: 20 },` → `natisk: { distance: 20, initiative: 90, tempo: 71, weight: 55, stick: 65, resilience: 66, counter: 30, slip: 20 },`
+- `:44` — `skala: { distance: 20, initiative: 25, tempo: 30, weight: 65, stick: 70, resilience: 90, counter: 60, slip: 15 },` → `skala: { distance: 20, initiative: 25, tempo: 30, weight: 65, stick: 60, resilience: 81, counter: 59, slip: 15 },`
+- `:45` — `zasada: { distance: 80, initiative: 15, tempo: 20, weight: 75, stick: 20, resilience: 35, counter: 90, slip: 75 },` → `zasada: { distance: 78, initiative: 15, tempo: 20, weight: 75, stick: 20, resilience: 35, counter: 84, slip: 67 },`
+
+## src/data/upgradeData.js
+
+- `:94` — `function mkBranch(id, name, faces, stat = null) {` → `function mkBranch(id, name, faces, stat = null, key = null) {`
+- `:95` — `const ramp = COMBAT_BALANCE.gradeBonusRamp;` → `const ramp = (key && COMBAT_BALANCE.branchRamp[key]) || COMBAT_BALANCE.gradeBonusRamp;`
+- `:96` + `const extra = (i) => Object.entries((key && COMBAT_BALANCE.facetBonus[`${key}.${i + 1}`]) || {}).map(([stat, pct]) => ({ stat, pct }));`
+- `:117` — `extraBonuses: f.bonuses || [],` → `extraBonuses: [...(f.bonuses || []), ...extra(i)],`
+- `:141` — `{ name: 'Guard Crush', shifts: [s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramGuardCrushPen)] },` → `{ name: 'Guard Crush', shifts: [s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramGuardCrushPen)], conditionals: ['guard_crush'] },`
+- `:143` — `{ name: 'Unshaken', shifts: [s('resilience', 14)], bonuses: [b('interruptResist', COMBAT_BALANCE.ramUnshakenInterruptResist)] },` → `{ name: 'Unshaken', shifts: [s('resilience', 5)], bonuses: [b('interruptResist', COMBAT_BALANCE.ramUnshakenInterruptResist)], conditionals: ['unshaken'] },`
+- `:149` — `], 'strikePower'),` → `], 'strikePower', 'natisk.a'),`
+- `:155` — `{ name: 'Hard Entry', shifts: [s('distance', -8), s('initiative', 6)] },` → `{ name: 'Hard Entry', shifts: [s('distance', -6), s('initiative', 6)], conditionals: ['hard_entry'] },`
+- `:157` — `{ name: 'Run-Down', shifts: [s('stick', 8), s('distance', -6)], conditionals: ['chase_strike'] },` → `{ name: 'Run-Down', shifts: [s('stick', 5), s('distance', -4)], conditionals: ['chase_strike'] },`
+- `:159` — `{ name: 'Cut Off', shifts: [s('stick', 10)] },` → `{ name: 'Cut Off', shifts: [s('stick', 6)], conditionals: ['cut_off'] },`
+- `:161` — `{ name: 'Cling', shifts: [s('stick', 10), s('distance', -6)] },` → `{ name: 'Cling', shifts: [s('stick', 6), s('distance', -4)], conditionals: ['cling'] },`
+- `:163` — `{ name: 'Lockdown', shifts: [s('stick', 14), s('distance', -8)], effects: ['lockdown'] },` → `{ name: 'Lockdown', shifts: [s('stick', 8), s('distance', -6)], effects: ['lockdown'] },`
+- `:164` — `]),` → `], null, 'natisk.b'),`
+- `:172` — `{ name: 'Long Combo', shifts: [s('tempo', 8)] },` → `{ name: 'Long Combo', shifts: [s('tempo', 3)], conditionals: ['long_combo'] },`
+- `:174` — `{ name: 'No Pause', shifts: [s('tempo', 10)] },` → `{ name: 'No Pause', shifts: [s('tempo', 3)], conditionals: ['no_pause'] },`
+- `:176` — `{ name: 'Building Momentum', shifts: [s('tempo', 6)], conditionals: ['hit_accel'] },` → `{ name: 'Building Momentum', shifts: [s('tempo', 2)], conditionals: ['hit_accel'] },`
+- `:179` — `{ name: 'No Breather', shifts: [s('tempo', 6), s('stick', 6)], conditionals: ['no_breather'] },` → `{ name: 'No Breather', shifts: [s('tempo', 3), s('stick', 6)], conditionals: ['no_breather'] },`
+- `:181` — `{ name: 'Rampage', shifts: [s('tempo', 12)], effects: ['rampage'] },` → `{ name: 'Rampage', shifts: [s('tempo', 3)], effects: ['rampage'] },`
+- `:182` — `]),` → `], null, 'natisk.c'),`
+- `:191` — `{ name: 'Quick Out', shifts: [s('distance', 8), s('tempo', 6)] },` → `{ name: 'Quick Out', shifts: [s('distance', 8), s('tempo', 6)], conditionals: ['quick_out'] },`
+- `:193` — `{ name: 'Pinpoint Entry', shifts: [s('initiative', 6)], bonuses: [b('accuracy', COMBAT_BALANCE.jabPinpointAccuracy)] },` → `{ name: 'Pinpoint Entry', shifts: [s('initiative', 9)], bonuses: [b('accuracy', COMBAT_BALANCE.jabPinpointAccuracy)], conditionals: ['pinpoint_entry'] },`
+- `:200` — `]),` → `], null, 'nalet.a'),`
+- `:207` — `{ name: 'Fake-In', shifts: [s('tempo', 4)], bonuses: [b('feintChance', COMBAT_BALANCE.feintFakeInChance)] },` → `{ name: 'Fake-In', shifts: [s('tempo', 4)], bonuses: [b('feintChance', COMBAT_BALANCE.feintFakeInChance)], conditionals: ['fake_in'] },`
+- `:209` — `{ name: 'Punish Reaction', shifts: [s('tempo', 4)], bonuses: [b('feintPayoff', COMBAT_BALANCE.feintPunishPayoff)] },` → `{ name: 'Punish Reaction', shifts: [s('tempo', 4)], bonuses: [b('feintPayoff', COMBAT_BALANCE.feintPunishPayoff)], conditionals: ['punish_reaction'] },`
+- `:217` — `]),` → `], null, 'nalet.b'),`
+- `:224` — `{ name: 'Read the Tell', shifts: [s('initiative', -6)], bonuses: [b('accuracy', COMBAT_BALANCE.huntReadAccuracy)] },` → `{ name: 'Read the Tell', shifts: [s('initiative', -6)], bonuses: [b('accuracy', COMBAT_BALANCE.huntReadAccuracy)], conditionals: ['read_tell'] },`
+- `:229` — `{ name: 'Charged Run', shifts: [s('distance', 6)], bonuses: [b('chargeGain', COMBAT_BALANCE.huntChargedGain)] },` → `{ name: 'Charged Run', shifts: [s('distance', 6)], bonuses: [b('chargeGain', COMBAT_BALANCE.huntChargedGain)], conditionals: ['charged_run'] },`
+- `:234` — `], 'strikePower'),` → `], 'strikePower', 'nalet.c'),`
+- `:243` — `{ name: 'Tough Hide', shifts: [s('resilience', 8)] },` → `{ name: 'Tough Hide', shifts: [s('resilience', 3)], conditionals: ['tough_hide'] },`
+- `:245` — `{ name: 'Steady Guard', shifts: [s('resilience', 10)] },` → `{ name: 'Steady Guard', shifts: [s('resilience', 2)], conditionals: ['steady_guard'] },`
+- `:247` — `{ name: 'Catch Breath', shifts: [s('resilience', 6)], bonuses: [b('staminaRegen', COMBAT_BALANCE.bastionBreathRegen)] },` → `{ name: 'Catch Breath', shifts: [s('resilience', 3)], bonuses: [b('staminaRegen', COMBAT_BALANCE.bastionBreathRegen)], conditionals: ['catch_breath'] },`
+- `:252` — `{ name: 'Unbreakable', shifts: [s('resilience', 8)], bonuses: [b('blockMitigation', COMBAT_BALANCE.bastionFortressMitigation)], effects: ['fortress'] },` → `{ name: 'Unbreakable', shifts: [s('resilience', 2)], bonuses: [b('blockMitigation', COMBAT_BALANCE.bastionFortressMitigation)], effects: ['fortress'] },`
+- `:253` — `], 'toughness'),` → `], 'toughness', 'skala.a'),`
+- `:261` — `{ name: 'Riposte', shifts: [s('counter', 8), s('stick', 6)], bonuses: [b('blockCounter', COMBAT_BALANCE.breakerRiposteBonus)] },` → `{ name: 'Riposte', shifts: [s('counter', 8), s('stick', 6)], bonuses: [b('blockCounter', COMBAT_BALANCE.breakerRiposteBonus)], conditionals: ['riposte'] },`
+- `:263` — `{ name: 'Catch & Punish', shifts: [s('counter', 8)], bonuses: [b('interruptBonus', COMBAT_BALANCE.breakerInterruptBonus)] },` → `{ name: 'Catch & Punish', shifts: [s('counter', 8)], bonuses: [b('interruptBonus', COMBAT_BALANCE.breakerInterruptBonus)], conditionals: ['catch_punish'] },`
+- `:265` — `{ name: 'Hard Meet', shifts: [s('counter', 10), s('stick', 6)] },` → `{ name: 'Hard Meet', shifts: [s('counter', 10), s('stick', 6)], conditionals: ['hard_meet'] },`
+- `:268` — `{ name: 'Retaliation', shifts: [s('counter', 8)], conditionals: ['retaliate_ramp'] },` → `{ name: 'Retaliation', shifts: [s('counter', 7)], conditionals: ['retaliate_ramp'] },`
+- `:272` — `], 'toughness'),` → `], 'toughness', 'skala.b'),`
+- `:279` — `{ name: 'Body Shove', shifts: [s('stick', 8), s('distance', -6)] },` → `{ name: 'Body Shove', shifts: [s('stick', 6), s('distance', -6)], conditionals: ['body_shove'] },`
+- `:281` — `{ name: 'Heavy Slam', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceSlamPen)] },` → `{ name: 'Heavy Slam', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceSlamPen)], conditionals: ['heavy_slam'] },`
+- `:283` — `{ name: 'No Way Around', shifts: [s('stick', 10)] },` → `{ name: 'No Way Around', shifts: [s('stick', 7)], conditionals: ['no_way_around'] },`
+- `:286` — `{ name: 'Pin', shifts: [s('stick', 8), s('distance', -6)], conditionals: ['pin'] },` → `{ name: 'Pin', shifts: [s('stick', 6), s('distance', -6)], conditionals: ['pin'] },`
+- `:288` — `{ name: 'Clinch', shifts: [s('stick', 14), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },` → `{ name: 'Clinch', shifts: [s('stick', 11), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },`
+- `:289` — `]),` → `], null, 'skala.c'),`
+- `:299` — `{ name: 'Hard Counter', shifts: [s('counter', 8)] },` → `{ name: 'Hard Counter', shifts: [s('counter', 6)], conditionals: ['hard_counter'] },`
+- `:301` — `{ name: 'Slip Counter', shifts: [s('slip', 6)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)] },` → `{ name: 'Slip Counter', shifts: [s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)], conditionals: ['slip_counter'] },`
+- `:304` — `{ name: 'Punish Aggression', shifts: [s('counter', 8)], conditionals: ['punish_aggression'] },` → `{ name: 'Punish Aggression', shifts: [s('counter', 5)], conditionals: ['punish_aggression'] },`
+- `:306` — `{ name: 'Punish Whiff', shifts: [s('distance', 6)], bonuses: [b('missCounter', COMBAT_BALANCE.trapMissCounter)] },` → `{ name: 'Punish Whiff', shifts: [s('counter', 5)], bonuses: [b('missCounter', COMBAT_BALANCE.trapMissCounter)], conditionals: ['punish_whiff'] },`
+- `:308` — `{ name: 'Perfect Trap', shifts: [s('counter', 8), s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },` → `{ name: 'Perfect Trap', shifts: [s('counter', 2), s('slip', 2)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },`
+- `:309` — `]),` → `], null, 'zasada.a'),`
+- `:314` — `{ name: 'Long Slip', shifts: [s('slip', 10), s('distance', 6)] },` → `{ name: 'Long Slip', shifts: [s('slip', 8), s('distance', 5)], conditionals: ['long_slip'] },`
+- `:316` — `{ name: 'Hard to Reach', shifts: [s('slip', 8), s('distance', 6)] },` → `{ name: 'Hard to Reach', shifts: [s('slip', 6), s('distance', 5)], conditionals: ['hard_to_reach'] },`
+- `:320` — `{ name: "Run 'Em Ragged", shifts: [s('distance', 8), s('slip', 6)], conditionals: ['exhaust'] },` → `{ name: "Run 'Em Ragged", shifts: [s('distance', 4), s('slip', 4)], conditionals: ['exhaust'] },`
+- `:323` — `{ name: 'Open Window', shifts: [s('slip', 8)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.shadowDodgeWindow)] },` → `{ name: 'Open Window', shifts: [s('slip', 6)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.shadowDodgeWindow)], conditionals: ['open_window'] },`
+- `:325` — `{ name: 'Phantom', shifts: [s('slip', 12), s('distance', 6)], effects: ['phantom'] },` → `{ name: 'Phantom', shifts: [s('slip', 9), s('distance', 5)], effects: ['phantom'] },`
+- `:326` — `]),` → `], null, 'zasada.b'),`
+- `:333` — `{ name: 'Loaded Hit', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingLoadedPower)] },` → `{ name: 'Loaded Hit', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingLoadedPower)], conditionals: ['loaded_hit'] },`
+- `:336` — `{ name: 'Long Charge', shifts: [s('initiative', -6), s('distance', 6)], bonuses: [b('chargeMax', COMBAT_BALANCE.stingLongChargeMax)] },` → `{ name: 'Long Charge', shifts: [s('distance', 4)], bonuses: [b('chargeMax', COMBAT_BALANCE.stingLongChargeMax)], conditionals: ['long_charge'] },`
+- `:341` — `{ name: 'Pierce', shifts: [s('distance', 6)], bonuses: [b('chargePen', COMBAT_BALANCE.stingPiercePen)] },` → `{ name: 'Pierce', shifts: [s('distance', 6)], bonuses: [b('chargePen', COMBAT_BALANCE.stingPiercePen)], conditionals: ['pierce'] },`
+- `:344` — `{ name: 'Execution', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingExecutionPower)], effects: ['execute'] },` → `{ name: 'Execution', shifts: [s('distance', 5)], bonuses: [b('chargePower', COMBAT_BALANCE.stingExecutionPower)], effects: ['execute'] },`
+- `:345` — `], 'strikePower'),` → `], 'strikePower', 'zasada.c'),`
+
+## src/data/branchThreshold.js
+
+- `:31` — `close_damage_ramp: [ST, 'close'],` → `guard_crush: [ST, 'foeGuard', false, 0.12], // a2`
+- `:32` — `overload_strike: [ST, 'foeHpLow', true], // вершина RAM: добивает раненого (было: заряд ≥ 0.5 — почти не наступал)` → `unshaken: [H, 'foeSwing', false, 0.27], // a3`
+- `:33` — `chase_strike: [P, 'longFight'], // CHASE: гонит всё настойчивее с длиной боя (было: враг далеко — 4%)` → `close_damage_ramp: [ST, 'close', false, 0.05], // a4`
+- `:34` — `lockdown: [H, 'close', true], // вершина CHASE: прижав вплотную — держит (было: PRESS вблизи, как шаг 2)` → `overload_strike: [ST, 'foeHpLow', true, 0.45], // a5`
+- `:35` — `hit_accel: [ST, 'longFight'], // FRENZY: разгоняется с длиной боя (было: всегда)` → `hard_entry: [ST, 'always', false, 0.05], // b1`
+- `:36` — `no_breather: [P, 'foeHpLow'], // FRENZY: не даёт раненому врагу перевести дух (было: всегда)` → `chase_strike: [ST, 'foeQuiet', false, 0.14], // b2`
+- `:37` — `rampage: [ST, 'selfHpLow', true], // вершина FRENZY: вразнос, когда прижали (было: всегда)` → `cut_off: [H, 'close', false, 0.27], // b3`
+- `:38` + `cling: [H, 'close', false, 0.45], // b4`
+- `:39` + `lockdown: [H, 'close', true, 0.27], // b5`
+- `:40` + `long_combo: [ST, 'close', false, 0.05], // c1`
+- `:41` + `no_pause: [ST, 'foeOpen', false, 0.09], // c2`
+- `:42` + `hit_accel: [ST, 'longFight', false, 0.09], // c3`
+- `:43` + `no_breather: [ST, 'foeQuiet', false, 0.14], // c4`
+- `:44` + `rampage: [ST, 'always', true, 0.3], // c5`
+- `:46` — `clean_chain: [SG, 'always'],` → `quick_out: [BR, 'close', false, 0.15], // a1`
+- `:47` — `perfect_jab: [SG, 'foeQuiet', true], // вершина JAB: свободные тычки по пассивному (было: враг далеко — 3%)` → `pinpoint_entry: [P, 'foeQuiet', false, 0.3], // a2`
+- `:48` — `rhythm_break: [BR, 'close'],` → `clean_chain: [SG, 'always', false, 0.10], // a4`
+- `:49` — `feint_interrupt: [SG, 'foeSwing'],` → `perfect_jab: [SG, 'foeQuiet', true, 0.45], // a5`
+- `:50` — `feint_combo: [ST, 'close', true],` → `fake_in: [BR, 'foeSwing', false, 0.15], // b1`
+- `:51` — `punish_exhausted: [ST, 'foeWindLow'], // HUNT: карает выдохшегося (было: враг открыт)` → `punish_reaction: [P, 'foeGuard', false, 0.18], // b2`
+- `:52` — `hunt_reply: [ST, 'foeSwing'], // HUNT·4, бывший punish_aggression: атакующая ветка отвечает ударом, а не ловит` → `rhythm_break: [BR, 'close', false, 0.15], // b3`
+- `:53` — `lethal_entry: [P, 'foeHpLow', true], // вершина HUNT: вход на добивание (было: враг далеко — 5%)` → `feint_interrupt: [SG, 'foeSwing', false, 0.18], // b4`
+- `:54` + `feint_combo: [ST, 'close', true, 0.45], // b5`
+- `:55` + `read_tell: [C, 'foeSwing', false, 0.31], // c1`
+- `:56` + `punish_exhausted: [P, 'foeOpen', false, 0.18], // c2`
+- `:57` + `charged_run: [SG, 'always', false, 0.10], // c3`
+- `:58` + `hunt_reply: [ST, 'foeSwing', false, 0.45], // c4`
+- `:59` + `lethal_entry: [P, 'charged', true, 0.45], // c5`
+- `:61` — `dig_in: [H, 'close'],` → `tough_hide: [H, 'close', false, 0.25], // a1`
+- `:62` — `fortress: [H, 'selfHpLow', true], // вершина BASTION: несокрушим, когда прижали (было: всегда)` → `steady_guard: [H, 'foeSwing', false, 0.31], // a2`
+- `:63` — `retaliate_ramp: [ST, 'hpDropped'], // BREAKER: получил — отдаёт (было: CATCH по «враг бил» — мертво по устройству)` → `catch_breath: [H, 'foeQuiet', false, 0.27], // a3`
+- `:64` — `counter_trap: [C, 'longFight', true], // вершина BREAKER: стена, которая с длиной боя только крепнет` → `dig_in: [H, 'close', false, 0.25], // a4`
+- `:65` — `pin: [H, 'close'],` → `fortress: [H, 'always', true, 0.15], // a5`
+- `:66` — `clinch: [P, 'close', true],` → `riposte: [P, 'foeSwing', false, 0.19], // b1`
+- `:67` + `catch_punish: [P, 'foeOpen', false, 0.45], // b2`
+- `:68` + `hard_meet: [P, 'close', false, 0.17], // b3`
+- `:69` + `retaliate_ramp: [ST, 'foeSwing', false, 0.45], // b4`
+- `:70` + `counter_trap: [C, 'longFight', true, 0.45], // b5`
+- `:71` + `body_shove: [P, 'close', false, 0.17], // c1`
+- `:72` + `heavy_slam: [ST, 'close', false, 0.26], // c2`
+- `:73` + `no_way_around: [H, 'foeGuard', false, 0.45], // c3`
+- `:74` + `pin: [H, 'close', false, 0.25], // c4`
+- `:75` + `clinch: [P, 'close', true, 0.17], // c5`
+- `:77` — `punish_aggression: [C, 'hpDropped'], // TRAP·3: осталось CATCH; условие из нового словаря` → `hard_counter: [ST, 'foeSwing', false, 0.45], // a1`
+- `:78` — `perfect_trap: [ST, 'foeHpLow&foeQuiet', true], // вершина TRAP: добивает переставшего сопротивляться — враг ранен И затих (было: просто «затих» — 68–72%, переодетое «всегда»)` → `slip_counter: [ST, 'foeQuiet', false, 0.45], // a2`
+- `:79` — `exhaust: [SG, 'longFight'], // SHADOW: изматывает с длиной боя (было: враг далеко — 5%)` → `punish_aggression: [ST, 'foeSwing', false, 0.45], // a3`
+- `:80` — `phantom: [BR, 'hpDropped', true], // вершина SHADOW: уходит из-под удара после попадания` → `punish_whiff: [ST, 'foeOpen', false, 0.6], // a4`
+- `:81` — `vulnerable_strike: [ST, 'foeOpen'],` → `perfect_trap: [ST, 'foeQuiet', true, 0.45], // a5`
+- `:82` — `execute: [ST, 'foeHpLow', true], // вершина STING: казнь раненого (было: враг открыт, как шаг 3)` → `long_slip: [SG, 'foeSwing', false, 0.45], // b1`
+- `:83` + `hard_to_reach: [SG, 'longFight', false, 0.40], // b2`
+- `:84` + `exhaust: [SG, 'longFight', false, 0.40], // b3`
+- `:85` + `open_window: [ST, 'foeOpen', false, 0.45], // b4`
+- `:86` + `phantom: [SG, 'hpDropped', true, 0.45], // b5`
+- `:87` + `loaded_hit: [ST, 'charged', false, 0.45], // c1`
+- `:88` + `long_charge: [SG, 'charged', false, 0.3], // c2`
+- `:89` + `vulnerable_strike: [ST, 'foeOpen', false, 0.45], // c3`
+- `:90` + `pierce: [ST, 'foeGuard', false, 0.45], // c4`
+- `:91` + `execute: [ST, 'close', true, 0.35], // c5`
+- `:96` — `natisk: { a: [ST, P], b: [H, P], c: [ST, P] }, // RAM · CHASE · FRENZY (ядро и так давит в 99% тиков — PRESS главным был бы холостым: CHASE «пришивает» вплотную, FRENZY рубит сериями)` → `natisk: { a: [ST, P], b: [P, ST], c: [ST, P] }, // RAM · CHASE · FRENZY (ядро и так давит в 99% тиков — PRESS главным был бы холостым: CHASE «пришивает» вплотную, FRENZY рубит сериями)`
+- `:97` — `nalet: { a: [SG, null], b: [SG, BR], c: [ST, SG] }, // JAB · FEINT · HUNT` → `nalet: { a: [SG, null], b: [SG, P], c: [ST, SG] }, // JAB · FEINT · HUNT`
+- `:98` — `skala: { a: [H, C], b: [C, null], c: [H, P] }, // BASTION · BREAKER · VICE` → `skala: { a: [C, H], b: [C, null], c: [P, H] }, // BASTION · BREAKER · VICE`
+- `:113` — `if (t) leans.push({ i: t[0], w: t[2] ? G.vertexLean : G.tagLean, when: t[1], tag });` → `if (t) leans.push({ i: t[0], w: t[3] != null ? t[3] : t[2] ? G.vertexLean : G.tagLean, when: t[1], tag });`
+
+## src/data/intentions.js
+
+- `:26` + `const TL = COMBAT_BALANCE.tempoLean;`
+- `:143` + `const n = hardNeedKind(self, foe, memory, fight);`
+- `:144` + `if (!n) return null;`
+- `:145` + `return n === 'swing' ? swingReply(self, foe, memory, fight) : n === 'stamina' ? INTENTIONS.BREATHE : INTENTIONS.STRIKE;`
+- `:146` + `}`
+- `:147` + ``
+- `:148` + `// Какая нужда сработала: 'stamina' | 'swing' | 'charge' | null. Отдельно от hardNeed, чтобы замеры (и отладка) видели ВИД нужды, не`
+- `:149` + `// пересчитывая её. Пороги — combatBalance.hardNeed (TZ_balance_fix_v2, А1); здесь только логика.`
+- `:150` + `export function hardNeedKind(self, foe, memory, fight) {`
+- `:154` — `if (self.stamina01 < 0.22 * (1 - K * (2 * a.initiative - 1))) return INTENTIONS.BREATHE;` → `if (self.stamina01 < NEED.staminaBelow * (1 - K * (2 * a.initiative - 1))) return 'stamina';`
+- `:157` — `const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);` → `// fighter also waits from farther out. The reply itself is picked by character and build, see swingReply.`
+- `:158` — `if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8 * (1 + K * (2 * a.counter - 1))) return swingReply(self, foe, memory, fight);` → `const SW = NEED.swing;`
+- `:159` + `const window = SW.windowMax * Math.pow(a.counter, SW.curve);`
+- `:160` + `let lastSwing = -Infinity;`
+- `:161` + `for (const e of memory) if (e.type === 'attack' && e.t > lastSwing) lastSwing = e.t;`
+- `:162` + `if (fight.t - lastSwing < window && foe.has && foe.dist < self.range + SW.reach * (1 + K * (2 * a.counter - 1))) return 'swing';`
+- `:165` — `if (self.charge01 >= Math.min(1, 0.85 * (1 - K * (2 * a.weight - 1))) && foe.inStrike) return INTENTIONS.STRIKE;` → `if (self.charge01 >= Math.min(1, NEED.chargeAt * (1 - K * (2 * a.weight - 1))) && foe.inStrike) return 'charge';`
+- `:170` − `const SWING_REPLIES = [INTENTIONS.CATCH, INTENTIONS.BREAK, INTENTIONS.HOLD];`
+- `:192` — `[INTENTIONS.PRESS]: 0.50 * a.initiative + 0.30 * a.stick + 0.20 * (1 - a.distance) + (far ? 0.20 : 0),` → `[INTENTIONS.PRESS]: 0.50 * a.initiative + 0.30 * a.stick + 0.20 * (1 - a.distance) + TL.press * a.tempo + (far ? 0.20 : 0),`
+- `:193` — `[INTENTIONS.STRIKE]: 0.35 * a.weight + 0.30 * a.initiative + 0.35 * self.charge01 + (foe.inStrike ? 0.25 : -0.35),` → `[INTENTIONS.STRIKE]: 0.35 * a.weight + 0.30 * a.initiative + 0.35 * self.charge01 + TL.strike * a.tempo + (foe.inStrike ? 0.25 : -0.35),`
+- `:194` — `[INTENTIONS.STING]: 0.45 * a.distance + 0.30 * a.slip + 0.20 * (1 - a.weight) + (far ? 0.20 : 0),` → `[INTENTIONS.STING]: 0.45 * a.distance + 0.30 * a.slip + 0.20 * (1 - a.weight) + TL.sting * a.tempo + (far ? 0.20 : 0),`
+- `:195` — `[INTENTIONS.HOLD]: 0.40 * a.resilience + 0.30 * a.stick + (closeBand ? 0.20 : 0),` → `[INTENTIONS.HOLD]: 0.40 * a.resilience + 0.30 * a.stick + TL.hold * (1 - a.tempo) + (closeBand ? 0.20 : 0),`
+- `:198` — `[INTENTIONS.CATCH]: 0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + (foeThreat ? 0.25 : 0) + readPounce,` → `[INTENTIONS.CATCH]: 0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + TL.catch * (1 - a.tempo) + (foeThreat ? 0.25 : 0) + readPounce,`
+- `:210` + `case 'foeGuard': return !!foe.reacting; // враг сейчас закрылся блоком или уходит в уклон (TZ_balance_fix_v2): для «пробивающих» кристаллов`
+- `:261` + `const bias = KLICH_BALANCE.bias[self.klich.id]; // перекос внутри группы (этап Д)`
+- `:262` + `if (bias) for (const id in bias) if (s[id] != null) s[id] += bias[id];`
+
+## src/data/klichBalance.js
+
+- `:44` — `does: 'drives him forward into the exchange, no backing off' },` → `does: 'drives him forward into the exchange and keeps him swinging faster, no backing off' },`
+- `:46` — `does: 'breaks contact, buys him room and time' },` → `does: 'breaks contact, gets his wind back faster, takes less damage and hits back harder while he backs off' },`
+- `:48` — `does: 'digs him in, guard up, rides out the series' },` → `does: 'digs him in, guard up, takes less damage and answers harder while he rides out the series' },`
+- `:120` + `/**`
+- `:121` + `* ПЕРЕКОС ВНУТРИ ГРУППЫ (balance-fix, этап Д): прибавка к очкам намерения, пока клич на полной силе. Нужен там, где группа клича —`
+- `:122` + `* это уже и так выбор бойца: ONSLAUGHT давит (PRESS) ~100% времени, поэтому «ВПЕРЁД» внутри {PRESS, STRIKE} ничего не меняло (замер: доля`
+- `:123` + `* PRESS 100% → 100%, замахов за 6 с 5.1 → 5.1). Прибавка к STRIKE переводит его в рубящий режим: серии и комбо вместо одиночных, больше`
+- `:124` + `* темпа (дельты осей STRIKE) — видно сразу. Тот же приём у «ДЕРЖАТЬ»: HOLD вместо CATCH. Ключ — id намерения.`
+- `:125` + `*/`
+- `:126` + `bias: {`
+- `:127` + `push: { strike: 0.6 },`
+- `:128` + `hold: { hold: 0.8 }, // BULWARK и AMBUSH и так ловят (CATCH 82–86%): без перекоса «ДЕРЖАТЬ» на них не читался (сдвиг распределения намерений 11–14 п.п.); с ним CATCH → HOLD, 93–95 п.п.`
+- `:129` + `},`
+- `:130` + ``
+- `:137` + `/**`
+- `:138` + `* ЭФФЕКТЫ НА ПОЛНОЙ СИЛЕ (balance-fix, этап Д). Множители, которые боец применяет, ПОКА клич держится весь `holdSec`; в сход на нет`
+- `:139` + `* (`fadeSec`) они снимаются сразу — иначе плавный хвост читался бы как обрыв в другую сторону. Ключи читает scene/buildFighter.js (`klichFx`):`
+- `:140` + `* regenMul — множитель восстановления сил: больше 1 — отдышивается быстрее`
+- `:141` + `* dmgTakenMul — множитель входящего урона: меньше 1 — берёт меньше`
+- `:142` + `* dmgDealtMul — множитель исходящего урона: больше 1 — отвечает сильнее`
+- `:143` + `*`
+- `:144` + `* ⚠️ ШАПКА ФАЙЛА («клич не трогает силу») ОСТАЁТСЯ ВЕРНОЙ ДЛЯ ВПЕРЁД: у него нет ни одного множителя силы — только перекос выбора намерения`
+- `:145` + `* (`bias` ниже). ОТХОД получил быстрое восстановление сил и меньший входящий урон по ТЗ balance_fix_v2 (этап Д). Оба оборонительных клича`
+- `:146` + `* получили ещё и «отвечает сильнее»: без этого они проигрывали бою — замер до правки: ОТХОД на BULWARK −6.8 п.п., ДЕРЖАТЬ −4.8 (значимо);`
+- `:147` + `* боец в обороне почти не бьёт, и одной защиты на этом выигрыша не давало (входящий урон −45% почти не двигал исход).`
+- `:148` + `*/`
+- `:149` + `effects: {`
+- `:150` + `fallback: { regenMul: 2.5, dmgTakenMul: 0.55, dmgDealtMul: 1.8 },`
+- `:151` + `hold: { dmgTakenMul: 0.7, dmgDealtMul: 1.8 },`
+- `:152` + `},`
+- `:153` + ``
+- `:158` — `fallback: { distance: 90, initiative: -30, tempo: -10, stick: -35 },` → `fallback: { distance: 90, initiative: -15, tempo: 0, stick: -35 },`
+- `:160` — `hold: { distance: -5, initiative: -25, tempo: -20, stick: 40 },` → `hold: { distance: -5, initiative: -10, tempo: -5, stick: 10 },`
+
+## src/data/buffBalance.js
+
+- `:30` — `does: 'puts speed in his legs for a while' },` → `does: 'sharpens his reactions for a while: he reads the foe\'s swings sooner and answers them more often' },`
+- `:39` — `healFracOfMax: 0.20, // 20% полного здоровья за всё время действия` → `healFracOfMax: 0.07, // 7% полного здоровья за всё время действия (было 20%: +7.9 п.п. к исходу, цель этапа Е +3…+8 для каждого предмета и ≤ +15 на набор)`
+- `:53` — `paceMul: 1.30,` → `paceMul: 1.0, // шаг ведро больше не ускоряет (balance-fix, этап Е): 1.30 давало ≈ 0 п.п. к исходу; ключ оставлен — его читают замеры`
+- `:54` + `// БЫСТРАЯ РЕАКЦИЯ НА ЗАМАХ (этап Е): пока ведро действует, боец читает фазу врага быстрее, реже пропускает замах и чаще решается на сбив/контру.`
+- `:55` + `// Множители к combatBalance.read: delayMul — задержка чтения, missMul — шанс пропустить, reactMul — шанс решиться (потолок 1), cooldownMul — пауза между реакциями.`
+- `:56` + `// dodgeAdd — прибавка к шансу рефлекторного уворота (доля, потолок прежний combatBalance.dodgeChanceMax): реакция на замах, которая даёт исход.`
+- `:57` + `react: { delayMul: 0.3, missMul: 0.3, reactMul: 1.4, cooldownMul: 0.5, dodgeAdd: 0.5, counterAdd: 1.5 }, // counterAdd — прибавка к ответному удару после уворота (как sb.dodgeCounter у КАПКАНА)`
+- `:66` — `1: { hits: 1, mul: 1.5 },` → `// Было 1.5/1.5/2.0/2.0/2.5/3.0 с 1/2/2/3/3/3 ударами: от +4 до +38 п.п. к исходу (разброс ×9). Сжато этапом Е: от ≈ +1 до ≈ +11 (цель: худшая грань ≥ 0, лучшая ≤ +15).`
+- `:67` — `2: { hits: 2, mul: 1.5 },` → `1: { hits: 1, mul: 1.08 },`
+- `:68` — `3: { hits: 2, mul: 2.0 },` → `2: { hits: 1, mul: 1.2 },`
+- `:69` — `4: { hits: 3, mul: 2.0 },` → `3: { hits: 2, mul: 1.12 },`
+- `:70` — `5: { hits: 3, mul: 2.5 },` → `4: { hits: 2, mul: 1.25 },`
+- `:71` — `6: { hits: 3, mul: 3.0 }, // + особая вспышка` → `5: { hits: 3, mul: 1.18 },`
+- `:72` + `6: { hits: 3, mul: 1.3 }, // + особая вспышка`
+- `:90` + `bucketAfterSec: 5, // ведро не раньше этой секунды боя (этап Е): раньше бот бросал его на первой же секунде, пока никто ещё не замахивался`
+
+## src/data/foeCompose.js
+
+- `:29` — `* Перемешиваем весь список и берём первые N. Оба потолка — запас очков и предел` → `* Бот собирает КАК ИГРОК, а не вразброс: одну ветку набирает снизу вверх (до 5 граней),`
+- `:30` — `* ветки — накладывает сам buildTree, поэтому перебрать здесь нельзя даже ошибкой.` → `* остаток кладёт во вторую ветку тоже снизу вверх. Третья ветка не затрагивается — N не`
+- `:31` + `* больше запаса очков (7), поэтому две ветки вмещают всё. Раньше брались N случайных`
+- `:32` + `* граней из 15 вперемешку: бот выходил «россыпью» без резонанса ветки и без вершины,`
+- `:33` + `* то есть слабее любого игрока с тем же числом граней, а поле ботов не проверяло сборки`
+- `:34` + `* игроков вообще (balance-fix, этап Г). Порядок веток случаен.`
+- `:35` + `*`
+- `:36` + `* Оба потолка — запас очков и предел ветки — накладывает сам buildTree.`
+- `:40` — `const all = [];` → `const crystals = (CRYSTALS[coreId] || []).filter((cr) => (cr.faces || []).some((f) => f.state === 'open'));`
+- `:41` — `for (const cr of CRYSTALS[coreId] || []) {` → `for (let i = crystals.length - 1; i > 0; i--) {`
+- `:40` − `for (const f of cr.faces || []) if (f.state === 'open') all.push({ cr: cr.id, f: f.id });`
+- `:40` − `}`
+- `:40` − `for (let i = all.length - 1; i > 0; i--) {`
+- `:43` — `[all[i], all[j]] = [all[j], all[i]];` → `[crystals[i], crystals[j]] = [crystals[j], crystals[i]];`
+- `:46` — `for (const pick of all.slice(0, n)) (out[pick.cr] = out[pick.cr] || []).push(pick.f);` → `let left = n;`
+- `:47` + `for (const cr of crystals) {`
+- `:48` + `if (left <= 0) break;`
+- `:49` + `const open = cr.faces.filter((f) => f.state === 'open'); // снизу вверх: 1, 2, 3 …`
+- `:50` + `const take = Math.min(left, cr.limit || open.length, open.length);`
+- `:51` + `out[cr.id] = open.slice(0, take).map((f) => f.id);`
+- `:52` + `left -= take;`
+- `:53` + `}`
+
+## src/scene/buildFighter.js
+
+- `:17` + `import { KLICH_BALANCE } from '../data/klichBalance.js';`
+- `:18` + `import { BUFF_BALANCE } from '../data/buffBalance.js';`
+- `:721` — `const strikeDamage = (c) => B.damageFracBase * (stats.strikePower / B.strikePower) * (c.dmgMult || 0) * staminaPowerMul() * (1 + jit(B.jitter));` → `const strikeDamage = (c) => B.damageFracBase * (stats.strikePower / B.strikePower) * (c.dmgMult || 0) * staminaPowerMul() * klichFx('dmgDealtMul') * (1 + jit(B.jitter));`
+- `:738` — `const dmgMulFor = (res01) => lerp(1.15, 0.38, res01); // glass takes more · floor 0.38 (was 0.6) so max resilience at peak ~halves incoming vs a neutral fighter` → `const RES = COMBAT_BALANCE.resilience; // 🔒 числа вынесены в combatBalance.resilience (TZ_balance_fix_v2, этап Б)`
+- `:739` — `const stagMulFor = (res01) => lerp(1.0, 0.15, res01); // tough barely hitches` → `const dmgMulFor = (res01) => lerp(RES.dmgMulGlass, RES.dmgMulWall, res01); // glass takes more · wall takes less`
+- `:740` + `const stagMulFor = (res01) => lerp(RES.stagMulGlass, RES.stagMulWall, res01); // tough barely hitches`
+- `:836` + `// Эффекты клича на ПОЛНОЙ силе (весь holdSec): множитель из KLICH_BALANCE.effects[id][key], иначе 1 (balance-fix, этап Д). В сход на нет — снимаются сразу.`
+- `:837` + `const klichFx = (key) => { if (!klichId || klichStrength < 1) return 1; const e = KLICH_BALANCE.effects[klichId]; return (e && e[key]) || 1; };`
+- `:1188` — `let buffPaceMul = 1; // ВЕДРО: >1 — двигается быстрее. 1 = баффа нет` → `let buffPaceMul = 1; // ВЕДРО: >1 — двигается быстрее. 1 = баффа нет (с этапа Е ведро шаг не ускоряет — paceMul = 1)`
+- `:1189` + `let buffReactOn = false; // ВЕДРО (этап Е): быстрая реакция на замах врага — чтение фазы быстрее и реже мимо, реакция чаще (buffBalance.bucket.react)`
+- `:1623` — `if (intentionId === INTENTIONS.BREATHE && !clip) stamina += staminaRegenRate * dt;` → `if (intentionId === INTENTIONS.BREATHE && !clip) stamina += staminaRegenRate * klichFx('regenMul') * dt;`
+- `:1625` — `else if (!clip) stamina += staminaRegenRate * dt; // rest/stance → recover (БАСТИОН-3 «дыхание» seam)` → `else if (!clip) stamina += staminaRegenRate * klichFx('regenMul') * dt; // rest/stance → recover (БАСТИОН-3 «дыхание» seam)`
+- `:2059` — `const dodgeChance = B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve);` → `// ВЕДРО (этап Е): быстрая реакция на замах = рефлекторный уворот чаще на dodgeAdd (потолок тот же dodgeChanceMax — бой обязан доигрываться).`
+- `:2060` + `const dodgeChance = Math.min(B.dodgeChanceMax, B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve) + (buffReactOn ? BUFF_BALANCE.bucket.react.dodgeAdd : 0));`
+- `:2063` — `armRiposte(sb.dodgeCounter || 0); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window` → `armRiposte((sb.dodgeCounter || 0) + (buffReactOn ? BUFF_BALANCE.bucket.react.counterAdd : 0)); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window · ВЕДРО: уворот отвечает сильнее (counterAdd)`
+- `:2099` — `hp = Math.max(0, hp - dmg * maxHp * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);` → `hp = Math.max(0, hp - dmg * maxHp * dmgMulFor(res01) * klichFx('dmgTakenMul') * (1 - toughSoft) * blockMul * interruptMul);`
+- `:2183` + `const setBuffReact = (on) => { buffReactOn = !!on; };`
+- `:2330` — `const delay = readDelaySec(counter01) * (0.75 + Math.random() * 0.5); // jittered latency` → `const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: быстрее читает и реже пропускает`
+- `:2331` — `const missed = Math.random() < readMissChance(counter01); // failed to register this transition` → `const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + Math.random() * 0.5); // jittered latency`
+- `:2332` + `const missed = Math.random() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition`
+- `:2351` + `const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: чаще решается на сбив/контру, паузы между реакциями короче`
+- `:2352` + `const rx = BRX ? BRX.reactMul : 1;`
+- `:2360` — `if (Math.random() > readWindupReactChance(c) * boost) return false;` → `if (Math.random() > Math.min(1, readWindupReactChance(c) * boost * rx)) return false;`
+- `:2361` — `readReactUntil = t + B.read.reactCooldownSec;` → `readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);`
+- `:2369` — `if (Math.random() > readOpenReactChance(c) * boost) return false;` → `if (Math.random() > Math.min(1, readOpenReactChance(c) * boost * rx)) return false;`
+- `:2370` — `readReactUntil = t + B.read.reactCooldownSec;` → `readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);`
+- `:2635` — `stamina = THREE.MathUtils.clamp(stamina + staminaRegenRate * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack; БАСТИОН-3 seam)` → `stamina = THREE.MathUtils.clamp(stamina + staminaRegenRate * klichFx('regenMul') * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack; БАСТИОН-3 seam)`
+- `:2897` + `setBuffReact, // ВЕДРО (этап Е): быстрая реакция на замах (true/false)`
+
+## src/services/buffs.js
+
+- `:392` + `f.setBuffReact(true);`
+- `:412` — `if (e.id === 'bucket') f.setBuffPace(1);` → `if (e.id === 'bucket') { f.setBuffPace(1); f.setBuffReact(false); }`
+- `:444` — `else if (botKit.includes('bucket') && gap < B.bucketNearDist) pick = 'bucket';` → `else if (botKit.includes('bucket') && nowT >= B.bucketAfterSec && gap < B.bucketNearDist) pick = 'bucket';`
