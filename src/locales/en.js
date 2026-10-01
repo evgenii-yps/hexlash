@@ -647,19 +647,20 @@ export default {
   privacy: {
     back: "Back",
     title: "PRIVACY",
-    updated: "Last updated: 29 September 2026",
+    updated: "Last updated: 2 October 2026",
     intro: "Hexlash is a browser game. This page explains what the game stores, what leaves your browser, and who else sees it. It is written in plain language on purpose.",
     sections: [
       {
         h: "1. PLAYING WITHOUT AN ACCOUNT",
         blocks: [
-          { p: "You can play as a guest. A guest is not registered and has no account. Your progress is kept inside your own browser and never reaches us:" },
+          { p: "You can play as a guest. A guest is not registered and has no account. Your progress is kept inside your own browser and is not stored by us:" },
           { ul: [
             "your current run, held until you close the tab;",
             "a local copy of your roster and fights, held in your browser's database;",
             "small technical flags, such as a referral code you arrived with and whether you have dismissed a notice.",
           ] },
           { p: "Clearing your browser data removes all of it. We cannot restore it, because we never had it." },
+          { p: "One thing does leave your browser: during a fight, anonymous data about the situation in the fight is sent to our server and to the AI provider (Anthropic), so that the fighter can choose an action. No account or personal data is needed for this, and none is sent. Section 5 has the details." },
         ],
       },
       {
@@ -693,8 +694,9 @@ export default {
       {
         h: "5. FIGHTS AND THE AI OPPONENT",
         blocks: [
-          { p: "Fighters in Hexlash are driven by an AI model. During a fight the game may send a short description of the fight to Anthropic, the company behind the model: how much health and stamina each side has left, how far apart they are, how the opponent is behaving, and a fighter's callsign. Callsigns come from a fixed list inside the game — you do not type them." },
-          { p: "No account data goes with it. Your login, your email, your wallet address and your account number are not part of these messages. Anthropic receives the fight, not the player." },
+          { p: "Fighters in Hexlash are driven by an AI model. During a fight, anonymous data about the situation in the fight is sent to our server, and from there to Anthropic, the company behind the model, so that the fighter can choose an action. This happens for guests as well as for players with an account. It describes how much health and stamina each side has left, how far apart they are, how the opponent is behaving, and a fighter's callsign. Callsigns come from a fixed list inside the game — you do not type them." },
+          { p: "No account data goes with it. Your login, your email, your wallet address and your account number are not part of these messages. A guest sends only a random identifier made by your browser, which is kept for as long as the tab is open and is not linked to you. Anthropic receives the fight, not the player." },
+          { p: "Our server keeps one short record per request: which part of the game asked, whether it was a guest or a player, the result, the size of the exchange and how long it took. The content of the fight is not recorded." },
         ],
       },
       {
@@ -723,7 +725,7 @@ export default {
       {
         h: "9. YOUR CHOICES",
         blocks: [
-          { p: "You can play as a guest and leave nothing with us at all. You can clear your browser data at any time and start fresh. When accounts are open, you can delete yours, and the game data attached to it is deleted with it. Records already held by the analytics services are not removed by that deletion and must be requested from them directly." },
+          { p: "You can play as a guest without giving us any account or personal data. You can clear your browser data at any time and start fresh. When accounts are open, you can delete yours, and the game data attached to it is deleted with it. Records already held by the analytics services are not removed by that deletion and must be requested from them directly." },
         ],
       },
       {

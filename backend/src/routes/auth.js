@@ -5,6 +5,7 @@ const { generateToken, generateRandomToken } = require('../utils/helpers');
 const { sendVerifyEmail, sendResetEmail } = require('../services/emailService');
 
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = rateLimit; // IPv6-safe IP helper (v8) — keyGenerators must not use req.ip raw
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ const forgotPasswordLimiter = rateLimit({
   // Generic message — same shape as success path, no email-leak vector
   message: { message: "If this email is registered and verified, you'll receive a reset link." },
   keyGenerator: (req) => {
-    const ip = req.ip || 'unknown';
+    const ip = ipKeyGenerator(req.ip || 'unknown');
     const email = (req.body && req.body.email && typeof req.body.email === 'string')
       ? req.body.email.toLowerCase().trim()
       : '';

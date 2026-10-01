@@ -2,6 +2,7 @@ import axios from 'axios';
 import store from "@/core/state/store.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
 import {isMockMode} from "@/core/mock/mockData.js";
+import {getGuestId} from "@/services/playerProgress.js";
 
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
@@ -73,26 +74,40 @@ apiClient.getReferrals = function () {
     return this.get('/user/referrals', { authRequired: true });
 };
 
-// ── Arena fighter-intention (model brain) ───────────────────────────────────
-// Posts the WORD context for one fighter on a fight break; resolves to
-// { intention, read }. Short 1.5s timeout — a late answer is not worth applying.
+// ── Arena model calls (fighter intention + legend command) ─────────────────
+// Both go through BARE axios, NOT the apiClient instance, and use the same rules:
 //
-// CRITICAL: this deliberately uses BARE axios, NOT the apiClient instance. The
-// apiClient interceptors dispatch `master/logout` (→ navigate away from the arena)
-// on a missing/invalid token or any 401 — which would EJECT the player to home the
-// instant they flip BRAIN: MODEL. The model brain is a degrade-to-spinal dev path:
-// every failure (no token, 401, 503 AI-off, 4xx/5xx, timeout, CORS, network, bad
-// JSON) must REJECT quietly so the caller falls back to the spinal cord — it must
-// never change the route or crash the fight frame. The token is attached manually
-// when present; with no usable token we reject immediately (no doomed request, no
-// logout). The caller (buildFighter.fireModelRequest) always has a .catch.
-apiClient.requestFighterIntention = function (payload) {
+//  • SHORT 1.5s timeout — a late answer is not worth applying; the fight never
+//    waits for the model.
+//  • EVERY failure (no network, 401, 429, 503 AI-off or daily cap, 4xx/5xx,
+//    timeout, CORS, bad JSON) must REJECT quietly so the caller falls back to
+//    the reflexes. It must never change the route or crash the fight frame.
+//  • WHY BARE AXIOS: the apiClient interceptors dispatch `master/logout` (→ navigate
+//    away from the arena) on a missing/invalid token or any 401 — which would
+//    EJECT the player to home. The callers (buildFighter.fireModelRequest,
+//    commandBrain.fire) always have a .catch.
+//
+// WHO IS ASKING. A signed-in player sends their token, exactly as before. A GUEST
+// has no token (guest play is the only entry today), so the request goes out as a
+// guest: no Authorization header, plus an anonymous per-tab id in X-Guest-Id.
+// The id is not an account and carries no personal data — see getGuestId().
+// The server accepts a guest on these two routes only.
+function modelRequestHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
     const token = store.getters['master/getJwtToken'];
-    if (!token || !validateJwtToken(token)) {
-        return Promise.reject(new Error('fighter-intention: no valid token (staying spinal)'));
+    if (token && validateJwtToken(token)) {
+        headers.Authorization = `Bearer ${token}`;
+    } else {
+        headers['X-Guest-Id'] = getGuestId();
     }
+    return headers;
+}
+
+// Posts the WORD context for one fighter on a fight break; resolves to
+// { intention, read }.
+apiClient.requestFighterIntention = function (payload) {
     return axios.post(`${__API_SERVER_URL__}/v1/ai/fighter-intention`, payload, {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: modelRequestHeaders(),
         timeout: 1500,
     }).then((resp) => resp.data);
 };
@@ -105,12 +120,8 @@ apiClient.requestFighterIntention = function (payload) {
  *    здесь нормальное, ожидаемое событие, а не происшествие.
  */
 apiClient.requestLegendCommand = function (payload) {
-    const token = store.getters['master/getJwtToken'];
-    if (!token || !validateJwtToken(token)) {
-        return Promise.reject(new Error('legend-command: no valid token (staying on the table)'));
-    }
     return axios.post(`${__API_SERVER_URL__}/v1/ai/legend-command`, payload, {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: modelRequestHeaders(),
         timeout: 1500,
     }).then((resp) => resp.data);
 };

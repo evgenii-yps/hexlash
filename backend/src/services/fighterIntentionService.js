@@ -106,7 +106,7 @@ function parseIntention(text) {
 // Call Claude for one intention. THROWS on no-key / API error / unparseable output
 // (err.code: AI_DISABLED | BAD_OUTPUT | else generic) — the route maps that to a
 // non-200 so the frontend silently keeps the spinal cord.
-async function getFighterIntention(ctx) {
+async function getFighterIntention(ctx, opts = {}) {
   const c = getClient();
   if (!c) { const e = new Error('AI disabled'); e.code = 'AI_DISABLED'; throw e; }
   const resp = await c.messages.create({
@@ -115,6 +115,9 @@ async function getFighterIntention(ctx) {
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: buildUserPrompt(ctx) }],
   });
+  // Token usage for the one-line call log (see services/aiLog.js). Reported before
+  // parsing, so a call whose answer is thrown away is still counted.
+  if (opts.onUsage && resp && resp.usage) opts.onUsage(resp.usage);
   const text = ((resp && resp.content) || [])
     .filter((b) => b.type === 'text')
     .map((b) => b.text)

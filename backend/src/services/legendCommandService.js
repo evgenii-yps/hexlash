@@ -211,7 +211,7 @@ function parseCommand(text, allowedLevers = [], unitCount = 0) {
  * неразбираемом ответе (err.code: AI_DISABLED | BAD_OUTPUT | прочее) — маршрут
  * превращает это в не-200, и клиент молча остаётся на табличке порогов.
  */
-async function getLegendCommand(ctx) {
+async function getLegendCommand(ctx, opts = {}) {
   const c = getClient();
   if (!c) { const e = new Error('AI disabled'); e.code = 'AI_DISABLED'; throw e; }
   const allowed = ((ctx && ctx.levers) || []).map((l) => String(l.id).toLowerCase());
@@ -222,6 +222,9 @@ async function getLegendCommand(ctx) {
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: buildUserPrompt(ctx) }],
   });
+  // Token usage for the one-line call log (see services/aiLog.js). Reported before
+  // parsing, so a call whose answer is thrown away is still counted.
+  if (opts.onUsage && resp && resp.usage) opts.onUsage(resp.usage);
   const text = ((resp && resp.content) || [])
     .filter((b) => b.type === 'text')
     .map((b) => b.text)

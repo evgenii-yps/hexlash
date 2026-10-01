@@ -113,6 +113,17 @@ module.exports = {
   AI_BUILD_DESCRIPTION_MAX_TOKENS: parseInt(process.env.AI_BUILD_DESCRIPTION_MAX_TOKENS) || 60,
   AI_TRAINER_ENABLED: process.env.AI_TRAINER_ENABLED !== 'false',
 
+  // Guests (no account) may use the two arena model routes — fighter intention and
+  // legend command — so the game works for the only entry that exists today.
+  // The spend guard for them lives on the server:
+  //   AI_GUEST_DAILY_CAP — ONE shared ceiling of guest model calls per UTC day for
+  //     the whole server (3000 ≈ 180 duels ≈ $1.5). Over it → 503, and the client
+  //     quietly stays on its reflexes. There is deliberately NO per-guest daily cap.
+  //   AI_GUEST_RATE_MAX — guest burst limit per IP per 5 minutes (a duel makes
+  //     ~17-24 calls; players are held to 60 per 5 minutes by their account id).
+  AI_GUEST_DAILY_CAP: parseInt(process.env.AI_GUEST_DAILY_CAP, 10) || 3000,
+  AI_GUEST_RATE_MAX: parseInt(process.env.AI_GUEST_RATE_MAX, 10) || 120,
+
   // Premium Report (Lv3)
   PREMIUM_REPORT_MAX_TOKENS: 2000,
   PREMIUM_REPORT_RATE_LIMIT: 10,

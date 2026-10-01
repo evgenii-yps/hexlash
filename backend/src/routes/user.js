@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = rateLimit; // IPv6-safe IP helper (v8) — keyGenerators must not use req.ip raw
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
@@ -46,7 +47,7 @@ const resendVerificationLimiter = rateLimit({
   keyGenerator: (req) => {
     // req.userId is set by authMiddleware (which runs before this limiter).
     // Fall back to IP if userId missing (shouldn't happen — auth fails first).
-    return req.userId || req.ip || 'unknown';
+    return req.userId || ipKeyGenerator(req.ip || 'unknown');
   },
 });
 

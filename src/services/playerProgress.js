@@ -127,3 +127,38 @@ export function isProgressSaved() {
   load();          // touching storage is what tells us whether it works at all
   return available;
 }
+
+// ── Anonymous guest id ─────────────────────────────────────────────────────
+// A random id that lives exactly as long as the guest's progress does: in the
+// same per-tab sessionStorage, gone when the tab closes. It is NOT an account and
+// carries nothing about the person — it only tells the server "this request comes
+// from a guest" (see apiClient.requestFighterIntention / requestLegendCommand).
+// Kept under its own key, not inside the progress snapshot, so clearing or
+// re-versioning the snapshot never rotates it mid-fight.
+// If storage is blocked the id is kept in memory for the life of the page.
+const GUEST_KEY = 'hexlash_guest_id';
+let memoryGuestId = null;
+
+function makeGuestId() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  } catch (_) { /* fall through to the manual id */ }
+  let id = '';
+  for (let i = 0; i < 32; i += 1) id += Math.floor(Math.random() * 16).toString(16);
+  return id;
+}
+
+/** The guest's anonymous id for this tab. Created on first use. */
+export function getGuestId() {
+  if (memoryGuestId) return memoryGuestId;
+  const s = storage();
+  if (s) {
+    try {
+      const saved = s.getItem(GUEST_KEY);
+      if (saved && /^[A-Za-z0-9_-]{16,64}$/.test(saved)) { memoryGuestId = saved; return saved; }
+    } catch (_) { /* blocked — use memory */ }
+  }
+  memoryGuestId = makeGuestId();
+  if (s) { try { s.setItem(GUEST_KEY, memoryGuestId); } catch (_) { /* memory only */ } }
+  return memoryGuestId;
+}
