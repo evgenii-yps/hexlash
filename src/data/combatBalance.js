@@ -217,7 +217,7 @@ export const COMBAT_BALANCE = {
   //     (light jab → short/shallow · heavy combo → longer/deeper). Fits inside the
   //     existing ai.nextAt pause, so the bout rhythm doesn't stretch.
   exhale: {
-    lightDur: 0.3, heavyDur: 0.55, // settle length (s) by move weight (0 → light, 1 → heavy)
+    lightDur: 0.5, heavyDur: 0.9, // settle length (s) by move weight (0 → light, 1 → heavy) — было 0.3 / 0.55; удлинено на этапе Б, чтобы «свободное время» (нет клипа/блока/сбива/выдоха) встало ≤ 34%
     sink: 0.06, // hip drop at full settle (world units) — weight oseдает then recovers
     torsoEase: 0.07, // slight torso slump-back at full settle
     shoulderDrop: 0.1, // shoulders sag a touch as tension leaves
@@ -278,7 +278,49 @@ export const COMBAT_BALANCE = {
   //     BULWARK и AMBUSH ничего не добавляет (у RAIDER ≤ 0.7 п.п. при 0.5). Ручка оставлена рабочей для числового прохода;
   //     > 0 сдвигает и голые ядра (контрольная сумма боя, метрики «вне радиуса» / «свободное время» с нулевым запасом).
   //     Под винрейты не подбиралось. Разбор — docs/reflex-sight/REPORT.md.
-  hardNeed: { bend: 0 },
+  hardNeed: {
+    bend: 0,
+    // ── ПОРОГИ ЖЁСТКИХ НУЖД. Раньше зашиты числами в data/intentions.js; вынесены сюда (TZ_balance_fix_v2, этап А1).
+    //    Три нужды, по убыванию срочности. Все пороги — доли 0…1, кроме секунд.
+    //    ЗАПАС СИЛ → BREATHE: запас ниже staminaBelow·(1 − bend·(2·инициатива − 1)).
+    staminaBelow: 0.22,
+    //    ЗАРЯД → STRIKE: заряд хлёсткого удара ≥ min(1, chargeAt·(1 − bend·(2·вес − 1))) и враг в радиусе удара.
+    chargeAt: 0.85,
+    //    ОТВЕТ НА ЗАМАХ: враг бил недавно и он в досягаемости → боец отвечает одним из `replies` (какой — решает характер, тем же счётом, что и
+    //    выбор по очкам). Раньше это был выключатель «counter > 0.55» (открыт только у BULWARK и AMBUSH, 45–50% их решений, ответ всегда CATCH).
+    //    Теперь зависимость плавная: нужда держится `windowMax · counter^curve` секунд после замаха врага — чем выше ось counter, тем дольше
+    //    боец «в стойке ответа» и тем чаще нужда перебивает выбор по очкам; у ONSLAUGHT она есть, но короткая.
+    swing: {
+      windowMax: 0.8, //   с после замаха врага при counter = 100 (при counter 30 — 0.24 с)
+      curve: 1.0, //       1 = линейно по counter; >1 — круче к высоким counter
+      reach: 0.8, //       досягаемость ответа: враг ближе, чем (желаемая дистанция бойца + reach·(1 + bend·(2·counter − 1)))
+      // Ответные намерения: ловить (CATCH), уйти с линии (BREAK), стоять и меняться (HOLD), встретить напором (PRESS), ужалить с дистанции (STING).
+      // НЕ входят STRIKE (тяжёлая серия посреди чужого замаха — не ответ, а самоубийство; он закрыт нуждой «заряд») и BREATHE (закрыт нуждой «запас сил»).
+      replies: ['catch', 'break', 'hold', 'press', 'sting'],
+    },
+  },
+
+  // --- СТОЙКОСТЬ → ВХОДЯЩИЙ УРОН (TZ_balance_fix_v2, этап Б). Главная ручка силы ядер: ось resilience (0 стекло … 100 скала) превращается в
+  //     множитель урона по бойцу (buildFighter.js dmgMulFor) и в множитель оглушения (stagMulFor). Раньше числа стояли в бойце; вынесены сюда.
+  //     Линейно: glass при resilience 0, wall при 100. Множитель 0.5 = боец получает половину нейтрального урона.
+  resilience: {
+    dmgMulGlass: 1.15, // входящий урон при resilience 0
+    dmgMulWall: 0.7, //   входящий урон при resilience 100 (было 0.38: BULWARK выигрывал 69–76% против поля — этап Б, Ц1)
+    stagMulGlass: 1.0, // оглушение при resilience 0
+    stagMulWall: 0.15, // оглушение при resilience 100
+  },
+
+  // --- ТЕМП В ВЫБОРЕ НАМЕРЕНИЯ (TZ_balance_fix_v2, А2). Ось tempo (0 редкие одиночные … 100 серии) раньше выбором намерения не читалась
+  //     вовсе — только телом (каденс ударов). Смысл по оси: высокий темп — непрерывная работа вперёд (давит, жалит сериями, рубит
+  //     связками), низкий — терпение (ловит, стоит). Вес — прибавка к очкам намерения за единицу темпа (0…1): `tempo`·w для «активных» и
+  //     (1 − `tempo`)·w для «терпеливых». BREAK / BREATHE темпа не читают: уход и дыхание — про скольжение и запас сил, не про каденс.
+  tempoLean: {
+    press: 0.1, //   давление идёт сериями
+    sting: 0.08, //  жалящие тычки — серия лёгких ударов
+    strike: 0.1, //  тяжёлая связка чуть охотнее у быстрых
+    catch: 0.2, //   ловит терпеливый: редкие, выверенные ответы
+    hold: 0.1, //    стоит терпеливый
+  },
 
   // --- ГРАНИ И ТЕГИ (TZ_grani_tags_v1). ЧЕРНОВЫЕ числа: финальные выставляются отдельным пасом.
   //     Словарь ТЗ: ГРАНЬ = ветка (в коде `crystal`, id a/b/c), КРИСТАЛЛ = шаг ветки (в коде `face`, 1..5).
@@ -311,6 +353,52 @@ export const COMBAT_BALANCE = {
   //     зажечь не все грани). Starting orientation, tunable.
   //       depth 1 ≈ 4% · 2 ≈ 7% · 3 ≈ 10% · 4 ≈ 14% · 5/вершина ≈ 22%
   gradeBonusRamp: [0.04, 0.07, 0.1, 0.14, 0.22],
+  // Рамп жёсткой ветки по ядру/ветке (balance-fix, этап В): ветка берёт СВОЙ рамп, а не общий, чтобы вершина не давала
+  // сольный скачок >12 п.п., а полная ветка выходила в +15…+25. Нет записи → общий gradeBonusRamp.
+  branchRamp: {
+    'natisk.a': [0.01, 0.015, 0.025, 0.035, 0.04],
+    'nalet.c': [0.02, 0.035, 0.045, 0.05, 0.06],
+    'skala.a': [0.03, 0.05, 0.07, 0.09, 0.06],
+    'skala.b': [0.04, 0.07, 0.1, 0.14, 0.14],
+    'zasada.c': [0.04, 0.09, 0.1, 0.11, 0.07],
+  },
+  // Добавочные силовые рычаги кристаллов, не вшитые в текст: 'ядро.ветка.номер' → { стат: доля }. Складываются с `bonuses` кристалла
+  // и идут тем же путём extraBonuses → statBonuses → sb.*. Карточка читает их сама (facetReadout), поэтому вранья нет.
+  facetBonus: {
+    // ONS CHASE — «догоняет и не отпускает»: силу даёт то, о чём говорит текст кристалла
+    'natisk.b.1': { accuracy: 0.2 },
+    'natisk.b.2': { strikePower: 0.04 },
+    'natisk.b.3': { blockPenetration: 0.25 },
+    'natisk.b.4': { interruptResist: 0.3 },
+    'natisk.b.5': { strikePower: 0.04, blockPenetration: 0.1 },
+    // ONS FRENZY — нарастающий натиск
+    'natisk.c.1': { strikePower: 0.01 },
+    'natisk.c.2': { strikePower: 0.02 },
+    'natisk.c.3': { strikePower: 0.02 },
+    'natisk.c.4': { strikePower: 0.02 },
+    'natisk.c.5': { strikePower: 0.07 },
+    // RAI JAB
+    // AMBUSH STING
+    'zasada.c.2': { strikePower: 0.03 },
+    'nalet.a.1': { strikePower: 0.05 },
+    'nalet.a.3': { strikePower: 0.04 },
+    'nalet.a.4': { strikePower: 0.07 },
+    'nalet.a.5': { strikePower: 0.08 },
+    // RAI FEINT
+    'nalet.b.1': { strikePower: 0.03 },
+    'nalet.b.2': { strikePower: 0.06 },
+    'nalet.b.3': { strikePower: 0.05 },
+    'nalet.b.4': { strikePower: 0.06 },
+    'nalet.b.5': { strikePower: 0.04, blockPenetration: 0.2 },
+    // BULWARK BASTION
+    'skala.a.1': { blockMitigation: 0.03 },
+    'skala.a.2': { interruptResist: 0.15, blockMitigation: 0.05 },
+    'skala.a.3': { blockMitigation: 0.05 },
+    'skala.b.3': { interruptBonus: 0.9 },
+    'skala.b.4': { blockCounter: 0.3 },
+    'skala.c.1': { blockPenetration: 0.1 },
+    'skala.a.4': { blockMitigation: 0.12 },
+  },
 
   // --- Пауза между замиранием боя и панелью поверх него (с). Одна на всех, кто
   //     говорит после боя: итог обычного боя, панель между раундами забега, итог
@@ -905,21 +993,21 @@ export const COMBAT_BALANCE = {
   //     in one place — upgradeData.js references these by name, no inline magic.
   //     The mechanics already exist (block pierce in takeDamage; the early-windup
   //     interrupt window in play()); these only FEED them from a grain. Fractions.
-  ramGuardCrushPen: 0.4, // ТАРАН-2 «хуже блокируется» — blockPenetration add (block cut 0.50 → 0.30)
-  ramBreakthroughPen: 0.95, // ТАРАН-5 «пролом насквозь» — near-total pierce (raised guard ≈ moot)
-  ramUnshakenInterruptResist: 0.7, // ТАРАН-3 «почти не сбивается» — shrinks the early-windup vuln window (×0.30 of base)
+  ramGuardCrushPen: 0.12, // ТАРАН-2 «хуже блокируется» — blockPenetration add (+12%; было 0.4: block cut 0.50 → 0.30, теперь ≈ 0.44; сила кристалла урезана этапом В)
+  ramBreakthroughPen: 0.2, // ТАРАН-5 «пролом насквозь» — blockPenetration +20% (было 0.95 — «почти полный пробой»; урезано этапом В: одиночка +32 → +8)
+  ramUnshakenInterruptResist: 0.1, // ТАРАН-3 «не сбивается» — окно уязвимости раннего замаха ×0.90 (было 0.7 → ×0.30; урезано этапом В)
 
   // RAIDER (заход 2). Fed via sb.* into the LIVE miss / feint / charge mechanics.
   //   accuracy — УКОЛ-2 / ОХОТА-1 read the opening, the first strike misses less.
   //   feint    — ФИНТ-1 fakes more often; ФИНТ-2 / -5 make the punish bite harder.
   //   charge   — ОХОТА-3 fills the haymaker faster; ОХОТА-5 makes its release hurt.
-  jabPinpointAccuracy: 0.35, // УКОЛ-2 «точнее на входе» — +accuracy (miss ≈10% → ≈6.5%)
-  huntReadAccuracy: 0.3, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry
-  feintFakeInChance: 0.2, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)
+  jabPinpointAccuracy: 0.2, // УКОЛ-2 «точнее на входе» — +accuracy (+20%; было 0.35)
+  huntReadAccuracy: 0.16, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry
+  feintFakeInChance: 0.05, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)
   feintPunishPayoff: 0.5, // ФИНТ-2 «наказывает раскрытие» — ×1.5 the feint payoff (pierce + dmg)
   feintSetupPayoff: 1.2, // ФИНТ-5 «развод-связка» (vertex) — ×2.2 the feint payoff (guard ≈ moot on the punish)
-  huntChargedGain: 0.6, // ОХОТА-3 «копит в маневрировании» — +60% charge gain (full ≈5s vs ≈8s)
-  huntKillingPower: 0.6, // ОХОТА-5 «смертельный заход» (vertex) — +60% charge-release power
+  huntChargedGain: 0.3, // ОХОТА-3 «копит в маневрировании» — +30% charge gain (было +60%)
+  huntKillingPower: 0.3, // ОХОТА-5 «смертельный заход» (vertex) — +30% charge-release power (было +60%)
 
   // BULWARK (заход 3). Fed via sb.* into the LIVE toughness / block / breathing /
   // block-counter / interrupt mechanics.
@@ -930,15 +1018,15 @@ export const COMBAT_BALANCE = {
   //   interrupt bonus — ВОЛНОЛОМ-2/5: catching the foe's windup punishes harder
   //                   (attacker-side interrupt reward, через onImpact — see report).
   //   block pierce — ТИСКИ-2/5: a heavy press is hard to block (blockPenetration).
-  bastionBreathRegen: 0.6, // БАСТИОН-3 «восстанавливает дыхание» — +60% stamina regen в покое
-  bastionFortressMitigation: 0.6, // БАСТИОН-5 «несокрушим» — +60% block strength (cut 0.50 → ~0.80, capped 0.90)
+  bastionBreathRegen: 0.7, // БАСТИОН-3 «восстанавливает дыхание» — +70% stamina regen в покое (было +60%)
+  bastionFortressMitigation: 0.15, // БАСТИОН-5 «несокрушим» — +15% block strength (было +60%; урезано этапом В: одиночка +23 → +9)
   breakerRiposteBonus: 0.5, // ВОЛНОЛОМ-1 «ответный тычок» — +50% dmg on the strike after a block
-  breakerInterruptBonus: 0.5, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup
-  breakerTrapRiposte: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% post-block riposte dmg
-  breakerTrapInterrupt: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% interrupt-catch dmg
+  breakerInterruptBonus: 0.4, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +40% dmg when this hit catches a windup (было +50%)
+  breakerTrapRiposte: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +60% post-block riposte dmg (было +100%)
+  breakerTrapInterrupt: 0.6, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +60% interrupt-catch dmg (было +100%)
   riposteWindowSec: 1.5, // how long a defensive win (block / dodge / foe whiff) keeps the riposte armed (covers the counter-jab)
-  viceSlamPen: 0.35, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)
-  viceClinchPen: 0.5, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)
+  viceSlamPen: 0.3, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add +30% (было +35%)
+  viceClinchPen: 0.4, // ТИСКИ-5 «захват» (vertex) — blockPenetration add +40% (было +50%)
 
   // AMBUSH (заход 4 — финал). Fed via sb.* into the LIVE dodge / onMiss / charge
   // mechanics. КАПКАН counters from RANGE (dodge + foe whiff), ЖАЛО is the standing
@@ -947,15 +1035,15 @@ export const COMBAT_BALANCE = {
   //                   (mirror of ВОЛНОЛОМ's blockCounter — same window, dodge trigger).
   //   miss-counter  — КАПКАН-4: the foe's whiff arms the riposte (activates onMiss).
   //   charge        — ЖАЛО: power (Loaded / Execution), ceiling (Long Charge), pierce.
-  trapDodgeCounter: 0.5, // КАПКАН-2 «уход + контр» — +50% dmg on the strike after a dodge
-  trapMissCounter: 0.5, // КАПКАН-4 «наказывает промах» — +50% dmg after the foe whiffs
-  trapPerfectDodge: 1.0, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-dodge riposte
-  trapPerfectMiss: 1.0, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-whiff riposte
-  shadowDodgeWindow: 0.4, // ТЕНЬ-4 «окно для своего захода шире» — +40% dmg after a dodge (own opening)
-  stingLoadedPower: 0.5, // ЖАЛО-1 «накопленный удар тяжёлый» — +50% charge-release power
+  trapDodgeCounter: 0.03, // КАПКАН-2 «уход + контр» — +3% dmg on the strike after a dodge (было +50%; урезано этапом В)
+  trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +40% dmg after the foe whiffs (было +50%)
+  trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-dodge riposte (было +100%)
+  trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-whiff riposte (было +100%)
+  shadowDodgeWindow: 0.15, // ТЕНЬ-4 «окно для своего захода шире» — +15% dmg after a dodge (own opening; было +40%)
+  stingLoadedPower: 0.05, // ЖАЛО-1 «накопленный удар тяжёлый» — +5% charge-release power (было +50%)
   stingLongChargeMax: 0.6, // ЖАЛО-2 «дольше выжидает — сильнее» — +60% charge ceiling (loads longer, hits bigger)
-  stingPiercePen: 0.6, // ЖАЛО-4 «пробивает любую защиту» — +60% charge-release block pierce
-  stingExecutionPower: 0.8, // ЖАЛО-5 «казнь» (vertex) — +80% charge-release power (with the escalate safeguard, not a start one-shot)
+  stingPiercePen: 0.8, // ЖАЛО-4 «пробивает любую защиту» — +80% charge-release block pierce (было +60%)
+  stingExecutionPower: 0.07, // ЖАЛО-5 «казнь» (vertex) — +7% charge-release power (было +80%; урезано этапом В)
 
   // --- Stalemate safeguard: rising накал (escalation by SILENCE, NOT fight time).
   //     The hole this closes: two patient cores (both CATCH / HOLD) могут встать в
@@ -1016,7 +1104,7 @@ export const COMBAT_BALANCE = {
     openReactLow: 0.3, openReactHigh: 0.95, // chance to punish a READ opening (recovery / stagger)
     catchBoost: 1.35, // CATCH (засада) — the dedicated waiter, reads + pounces hardest
     holdBoost: 1.12, // HOLD leans into the read a little
-    reactCooldownSec: 1.65, // min gap between conscious read-reactions (anti-spam)
+    reactCooldownSec: 1.6, // min gap between conscious read-reactions (anti-spam)
     gatherSec: 0.16, // visible "собрался" coil beat before a контра lunge (the улов reads as a moment)
   },
 

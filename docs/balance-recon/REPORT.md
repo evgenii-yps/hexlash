@@ -1,675 +1,1257 @@
-> ⚠️ **ЧИСЛА В ЭТОМ ОТЧЁТЕ УСТАРЕЛИ (29.09.2026, TZ_combat_distance_v1).** Ниже — замер до правки дистанции боя и на неверных точках выхода (бойцы стояли на (∓1.2, 0), в игре — (0.45, 1.3) и (−0.65, −1.4)). Скрипт `balance-recon.mjs` перенесён на общий стенд и перезапущен, папка `out/` пересчитана. Актуальная сверка выводов — в `docs/combat-distance/REPORT.md` (раздел «Перезамер»). Таблицы и цифры ниже цитировать нельзя.
+# Разведка баланса: как система «ядро + грани + кристаллы + клич + бафф» устроена на самом деле
 
-# Замер системы прокачки и боя — отчёт (TZ_balance_recon_v1)
+ТЗ: `TZ_balance_recon_v1`. Код игры (`src/`) не менялся. Ничего не чинилось, ничего не вливалось. Этот файл собирается из `REPORT.template.md` и готовых разделов `out/*.md` (`node scripts/balance-recon-assemble.mjs`); сырьё — `out/raw/*.json`; как повторить — `probe/README.md`.
 
-**Дата:** 29.09.2026 · **Ветка:** `claude/blissful-brahmagupta-mpx51k` (от `1d1461c`, `main` не тронут) · **Игровую логику не менял** — добавлены только `scripts/balance-recon.mjs` и эта папка.
+**Слова.** ЯДРО — ONSLAUGHT / RAIDER / BULWARK / AMBUSH (в коде natisk / nalet / skala / zasada). ГРАНЬ — вся ветвь BODY / MIND / WILL (в коде это `crystal`, id a/b/c; 3 на ядро). КРИСТАЛЛ — один из 5 шагов грани (в коде `face`; 15 на ядро, 60 всего). В коде слова стоят наоборот — не переименовывалось; при ссылке на код указаны оба смысла.
 
-**Как это доказано.** Контрольная сумма регрессии боя `scripts/fight-regression.mjs` до и после работы одна и та же: `017fb79b01a86b5953c04d13232f3d7fada96216a4c03df2791961d929f67b13` (48 боёв). Проверка баффов `scripts/buffs-check.mjs` — «ВСЁ СОШЛОСЬ». `git status` — только два новых пути.
+**Старт.** `git fetch`: `main` сейчас `b7515df7` — на один коммит новее `d9327e02`. Коммит один: `feat(loading): случайная фраза бойцов на экране загрузки` — трогает только `index.html` и `src/views-v2/SceneLoadingOverlay.vue` (экран загрузки). Файлов боя и данных баланса он не касается, поэтому всё измерено на `d9327e02` и остаётся верным. Обе контрольные суммы на старте совпали (`ec148d29…86400c`, `5b0a65d4…bd27`), поэтому данные прошлых замеров (`docs/crystal-remeasure/REPORT.md`, `docs/klich-reach/REPORT.md`) признаны действительными и использованы как ссылки; отдельно пересчитаны только «НОВЫЕ ЗАМЕРЫ» и проверки, оговорённые в ТЗ. Обе суммы в конце снова сняты — те же.
 
-**Что НЕ сделано намеренно.** Шесть защищённых файлов (`buildFighter.js`, `ArenaScene.vue`, `buildArena.js`, `arenaTextures.js`, `arenaPresence.js`, `hpIndicator.js`) не открывались (граница ТЗ). Поэтому всё, что живёт только внутри бойца — скорость атаки, скорость хода, «рабочая дистанция», отображение осей на движения, лимиты думающей модели, точки выхода рейда — в п.1 отмечено как **не прочитано** и вместо ключей дано **измерение в бою**.
+**Общая методика новых замеров.** Мгновенный бой без экрана (`scripts/lib/bout-harness.mjs` над `src/scene/instantBout.js`), мозг спинной, стороны плиты чередуются по зерну, точки выхода как в игре. Минимум 200 зёрен на пару «состав × враг»; всюду два набора зёрен 1–200 и 201–400, вывод о значимости — только если повторился на втором наборе. Интервалы 95%; парное сравнение на одних и тех же зёрнах. Зонд решений (`probe/need-probe.patch`) ставится только в отдельной копии дерева (`git worktree`), в `src/` не попадает; с зондом (выключенным и включённым) обе суммы те же, включённый зонд исходов боёв не меняет. Ни один пункт не потребовал более ~4 ч машинного времени — сокращений до одного набора зёрен не было.
 
----
+**Оговорка о множественных проверках.** Во всех таблицах по 60 кристаллам / 27 сборкам около 1–2 «значимых» ячеек на 95% ожидаются от одного шума. Где это важно — сказано в пункте.
 
-## Главное одним экраном
+## Сводная таблица: 14 утверждений
 
-1. **BULWARK доминирует.** Без кристаллов, усреднив стороны и порядок (100 боёв на ячейку): BULWARK бьёт ONSLAUGHT 78%, RAIDER 86%, AMBUSH 77%. Остальные три между собой в коридоре 45–55%. Длина боёв — 45 с (без BULWARK) … 63 с (зеркало BULWARK); таймаутов 0, боёв дольше 100 с — 0.
-2. **Из 60 кристаллов заметно влияют на исход 20, и все — в плюс; ещё 40 неотличимы от шума** (200 зёрен на ячейку; сдвиг винрейта против боя без кристалла ≥10 п.п. — это 2σ разности замеров, σ≈5 п.п.). Ни один кристалл не вредит. Разброс огромный: от 0 до +44 п.п. (BULWARK ANVIL). На 50 зёрнах (как в ТЗ) «значимых» выходит 35 из 60 — шум раздувает картину, верить нужно таблице на 200 зёрнах (п.4.3б).
-3. **Пять кристаллов ONSLAUGHT MIND (Hard Entry / Run-Down / Cut Off / Cling / Lockdown) не меняют ничего**: 198–199 из 200 боёв совпадают с боем без кристалла бит в бит. Причина видна в замере осей: ось `distance` и `initiative` у ONSLAUGHT в диапазоне ±20 не меняет бой вовсе (0 из 20), `stick` вверх — тоже. Ядро стоит «на упоре».
-4. **Текст кристалла и механика расходятся почти везде.** Игрок видит ОДИН набор из 15 текстов (BODY/MIND/WILL) на все 4 ядра, а механика у каждого ядра своя (60 разных). По моему чтению текстов: совпало полностью 0, частично 9, не совпало 26, **прямо наоборот 5**, у текста нет соответствующей оси/рычага 20. Пример наоборот: MIND/WATCH обещает «Waits a little longer before he enters», а у ONSLAUGHT под ним лежит Hard Entry (initiative +6, distance −8 — входит раньше).
-5. **Теги граней мертвы, как и заявлено:** все 26 тегов навешены сразу — 0 изменённых боёв из 80. Рычаги-бонусы все живые, но `feintPayoff` (7/80 боёв меняются) и `chargePen` (8/80) — почти мёртвые.
-6. **Баффы.** DICE — самый сильный рычаг: +17 п.п. (случайная грань), разброс по граням от +1.5 (грань 1) до +34 (грань 6). TOWEL: +20 п.п. по правилу бота (когда HP < 40%), +8.5 при броске в 10 с (на грани шума). **BUCKET ≈ 0** (−2…+4, шум ±10): бойцы почти не ходят (средняя скорость 0.07 ед./с), ускорять нечего. Бафф при этом работает как написано (`buffs-check`: сход 16.1 → 12.1 с).
-7. **Клич почти ничего не делает в числах.** Винрейт −1…+5 п.п. при 95% шуме ±10 п.п. (на одном ядре BULWARK три PUSH подряд дают −18 п.п., FALLBACK −16/−10 при n=50, где 95% шум ±20 п.п. — сигнал слабый, нужен перемер); в окне действия дистанция до цели меняется на 0.01–0.07 ед., темп атак — на 0.01–0.06/с. FALLBACK («рвёт контакт») даёт дистанцию 1.14 → 1.15. Заряды и откат 6 с на исход не влияют.
-8. **RAID.** Граней 0 → 7/20 побед (35%), 1–3 грани → 70%, 4 → 80%, 5 → 20/20 (100%). Ступенька от «нет граней» к «одна грань» — +35 п.п. Медиана 59–73 с; хвост дольше 100 с — 1–3 боя из 20; таймаутов 0. Числа из комментария в `combatBalance.raid.escalateStartSec` («12 из 20, медиана 65, максимум 82») **не воспроизводятся** (у меня без граней 7/20, 72.8 и 124.9 с) — вероятная причина в п.6.
-9. **Найдено в самом движке (не правил):** первый бой процесса не совпадает с тем же боем, посчитанным позже (43.50 с против 44.50 с; причина не выяснена — файл бойца не открывался) — харнесс прогревается; порядок бойцов в списке даёт малый перекос (первый в списке выигрывает 46.9%, 1600 боёв).
-10. **Числа, которых нет в `combatBalance.js`, и дубли** — список в п.1.9.
-
----
-
-## Словарь (важно для чтения)
-
-В ТЗ и в показываемых игроку текстах (`crystalTexts.js`, `coreFacets.js`): **грань** = ветка BODY / MIND / WILL (3), **кристалл** = один из 5 шагов внутри грани (15). В `upgradeData.js` и в скиле `hexlash-combat` названия **перевёрнуты**: там `crystal` = ветка (a/b/c), `face` = шаг. Ниже — словарь ТЗ. Соответствие: `natisk`=ONSLAUGHT, `nalet`=RAIDER, `skala`=BULWARK, `zasada`=AMBUSH; ветка `a`=BODY, `b`=MIND, `c`=WILL; шаг 1–5 = кристалл (a1…c5). Расхождение словарей — само по себе находка.
-
----
-
-## 1. Где живут числа
-
-⚠️ Всё, что помечено 🔒, лежит в защищённом файле и **не читалось**; вместо значения — замер из п.3–4 или пометка «не проверено». Полный плоский список 392 числовых ключей (значения прочитаны из живых модулей) — `docs/balance-recon/out/inventory_full.md`.
-
-### 1.1 Метрики бойца
-
-| параметр | файл | ключ | значение |
-| --- | --- | --- | --- |
-| HP | `src/data/combatBalance.js` | `maxHp` | 100 |
-| Урон: доля max HP цели за нейтральный панч (до защиты) | `combatBalance.js` | `damageFracBase` | 0.045 |
-| Сила удара (читаемая) | `combatBalance.js` | `strikePower` | 100 |
-| Множители приёмов | `combatBalance.js` | `moveMult.*` | punch 1.0 · doubleEach 1.33 · combo 3.67 · hook 1.7 · uppercut 1.9 · bodyShot 1.2 · frontKick 2.2 · teep 1.6 · knee 2.6 |
-| Разброс удара | `combatBalance.js` | `jitter` | ±0.10 |
-| Бонус граней по глубине | `combatBalance.js` | `gradeBonusRamp` | [0.04, 0.07, 0.10, 0.14, 0.22] |
-| Скорость атаки | 🔒 `buildFighter.js` (ось `tempo`) + `combatBalance.js` (`staminaCadenceStretchMax` 1.8, `staminaCost{Punch,Double,Combo}` 6/11/16, `staminaRegenPerSec` 14, `staminaMoveDrainPerSec` 6, `staminaPowerFloor` 0.55) | — | ключа скорости нет. **Замер:** 0.5–0.6 начатых атак/с у всех ядер |
-| Скорость перемещения | 🔒 `buildFighter.js` (ось `weight` → `speedMul`); `combatBalance.js` `mobilityBase` 100; `src/data/intentionMotion.js` `speedMul` по намерению (STING 1.35, BREAK 1.30, HOLD 0.55, CATCH 0.65, BREATHE 0.45); `footwork.*`; `dodge.speed` 2.6 | — | **Замер:** `mobility = 100 × lerp(1.4 → 0.6, weight/100)` (weight 0 → 140, 50 → 100, 100 → 60). Скорость на ходу 0.8–1.1 ед./с, средняя за бой 0.07–0.1 |
-| Стойкость | `combatBalance.js` | `toughness` 200 · `toughnessK` 1200 · `blockMitigation` 0.5 · `blockTendency{ResWeight 0.55, StickWeight 0.15, Max 0.65}` · `blockHoldSec` 1.4 · `dodgeChanceMax` 0.55 · `dodgeChanceCurve` 1.5 · `staggerDurationSec` 0.5 · `interruptWindowFrac` 0.5 | как указано |
-| Точность / промах | `combatBalance.js` | `accuracy` 50 · `missChanceBase` 0.1 · `accuracyMissSwing` 0.2 · `missChanceCap` 0.35 | как указано |
-| Рабочая дистанция | `combatBalance.js` | `strikeReach.*` (punch 1.0 … teep 1.5, knee 0.85) · `reachHitTol` 0.45 · `reachStepMax` 1.3 · `field.bodyGap` 0.74 · `kicks.{kneeMaxGap 1.05, frontKickMaxGap 1.55, teepMaxGap 2.0}` · `hands.{closeMaxGap 1.0, hookMaxGap 1.3}` · `breath.{breakDist 2.6, breakWide 1.1}` | предпочитаемая дистанция каждого ядра (`range`, константы STRIKE/RANGE/CONTACT/FAR) — 🔒 не проверено. **Замер:** средняя дистанция до цели в бою 1.0–1.2 |
-| Стартовые характеристики (замер `buildFighter().stats`) | — | — | все 4 ядра: HP 100, strikePower 100, toughness 200, accuracy 50, blockMitigation 0.5, chargeMax 100, chargeGain 12/с. Отличие только в mobility: ONSLAUGHT 96 · RAIDER 112 · BULWARK 88 · AMBUSH 80 |
-
-### 1.2 Оси поведения
-
-8 осей, каждая 0–100, нейтраль 50, кламп в `clampAxis` (`src/data/behavior.js`: `AXES`, `AXIS_MIN/MAX/NEUTRAL`). Читает их в выборе намерения `src/data/intentions.js` (`spinalScore`, `hardNeed`); в тело (🔒 `buildFighter.js`) уходят через `refreshAxes` (базовая ось + дельта намерения).
-
-| ось (в коде) | смысл 0 … 100 | кто читает при выборе намерения (вес) | ещё |
-| --- | --- | --- | --- |
-| `distance` | вплотную … далеко | PRESS 0.20·(1−d) · STING 0.45·d · BREATHE 0.10·d | тело: дистанция |
-| `initiative` | ждёт … идёт вперёд | PRESS 0.50 · STRIKE 0.30 · CATCH 0.20·(1−i) | тело: агрессия |
-| `tempo` | редкие одиночные … серии | **не читается выбором намерения вообще** | тело: частота атак (по комментарию `behavior.js`; 🔒 не проверено) |
-| `weight` | лёгкий … тяжёлый | STRIKE 0.35 · STING 0.20·(1−w) | тело: `speedMul`, стиль удара (**замер:** mobility) |
-| `stick` | ударил и ушёл … цепляется | PRESS 0.30 · HOLD 0.30 · BREAK 0.20·(1−s) | тело: сцепка |
-| `resilience` | стекло … несгибаем | HOLD 0.40 · CATCH 0.25 | тело: склонность к блоку |
-| `counter` | пассив … наказывает | CATCH 0.45 · hardNeed CATCH (>0.55) · readPounce 0.35/0.22 | скорость и точность «чтения» боя `read.*` |
-| `slip` | легко попасть … неуловим | STING 0.30 · BREAK 0.50 | тело: шанс уклона `dodgeChance*` |
-
-### 1.3 Стартовые значения осей по ядрам (`src/data/behavior.js` → `CORE_PROFILES`)
-
-| ядро | distance | initiative | tempo | weight | stick | resilience | counter | slip |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT (`natisk`) | 15 | 90 | 80 | 55 | 85 | 60 | 30 | 20 |
-| RAIDER (`nalet`) | 55 | 70 | 65 | 35 | 15 | 35 | 45 | 65 |
-| BULWARK (`skala`) | 20 | 25 | 30 | 65 | 70 | 90 | 60 | 15 |
-| AMBUSH (`zasada`) | 80 | 15 | 20 | 75 | 20 | 35 | 90 | 75 |
-
-Профили намерений (дельты осей, `src/data/intentions.js` → `INTENTION_PROFILES`): PRESS distance −35, initiative +30, stick +20 · STRIKE distance −25, initiative +20, tempo +15 · STING distance +30, initiative +10, tempo −10, stick −25 · HOLD — · BREAK distance +35, initiative −25, stick −30 · BREATHE distance +45, initiative −35, stick −25 · CATCH distance +10, initiative −20.
-
-### 1.4 Дельты от кристаллов
-
-Все 60 записаны в `src/data/upgradeData.js` → `CRYSTALS[ядро]` (шаги через `mkBranch`, сдвиги `s(axis, delta)`, бонусы `b(stat, pct)` → значения из `combatBalance.js`: `ramGuardCrushPen` 0.4, `ramBreakthroughPen` 0.95, `ramUnshakenInterruptResist` 0.7, `jabPinpointAccuracy` 0.35, `feintFakeInChance` 0.2, `feintPunishPayoff` 0.5, `feintSetupPayoff` 1.2, `huntReadAccuracy` 0.3, `huntChargedGain` 0.6, `huntKillingPower` 0.6, `bastionBreathRegen` 0.6, `bastionFortressMitigation` 0.6, `breakerRiposteBonus` 0.5, `breakerInterruptBonus` 0.5, `breakerTrapRiposte` 1.0, `breakerTrapInterrupt` 1.0, `viceSlamPen` 0.35, `viceClinchPen` 0.5, `trapDodgeCounter` 0.5, `trapMissCounter` 0.5, `trapPerfectDodge/Miss` 1.0, `shadowDodgeWindow` 0.4, `stingLoadedPower` 0.5, `stingLongChargeMax` 0.6, `stingPiercePen` 0.6, `stingExecutionPower` 0.8). Полная таблица «ядро × кристалл → фактическая дельта» — п.4.1.
-
-### 1.5 Баффы (`src/data/buffBalance.js`)
-
-| бафф | ключ | значение |
-| --- | --- | --- |
-| TOWEL | `towel.durationSec` / `healFracOfMax` / `staggerRecoverMul` | 5 с · 0.20 полного HP за всё время · выход из сбива ×0.5 |
-| BUCKET | `bucket.durationSec` / `paceMul` | 5 с · ×1.30 к скорости ПЕРЕДВИЖЕНИЯ (частоту ударов не трогает) |
-| DICE — грани | `dice.faces` | 1: 1 удар ×1.5 · 2: 2×1.5 · 3: 2×2.0 · 4: 3×2.0 · 5: 3×2.5 · 6: 3×3.0 (+вспышка), `bigFace` 6 |
-| DICE — бросок | функция `rollDie()` (`buffBalance.js`) | `1 + floor(Math.random()·6)`, равновероятно |
-| Откат | `cooldownSec` | 8 с на вид, общий на сторону игрока |
-| Бот | `bot.*` | `towelHpBelow` 0.40 · `bucketNearDist` 2.2 · `diceFoeHpBelow` 0.50 · `diceLateSec` 20 · `minGapSec` 6 |
-| Запас | `kitSlots` 3 · `starterStock` 2/2/2 (бой не читает) | — |
-
-### 1.6 Клич (`src/data/klichBalance.js`)
-
-| ключ | значение |
-| --- | --- |
-| `holdSec` / `fadeSec` | 6 с полная сила + 2 с линейный сход (итого 8) |
-| `chargesPerKlich` | 3 на клич за бой |
-| `cooldownSec` | 6 с, общий на сторону, свой у каждого клича |
-| `axes.push` (ВПЕРЁД) | distance −40 · initiative +35 · tempo +10 · stick +25 |
-| `axes.fallback` (ОТХОД) | distance +45 · initiative −30 · tempo −10 · stick −35 |
-| `axes.hold` (ДЕРЖАТЬ) | distance −5 · initiative −25 · tempo −20 · stick +40 |
-
-Применение — `applyKlich` бойца (🔒 внутри), вызывает `src/services/klich.js` (замена клича новым, заряд списывается в момент броска).
-
-### 1.7 Таймауты и капы боя
-
-| что | где | значение |
-| --- | --- | --- |
-| Жёсткий потолок боя (мгновенный прогон) | `src/scene/instantBout.js` `MAX_SEC` | 240 с (не достигался ни разу: `capped` = 0) |
-| Шаг времени мгновенного боя | `instantBout.js` `INSTANT_DT` | 1/60 с |
-| Накал по длине: порог / рамп / потолок урона | `combatBalance.js` `escalateStartSec` / `escalateLengthRampSec` / `escalateMax` | 25 с / 20 с / ×6 |
-| Накал по тишине: порог / рамп | `escalateSilenceSec` / `escalateRampSec` | 5 с / 12 с |
-| Добавка агрессии / тяги вперёд на полном накале | `escalateAggroMax` / `escalateForwardMax` | 0.5 / 30 |
-| Порог накала рейда | `combatBalance.raid.escalateStartSec` | 18 с |
-| Рейд | `raid.*` | `allies` 3 · `guards` 2 · `bossDurability` 3 · `bossPowerBonus` 0 · `bossScale` 1.35 · `bossBodyGap` 1.0 |
-| Забег / турнир | `chain.roundBonus` / `chain.healBetweenRounds` / `collapse.healBetweenWaves` | [−0.5, −0.4, −0.25] / 0.25 / 0.25 |
-| Командование легенды | `src/data/commandBalance.js` | `quietStartSec` 5 · `minGapSec` 3 · `hurtHp01` 0.35 · `foeWeakHp01` 0.25 · `pusherHp01` 0.60 · `nearDist` 2.4 · `lineHoldSec` 4 · `brain.maxPerFight` 5 · `brain.minGapSec` 8 · `brain.answerTtlSec` 1.5 |
-| Думающая модель бойца (лимиты обращений: кулдаун 3 с, потолок 12, таймаут 1.5 с) | 🔒 `buildFighter.js` | не проверено; по скилу. Бэк: `backend/src/services/fighterIntentionService.js` `MAX_TOKENS` 120 |
-| Прочие капы | `combatBalance.js` | `dodgeChanceMax` 0.55 · `missChanceCap` 0.35 · `blockTendencyMax` 0.65 · `staminaCadenceStretchMax` 1.8 · `staminaPowerFloor` 0.55 |
-
-### 1.8 Числа вне `combatBalance.js` (правило проекта: все числа боя — в одном файле)
-
-- `src/data/intentions.js`: порог одышки 0.22, порог «контрударник» 0.55, порог заряженного удара 0.85, окно угрозы 1.5 с, `ESC_ATTACK_PUSH` 0.7, `ESC_PASSIVE_DAMP` 0.5, бонус удержания намерения 0.08, `readPounce` 0.35/0.22 и все веса `spinalScore` (§1.2).
-- `src/scene/instantBout.js`: `MAX_SEC` 240, `NAV_MARGIN` 0.5.
-- `src/services/command.js:345`: пороги слов о здоровье 0.66 / 0.35.
-
-### 1.9 Захардкожено в нескольких местах (расходятся молча)
-
-| что | места |
-| --- | --- |
-| Порог «своё здоровье критично» 0.35 | `commandBalance.hurtHp01` = 0.35, `commandBalance.brain.selfHurtHp01` = 0.35 (две записи), `services/command.js:345` (третья, литерал) |
-| Порог «противник при смерти» 0.25 | `commandBalance.foeWeakHp01` и `commandBalance.brain.foeWeakHp01` (две записи) |
-| Порог «заряд готов» | `combatBalance.chargeReleaseThreshold` = **0.8** (тело разряжает), `intentions.js hardNeed` = **0.85** (намерение STRIKE) — **два близких порога одного понятия, лежат в разных файлах и различаются** |
-| «Близко» | `buffBalance.bot.bucketNearDist` 2.2, `commandBalance.nearDist` 2.4 (осознанно, но два числа), + `combatBalance.field.ambushSwitchReach` 1.7 (в комментарии «на уровне STRIKE = 1.7», а скил называет STRIKE = 2.0 — не проверено, 🔒) |
-| Просвет тел | `combatBalance.field.bodyGap` = 0.74 = константа CONTACT внутри бойца 🔒 (сказано в комментарии; две записи) |
-| Границы плиты | `instantBout.js` (`PLATFORM.width/2 − NAV_MARGIN`) «те же, что считает сцена» 🔒 — вторая копия правила |
-| HP 100 | `combatBalance.maxHp` и `src/core/constants.js MAX_HP` (устаревшая, боем не читается; из этого файла читают только `DECIMALS`) |
-| Стартовые оси ядер ↔ ключи ядер | `behavior.js CORE_PROFILES`, `upgradeData.js CORES` и `CRYSTALS` — id ядер повторяются в трёх местах |
-| Что делает кристалл | **два параллельных источника**: механика — `upgradeData.js` (60 записей, у каждого ядра своя), показ — `crystalTexts.js` (15 текстов, общие). Между собой не связаны (п.4.1) |
-| Число на карточке | `facetReadout.js AXIS_PCT_PER_DELTA = 1`: сдвиг оси в пунктах показывается как «%» (weight +14 → «14%»), а реальный эффект — mobility −11 (п.4.1) |
-| «Восемь секунд» клича | текст в комментариях `klichBalance.js` («holdSec + fadeSec = 8») — производное от двух чисел |
-
----
-
-## 2. Харнесс
-
-`scripts/balance-recon.mjs` — батч, только чтение. Движок — существующий `src/scene/instantBout.js` (тот же `buildFighter`, `battleField`, `boutCore`, те же числа; без рендера, шаг 1/60 с, мозг спинной, модель не вызывается). Своей арифметики боя нет.
-
-- Запуск: `node scripts/balance-recon.mjs [раздел ...]`, разделы `det inventory metrics axes cores bias table effect levers raid` (или `all`). `SEEDS=200` / `RAID_SEEDS=20` меняют число зёрен. Скорость: пара ≈ 40–100 мс.
-- Выход: `docs/balance-recon/out/<раздел>.md` и `.json`.
-- Зёрна: `Math.random` подменяется генератором mulberry32 (как в `fight-regression.mjs`). **Детерминизм проверен**: 48 боёв, два прогона подряд и два разных процесса — один и тот же SHA-256 `d1a9eed4…29eb50` (раздел `det`).
-- **Прогрев.** Первый бой процесса не совпадает с тем же боем, посчитанным позже (43.50 с против 44.50 с). Причина не выяснена (файл бойца не открывался); гипотеза — ленивая инициализация, берущая числа из `Math.random`. Харнесс прогоняет 16 пар на зерне 999 до любого замера. Существующий `fight-regression.mjs` прогрева не делает; его сумма от прогона к прогону стабильна (проверено дважды), потому что порядок боёв в нём фиксирован.
-- Баффы и клич вешаются теми же вызовами бойца, что в игре (`heal`, `shortenStagger`, `setBuffPace`, `armDiceCharge`, `applyKlich`) и теми же числами. Логика тиков `services/buffs.js` воспроизведена в харнессе — сам файл не импортируется (тянет Vue и трёхмерные предметы).
-- **Перекос сторон.** Зеркала слева выигрывают 34–42% (по 50 боёв). Раздел `bias` (1600 боёв) развёл причины: «первый в списке бойцов» выигрывает 46.9%, «слева» — 48.8% (σ 1.3 п.п.). Небольшой, но реальный минус первому в списке. Во всех замерах с рычагом стороны и порядок **чередуются по чётности зерна**; в матрице ядер усреднены оба порядка.
-
-Ограничения: (1) рейд — состав и ядра как в игре (`composeRaid`), но точки выхода взяты из `collapseSpawnPos(4, …)`, а не из `ArenaScene.vue` 🔒, масштаб босса `bossScale` мгновенный бой не передаёт, боец игрока — «бот с теми же гранями» со случайным ядром; (2) пары ядер — без кристаллов; (3) выбор ядра игроком, живой клич пальцем и правильный момент броска в замере заменены фиксированными правилами.
-
----
-
-## Список зёрен
-
-| раздел | зёрна |
-| --- | --- |
-| п.3 ядра (16 пар) | 1…50 на пару |
-| п.4.1 таблица дельт | без зёрен (чтение данных + `buildFighter().stats`); проводка рычагов и тегов — 1…20 × 4 ядра (зеркало) |
-| п.4.3 вклад кристалла | 1…50 (как в ТЗ) **и** 1…200 (подтверждение); T слева при нечётном зерне, справа при чётном |
-| п.5 клич и баффы | 1…50 × 4 ядра = 200 боёв на строку; та же чередование |
-| п.6 RAID | 1…20 на каждое число граней 0…5 |
-| оси, перекос сторон | оси: 1…20; bias: 1…100 × 4 комбинации × 4 ядра |
-| прогрев | 999 (результат отбрасывается) |
-
----
-
-## 3. Замер: ядра (16 пар × 50 зёрен)
-
-Пары: 16 упорядоченных (A слева, B справа), зёрна 1..50. Начальные позиции x=∓1.2. Ядра без зажжённых кристаллов.
-
-| A (слева, player) | B (справа, foe) | мед. с | p10 с | p90 с | макс. с | победы A | винрейт A | HP победителя (ср.) | упёрлись в таймаут (240 с) | дольше 100 с |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT (зеркало) | ONSLAUGHT | 45.4 | 42.9 | 50.4 | 52.3 | 17/50 | 34% | 27% | 0 | 0 |
-| ONSLAUGHT | RAIDER | 45.1 | 43.3 | 49.2 | 52.3 | 26/50 | 52% | 25% | 0 | 0 |
-| ONSLAUGHT | BULWARK | 52.6 | 48.4 | 59.7 | 67.9 | 9/50 | 18% | 29% | 0 | 0 |
-| ONSLAUGHT | AMBUSH | 48.9 | 44.9 | 54.1 | 59.5 | 23/50 | 46% | 25% | 0 | 0 |
-| RAIDER | ONSLAUGHT | 45.5 | 41.2 | 49.4 | 52.0 | 21/50 | 42% | 25% | 0 | 0 |
-| RAIDER (зеркало) | RAIDER | 45.2 | 40.6 | 48.4 | 53.2 | 18/50 | 36% | 28% | 0 | 0 |
-| RAIDER | BULWARK | 53.3 | 45.1 | 62.5 | 66.5 | 5/50 | 10% | 32% | 0 | 0 |
-| RAIDER | AMBUSH | 49.6 | 42.4 | 56.8 | 68.1 | 25/50 | 50% | 34% | 0 | 0 |
-| BULWARK | ONSLAUGHT | 52.2 | 47.2 | 60.8 | 68.6 | 37/50 | 74% | 34% | 0 | 0 |
-| BULWARK | RAIDER | 52.7 | 45.3 | 58.7 | 64.9 | 41/50 | 82% | 33% | 0 | 0 |
-| BULWARK (зеркало) | BULWARK | 63.5 | 57.7 | 67.7 | 71.7 | 21/50 | 42% | 22% | 0 | 0 |
-| BULWARK | AMBUSH | 53.2 | 46.9 | 63.5 | 76.5 | 40/50 | 80% | 33% | 0 | 0 |
-| AMBUSH | ONSLAUGHT | 49.6 | 45.1 | 55.0 | 58.3 | 27/50 | 54% | 23% | 0 | 0 |
-| AMBUSH | RAIDER | 49.7 | 44.6 | 52.9 | 72.3 | 26/50 | 52% | 28% | 0 | 0 |
-| AMBUSH | BULWARK | 55.9 | 47.9 | 63.3 | 69.2 | 13/50 | 26% | 30% | 0 | 0 |
-| AMBUSH (зеркало) | AMBUSH | 51.5 | 47.2 | 57.1 | 65.9 | 21/50 | 42% | 31% | 0 | 0 |
-
-**Сводный винрейт ядра против трёх других (обе стороны плиты, без зеркал):**
-
-| ядро | победы | винрейт |
-| --- | --- | --- |
-| ONSLAUGHT | 123/300 | 41.0% |
-| RAIDER | 108/300 | 36.0% |
-| BULWARK | 241/300 | 80.3% |
-| AMBUSH | 128/300 | 42.7% |
-
-**Матрица винрейта «строка бьёт столбец», обе стороны и оба порядка усреднены (100 боёв на ячейку):**
-
-|  | ONSLAUGHT | RAIDER | BULWARK | AMBUSH |
+| № | утверждение | вердикт | главная цифра | где живёт в коде |
 | --- | --- | --- | --- | --- |
-| ONSLAUGHT | — | 55% | 22% | 46% |
-| RAIDER | 45% | — | 14% | 49% |
-| BULWARK | 78% | 86% | — | 77% |
-| AMBUSH | 54% | 51% | 23% | — |
+| 1 | жёсткая нужда решает ~51% (BULWARK) и ~47% (AMBUSH) решений; пороги от характера не зависят | **ПОДТВЕРЖДЕНО** | BULWARK 50.7%, AMBUSH 46.6%, ONSLAUGHT 0.3%, RAIDER 3.1%; причина — одни ворота `counter > 0.55` | `src/data/intentions.js` `hardNeed` (стр. 141–154); `bend` = 0 — `src/data/combatBalance.js:281` |
+| 2 | 9 кристаллов не видны в полной грани из-за зажима 0/100 | **ЧАСТИЧНО** | механизм верен, счёт иной: по осям «не видны» 19 из 60 (из них 8 без каких-либо других каналов); сгорает 34% записанных сдвигов у ONSLAUGHT, 29% AMBUSH, 20% BULWARK, 0% RAIDER | зажим — `src/data/behavior.js` `resolveBehavior`; сдвиги — `src/data/upgradeData.js` `CRYSTALS` |
+| 3 | против 4 голых ядер BULWARK ~70%, RAIDER ~40%; BULWARK медиана > 55 с | **ПОДТВЕРЖДЕНО** | BULWARK 71.8%, RAIDER 39.6%, ONSLAUGHT 46.9%, AMBUSH 43.0%; медиана BULWARK 57.8 с; метрики на пределе 25.07% / 34.95% — воспроизвелись точно | профили — `src/data/behavior.js` `CORE_PROFILES`; ×урона от стойкости — `src/scene/buildFighter.js:736` 🔒 |
+| 4 | вредят: ONSLAUGHT Run-Down, ONSLAUGHT Cling, RAIDER Fake-In | **ЧАСТИЧНО** | Fake-In вредит по-настоящему (−5.3 [−7.2…−3.4], рычаг шанса финта, оба набора); Run-Down и Cling на свежем наборе 201–400 вреда нет (+1.0 / +0.8) — скорее шум | `src/data/upgradeData.js` (кристаллы b2, b4 ONSLAUGHT; b1 RAIDER) |
+| 5 | 17 слабых кристаллов (при ×3 эффект появляется) | **ПОДТВЕРЖДЕНО** | 17 ячеек «МАЛЫЙ ВЕС» (23 флага) и 17 «ГЛУХОЙ КАНАЛ» (19 флагов) — суммы сошлись с перезамером | `docs/crystal-remeasure/out/partA.json`; веса — `src/data/upgradeData.js` |
+| 6 | 41 кристалл не меняет решения (< 5%); 8 тегов-пустышек | **ПОДТВЕРЖДЕНО** (41); гипотеза «тег < 0.08» **ОПРОВЕРГНУТА** | 41 из 60; у пустышек переворот выбора 0.02–1.0% решений; вес тега 0.12/0.20 больше бонуса удержания 0.08 | очки — `intentions.js` `spinalScore`; наклоны тегов — `src/data/branchThreshold.js` `TAG_LEANS`; вес — `combatBalance.js` `grani.tagLean/vertexLean` |
+| 7 | перекосы Unshaken +38, Breakthrough +31, Unbreakable +25, Perfect Trap +21 | **ПОДТВЕРЖДЕНО** | воспроизведено +39.5 / +32.6 / +23.6 / +18.7; прибавка — рычаги силы и оси, тег почти ничего (+3.5 / −0.9 / +0.3; у Unshaken тега нет) | `upgradeData.js` (рамп, `interruptResist`, `blockPenetration`, `blockMitigation`, `dodgeCounter`, `missCounter`) |
+| 8 | шесть вершин поглощены гранью | **ЧАСТИЧНО** | «ось на упоре» — причина только у двух (Rampage, Phantom); у остальных тег дублирует резонанс ветви / перекрыт соседом; Killing Run — резонанс тянет к другому намерению | `branchThreshold.js` `BRANCH_HOME`, `resolveLeans`; `combatBalance.js` `grani.homeLean 0.3/0.15`, `threshold 3` |
+| 9 | полные грани; ONSLAUGHT MIND −2.4, RAIDER MIND −4.5 | **ЧАСТИЧНО** | таблица воспроизведена; ONSLAUGHT MIND −2.4 — шум (интервал включает 0, свежий набор +1.8); RAIDER MIND отрицательна на обоих наборах (−4.5 / −1.8): оси дают +3.9, резонанс ветви −8.4 | `branchThreshold.js` (резонанс), `upgradeData.js` |
+| 10 | сборки на 7 кристаллов (новый замер) | **ЗАМЕРЕНО** | лучшая: ONSLAUGHT a5c2 (99.1% / 91.6%), RAIDER c5a2 (79.6% / 65.2%), BULWARK a5c2 (99.3% / 84.4%), AMBUSH a5b2 (83.3% / 69.7%); потолок 7 из 15 без условий зажигания — подтверждён | `src/data/upgradeTree.js` `buildTree`; `upgradeData.js:14` `RESOURCE = 7`; боты — `src/services/collapseRun.js` `buildBotSide`, `src/data/foeCompose.js` |
+| 11 | ОТХОД −1.5…−2 п.п., ВПЕРЁД у ONSLAUGHT без эффекта | **ПОДТВЕРЖДЕНО**; пользы у ОТХОДА нет | ОТХОД −2.1 [−3.7…−0.5]; запас сил +0.3 п.п. (шум), полученный урон +0.09 ±0.19 HP, нанесённый −2.43 HP | `src/data/klichBalance.js`; `buildFighter.js` `applyKlich` 🔒 |
+| 12 | клич против выживания | **ПОДТВЕРЖДЕНО** | порядок «нужда → свежий ответ модели → очки» верен; нужды по здоровью нет; при ≤ 20% HP в окне ВПЕРЁД: 2.6 решений PRESS/STRIKE на бой, как и без клича; ответ на замах совпал 4771/4771 | `intentions.js` `chooseIntentionSpinal` (129), `chooseIntentionModel` (118–124), `swingReply` (159), срез группы (246–253) |
+| 13 | баффы (новый замер) | **ЗАМЕРЕНО**; «BUCKET не даёт выигрыша» **ПОДТВЕРЖДЕНО**, гипотеза о плите — **ЧАСТИЧНО** | по правилу бота набор +30.3 п.п. (DICE +21.6, TOWEL +14.7, BUCKET −0.2); BUCKET на большой плите 12×9 лишь +2.3; клич+бафф складываются | `src/data/buffBalance.js`; `src/services/buffs.js` `tickBot`/`applyBuff`; `buffStrike.js`; `boutCore.js:168` |
+| 14 | заряды и перезарядка | **ПОДТВЕРЖДЕНО** | 3 заряда на клич, пауза 6 с (клич) / 8 с (бафф); второй клич заменяет первый (20/20); 9 применений успевают лишь в 44% боёв; ВПЕРЁД «сразу» хуже «по бою» на 3.0 п.п., баффы — на 7.7 п.п. | `klichBalance.js` `chargesPerKlich`, `cooldownSec`; `services/klich.js`; `buffBalance.js` `cooldownSec` |
 
-**Перекос в зеркалах (должно быть ≈50%):** ONSLAUGHT: победы «слева» 17/50 · RAIDER: победы «слева» 18/50 · BULWARK: победы «слева» 21/50 · AMBUSH: победы «слева» 21/50. Разбор перекоса (порядок в списке против точки выхода) — раздел bias.
+## Главное в трёх строках
 
-**Перекос сторон (раздел `bias`):**
-
-Зеркальные бои (одно ядро с обеих сторон), 100 зёрен на каждую из 4 комбинаций «кто первым в списке × кто слева», 4 ядра = 1600 боёв. Считаются победы того, кто ПЕРВЫМ в списке бойцов (обновляется в кадре раньше), и того, кто СЛЕВА.
-
-| ядро | победы «первого в списке» | винрейт «первого» | победы «слева» | винрейт «слева» |
-| --- | --- | --- | --- | --- |
-| ONSLAUGHT | 185/400 | 46.3% | 193/400 | 48.3% |
-| RAIDER | 191/400 | 47.8% | 193/400 | 48.3% |
-| BULWARK | 180/400 | 45.0% | 188/400 | 47.0% |
-| AMBUSH | 194/400 | 48.5% | 206/400 | 51.5% |
-
-**Итого (1600 боёв):** «первый в списке» выигрывает 46.9%, «слева» выигрывает 48.8%. Честно — 50%; σ ≈ 1.3 п.п.
-
----
-
-## 4. Замер: кристаллы поштучно
-
-### 4.1 Таблица «ядро × кристалл → фактическая дельта» (60 ячеек) и строка CHARACTER
-
-«Кристалл» = один из 5 шагов внутри грани (в коде `face` в ветке a|b|c). 15 кристаллов × 4 ядра = 60 ячеек.
-Δ осей — фактическая (после зажима 0..100) при зажжённом ЭТОМ кристалле одном, относительно стартового профиля ядра.
-Δ stats — замер у живого бойца (`buildFighter().stats`): strikePower / toughness / mobility / accuracy / blockMitigation / blockPenetration / chargeMax…
-Рычаги, которых нет в `stats` (feintChance, feintPayoff, staminaRegen, blockCounter, interruptBonus, dodgeCounter, missCounter, interruptResist), видны только в колонке «бонусы» — как записано в данных.
-
-| ядро | грань/кристалл | имя в данных | Δ осей (факт, от старта ядра) | бонусы (% к рычагу) | Δ stats у бойца (замер) | теги (мертвы) | CHARACTER, что видит игрок | текст vs механика |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT | BODY/ROOT (a1) | Heavy Hit | wt+14 | strikePower +4% | strikePower +4, mobility -11 | — | Stubborn. He backs off less often than he should. | не совпало (оси resilience,stick,distance не двигаются) |
-| ONSLAUGHT | BODY/DRIVE (a2) | Guard Crush | wt+8 | strikePower +7%, blockPenetration +40% | strikePower +7, blockPenetration +0.4, mobility -6 | — | Impatient. He opens the exchange first. | частично |
-| ONSLAUGHT | BODY/GRIND (a3) | Unshaken | res+14 | strikePower +10%, interruptResist +70% | strikePower +10 | — | Takes punishment well. Stays in an exchange past the point where it pays. | частично |
-| ONSLAUGHT | BODY/BREAK (a4) | Close Power | dist−8 wt+6 | strikePower +14% | strikePower +14, mobility -5 | close_damage_ramp | Greedy for the finish. Forgets his guard when he smells weakness. | не совпало (оси initiative,counter не двигаются) |
-| ONSLAUGHT | BODY/ANVIL (a5) | Breakthrough | wt+10 | strikePower +22%, blockPenetration +95% | strikePower +22, blockPenetration +0.95, mobility -8 | overload_strike | Calm under pressure. He no longer panics in the corner. | не совпало (оси resilience,counter не двигаются) |
-| ONSLAUGHT | MIND/WATCH (b1) | Hard Entry | dist−8 init+6 | — | — | — | Careful. Waits a little longer before he enters. | ПРОТИВОПОЛОЖНО (initiative) |
-| ONSLAUGHT | MIND/TIMING (b2) | Run-Down | dist−6 stick+8 | — | — | chase_strike | Deliberate. Throws fewer blind punches. | не совпало (оси tempo,counter не двигаются) |
-| ONSLAUGHT | MIND/FEINT (b3) | Cut Off | stick+10 | — | — | — | Sly. Starts playing with the opponent and loses tempo. | не совпало (оси tempo не двигаются) |
-| ONSLAUGHT | MIND/ADAPT (b4) | Cling | dist−6 stick+10 | — | — | — | Flexible. Changes the plan even where holding it would have paid. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| ONSLAUGHT | MIND/COLD (b5) | Lockdown | dist−8 stick+14 | — | — | lockdown | Cold. Never rattled, and never lit up when a spark is what he needs. | не совпало (оси resilience не двигаются) |
-| ONSLAUGHT | WILL/HOLD (c1) | Long Combo | tempo+8 | — | — | — | Composed. Asks for fewer pauses. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| ONSLAUGHT | WILL/SPITE (c2) | No Pause | tempo+10 | — | — | — | Angry. Dull in an even fight. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| ONSLAUGHT | WILL/VOW (c3) | Building Momentum | tempo+6 | — | — | hit_accel | Loyal to the order. Improvises worse. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| ONSLAUGHT | WILL/HUNGER (c4) | No Breather | tempo+6 stick+6 | — | — | no_breather | Eager. Probes where he should not. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| ONSLAUGHT | WILL/STILL (c5) | Rampage | tempo+12 | — | — | rampage | Ice. His overall liveliness drops. | ПРОТИВОПОЛОЖНО (tempo) |
-| RAIDER | BODY/ROOT (a1) | Quick Out | dist+8 tempo+6 | — | — | — | Stubborn. He backs off less often than he should. | ПРОТИВОПОЛОЖНО (distance) |
-| RAIDER | BODY/DRIVE (a2) | Pinpoint Entry | init+6 | accuracy +35% | accuracy +18 | — | Impatient. He opens the exchange first. | частично |
-| RAIDER | BODY/GRIND (a3) | Far Bounce | dist+10 slip+6 | — | — | — | Takes punishment well. Stays in an exchange past the point where it pays. | не совпало (оси resilience,stick не двигаются) |
-| RAIDER | BODY/BREAK (a4) | Clean Exchange | tempo+8 | — | — | clean_chain | Greedy for the finish. Forgets his guard when he smells weakness. | не совпало (оси initiative,counter не двигаются) |
-| RAIDER | BODY/ANVIL (a5) | Perfect Prick | dist+8 init+10 slip+6 | — | — | perfect_jab | Calm under pressure. He no longer panics in the corner. | не совпало (оси resilience,counter не двигаются) |
-| RAIDER | MIND/WATCH (b1) | Fake-In | tempo+4 | feintChance +20% | — | — | Careful. Waits a little longer before he enters. | не совпало (оси counter,initiative не двигаются) |
-| RAIDER | MIND/TIMING (b2) | Punish Reaction | tempo+4 | feintPayoff +50% | — | — | Deliberate. Throws fewer blind punches. | ПРОТИВОПОЛОЖНО (tempo) |
-| RAIDER | MIND/FEINT (b3) | Broken Rhythm | tempo+8 | — | — | rhythm_break | Sly. Starts playing with the opponent and loses tempo. | ПРОТИВОПОЛОЖНО (tempo) |
-| RAIDER | MIND/ADAPT (b4) | Feint to Interrupt | tempo+6 | — | — | feint_interrupt | Flexible. Changes the plan even where holding it would have paid. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| RAIDER | MIND/COLD (b5) | Setup Combo | tempo+6 | feintPayoff +120% | — | feint_combo | Cold. Never rattled, and never lit up when a spark is what he needs. | не совпало (оси resilience не двигаются) |
-| RAIDER | WILL/HOLD (c1) | Read the Tell | init−6 | strikePower +4%, accuracy +30% | strikePower +4, accuracy +15 | — | Composed. Asks for fewer pauses. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| RAIDER | WILL/SPITE (c2) | Strike the Open | init+4 | strikePower +7% | strikePower +7 | punish_exhausted | Angry. Dull in an even fight. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| RAIDER | WILL/VOW (c3) | Charged Run | dist+6 | strikePower +10%, chargeGain +60% | strikePower +10, chargeGain/с +7.2 | — | Loyal to the order. Improvises worse. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| RAIDER | WILL/HUNGER (c4) | Punish Aggression | ctr+10 | strikePower +14% | strikePower +14 | punish_aggression | Eager. Probes where he should not. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| RAIDER | WILL/STILL (c5) | Killing Run | dist+6 | strikePower +22%, chargePower +60% | strikePower +22, chargePowerMax +0.36 | lethal_entry | Ice. His overall liveliness drops. | не совпало (оси tempo не двигаются) |
-| BULWARK | BODY/ROOT (a1) | Tough Hide | res+8 | toughness +4% | toughness +8 | — | Stubborn. He backs off less often than he should. | частично |
-| BULWARK | BODY/DRIVE (a2) | Steady Guard | res+10 | toughness +7% | toughness +14 | — | Impatient. He opens the exchange first. | не совпало (оси weight,initiative не двигаются) |
-| BULWARK | BODY/GRIND (a3) | Catch Breath | res+6 | toughness +10%, staminaRegen +60% | toughness +20 | — | Takes punishment well. Stays in an exchange past the point where it pays. | частично |
-| BULWARK | BODY/BREAK (a4) | Dig In | dist−6 | toughness +14% | toughness +28 | dig_in | Greedy for the finish. Forgets his guard when he smells weakness. | не совпало (оси initiative,counter не двигаются) |
-| BULWARK | BODY/ANVIL (a5) | Unbreakable | res+8 | toughness +22%, blockMitigation +60% | toughness +44, blockMitigation +0.3 | fortress | Calm under pressure. He no longer panics in the corner. | частично |
-| BULWARK | MIND/WATCH (b1) | Riposte | stick+6 ctr+8 | toughness +4%, blockCounter +50% | toughness +8 | — | Careful. Waits a little longer before he enters. | частично |
-| BULWARK | MIND/TIMING (b2) | Catch & Punish | ctr+8 | toughness +7%, interruptBonus +50% | toughness +14 | — | Deliberate. Throws fewer blind punches. | частично |
-| BULWARK | MIND/FEINT (b3) | Hard Meet | stick+6 ctr+10 | toughness +10% | toughness +20 | — | Sly. Starts playing with the opponent and loses tempo. | не совпало (оси tempo не двигаются) |
-| BULWARK | MIND/ADAPT (b4) | Retaliation | ctr+8 | toughness +14% | toughness +28 | retaliate_ramp | Flexible. Changes the plan even where holding it would have paid. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| BULWARK | MIND/COLD (b5) | Sea Wall | stick+6 ctr+8 | toughness +22%, blockCounter +100%, interruptBonus +100% | toughness +44 | counter_trap | Cold. Never rattled, and never lit up when a spark is what he needs. | не совпало (оси resilience не двигаются) |
-| BULWARK | WILL/HOLD (c1) | Body Shove | dist−6 stick+8 | — | — | — | Composed. Asks for fewer pauses. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| BULWARK | WILL/SPITE (c2) | Heavy Slam | wt+10 | blockPenetration +35% | blockPenetration +0.35, mobility -8 | — | Angry. Dull in an even fight. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| BULWARK | WILL/VOW (c3) | No Way Around | stick+10 | — | — | — | Loyal to the order. Improvises worse. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| BULWARK | WILL/HUNGER (c4) | Pin | dist−6 stick+8 | — | — | pin | Eager. Probes where he should not. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| BULWARK | WILL/STILL (c5) | Clinch | wt+8 stick+14 | blockPenetration +50% | blockPenetration +0.5, mobility -6 | clinch | Ice. His overall liveliness drops. | не совпало (оси tempo не двигаются) |
-| AMBUSH | BODY/ROOT (a1) | Hard Counter | ctr+8 | — | — | — | Stubborn. He backs off less often than he should. | не совпало (оси resilience,stick,distance не двигаются) |
-| AMBUSH | BODY/DRIVE (a2) | Slip Counter | slip+6 | dodgeCounter +50% | — | — | Impatient. He opens the exchange first. | не совпало (оси weight,initiative не двигаются) |
-| AMBUSH | BODY/GRIND (a3) | Punish Aggression | ctr+8 | — | — | punish_aggression | Takes punishment well. Stays in an exchange past the point where it pays. | не совпало (оси resilience,stick не двигаются) |
-| AMBUSH | BODY/BREAK (a4) | Punish Whiff | dist+6 | missCounter +50% | — | — | Greedy for the finish. Forgets his guard when he smells weakness. | не совпало (оси initiative,counter не двигаются) |
-| AMBUSH | BODY/ANVIL (a5) | Perfect Trap | ctr+8 slip+4 | dodgeCounter +100%, missCounter +100% | — | perfect_trap | Calm under pressure. He no longer panics in the corner. | частично |
-| AMBUSH | MIND/WATCH (b1) | Long Slip | dist+6 slip+10 | — | — | — | Careful. Waits a little longer before he enters. | не совпало (оси counter,initiative не двигаются) |
-| AMBUSH | MIND/TIMING (b2) | Hard to Reach | dist+6 slip+8 | — | — | — | Deliberate. Throws fewer blind punches. | не совпало (оси tempo,counter не двигаются) |
-| AMBUSH | MIND/FEINT (b3) | Run 'Em Ragged | dist+8 slip+6 | — | — | exhaust | Sly. Starts playing with the opponent and loses tempo. | не совпало (оси tempo не двигаются) |
-| AMBUSH | MIND/ADAPT (b4) | Open Window | slip+8 | dodgeCounter +40% | — | — | Flexible. Changes the plan even where holding it would have paid. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| AMBUSH | MIND/COLD (b5) | Phantom | dist+6 slip+12 | — | — | phantom | Cold. Never rattled, and never lit up when a spark is what he needs. | не совпало (оси resilience не двигаются) |
-| AMBUSH | WILL/HOLD (c1) | Loaded Hit | dist+6 | strikePower +4%, chargePower +50% | strikePower +4, chargePowerMax +0.3 | — | Composed. Asks for fewer pauses. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| AMBUSH | WILL/SPITE (c2) | Long Charge | dist+6 init−6 | strikePower +7%, chargeMax +60% | strikePower +7, chargeMax +60 | — | Angry. Dull in an even fight. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| AMBUSH | WILL/VOW (c3) | Hit the Opening | init−6 | strikePower +10% | strikePower +10 | vulnerable_strike | Loyal to the order. Improvises worse. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| AMBUSH | WILL/HUNGER (c4) | Pierce | dist+6 | strikePower +14%, chargePen +60% | strikePower +14, chargePenetrationMax +0.42 | — | Eager. Probes where he should not. | НЕТ ОСИ: текст про механику, которой у оси нет |
-| AMBUSH | WILL/STILL (c5) | Execution | dist+6 | strikePower +22%, chargePower +80% | strikePower +22, chargePowerMax +0.48 | execute | Ice. His overall liveliness drops. | не совпало (оси tempo не двигаются) |
-
-Сводка сверки текста с механикой (по моему чтению CLAIMS в скрипте): {"не совпало":26,"частично":9,"противоположно":5,"нет оси у механики":20}
-
-### 4.2 Нулевые и почти нулевые кристаллы
-
-**4.2а. Проводка рычагов-бонусов.** Каждому рычагу ставилось +100% (бонус кристалла), 4 ядра × 20 зёрен, зеркало; сравнение с нулевым боем бит в бит. «Изменилось» — сколько боёв из 80 отличаются.
-
-| рычаг | боёв изменилось | вывод |
-| --- | --- | --- |
-| strikePower | 80/80 | живой |
-| blockPenetration | 72/80 | живой |
-| interruptResist | 80/80 | живой |
-| accuracy | 74/80 | живой |
-| feintChance | 19/80 | живой |
-| feintPayoff | 7/80 | живой |
-| chargeGain | 31/80 | живой |
-| chargePower | 25/80 | живой |
-| toughness | 71/80 | живой |
-| staminaRegen | 71/80 | живой |
-| blockMitigation | 61/80 | живой |
-| blockCounter | 29/80 | живой |
-| interruptBonus | 47/80 | живой |
-| dodgeCounter | 38/80 | живой |
-| missCounter | 39/80 | живой |
-| chargeMax | 26/80 | живой |
-| chargePen | 8/80 | живой |
-| (теги: все 26 сразу) | 0/80 | **ЛОЖЬ: бой не меняется вовсе** |
-
-**4.2б. Кристаллы, чей ЕДИНСТВЕННЫЙ бонус — мёртвый рычаг (осевой сдвиг, если он есть, остаётся):** нет.
-
-**4.2в. Малая дельта: Σ|Δ осей| ≤ 6 в изоляции и нет ни одного живого рычага-бонуса** (кристалл почти ничего не меняет в бойце сам по себе):
-
-| ядро | кристалл | имя | Δ осей факт | бонусы | теги |
-| --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT | WILL/VOW (c3) | Building Momentum | tempo+6 | — | hit_accel |
-| RAIDER | MIND/ADAPT (b4) | Feint to Interrupt | tempo+6 | — | feint_interrupt |
-
-**4.2г. Ось насыщается: при зажжённых предыдущих кристаллах той же грани записанный сдвиг съедается зажимом 0..100 (факт < записанного).**
-
-| ядро | кристалл | записано | предельный вклад (факт) |
-| --- | --- | --- | --- |
-| ONSLAUGHT | MIND/ADAPT (b4) | stick+10 distance−6 | dist−1 |
-| ONSLAUGHT | MIND/COLD (b5) | stick+14 distance−8 | — |
-| ONSLAUGHT | WILL/HUNGER (c4) | tempo+6 stick+6 | stick+6 |
-| ONSLAUGHT | WILL/STILL (c5) | tempo+12 | — |
-| BULWARK | BODY/GRIND (a3) | resilience+6 | — |
-| BULWARK | BODY/ANVIL (a5) | resilience+8 | — |
-| AMBUSH | BODY/ANVIL (a5) | counter+8 slip+4 | slip+4 |
-| AMBUSH | MIND/COLD (b5) | slip+12 distance+6 | — |
-
-Кристаллов без единого движения осей в изоляции: 0 из 60 (все имеют ось или бонус).
-Кристаллов, у которых предельный вклад по осям нулевой и живого рычага нет: 3 — ONSLAUGHT COLD, ONSLAUGHT STILL, AMBUSH COLD.
-
-### 4.2д Чувствительность боя к осям (где ось «на упоре»)
-
-Ось сдвигается на −20/−10/+10/+20 от стартового значения ядра (с зажимом 0..100; «—» = ось уже на границе); мерится, в скольких из 20 зеркальных боёв исход отличается от нулевого БИТ В БИТ. 0/20 — бой к сдвигу нечувствителен.
-
-| ядро | ось | старт | −20 | −10 | +10 | +20 |
-| --- | --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT | distance | 15 | 0/20 | 0/20 | 0/20 | 0/20 |
-| ONSLAUGHT | initiative | 90 | 0/20 | 0/20 | 0/20 | 0/20 |
-| ONSLAUGHT | tempo | 80 | 14/20 | 13/20 | 16/20 | 16/20 |
-| ONSLAUGHT | weight | 55 | 20/20 | 20/20 | 20/20 | 20/20 |
-| ONSLAUGHT | stick | 85 | 16/20 | 11/20 | 0/20 | 0/20 |
-| ONSLAUGHT | resilience | 60 | 20/20 | 20/20 | 20/20 | 20/20 |
-| ONSLAUGHT | counter | 30 | 20/20 | 20/20 | 20/20 | 20/20 |
-| ONSLAUGHT | slip | 20 | 20/20 | 15/20 | 14/20 | 17/20 |
-| RAIDER | distance | 55 | 20/20 | 20/20 | 20/20 | 20/20 |
-| RAIDER | initiative | 70 | 20/20 | 20/20 | 17/20 | 20/20 |
-| RAIDER | tempo | 65 | 12/20 | 12/20 | 14/20 | 16/20 |
-| RAIDER | weight | 35 | 20/20 | 20/20 | 20/20 | 20/20 |
-| RAIDER | stick | 15 | 18/20 | 16/20 | 20/20 | 20/20 |
-| RAIDER | resilience | 35 | 18/20 | 18/20 | 20/20 | 20/20 |
-| RAIDER | counter | 45 | 20/20 | 20/20 | 20/20 | 20/20 |
-| RAIDER | slip | 65 | 20/20 | 20/20 | 20/20 | 20/20 |
-| BULWARK | distance | 20 | 13/20 | 13/20 | 15/20 | 18/20 |
-| BULWARK | initiative | 25 | 20/20 | 20/20 | 16/20 | 19/20 |
-| BULWARK | tempo | 30 | 11/20 | 11/20 | 8/20 | 10/20 |
-| BULWARK | weight | 65 | 20/20 | 20/20 | 20/20 | 20/20 |
-| BULWARK | stick | 70 | 20/20 | 9/20 | 13/20 | 19/20 |
-| BULWARK | resilience | 90 | 20/20 | 20/20 | 20/20 | 20/20 |
-| BULWARK | counter | 60 | 20/20 | 20/20 | 20/20 | 20/20 |
-| BULWARK | slip | 15 | 20/20 | 10/20 | 16/20 | 19/20 |
-| AMBUSH | distance | 80 | 20/20 | 19/20 | 20/20 | 20/20 |
-| AMBUSH | initiative | 15 | 9/20 | 8/20 | 12/20 | 20/20 |
-| AMBUSH | tempo | 20 | 6/20 | 6/20 | 8/20 | 8/20 |
-| AMBUSH | weight | 75 | 20/20 | 20/20 | 20/20 | 20/20 |
-| AMBUSH | stick | 20 | 17/20 | 16/20 | 12/20 | 15/20 |
-| AMBUSH | resilience | 35 | 20/20 | 20/20 | 19/20 | 20/20 |
-| AMBUSH | counter | 90 | 20/20 | 20/20 | 20/20 | 20/20 |
-| AMBUSH | slip | 75 | 20/20 | 13/20 | 13/20 | 20/20 |
-
-### 4.3 Вклад каждого кристалла в исход — 50 зёрен (как в ТЗ)
-
-Зеркальный бой, 50 зёрен на ячейку, стороны плиты чередуются. T = сторона с ОДНИМ зажжённым кристаллом. «Δ к 50%» — сдвиг винрейта T от честной ничьей; «Δ к нулю» — от замера того же зеркала без кристаллов (перекос сторон вычтен).
-**Шум:** при n=50 стандартное отклонение винрейта ≈ 7.1 п.п. Колонка «Δ к нулю» — РАЗНОСТЬ двух замеров (кристалл и нулевой), поэтому её σ ≈ 10.0 п.п., а 95% интервал ≈ ±20 п.п.: сдвиги «к нулю» меньше ~20 п.п. от шума не отличимы. Столбец «Δ к 50%» несёт ещё и перекос зеркала — смотреть на «Δ к нулю».
-
-**Нулевой замер (зеркало без кристаллов; T = сторона, помеченная в чётные/нечётные зёрна):**
-
-| ядро | победы T | винрейт T | мед. длительность, с |
-| --- | --- | --- | --- |
-| ONSLAUGHT | 22/50 | 44% | 46.1 |
-| RAIDER | 20/50 | 40% | 45.3 |
-| BULWARK | 26/50 | 52% | 61.9 |
-| AMBUSH | 24/50 | 48% | 51.0 |
-
-| ядро | кристалл | имя в данных | победы T | винрейт T | Δ к 50%, п.п. | Δ к нулю, п.п. | мед. с | Δ мед. с | боёв бит-в-бит как без кристалла |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT | BODY/ROOT (a1) | Heavy Hit | 27/50 | 54% | +4.0 | +10.0 | 45.6 | -0.5 | 0/50 |
-| ONSLAUGHT | BODY/DRIVE (a2) | Guard Crush | 33/50 | 66% | +16.0 | +22.0 | 44.5 | -1.6 | 0/50 |
-| ONSLAUGHT | BODY/GRIND (a3) | Unshaken | 40/50 | 80% | +30.0 | +36.0 | 44.9 | -1.2 | 0/50 |
-| ONSLAUGHT | BODY/BREAK (a4) | Close Power | 29/50 | 58% | +8.0 | +14.0 | 45.3 | -0.7 | 0/50 |
-| ONSLAUGHT | BODY/ANVIL (a5) | Breakthrough | 45/50 | 90% | +40.0 | +46.0 | 42.4 | -3.7 | 0/50 |
-| ONSLAUGHT | MIND/WATCH (b1) | Hard Entry | 22/50 | 44% | -6.0 | +0.0 | 46.1 | +0.0 | 49/50 |
-| ONSLAUGHT | MIND/TIMING (b2) | Run-Down | 22/50 | 44% | -6.0 | +0.0 | 46.1 | +0.0 | 49/50 |
-| ONSLAUGHT | MIND/FEINT (b3) | Cut Off | 22/50 | 44% | -6.0 | +0.0 | 46.1 | +0.0 | 50/50 |
-| ONSLAUGHT | MIND/ADAPT (b4) | Cling | 22/50 | 44% | -6.0 | +0.0 | 46.1 | +0.0 | 49/50 |
-| ONSLAUGHT | MIND/COLD (b5) | Lockdown | 22/50 | 44% | -6.0 | +0.0 | 46.1 | +0.0 | 49/50 |
-| ONSLAUGHT | WILL/HOLD (c1) | Long Combo | 27/50 | 54% | +4.0 | +10.0 | 46.8 | +0.8 | 12/50 |
-| ONSLAUGHT | WILL/SPITE (c2) | No Pause | 23/50 | 46% | -4.0 | +2.0 | 45.9 | -0.2 | 11/50 |
-| ONSLAUGHT | WILL/VOW (c3) | Building Momentum | 28/50 | 56% | +6.0 | +12.0 | 46.3 | +0.2 | 20/50 |
-| ONSLAUGHT | WILL/HUNGER (c4) | No Breather | 28/50 | 56% | +6.0 | +12.0 | 46.3 | +0.2 | 20/50 |
-| ONSLAUGHT | WILL/STILL (c5) | Rampage | 22/50 | 44% | -6.0 | +0.0 | 47.2 | +1.1 | 11/50 |
-| RAIDER | BODY/ROOT (a1) | Quick Out | 22/50 | 44% | -6.0 | +4.0 | 44.9 | -0.3 | 0/50 |
-| RAIDER | BODY/DRIVE (a2) | Pinpoint Entry | 27/50 | 54% | +4.0 | +14.0 | 44.3 | -1.0 | 3/50 |
-| RAIDER | BODY/GRIND (a3) | Far Bounce | 26/50 | 52% | +2.0 | +12.0 | 45.0 | -0.3 | 0/50 |
-| RAIDER | BODY/BREAK (a4) | Clean Exchange | 19/50 | 38% | -12.0 | -2.0 | 44.3 | -1.0 | 11/50 |
-| RAIDER | BODY/ANVIL (a5) | Perfect Prick | 23/50 | 46% | -4.0 | +6.0 | 45.4 | +0.1 | 0/50 |
-| RAIDER | MIND/WATCH (b1) | Fake-In | 14/50 | 28% | -22.0 | -12.0 | 45.2 | -0.1 | 11/50 |
-| RAIDER | MIND/TIMING (b2) | Punish Reaction | 20/50 | 40% | -10.0 | +0.0 | 44.7 | -0.6 | 14/50 |
-| RAIDER | MIND/FEINT (b3) | Broken Rhythm | 19/50 | 38% | -12.0 | -2.0 | 44.3 | -1.0 | 11/50 |
-| RAIDER | MIND/ADAPT (b4) | Feint to Interrupt | 20/50 | 40% | -10.0 | +0.0 | 44.2 | -1.1 | 14/50 |
-| RAIDER | MIND/COLD (b5) | Setup Combo | 20/50 | 40% | -10.0 | +0.0 | 44.2 | -1.1 | 14/50 |
-| RAIDER | WILL/HOLD (c1) | Read the Tell | 33/50 | 66% | +16.0 | +26.0 | 44.7 | -0.5 | 1/50 |
-| RAIDER | WILL/SPITE (c2) | Strike the Open | 34/50 | 68% | +18.0 | +28.0 | 44.4 | -0.9 | 6/50 |
-| RAIDER | WILL/VOW (c3) | Charged Run | 27/50 | 54% | +4.0 | +14.0 | 44.1 | -1.2 | 0/50 |
-| RAIDER | WILL/HUNGER (c4) | Punish Aggression | 37/50 | 74% | +24.0 | +34.0 | 43.6 | -1.6 | 0/50 |
-| RAIDER | WILL/STILL (c5) | Killing Run | 27/50 | 54% | +4.0 | +14.0 | 43.7 | -1.6 | 0/50 |
-| BULWARK | BODY/ROOT (a1) | Tough Hide | 38/50 | 76% | +26.0 | +24.0 | 65.0 | +3.1 | 0/50 |
-| BULWARK | BODY/DRIVE (a2) | Steady Guard | 40/50 | 80% | +30.0 | +28.0 | 65.6 | +3.7 | 0/50 |
-| BULWARK | BODY/GRIND (a3) | Catch Breath | 36/50 | 72% | +22.0 | +20.0 | 62.8 | +0.9 | 0/50 |
-| BULWARK | BODY/BREAK (a4) | Dig In | 23/50 | 46% | -4.0 | -6.0 | 61.0 | -0.8 | 7/50 |
-| BULWARK | BODY/ANVIL (a5) | Unbreakable | 47/50 | 94% | +44.0 | +42.0 | 65.6 | +3.7 | 0/50 |
-| BULWARK | MIND/WATCH (b1) | Riposte | 30/50 | 60% | +10.0 | +8.0 | 60.3 | -1.6 | 0/50 |
-| BULWARK | MIND/TIMING (b2) | Catch & Punish | 31/50 | 62% | +12.0 | +10.0 | 62.6 | +0.7 | 0/50 |
-| BULWARK | MIND/FEINT (b3) | Hard Meet | 32/50 | 64% | +14.0 | +12.0 | 62.6 | +0.7 | 0/50 |
-| BULWARK | MIND/ADAPT (b4) | Retaliation | 31/50 | 62% | +12.0 | +10.0 | 63.5 | +1.6 | 0/50 |
-| BULWARK | MIND/COLD (b5) | Sea Wall | 39/50 | 78% | +28.0 | +26.0 | 59.1 | -2.7 | 0/50 |
-| BULWARK | WILL/HOLD (c1) | Body Shove | 24/50 | 48% | -2.0 | -4.0 | 61.6 | -0.3 | 10/50 |
-| BULWARK | WILL/SPITE (c2) | Heavy Slam | 32/50 | 64% | +14.0 | +12.0 | 59.5 | -2.4 | 0/50 |
-| BULWARK | WILL/VOW (c3) | No Way Around | 27/50 | 54% | +4.0 | +2.0 | 60.9 | -0.9 | 18/50 |
-| BULWARK | WILL/HUNGER (c4) | Pin | 24/50 | 48% | -2.0 | -4.0 | 61.6 | -0.3 | 10/50 |
-| BULWARK | WILL/STILL (c5) | Clinch | 39/50 | 78% | +28.0 | +26.0 | 58.4 | -3.5 | 0/50 |
-| AMBUSH | BODY/ROOT (a1) | Hard Counter | 29/50 | 58% | +8.0 | +10.0 | 51.5 | +0.6 | 0/50 |
-| AMBUSH | BODY/DRIVE (a2) | Slip Counter | 30/50 | 60% | +10.0 | +12.0 | 50.0 | -1.0 | 12/50 |
-| AMBUSH | BODY/GRIND (a3) | Punish Aggression | 29/50 | 58% | +8.0 | +10.0 | 51.5 | +0.6 | 0/50 |
-| AMBUSH | BODY/BREAK (a4) | Punish Whiff | 29/50 | 58% | +8.0 | +10.0 | 50.5 | -0.5 | 3/50 |
-| AMBUSH | BODY/ANVIL (a5) | Perfect Trap | 38/50 | 76% | +26.0 | +28.0 | 49.0 | -1.9 | 0/50 |
-| AMBUSH | MIND/WATCH (b1) | Long Slip | 24/50 | 48% | -2.0 | +0.0 | 52.1 | +1.2 | 0/50 |
-| AMBUSH | MIND/TIMING (b2) | Hard to Reach | 27/50 | 54% | +4.0 | +6.0 | 52.2 | +1.2 | 1/50 |
-| AMBUSH | MIND/FEINT (b3) | Run 'Em Ragged | 28/50 | 56% | +6.0 | +8.0 | 52.6 | +1.6 | 0/50 |
-| AMBUSH | MIND/ADAPT (b4) | Open Window | 32/50 | 64% | +14.0 | +16.0 | 50.4 | -0.5 | 11/50 |
-| AMBUSH | MIND/COLD (b5) | Phantom | 27/50 | 54% | +4.0 | +6.0 | 52.9 | +2.0 | 0/50 |
-| AMBUSH | WILL/HOLD (c1) | Loaded Hit | 33/50 | 66% | +16.0 | +18.0 | 49.7 | -1.3 | 2/50 |
-| AMBUSH | WILL/SPITE (c2) | Long Charge | 33/50 | 66% | +16.0 | +18.0 | 50.6 | -0.3 | 2/50 |
-| AMBUSH | WILL/VOW (c3) | Hit the Opening | 27/50 | 54% | +4.0 | +6.0 | 50.5 | -0.4 | 12/50 |
-| AMBUSH | WILL/HUNGER (c4) | Pierce | 37/50 | 74% | +24.0 | +26.0 | 49.2 | -1.8 | 2/50 |
-| AMBUSH | WILL/STILL (c5) | Execution | 37/50 | 74% | +24.0 | +26.0 | 48.4 | -2.5 | 0/50 |
-
-**Кристаллы, НИЧЕГО не меняющие в бою (все 50 боёв совпали с нулевым бит в бит):** ONSLAUGHT MIND/FEINT
-
-**Почти ничего не меняющие (≥80% боёв совпали бит-в-бит, но не все):** ONSLAUGHT MIND/WATCH (49/50), ONSLAUGHT MIND/TIMING (49/50), ONSLAUGHT MIND/ADAPT (49/50), ONSLAUGHT MIND/COLD (49/50)
-
-**Средний сдвиг по ядрам (знак / средний модуль):**
-
-| ядро | средний Δ | средний |Δ| |
-| --- | --- | --- |
-| ONSLAUGHT | +4.9 | +10.3 |
-| RAIDER | -0.9 | +10.5 |
-| BULWARK | +15.7 | +16.8 |
-| AMBUSH | +11.3 | +11.6 |
-
-**По граням:** BODY +13.0 · MIND +0.4 · WILL +9.9
-
-**По глубине (шаг в грани):** шаг 1 +3.8 · шаг 2 +8.7 · шаг 3 +6.8 · шаг 4 +5.2 · шаг 5 +14.3
-
-**Топ-5 плюс:** BULWARK ANVIL +44.0, ONSLAUGHT ANVIL +40.0, ONSLAUGHT GRIND +30.0, BULWARK DRIVE +30.0, BULWARK COLD +28.0
-
-**Топ-5 минус:** RAIDER WATCH -22.0, RAIDER FEINT -12.0, RAIDER BREAK -12.0, RAIDER COLD -10.0, RAIDER ADAPT -10.0
-
-### 4.3б То же на 200 зёрнах (подтверждение; σ ≈ 3.5 п.п., порог значимости ±7)
-
-Зеркальный бой, 200 зёрен на ячейку, стороны плиты чередуются. T = сторона с ОДНИМ зажжённым кристаллом. «Δ к 50%» — сдвиг винрейта T от честной ничьей; «Δ к нулю» — от замера того же зеркала без кристаллов (перекос сторон вычтен).
-**Шум:** при n=200 стандартное отклонение винрейта ≈ 3.5 п.п. Колонка «Δ к нулю» — РАЗНОСТЬ двух замеров (кристалл и нулевой), поэтому её σ ≈ 5.0 п.п., а 95% интервал ≈ ±10 п.п.: сдвиги «к нулю» меньше ~10 п.п. от шума не отличимы. Столбец «Δ к 50%» несёт ещё и перекос зеркала — смотреть на «Δ к нулю».
-
-**Нулевой замер (зеркало без кристаллов; T = сторона, помеченная в чётные/нечётные зёрна):**
-
-| ядро | победы T | винрейт T | мед. длительность, с |
-| --- | --- | --- | --- |
-| ONSLAUGHT | 93/200 | 47% | 46.2 |
-| RAIDER | 93/200 | 47% | 44.4 |
-| BULWARK | 101/200 | 51% | 62.0 |
-| AMBUSH | 110/200 | 55% | 50.5 |
-
-| ядро | кристалл | имя в данных | победы T | винрейт T | Δ к 50%, п.п. | Δ к нулю, п.п. | мед. с | Δ мед. с | боёв бит-в-бит как без кристалла |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ONSLAUGHT | BODY/ROOT (a1) | Heavy Hit | 105/200 | 53% | +2.5 | +6.0 | 45.9 | -0.3 | 0/200 |
-| ONSLAUGHT | BODY/DRIVE (a2) | Guard Crush | 140/200 | 70% | +20.0 | +23.5 | 44.6 | -1.6 | 0/200 |
-| ONSLAUGHT | BODY/GRIND (a3) | Unshaken | 165/200 | 83% | +32.5 | +36.0 | 44.9 | -1.3 | 0/200 |
-| ONSLAUGHT | BODY/BREAK (a4) | Close Power | 127/200 | 64% | +13.5 | +17.0 | 45.6 | -0.6 | 0/200 |
-| ONSLAUGHT | BODY/ANVIL (a5) | Breakthrough | 172/200 | 86% | +36.0 | +39.5 | 42.2 | -4.0 | 0/200 |
-| ONSLAUGHT | MIND/WATCH (b1) | Hard Entry | 93/200 | 47% | -3.5 | +0.0 | 46.2 | -0.0 | 198/200 |
-| ONSLAUGHT | MIND/TIMING (b2) | Run-Down | 93/200 | 47% | -3.5 | +0.0 | 46.2 | -0.0 | 198/200 |
-| ONSLAUGHT | MIND/FEINT (b3) | Cut Off | 93/200 | 47% | -3.5 | +0.0 | 46.2 | -0.0 | 199/200 |
-| ONSLAUGHT | MIND/ADAPT (b4) | Cling | 93/200 | 47% | -3.5 | +0.0 | 46.2 | -0.0 | 198/200 |
-| ONSLAUGHT | MIND/COLD (b5) | Lockdown | 93/200 | 47% | -3.5 | +0.0 | 46.2 | -0.0 | 198/200 |
-| ONSLAUGHT | WILL/HOLD (c1) | Long Combo | 86/200 | 43% | -7.0 | -3.5 | 46.3 | +0.1 | 48/200 |
-| ONSLAUGHT | WILL/SPITE (c2) | No Pause | 90/200 | 45% | -5.0 | -1.5 | 46.1 | -0.1 | 44/200 |
-| ONSLAUGHT | WILL/VOW (c3) | Building Momentum | 88/200 | 44% | -6.0 | -2.5 | 46.2 | -0.0 | 59/200 |
-| ONSLAUGHT | WILL/HUNGER (c4) | No Breather | 88/200 | 44% | -6.0 | -2.5 | 46.2 | -0.0 | 59/200 |
-| ONSLAUGHT | WILL/STILL (c5) | Rampage | 90/200 | 45% | -5.0 | -1.5 | 46.4 | +0.1 | 39/200 |
-| RAIDER | BODY/ROOT (a1) | Quick Out | 101/200 | 51% | +0.5 | +4.0 | 45.0 | +0.6 | 0/200 |
-| RAIDER | BODY/DRIVE (a2) | Pinpoint Entry | 103/200 | 52% | +1.5 | +5.0 | 44.2 | -0.2 | 19/200 |
-| RAIDER | BODY/GRIND (a3) | Far Bounce | 102/200 | 51% | +1.0 | +4.5 | 45.2 | +0.8 | 0/200 |
-| RAIDER | BODY/BREAK (a4) | Clean Exchange | 91/200 | 46% | -4.5 | -1.0 | 44.6 | +0.2 | 54/200 |
-| RAIDER | BODY/ANVIL (a5) | Perfect Prick | 100/200 | 50% | +0.0 | +3.5 | 45.6 | +1.2 | 0/200 |
-| RAIDER | MIND/WATCH (b1) | Fake-In | 87/200 | 44% | -6.5 | -3.0 | 44.6 | +0.3 | 48/200 |
-| RAIDER | MIND/TIMING (b2) | Punish Reaction | 102/200 | 51% | +1.0 | +4.5 | 44.4 | -0.0 | 60/200 |
-| RAIDER | MIND/FEINT (b3) | Broken Rhythm | 91/200 | 46% | -4.5 | -1.0 | 44.6 | +0.2 | 54/200 |
-| RAIDER | MIND/ADAPT (b4) | Feint to Interrupt | 94/200 | 47% | -3.0 | +0.5 | 44.2 | -0.1 | 58/200 |
-| RAIDER | MIND/COLD (b5) | Setup Combo | 94/200 | 47% | -3.0 | +0.5 | 44.2 | -0.1 | 58/200 |
-| RAIDER | WILL/HOLD (c1) | Read the Tell | 113/200 | 57% | +6.5 | +10.0 | 44.4 | +0.0 | 3/200 |
-| RAIDER | WILL/SPITE (c2) | Strike the Open | 111/200 | 56% | +5.5 | +9.0 | 44.3 | -0.1 | 23/200 |
-| RAIDER | WILL/VOW (c3) | Charged Run | 119/200 | 60% | +9.5 | +13.0 | 43.9 | -0.5 | 0/200 |
-| RAIDER | WILL/HUNGER (c4) | Punish Aggression | 136/200 | 68% | +18.0 | +21.5 | 43.4 | -0.9 | 0/200 |
-| RAIDER | WILL/STILL (c5) | Killing Run | 137/200 | 69% | +18.5 | +22.0 | 43.1 | -1.2 | 0/200 |
-| BULWARK | BODY/ROOT (a1) | Tough Hide | 143/200 | 72% | +21.5 | +21.0 | 65.0 | +2.9 | 2/200 |
-| BULWARK | BODY/DRIVE (a2) | Steady Guard | 151/200 | 76% | +25.5 | +25.0 | 65.1 | +3.1 | 2/200 |
-| BULWARK | BODY/GRIND (a3) | Catch Breath | 151/200 | 76% | +25.5 | +25.0 | 62.8 | +0.8 | 0/200 |
-| BULWARK | BODY/BREAK (a4) | Dig In | 103/200 | 52% | +1.5 | +1.0 | 62.2 | +0.1 | 33/200 |
-| BULWARK | BODY/ANVIL (a5) | Unbreakable | 189/200 | 95% | +44.5 | +44.0 | 65.8 | +3.8 | 0/200 |
-| BULWARK | MIND/WATCH (b1) | Riposte | 109/200 | 55% | +4.5 | +4.0 | 61.1 | -0.9 | 0/200 |
-| BULWARK | MIND/TIMING (b2) | Catch & Punish | 112/200 | 56% | +6.0 | +5.5 | 61.5 | -0.5 | 0/200 |
-| BULWARK | MIND/FEINT (b3) | Hard Meet | 99/200 | 50% | -0.5 | -1.0 | 62.9 | +0.9 | 0/200 |
-| BULWARK | MIND/ADAPT (b4) | Retaliation | 109/200 | 55% | +4.5 | +4.0 | 62.5 | +0.5 | 0/200 |
-| BULWARK | MIND/COLD (b5) | Sea Wall | 150/200 | 75% | +25.0 | +24.5 | 58.3 | -3.8 | 0/200 |
-| BULWARK | WILL/HOLD (c1) | Body Shove | 95/200 | 48% | -2.5 | -3.0 | 61.9 | -0.1 | 51/200 |
-| BULWARK | WILL/SPITE (c2) | Heavy Slam | 143/200 | 72% | +21.5 | +21.0 | 59.1 | -3.0 | 0/200 |
-| BULWARK | WILL/VOW (c3) | No Way Around | 101/200 | 51% | +0.5 | +0.0 | 62.6 | +0.5 | 78/200 |
-| BULWARK | WILL/HUNGER (c4) | Pin | 95/200 | 48% | -2.5 | -3.0 | 61.9 | -0.1 | 51/200 |
-| BULWARK | WILL/STILL (c5) | Clinch | 151/200 | 76% | +25.5 | +25.0 | 58.7 | -3.4 | 0/200 |
-| AMBUSH | BODY/ROOT (a1) | Hard Counter | 108/200 | 54% | +4.0 | -1.0 | 51.3 | +0.7 | 0/200 |
-| AMBUSH | BODY/DRIVE (a2) | Slip Counter | 132/200 | 66% | +16.0 | +11.0 | 49.6 | -0.9 | 33/200 |
-| AMBUSH | BODY/GRIND (a3) | Punish Aggression | 108/200 | 54% | +4.0 | -1.0 | 51.3 | +0.7 | 0/200 |
-| AMBUSH | BODY/BREAK (a4) | Punish Whiff | 113/200 | 57% | +6.5 | +1.5 | 50.3 | -0.2 | 22/200 |
-| AMBUSH | BODY/ANVIL (a5) | Perfect Trap | 140/200 | 70% | +20.0 | +15.0 | 48.8 | -1.7 | 0/200 |
-| AMBUSH | MIND/WATCH (b1) | Long Slip | 107/200 | 54% | +3.5 | -1.5 | 51.7 | +1.1 | 1/200 |
-| AMBUSH | MIND/TIMING (b2) | Hard to Reach | 109/200 | 55% | +4.5 | -0.5 | 51.7 | +1.2 | 4/200 |
-| AMBUSH | MIND/FEINT (b3) | Run 'Em Ragged | 116/200 | 58% | +8.0 | +3.0 | 51.7 | +1.2 | 4/200 |
-| AMBUSH | MIND/ADAPT (b4) | Open Window | 130/200 | 65% | +15.0 | +10.0 | 50.3 | -0.3 | 32/200 |
-| AMBUSH | MIND/COLD (b5) | Phantom | 121/200 | 61% | +10.5 | +5.5 | 52.4 | +1.8 | 1/200 |
-| AMBUSH | WILL/HOLD (c1) | Loaded Hit | 120/200 | 60% | +10.0 | +5.0 | 50.3 | -0.2 | 14/200 |
-| AMBUSH | WILL/SPITE (c2) | Long Charge | 119/200 | 60% | +9.5 | +4.5 | 50.4 | -0.1 | 11/200 |
-| AMBUSH | WILL/VOW (c3) | Hit the Opening | 121/200 | 61% | +10.5 | +5.5 | 50.2 | -0.4 | 33/200 |
-| AMBUSH | WILL/HUNGER (c4) | Pierce | 139/200 | 70% | +19.5 | +14.5 | 49.1 | -1.4 | 8/200 |
-| AMBUSH | WILL/STILL (c5) | Execution | 151/200 | 76% | +25.5 | +20.5 | 48.4 | -2.1 | 2/200 |
-
-**Кристаллы, НИЧЕГО не меняющие в бою (все 200 боёв совпали с нулевым бит в бит):** нет
-
-**Почти ничего не меняющие (≥80% боёв совпали бит-в-бит, но не все):** ONSLAUGHT MIND/WATCH (198/200), ONSLAUGHT MIND/TIMING (198/200), ONSLAUGHT MIND/FEINT (199/200), ONSLAUGHT MIND/ADAPT (198/200), ONSLAUGHT MIND/COLD (198/200)
-
-**Средний сдвиг по ядрам (знак / средний модуль):**
-
-| ядро | средний Δ | средний |Δ| |
-| --- | --- | --- |
-| ONSLAUGHT | +3.9 | +10.1 |
-| RAIDER | +2.7 | +5.6 |
-| BULWARK | +13.4 | +14.1 |
-| AMBUSH | +11.1 | +11.1 |
-
-**По граням:** BODY +13.6 · MIND +2.4 · WILL +7.3
-
-**По глубине (шаг в грани):** шаг 1 +2.8 · шаг 2 +8.5 · шаг 3 +6.4 · шаг 4 +4.9 · шаг 5 +16.2
-
-**Топ-5 плюс:** BULWARK ANVIL +44.5, ONSLAUGHT ANVIL +36.0, ONSLAUGHT GRIND +32.5, BULWARK DRIVE +25.5, BULWARK GRIND +25.5
-
-**Топ-5 минус:** ONSLAUGHT HOLD -7.0, RAIDER WATCH -6.5, ONSLAUGHT HUNGER -6.0, ONSLAUGHT VOW -6.0, ONSLAUGHT STILL -5.0
+1. Сила ядер в голом бою держится почти целиком на двух вещах: множитель входящего урона от стойкости (BULWARK принимает 0.46 урона, остальные 0.69–0.88) и жёстких воротах «ответ на замах» `counter > 0.55`, которые открыты только у BULWARK и AMBUSH и делают их решения пассивными (CATCH в 100% случаев). Закрытие ворот подняло бы BULWARK ещё на +10 п.п., а открытие у ONSLAUGHT и RAIDER их опустило бы на 4–10 п.п.
+2. Кристаллы сильно различаются по делу: реальную силу дают **рычаги силы** (рамп, блок, пробитие) и оси в полной ветви ≥ 3 кристаллов; теги и тонкие сдвиги осей почти ничего не делают, `tempo` в выборе намерения не читается вовсе.
+3. Клич ОТХОД вредит (−2…−5 п.п.) без какой-либо защитной пользы; баффы — огромный рычаг (+30 п.п. набор по правилу бота), BUCKET — пустой.
 
 ---
 
-## 5. Замер: клич и бафф
+# Разделы по пунктам
 
-Зеркальный бой (одно и то же ядро с обеих сторон), по 50 зёрен на ядро × 4 ядра = 200 боёв на строку. T — сторона с рычагом, стороны плиты чередуются по чётности зерна. Второй стороне рычага нет.
-Нулевой замер (те же зёрна, рычага нет): винрейт T = 46.0% (92/200), мед. длительность = 49.0 с.
-**Шум:** σ винрейта одного замера ≈ 3.5 п.п. на строку (n=200) и ≈ 7.1 п.п. на одно ядро (n=50). Колонка Δ — РАЗНОСТЬ двух замеров (с рычагом и без), её σ ≈ 5.0 п.п. на строку, 95% интервал ≈ ±10 п.п. (на одно ядро ±20 п.п.).
+## Пункт 1. Жёсткая нужда — ПОДТВЕРЖДЕНО (новый замер)
 
-**Правила применения (фиксированные, одинаковы для всех ядер и зёрен).** `fixed` — безусловно в t=10 с. `bot` — по порогам бота из buffBalance.bot (полотенце: своё HP < 40%; ведро: цель ближе 2.2; кубик: HP цели < 50% или t ≥ 20 с). Клич: один в t=5 с либо три подряд (5, 11, 17 с — заряды и откат 6 с из klichBalance). «Применено» — в скольких боях правило вообще сработало.
+**Вердикт.** Доли 50.7% (BULWARK) и 46.6% (AMBUSH) воспроизведены на двух наборах зёрен (51.0/50.3 и 46.9/46.4) и совпали с перезамером кристаллов (51.0 / 46.8). Пороги от характера не зависят: `bend` = 0 (`src/data/combatBalance.js:281`, `hardNeed: { bend: 0 }`), формулы «`1 − K·(2·ось − 1)`» при K = 0 вырождаются в константы. Единственная зависимость нужды от характера — не `bend`, а жёстко зашитые **ворота `counter > 0.55`** в нужде «ответ на замах» (`intentions.js`, `hardNeed`).
 
-**Что рычаг делает с бойцом T в окне наблюдения** (среднее по всем боям «до → после»; окно — фиксированное, у клича 5–13 с, у баффов 10–15 с; строка «нулевой» — те же бои без рычага в то же окно). Колонки: дистанция до цели, скорость хода (ед./с), начатых атак/с, снятое у цели HP/с, полученное HP/с, вылеченное HP/с.
+**Причина (гипотеза → проверка → итог).** Из трёх гипотез ТЗ подтвердилась одна — профиль ядра, точнее одно его число. Запас сил — не причина (нужда «запас» решает ≤ 2.7% решений); частота замахов врага — не причина (угроза в дальности у всех четырёх ≈ 45–50% времени). Ворота открыты только у BULWARK (counter 0.60) и AMBUSH (0.90), и тогда нужда срабатывает в каждом решении с «угрозой в дальности» — то есть около половины времени. Проверка контрфактом: сдвиг одной оси counter (ONSLAUGHT/RAIDER → 60, BULWARK/AMBUSH → 50) переносит нужду целиком (0.3→49.9% и 50.7→0.8%).
 
-| рычаг | окно | дистанция | скорость | атак/с | снято/с | получено/с | лечение/с |
+**Побочный результат.** Нужда «ответ на замах» в 100% случаев превращается в CATCH (пассивно), и она **вредит**: закрыв ворота, BULWARK выигрывает +10.3 [±2.8] п.п. (71.8→82.1), AMBUSH −5.8, а открыв их, ONSLAUGHT теряет −9.6, RAIDER −3.8. Ворота сами — рычаг силы ядра. См. «Новые находки».
+
+### Пункт 1. Жёсткая нужда
+
+**Где живут пороги** (`src/data/intentions.js`, `hardNeed`, строки 141–154; числа зашиты в код, кроме `bend`):
+
+| нужда | условие | числа | откуда |
+| --- | --- | --- | --- |
+| ЗАПАС СИЛ → BREATHE | `stamina01 < 0.22 × (1 − K·(2·initiative − 1))` | 0.22, K = `COMBAT_BALANCE.hardNeed.bend` = **0** | код + `combatBalance.js:281` |
+| ОТВЕТ НА ЗАМАХ → CATCH / BREAK / HOLD | враг бил за последние 1.5 с **И `counter > 0.55`** И враг ближе `range + 0.8·(1 + K·(2·counter − 1))` | 1.5 с, **0.55 (ворота)**, 0.8, K = 0 | код |
+| ЗАРЯД → STRIKE | `charge01 ≥ min(1, 0.85·(1 − K·(2·weight − 1)))` и враг в радиусе удара | 0.85, K = 0 | код |
+
+Пороги от характера **не зависят** (K = `bend` = 0) — подтверждено: единственная зависимость нужды от осей — ворота `counter > 0.55` (жёстко в коде, `a.counter` — ось 0…1; стартовые counter: ONSLAUGHT 0.30, RAIDER 0.45, BULWARK 0.60, AMBUSH 0.90).
+
+**Доля решений, принятых жёсткой нуждой (игрок = ядро в ряду, против 4 голых ядер, 800 боёв на набор, два набора: 1–200 и 201–400).**
+
+| ядро | решений | нужда всего | в т.ч. запас сил | в т.ч. ответ на замах | в т.ч. заряд | набор 1–200 | набор 201–400 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| TOWEL · фикс. t=10 с | 10–15 с | 1.12 → 1.12 | 0.07 → 0.07 | 0.51 → 0.51 | 0.80 → 0.80 | 0.72 → 0.70 | 0.00 → 1.99 |
-| BUCKET · фикс. t=10 с | 10–15 с | 1.12 → 1.12 | 0.07 → 0.07 | 0.51 → 0.50 | 0.80 → 0.77 | 0.72 → 0.74 | 0.00 → 0.00 |
-| DICE · фикс. t=10 с, случайная грань | 10–15 с | 1.12 → 1.12 | 0.07 → 0.07 | 0.51 → 0.49 | 0.80 → 1.63 | 0.72 → 0.70 | 0.00 → 0.00 |
-| КЛИЧ PUSH · один, t=5 с | 5–13 с | 1.14 → 1.12 | 0.08 → 0.09 | 0.49 → 0.47 | 0.76 → 0.73 | 0.69 → 0.73 | 0.00 → 0.00 |
-| КЛИЧ PUSH · три подряд (t=5, +6, +12) | 5–13 с | 1.14 → 1.12 | 0.08 → 0.09 | 0.49 → 0.47 | 0.76 → 0.73 | 0.69 → 0.73 | 0.00 → 0.00 |
-| КЛИЧ FALLBACK · один, t=5 с | 5–13 с | 1.14 → 1.15 | 0.08 → 0.07 | 0.49 → 0.50 | 0.76 → 0.67 | 0.69 → 0.71 | 0.00 → 0.00 |
-| КЛИЧ FALLBACK · три подряд (t=5, +6, +12) | 5–13 с | 1.14 → 1.15 | 0.08 → 0.07 | 0.49 → 0.50 | 0.76 → 0.67 | 0.69 → 0.71 | 0.00 → 0.00 |
-| КЛИЧ HOLD · один, t=5 с | 5–13 с | 1.14 → 1.14 | 0.08 → 0.07 | 0.49 → 0.48 | 0.76 → 0.74 | 0.69 → 0.66 | 0.00 → 0.00 |
-| КЛИЧ HOLD · три подряд (t=5, +6, +12) | 5–13 с | 1.14 → 1.14 | 0.08 → 0.07 | 0.49 → 0.48 | 0.76 → 0.74 | 0.69 → 0.66 | 0.00 → 0.00 |
+| ONSLAUGHT | 79736 | **0.3%** | 0.3% | 0.0% | 0.1% | 0.3% | 0.3% |
+| RAIDER | 78902 | **3.1%** | 2.7% | 0.0% | 0.4% | 3.2% | 3.0% |
+| BULWARK | 92096 | **50.7%** | 0.2% | 50.1% | 0.5% | 51.0% | 50.3% |
+| AMBUSH | 82441 | **46.6%** | 0.7% | 44.7% | 1.2% | 46.9% | 46.4% |
 
-**Клич по ядрам** (окно 5–13 с; в ячейке: дистанция до цели «нулевой→с кличем» · атак/с «нулевой→с кличем»):
+Прошлый замер (перезамер кристаллов, часть A): ONSLAUGHT 0.4%, RAIDER 3.5%, BULWARK 51.0%, AMBUSH 46.8% — **воспроизвелось** (там кристаллы по одному, здесь голые ядра; доли близки).
 
-| клич | ONSLAUGHT | RAIDER | BULWARK | AMBUSH |
+#### Почему у BULWARK и AMBUSH в разы выше — проверка трёх гипотез
+
+| ядро | враг бил за 1.5 с (угроза) | враг ближе range+0.8 | угроза И в дальности | …И ворота counter>0.55 открыты = нужда «замах» срабатывает | запас сил < 0.22 | заряд ≥0.85 и враг в радиусе |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 49.7% | 94.1% | 49.4% | **0.0%** | 0.3% | 0.1% |
+| RAIDER | 45.9% | 95.2% | 45.7% | **0.0%** | 2.7% | 0.4% |
+| BULWARK | 50.5% | 89.7% | 50.2% | **50.2%** | 0.2% | 0.9% |
+| AMBUSH | 45.2% | 97.5% | 45.2% | **45.2%** | 0.7% | 2.9% |
+
+- **Запас сил — НЕ причина.** «Запас сил < 0.22» у всех 0.2–2.7% времени, нужда «запас» решает ≤ 2.7% решений (RAIDER — максимум).
+- **Частота замахов врага — НЕ причина.** Угроза и «в дальности» у всех четырёх почти одинаковы (≈ 45–50% и 90–98%); условие «угроза И в дальности» у ONSLAUGHT и RAIDER выполняется так же часто, как у BULWARK и AMBUSH.
+- **Профиль ядра — причина, и единственная: ворота `counter > 0.55`.** Они закрыты у ONSLAUGHT (0.30) и RAIDER (0.45) и открыты у BULWARK (0.60) и AMBUSH (0.90). Когда ворота открыты, нужда срабатывает в каждом решении с «угрозой в дальности», то есть ≈ половину времени.
+
+**Контрфакт (меняется одна ось, остальное то же):** ONSLAUGHT и RAIDER получают counter = 60 (ворота открыты), BULWARK и AMBUSH — counter = 50 (ворота закрыты). ⚠️ Ось counter входит ещё и в очки CATCH (вес 0.45), поэтому сдвиг 10 пунктов двигает очки на 0.045 — малость по сравнению с воротами.
+
+| ядро | нужда сейчас | нужда при контрфакте | доля побед сейчас | при контрфакте | Δ п.п. | решений, где нужда ≠ обычный выбор по очкам |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 0.3% | 49.9% | 46.9 | 37.3 | -9.6 ±3.2 | 0% (сейчас) / 87% |
+| RAIDER | 3.1% | 46.8% | 39.6 | 35.8 | -3.8 ±3.3 | 0% (сейчас) / 62% |
+| BULWARK | 50.7% | 0.8% | 71.8 | 82.1 | +10.3 ±2.8 | 56% (сейчас) / 0% |
+| AMBUSH | 46.6% | 5.1% | 43.0 | 37.3 | -5.8 ±3.2 | 51% (сейчас) / 0% |
+
+Вывод по воздействию: ворота жёсткой нужды сами — рычаг силы. Закрыв их, BULWARK **выигрывает больше**, а открыв их у ONSLAUGHT и RAIDER, они **проигрывают больше** — то есть «ответ на замах» как нужда в среднем **вредит** выигрышу (в 50–60% срабатываний он ≠ обычного выбора по очкам: отдаёт оборонительный ответ вместо атаки).
+
+Во что нужда превращается (BULWARK и AMBUSH, два набора): BULWARK — catch 100%; AMBUSH — catch 100%.
+
+## Пункт 2. Потолок шкал 0/100 — ЧАСТИЧНО
+
+**Вердикт.** Механизм подтверждён (сдвиги применяются по порядку кристаллов 1…5 с зажимом 0/100 после каждого — `resolveBehavior` в `src/data/behavior.js`; всё, что выше 100 или ниже 0, пропадает, хотя карточка кристалла показывает полный сдвиг). Число «9» — нет. Правильный счёт: в полной грани итоговые оси не отличаются от оси без данного кристалла у **19 из 60** кристаллов; но у 11 из них есть другой живой канал (рамп силы/прочности, рычаг, тег), и «полностью невидимых» (только ось, ничего больше) — **8**: ONSLAUGHT Cut Off, Cling, Long Combo, No Pause; BULWARK No Way Around; AMBUSH Hard Counter, Long Slip, Hard to Reach. Перезамер называл 9 с критерием «бит в бит 800/800 боёв» — критерий другой (считает и рычаги), здесь проверены оси по данным.
+
+Сгорает: ONSLAUGHT 62 из 184 записанных пунктов сдвига (34%), AMBUSH 43 из 146 (29%), BULWARK 34 из 168 (20%), RAIDER 0 из 120 (0%). Главные потери: ONSLAUGHT MIND stick (+42 → 100, теряет 27) и WILL tempo (+42 → 100, теряет 22), BULWARK BODY resilience (122 → 100, −22), AMBUSH MIND slip (119 → 100, −19). Где живёт: стартовые оси — `src/data/behavior.js` `CORE_PROFILES`; сдвиги — `src/data/upgradeData.js` `CRYSTALS`; зажим — `resolveBehavior`.
+
+### Пункт 2. Потолок шкал 0/100: старт, сумма сдвигов грани, потеря
+
+Сдвиги осей применяются в порядке кристаллов 1…5 с зажимом 0/100 после каждого (как `resolveBehavior`). «Потеря» = |старт + сумма − итог|: сдвиг, записанный в данных и показанный на карточке, но не дошедший до бойца. Таблица по каждой грани в одиночку (полная грань, 5 из 5).
+
+| ядро | грань | ось | старт | сумма сдвигов | без зажима | итог | потеря |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | BODY | distance | 15 | -8 | 7 | 7 | 0 |
+| ONSLAUGHT | BODY | weight | 55 | +38 | 93 | 93 | 0 |
+| ONSLAUGHT | BODY | resilience | 60 | +14 | 74 | 74 | 0 |
+| ONSLAUGHT | MIND | distance | 15 | -28 | -13 | 0 | **13** |
+| ONSLAUGHT | MIND | initiative | 90 | +6 | 96 | 96 | 0 |
+| ONSLAUGHT | MIND | stick | 85 | +42 | 127 | 100 | **27** |
+| ONSLAUGHT | WILL | tempo | 80 | +42 | 122 | 100 | **22** |
+| ONSLAUGHT | WILL | stick | 85 | +6 | 91 | 91 | 0 |
+| RAIDER | BODY | distance | 55 | +26 | 81 | 81 | 0 |
+| RAIDER | BODY | initiative | 70 | +16 | 86 | 86 | 0 |
+| RAIDER | BODY | tempo | 65 | +14 | 79 | 79 | 0 |
+| RAIDER | BODY | slip | 65 | +12 | 77 | 77 | 0 |
+| RAIDER | MIND | tempo | 65 | +28 | 93 | 93 | 0 |
+| RAIDER | WILL | distance | 55 | +12 | 67 | 67 | 0 |
+| RAIDER | WILL | initiative | 70 | -2 | 68 | 68 | 0 |
+| RAIDER | WILL | counter | 45 | +10 | 55 | 55 | 0 |
+| BULWARK | BODY | distance | 20 | -6 | 14 | 14 | 0 |
+| BULWARK | BODY | resilience | 90 | +32 | 122 | 100 | **22** |
+| BULWARK | MIND | stick | 70 | +18 | 88 | 88 | 0 |
+| BULWARK | MIND | counter | 60 | +42 | 102 | 100 | **2** |
+| BULWARK | WILL | distance | 20 | -12 | 8 | 8 | 0 |
+| BULWARK | WILL | weight | 65 | +18 | 83 | 83 | 0 |
+| BULWARK | WILL | stick | 70 | +40 | 110 | 100 | **10** |
+| AMBUSH | BODY | distance | 80 | +6 | 86 | 86 | 0 |
+| AMBUSH | BODY | counter | 90 | +24 | 114 | 100 | **14** |
+| AMBUSH | BODY | slip | 75 | +10 | 85 | 85 | 0 |
+| AMBUSH | MIND | distance | 80 | +26 | 106 | 100 | **6** |
+| AMBUSH | MIND | slip | 75 | +44 | 119 | 100 | **19** |
+| AMBUSH | WILL | distance | 80 | +24 | 104 | 100 | **4** |
+| AMBUSH | WILL | initiative | 15 | -12 | 3 | 3 | 0 |
+
+Сгорает, по ядрам (сумма |потерь| по осям всех трёх полных граней / сумма |всех записанных сдвигов|): ONSLAUGHT 62 из 184 (34%), осей с потерей: 3; RAIDER 0 из 120 (0%), осей с потерей: 0; BULWARK 34 из 168 (20%), осей с потерей: 3; AMBUSH 43 из 146 (29%), осей с потерей: 4.
+
+#### Кристаллы, которых нет в итоговых осях полной грани (убрать — оси те же)
+
+Всего 19 из 60 (по осям; тело и рычаги не смотрим). Перезамер называл 9 кристаллов, «бит в бит 800/800» — ниже проверка по данным.
+
+| кристалл | что двигает | других каналов у него |
+| --- | --- | --- |
+| ONSLAUGHT · MIND/TIMING (b2) · Run-Down | stick+8 distance-6 | тег chase_strike |
+| ONSLAUGHT · MIND/FEINT (b3) · Cut Off | stick+10 | — |
+| ONSLAUGHT · MIND/ADAPT (b4) · Cling | stick+10 distance-6 | — |
+| ONSLAUGHT · MIND/COLD (b5) · Lockdown | stick+14 distance-8 | тег lockdown |
+| ONSLAUGHT · WILL/HOLD (c1) · Long Combo | tempo+8 | — |
+| ONSLAUGHT · WILL/SPITE (c2) · No Pause | tempo+10 | — |
+| ONSLAUGHT · WILL/VOW (c3) · Building Momentum | tempo+6 | тег hit_accel |
+| ONSLAUGHT · WILL/STILL (c5) · Rampage | tempo+12 | тег rampage |
+| BULWARK · BODY/ROOT (a1) · Tough Hide | resilience+8 | рамп toughness +4% |
+| BULWARK · BODY/DRIVE (a2) · Steady Guard | resilience+10 | рамп toughness +7% |
+| BULWARK · BODY/GRIND (a3) · Catch Breath | resilience+6 | рамп toughness +10%; staminaRegen +60% |
+| BULWARK · BODY/ANVIL (a5) · Unbreakable | resilience+8 | рамп toughness +22%; blockMitigation +60%; тег fortress |
+| BULWARK · WILL/VOW (c3) · No Way Around | stick+10 | — |
+| AMBUSH · BODY/ROOT (a1) · Hard Counter | counter+8 | — |
+| AMBUSH · BODY/GRIND (a3) · Punish Aggression | counter+8 | тег punish_aggression |
+| AMBUSH · MIND/WATCH (b1) · Long Slip | slip+10 distance+6 | — |
+| AMBUSH · MIND/TIMING (b2) · Hard to Reach | slip+8 distance+6 | — |
+| AMBUSH · MIND/ADAPT (b4) · Open Window | slip+8 | dodgeCounter +40% |
+| AMBUSH · MIND/COLD (b5) · Phantom | slip+12 distance+6 | тег phantom |
+
+## Пункт 3. Голые ядра — ПОДТВЕРЖДЕНО (новый замер)
+
+BULWARK 71.8% (70.5 на наборе 1, 73.0 на наборе 2), RAIDER 39.6% (40.6 / 38.6); ONSLAUGHT 46.9%, AMBUSH 43.0%. Медиана BULWARK 57.8 с (> 55), зеркало BULWARK 66.0 с. Вся разница ядер заложена в профиле осей: остальные параметры (здоровье 100, сила удара 100, прочность 200, блок 50% и т. д.) одинаковы — таблица ниже. Причина длинных боёв BULWARK (гипотеза, проверена арифметикой обмена): множитель входящего урона 0.457 против 0.69–0.88 у остальных плюс 27% времени в блоке и 59% в CATCH снижают суммарный обмен здоровьем на 15–20% (медиана ∝ 1/обмен, K ≈ 170.6 даёт 58.8 с против измеренных 57.8 с).
+
+### Пункт 3. Голые ядра друг против друга
+
+4×4 упорядоченных пары, 200 зёрен на набор, два набора (1–200 и 201–400), стороны плиты чередуются по зерну (`swap = чётное зерно`), точки выхода как в игре. Ячейка — доля побед ряда против столбца (игрок = ряд), в скобках медиана длины боя. Диагональ — зеркало: побеждает сторона «игрок» (ряд).
+
+**набор 1–200**
+
+| игрок \ враг | ONSLAUGHT | RAIDER | BULWARK | AMBUSH | итог против поля из 4 (с зеркалом) [95%] | медиана по ряду |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 54.5 (47.3 с) | 60.0 (47.8 с) | 27.5 (56.1 с) | 53.0 (51.5 с) | **48.8** [45.3…52.2] | 50.0 с |
+| RAIDER | 49.0 (48.3 с) | 56.0 (47.6 с) | 17.0 (54.4 с) | 40.5 (50.6 с) | **40.6** [37.3…44.1] | 49.9 с |
+| BULWARK | 69.5 (55.8 с) | 81.0 (54.4 с) | 51.0 (66.6 с) | 80.5 (57.2 с) | **70.5** [67.2…73.6] | 58.2 с |
+| AMBUSH | 48.0 (51.2 с) | 58.0 (50.1 с) | 16.5 (56.3 с) | 46.0 (50.5 с) | **42.1** [38.7…45.6] | 51.6 с |
+
+**набор 201–400**
+
+| игрок \ враг | ONSLAUGHT | RAIDER | BULWARK | AMBUSH | итог против поля из 4 (с зеркалом) [95%] | медиана по ряду |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 56.0 (47.0 с) | 58.0 (47.5 с) | 23.5 (55.9 с) | 43.0 (52.0 с) | **45.1** [41.7…48.6] | 49.9 с |
+| RAIDER | 47.5 (47.9 с) | 50.5 (47.3 с) | 16.5 (52.6 с) | 40.0 (51.5 с) | **38.6** [35.3…42.0] | 49.6 с |
+| BULWARK | 70.5 (55.1 с) | 84.5 (52.8 с) | 52.0 (65.1 с) | 85.0 (57.4 с) | **73.0** [69.8…76.0] | 57.2 с |
+| AMBUSH | 50.0 (51.6 с) | 61.0 (50.8 с) | 17.5 (58.0 с) | 47.0 (51.7 с) | **43.9** [40.5…47.3] | 53.1 с |
+
+**оба набора (400 зёрен на ячейку)**
+
+| игрок \ враг | ONSLAUGHT | RAIDER | BULWARK | AMBUSH | итог против поля из 4 (с зеркалом) [95%] | медиана по ряду |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 55.3 (47.2 с) | 59.0 (47.6 с) | 25.5 (56.0 с) | 48.0 (51.9 с) | **46.9** [44.5…49.4] | 50.0 с |
+| RAIDER | 48.3 (48.0 с) | 53.3 (47.4 с) | 16.8 (53.7 с) | 40.3 (50.8 с) | **39.6** [37.3…42.0] | 49.7 с |
+| BULWARK | 70.0 (55.5 с) | 82.8 (53.4 с) | 51.5 (66.0 с) | 82.8 (57.3 с) | **71.8** [69.5…73.9] | 57.8 с |
+| AMBUSH | 49.0 (51.3 с) | 59.5 (50.3 с) | 17.0 (57.3 с) | 46.5 (51.1 с) | **43.0** [40.6…45.4] | 52.3 с |
+
+**Итог по ядрам на каждом наборе (повторяемость):**
+
+| ядро | набор 1–200, % | набор 201–400, % | медиана 1–200, с | медиана 201–400, с |
 | --- | --- | --- | --- | --- |
-| КЛИЧ PUSH · один, t=5 с | 0.98→0.98 · 0.55→0.55 | 1.24→1.17 · 0.49→0.47 | 1.03→1.02 · 0.45→0.45 | 1.33→1.31 · 0.48→0.42 |
-| КЛИЧ FALLBACK · один, t=5 с | 0.98→0.97 · 0.55→0.55 | 1.24→1.22 · 0.49→0.50 | 1.03→1.05 · 0.45→0.44 | 1.33→1.35 · 0.48→0.51 |
-| КЛИЧ HOLD · один, t=5 с | 0.98→0.97 · 0.55→0.54 | 1.24→1.22 · 0.49→0.48 | 1.03→1.03 · 0.45→0.44 | 1.33→1.32 · 0.48→0.47 |
+| ONSLAUGHT | 48.8 | 45.1 | 50.0 | 49.9 |
+| RAIDER | 40.6 | 38.6 | 49.9 | 49.6 |
+| BULWARK | 70.5 | 73.0 | 58.2 | 57.2 |
+| AMBUSH | 42.1 | 43.9 | 51.6 | 53.1 |
 
-| рычаг · правило | применено | мед. t применения, с | боёв изменилось (бит-в-бит) к нулевому | победы T | винрейт T | Δ винрейта, п.п. | мед. длит., с | Δ мед., с | Δ п.п. ONSLAUGHT | Δ п.п. RAIDER | Δ п.п. BULWARK | Δ п.п. AMBUSH |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TOWEL · правило бота (здоровье < 40%) | 175/200 | 41.2 | 167/200 | 132/200 | 66.0% | +20.0 | 50.7 | +1.7 | +20.0 | +28.0 | +26.0 | +6.0 |
-| TOWEL · фикс. t=10 с | 200/200 | 10.0 | 165/200 | 109/200 | 54.5% | +8.5 | 50.3 | +1.3 | +10.0 | +16.0 | +6.0 | +2.0 |
-| BUCKET · правило бота (цель ближе 2.2) | 200/200 | 0.2 | 200/200 | 100/200 | 50.0% | +4.0 | 48.9 | -0.2 | +0.0 | +14.0 | -2.0 | +4.0 |
-| BUCKET · фикс. t=10 с | 200/200 | 10.0 | 88/200 | 88/200 | 44.0% | -2.0 | 48.7 | -0.3 | +2.0 | -6.0 | -2.0 | -2.0 |
-| DICE · правило бота (цель < 50% HP или t ≥ 20 с), случайная грань | 200/200 | 20.0 | 198/200 | 139/200 | 69.5% | +23.5 | 47.9 | -1.2 | +20.0 | +28.0 | +18.0 | +28.0 |
-| DICE · фикс. t=10 с, случайная грань | 200/200 | 10.0 | 198/200 | 126/200 | 63.0% | +17.0 | 46.8 | -2.2 | +10.0 | +24.0 | +10.0 | +24.0 |
-| DICE · фикс. t=10 с, грань 1 (1×1.5) | 200/200 | 10.0 | 132/200 | 95/200 | 47.5% | +1.5 | 48.6 | -0.4 | +2.0 | +2.0 | +0.0 | +2.0 |
-| DICE · фикс. t=10 с, грань 2 (2×1.5) | 200/200 | 10.0 | 149/200 | 99/200 | 49.5% | +3.5 | 48.4 | -0.6 | +2.0 | +6.0 | +4.0 | +2.0 |
-| DICE · фикс. t=10 с, грань 3 (2×2) | 200/200 | 10.0 | 179/200 | 108/200 | 54.0% | +8.0 | 47.4 | -1.7 | +2.0 | +16.0 | +6.0 | +8.0 |
-| DICE · фикс. t=10 с, грань 4 (3×2) | 200/200 | 10.0 | 189/200 | 126/200 | 63.0% | +17.0 | 46.4 | -2.6 | +12.0 | +20.0 | +16.0 | +20.0 |
-| DICE · фикс. t=10 с, грань 5 (3×2.5) | 200/200 | 10.0 | 195/200 | 149/200 | 74.5% | +28.5 | 45.5 | -3.6 | +26.0 | +28.0 | +26.0 | +34.0 |
-| DICE · фикс. t=10 с, грань 6 (3×3) | 200/200 | 10.0 | 198/200 | 160/200 | 80.0% | +34.0 | 44.3 | -4.7 | +28.0 | +42.0 | +30.0 | +36.0 |
-| КЛИЧ PUSH · один, t=5 с | 200/200 | 5.0 | 136/200 | 99/200 | 49.5% | +3.5 | 49.3 | +0.2 | +4.0 | +10.0 | -2.0 | +2.0 |
-| КЛИЧ PUSH · три подряд (t=5, +6, +12) | 200/200 | 5.0 | 165/200 | 90/200 | 45.0% | -1.0 | 49.3 | +0.2 | +6.0 | +10.0 | -18.0 | -2.0 |
-| КЛИЧ FALLBACK · один, t=5 с | 200/200 | 5.0 | 127/200 | 94/200 | 47.0% | +1.0 | 49.2 | +0.1 | +4.0 | +6.0 | -16.0 | +10.0 |
-| КЛИЧ FALLBACK · три подряд (t=5, +6, +12) | 200/200 | 5.0 | 185/200 | 102/200 | 51.0% | +5.0 | 49.2 | +0.1 | +10.0 | +14.0 | -10.0 | +6.0 |
-| КЛИЧ HOLD · один, t=5 с | 200/200 | 5.0 | 87/200 | 98/200 | 49.0% | +3.0 | 49.0 | -0.0 | +4.0 | +10.0 | -4.0 | +2.0 |
-| КЛИЧ HOLD · три подряд (t=5, +6, +12) | 200/200 | 5.0 | 139/200 | 102/200 | 51.0% | +5.0 | 49.1 | +0.0 | +4.0 | +6.0 | -4.0 | +14.0 |
+Проверка симметрии (A против B + B против A должны давать ≈ 100; отклонение — перекос стороны/порядка в списке, шум ±3):
 
----
+| пара | A побеждает, % | B побеждает, % | сумма |
+| --- | --- | --- | --- |
+| ONSLAUGHT vs RAIDER | 59.0 | 48.3 | 107.3 |
+| ONSLAUGHT vs BULWARK | 25.5 | 70.0 | 95.5 |
+| ONSLAUGHT vs AMBUSH | 48.0 | 49.0 | 97.0 |
+| RAIDER vs BULWARK | 16.8 | 82.8 | 99.5 |
+| RAIDER vs AMBUSH | 40.3 | 59.5 | 99.8 |
+| BULWARK vs AMBUSH | 82.8 | 17.0 | 99.8 |
 
-## 6. Замер: RAID (20 зёрен на каждое число граней)
+#### Чем отличаются ядра (вся разница заложена в профиле осей)
 
-Рейд: игрок + 3 союзника против босса (живучесть ×3, надбавка силы 0) + 2 охраны. Порог накала рейда 18 с. Зёрна 1..20, состав и ядра берутся из seeded composeRaid.
+В бою ядро — это только стартовая строка из 8 осей (`src/data/behavior.js` CORE_PROFILES): `coreId` в `buildFighter` нигде больше не читается (кроме выбора цели в `battleField.js`, который при дуэли не участвует). Всё остальное у четырёх ядер **одинаково**: здоровье 100, сила удара 100, прочность 200, точность 50, блок срезает 50% (пробитие 0), запас сил 100, заряд хлёсткого удара 100, база подвижности 100. Из осей выводятся (формулы — `buildFighter.js` 635–640, 736):
 
-| граней | победы игрока | винрейт | мед. с | p10 с | p90 с | макс. с | таймаут 240 с | дольше 100 с | ср. доживает у игрока | …в выигранных | ср. доживает у босса в проигранных | сам боец игрока жив |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 (у игрока и союзников) | 7/20 | 35% | 72.8 | 61.5 | 98.1 | 124.9 | 0 | 2 | 0.8 из 4 | 2.4 | 2.2 из 3 | 1/20 |
-| 1 (у игрока и союзников) | 14/20 | 70% | 69.6 | 59.6 | 94.5 | 108.2 | 0 | 1 | 1.6 из 4 | 2.3 | 2.3 из 3 | 4/20 |
-| 2 (у игрока и союзников) | 14/20 | 70% | 70.1 | 57.5 | 94.0 | 121.6 | 0 | 2 | 1.8 из 4 | 2.5 | 2.3 из 3 | 7/20 |
-| 3 (у игрока и союзников) | 14/20 | 70% | 67.5 | 54.4 | 94.5 | 132.5 | 0 | 2 | 1.9 из 4 | 2.8 | 2.3 из 3 | 8/20 |
-| 4 (у игрока и союзников) | 16/20 | 80% | 66.4 | 50.1 | 105.9 | 114.7 | 0 | 3 | 2.6 из 4 | 3.3 | 2.8 из 3 | 12/20 |
-| 5 (у игрока и союзников) | 20/20 | 100% | 59.2 | 53.0 | 96.0 | 107.6 | 0 | 2 | 3.0 из 4 | 3.0 | — | 12/20 |
+| ядро | distance | initiative | tempo | weight | stick | resilience | counter | slip | скорость × | разгон × | входящий урон × | heavy01 | тяга к блоку | ворота ответа на замах (counter > 55) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 15 | 90 | 80 | 55 | 85 | 60 | 30 | 20 | 0.96 | 0.92 | 0.688 | 0.63 | 0.46 | нет |
+| RAIDER | 55 | 70 | 65 | 35 | 15 | 35 | 45 | 65 | 1.12 | 1.04 | 0.880 | 0.44 | 0.21 | нет |
+| BULWARK | 20 | 25 | 30 | 65 | 70 | 90 | 60 | 15 | 0.88 | 0.86 | 0.457 | 0.54 | 0.60 | ДА |
+| AMBUSH | 80 | 15 | 20 | 75 | 20 | 35 | 90 | 75 | 0.80 | 0.80 | 0.880 | 0.58 | 0.22 | ДА |
 
-- граней 0: доживших на стороне игрока (0..4) = 0:13 1:1 2:3 3:2 4:1
-- граней 1: доживших на стороне игрока (0..4) = 0:6 1:4 2:2 3:8 4:0
-- граней 2: доживших на стороне игрока (0..4) = 0:6 1:2 2:5 3:5 4:2
-- граней 3: доживших на стороне игрока (0..4) = 0:6 1:1 2:4 3:6 4:3
-- граней 4: доживших на стороне игрока (0..4) = 0:4 1:1 2:0 3:9 4:6
-- граней 5: доживших на стороне игрока (0..4) = 0:0 1:1 2:3 3:11 4:5
+«Входящий урон ×» = lerp(1.15, 0.38, стойкость/100): BULWARK принимает на удар **0.46** от нейтрального урона, RAIDER и AMBUSH — **0.88**, то есть почти вдвое больше. Это основная асимметрия силы ядер в голом бою; остальное — стиль (дистанция, темп, сцепка).
 
----
+#### Что делает тело (игрок = ряд, по всем 4 врагам и обоим наборам, тики бойца)
 
-## Что дальше (предложение, не сделано)
+| ядро | скорость, ед./с | дистанция до врага | вне радиуса 1.45 | свободное время | замахов/мин | урон врагу, HP/с | урон получен, HP/с | время в блоке | запас сил < 0.22 | время в CATCH | время в PRESS |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | 0.20 | 1.15 | 13.2% | 18.8% | 26.8 | 1.69 | 1.73 | 17.8% | 0.3% | 0% | 99% |
+| RAIDER | 0.44 | 1.44 | 31.6% | 40.5% | 19.4 | 1.57 | 1.75 | 5.9% | 2.8% | 6% | 6% |
+| BULWARK | 0.27 | 1.28 | 22.3% | 33.4% | 18.7 | 1.61 | 1.29 | 27.5% | 0.2% | 59% | 10% |
+| AMBUSH | 0.36 | 1.48 | 33.5% | 45.2% | 15.9 | 1.49 | 1.63 | 16.7% | 0.8% | 71% | 2% |
 
-Правок логики здесь нет намеренно. Чтобы двигаться к балансу, я бы начал с пяти вещей: (1) прочитать (не править) `buildFighter.js`, чтобы закрыть п.1 по скорости атаки/хода и дистанции и понять, почему у ONSLAUGHT `distance`/`initiative` «на упоре»; (2) решить, что первично для кристалла — текст или механика, и связать их одним источником; (3) решить судьбу BUCKET и клича — при почти неподвижном бое им нечем работать; (4) разобраться с BULWARK (77–86% против всех); (5) перемерить рейд с настоящими точками выхода из арены и `bossScale`, чтобы сверить с числами в комментарии.
+**Медиана BULWARK больше 55 с: ПОДТВЕРЖДЕНО** — 57.8 с по полю из четырёх (остальные: ONSLAUGHT 50.0, RAIDER 49.7, AMBUSH 52.3); зеркало BULWARK — 66.0 с.
+
+**Гипотеза о причине (числа выше) — подтверждается.** Бой кончается, когда у одного иссякают 100 HP, значит длина боя ∝ 1 / (суммарный темп обмена здоровьем в паре). Суммарный обмен ядра с полем (нанёс + получил, HP/с): ONSLAUGHT 3.41, RAIDER 3.32, BULWARK 2.90, AMBUSH 3.11. Медиана ≈ K / обмен при K ≈ 170.6: для BULWARK это даёт 58.8 с при измеренных 57.8 с. Наносит BULWARK столько же, сколько остальные (1.61 HP/с против 1.69 у ONSLAUGHT), но получает заметно меньше (1.29 против 1.73): множитель входящего урона 0.46 против 0.69, плюс 27% времени в блоке и 59% в CATCH (замахов 18.7/мин против 26.8/мин у ONSLAUGHT). Обмен у BULWARK ниже на ≈ 15–20% — отсюда +8 с к медиане, а в зеркале (оба «стены») 66.0 с. Вторая половина причины — пункт 1: почти половину решений за BULWARK принимает нужда «ответ на замах», которая всегда отвечает CATCH (пассивно).
+
+#### Две метрики на пределе (снято на текущем `main` d9327e02)
+
+| метрика | сейчас | было | порог | запас до порога | где считается |
+| --- | --- | --- | --- | --- | --- |
+| вне радиуса удара (дистанция до врага ≥ 1.45), доля тиков бойца-игрока | **25.07%** | 25.07% | ≥ 25 | +0.07 п.п. | `scripts/reflex-sight-controls.mjs`, `MODE=pairs NOSWAP=1`: 16 пар × 200 зёрен, стороны не чередуются; порог `1.45` зашит там же (метка `far`). Здесь пересчитано тем же кодом в `balance-recon-worker.mjs` (`naked`, `swap: none`, 3200 боёв) |
+| свободное время (нет клипа, блока, сбива и выдоха), доля тиков | **34.95%** (по occupancy: 16 пар × 50 зёрен); 34.45% (по controls, 200 зёрен) | 34.95% | ≤ 35 | +0.05 п.п. (occupancy) | `scripts/motion-recon.mjs`, раздел `occupancy` (16 пар × min(SEEDS,50)=50 зёрен, без чередования); то же определение в `reflex-sight-controls.mjs` (`free`). Пересчитано в `balance-recon-worker.mjs` |
+
+Свободное время по ядрам (occupancy, 50 зёрен): ONSLAUGHT 18.9%, RAIDER 41.2%, BULWARK 33.8%, AMBUSH 46.0%. Вне радиуса по ядрам (controls, 200 зёрен): ONSLAUGHT 13.3%, RAIDER 32.3%, BULWARK 22.1%, AMBUSH 33.0%. Скорость 0.319 ед./с, медиана боя 51.87 с, максимум 83.03 с, таймаутов 0 из 3200.
+
+Сверка: в прошлых замерах 25.07 / 51.87 / 83.03 (вне радиуса / медиана / максимум) и 34.95 свободного времени — **воспроизвелись точно**.
+
+## Пункт 4. Три вредящих кристалла — ЧАСТИЧНО
+
+Ссылка: перезамер `docs/crystal-remeasure/REPORT.md` («Метки»): Run-Down −5.3, Cling −5.0, Fake-In −6.1.
+
+| кристалл | что двигает | повторилось на свежем наборе 201–400? | гипотеза (почему во вред) и проверка |
+| --- | --- | --- | --- |
+| ONSLAUGHT MIND Run-Down (b2) | stick +8, distance −6; тег chase_strike→PRESS [longFight] +0.12 | **нет**: оси +1.0, тег +0.1 (на наборе 1 −5.3); на обоих наборах −2.1 [−5.5…+1.3], интервал включает 0 | гипотеза: ONSLAUGHT уже в PRESS ≈ 99% времени, добавочное сближение (distance −6) не даёт ничего, а ось distance на наборе 1 была худшим каналом (−5.6) → «проклятие победителя» при выборе худшего из 60 ячеек. Проверка: второй набор |
+| ONSLAUGHT MIND Cling (b4) | stick +10, distance −6; тегов нет | **нет**: +0.8 на наборе 2 (на наборе 1 −5.0); оба набора −2.1 [−5.5…+1.3] | то же: единственный канал distance −6; ось stick в одиночку ≈ 0 (−0.9) |
+| RAIDER MIND Fake-In (b1) | tempo +4 (не читается выбором) и рычаг `feintChance` +20% | **да**: рычаг `feintChance` −5.3 [−7.2…−3.4]; набор 1 −6.6, набор 2 −4.0; ось tempo −1.6 (шум) | гипотеза: финт (обманное движение) удлиняет замах RAIDER и отдаёт инициативу врагу; вредит именно рычаг, а не ось. Проверка: канал «extra:feintChance» в одиночку даёт всё падение |
+
+**Вывод.** Вредит по-настоящему один кристалл (Fake-In, рычаг шанса финта — `upgradeData.js`, поле `feintChance`). Про Run-Down и Cling утверждение «вред» на втором наборе не подтвердилось; ожидаемое число ложных «значимых» ячеек на 60 — 1–2, так что это согласуется с шумом.
+
+### Пункт 4. Три вредящих кристалла
+
+Ссылка: перезамер (`docs/crystal-remeasure/REPORT.md` §«Метки»): ВРЕДИТ — ONSLAUGHT Run-Down (−5.3), ONSLAUGHT Cling (−5.0), RAIDER Fake-In (−6.1), каждый с 95% интервалом, не пересекающим ноль. **Проверка в этой разведке:** разложение по каналам и перепроверка на обоих наборах зёрен (набор 1–200 — те же зёрна, что в перезамере; 201–400 — свежие). Оговорка: из 60 ячеек при 95% интервалах около 1–2 «значимо отрицательных» ожидаются от одного шума.
+
+#### ONSLAUGHT MIND/TIMING (b2) Run-Down
+
+stick +8, distance −6; тег chase_strike→PRESS [longFight] +0.12
+
+| канал (что оставлено) | оба набора, п.п. [95%] | набор 1–200 | набор 201–400 (свежий) |
+| --- | --- | --- | --- |
+| axis:stick | **-1.0 [-3.1…+1.1]** | -2.9 [-5.9…+0.1] | +0.9 [-2.0…+3.7] |
+| axis:distance | **-2.1 [-5.4…+1.3]** | -5.6 [-10.5…-0.8] | +1.5 [-3.2…+6.2] |
+| axes | **-2.1 [-5.5…+1.3]** | -5.3 [-10.2…-0.3] | +1.0 [-3.7…+5.7] |
+| tag | **-0.2 [-0.9…+0.6]** | -0.5 [-1.6…+0.6] | +0.1 [-0.9…+1.1] |
+| axes + tag | **-2.3 [-5.7…+1.1]** | -5.3 [-10.2…-0.3] | +0.6 [-4.0…+5.3] |
+
+#### ONSLAUGHT MIND/ADAPT (b4) Cling
+
+stick +10, distance −6; тегов нет
+
+| канал (что оставлено) | оба набора, п.п. [95%] | набор 1–200 | набор 201–400 (свежий) |
+| --- | --- | --- | --- |
+| axis:stick | **-0.9 [-3.0…+1.2]** | -2.6 [-5.7…+0.4] | +0.8 [-2.2…+3.7] |
+| axis:distance | **-2.1 [-5.4…+1.3]** | -5.6 [-10.5…-0.8] | +1.5 [-3.2…+6.2] |
+| axes | **-2.1 [-5.5…+1.3]** | -5.0 [-9.9…-0.1] | +0.8 [-3.9…+5.4] |
+
+#### RAIDER MIND/WATCH (b1) Fake-In
+
+tempo +4; рычаг feintChance +20% (шанс финта); тегов нет
+
+| канал (что оставлено) | оба набора, п.п. [95%] | набор 1–200 | набор 201–400 (свежий) |
+| --- | --- | --- | --- |
+| axes | **-1.6 [-4.1…+0.8]** | -1.3 [-4.7…+2.2] | -2.0 [-5.5…+1.5] |
+| extra:feintChance | **-5.3 [-7.2…-3.4]** | -6.6 [-9.4…-3.9] | -4.0 [-6.7…-1.3] |
+| axes + extra:feintChance | **-4.9 [-7.6…-2.2]** | -6.1 [-10.0…-2.2] | -3.6 [-7.4…+0.2] |
+
+## Пункт 5. 17 слабых кристаллов — ПОДТВЕРЖДЕНО
+
+Пересчёт по `docs/crystal-remeasure/out/partA.json` (поле `cause`): ячеек с причиной «МАЛЫЙ ВЕС» — 17 (23 флага), «ГЛУХОЙ КАНАЛ» — 17 (19 флагов); ячеек ровно с одной причиной — 16 и 16, одна смешанная. **Суммы сошлись с перезамером.** По ядрам: ONSLAUGHT 1, RAIDER 2, BULWARK 9, AMBUSH 5 — это и есть 17 слабых «МАЛЫЙ ВЕС» в списке ниже (те самые, о которых говорит утверждение). «ГЛУХОЙ КАНАЛ» — отдельный набор из 17 других ячеек (эффект не появляется и при ×3, потому что канал не читается выбором), в утверждение он не входит.
+
+### Пункт 5. 17 слабых кристаллов (при тройной силе эффект появляется)
+
+Пересчёт по `partA.json` (поле `cause`): ячеек с причиной «МАЛЫЙ ВЕС» — **17** (флагов 23); ячеек с «ГЛУХОЙ КАНАЛ» — **17** (флагов 19). Сводка перезамера: флагов МАЛЫЙ ВЕС 23, ГЛУХОЙ КАНАЛ 19; ячеек только с одной причиной — 16 и 16, одна смешанная (1). **Суммы сошлись.**
+
+По ядрам: ONSLAUGHT 1, RAIDER 2, BULWARK 9, AMBUSH 5.
+
+| кристалл | что не дотягивает | сдвиг ×1 → ×3, п.п. | что меняет |
+| --- | --- | --- | --- |
+| ONSLAUGHT · WILL/VOW (c3) · Building Momentum | ИСХОД | +3.4 → +5.5 | tempo+6  |
+| RAIDER · BODY/GRIND (a3) · Far Bounce | ИСХОД | +1.8 → +11.9 | distance+10 slip+6  |
+| RAIDER · BODY/ANVIL (a5) · Perfect Prick | ИСХОД | +1.1 → +7.2 | distance+8 initiative+10 slip+6  |
+| BULWARK · BODY/GRIND (a3) · Catch Breath | ПОВЕДЕНИЕ | +14.0 → +21.6 | resilience+6 toughness+10% staminaRegen+60% |
+| BULWARK · BODY/BREAK (a4) · Dig In | ИСХОД | +3.1 → +5.6 | distance-6 toughness+14% |
+| BULWARK · MIND/WATCH (b1) · Riposte | ИСХОД + ПОВЕДЕНИЕ | +3.6 → +13.4 | stick+6 counter+8 toughness+4% blockCounter+50% |
+| BULWARK · MIND/TIMING (b2) · Catch & Punish | ИСХОД + ПОВЕДЕНИЕ | +3.9 → +13.5 | counter+8 toughness+7% interruptBonus+50% |
+| BULWARK · MIND/FEINT (b3) · Hard Meet | ИСХОД + ПОВЕДЕНИЕ | +0.9 → +8.9 | stick+6 counter+10 toughness+10% |
+| BULWARK · MIND/ADAPT (b4) · Retaliation | ИСХОД + ПОВЕДЕНИЕ | +2.6 → +11.0 | counter+8 toughness+14% |
+| BULWARK · MIND/COLD (b5) · Sea Wall | ПОВЕДЕНИЕ | +12.8 → +21.6 | stick+6 counter+8 toughness+22% blockCounter+100% interruptBonus+100% |
+| BULWARK · WILL/HOLD (c1) · Body Shove | ИСХОД + ПОВЕДЕНИЕ | +2.1 → +4.8 | distance-6 stick+8  |
+| BULWARK · WILL/VOW (c3) · No Way Around | ПОВЕДЕНИЕ | +2.6 → +3.1 | stick+10  |
+| AMBUSH · BODY/DRIVE (a2) · Slip Counter | ПОВЕДЕНИЕ | +11.0 → +29.9 | slip+6 dodgeCounter+50% |
+| AMBUSH · MIND/FEINT (b3) · Run 'Em Ragged | ИСХОД | +0.8 → +12.9 | distance+8 slip+6  |
+| AMBUSH · MIND/ADAPT (b4) · Open Window | ПОВЕДЕНИЕ | +12.1 → +33.3 | slip+8 dodgeCounter+40% |
+| AMBUSH · WILL/SPITE (c2) · Long Charge | ИСХОД + ПОВЕДЕНИЕ | +3.8 → +5.9 | distance+6 initiative-6 strikePower+7% chargeMax+60% |
+| AMBUSH · WILL/VOW (c3) · Hit the Opening | ПОВЕДЕНИЕ | +5.5 → +18.6 | initiative-6 strikePower+10% |
+
+## Пункт 6. 41 кристалл не меняет решения — ПОДТВЕРЖДЕНО; гипотеза про 0.08 — ОПРОВЕРГНУТА
+
+41 из 60 (перезамер, часть A). Канал каждого: только оси в очках намерений — 26; оси + тег — 11; только тело (tempo или рычаги, ни ось, ни тег не читаются выбором) — 4. **`tempo` выбором намерения не читается вовсе** (`spinalScore` читает 7 осей из 8). Таблица — по каждой из 41 ячейки: что двигает, тег, где участвует в выборе, наибольший сдвиг очков, доля изменённых решений.
+
+### Пункт 6. 41 кристалл не меняет решения (изменено < 5% решений о выборе намерения)
+
+Из перезамера (часть A, 60 ячеек): решений меняют < 5% — **41** ячеек (ожидалось 41). Распределение по единственному входному каналу: только тело (tempo или рычаги): 4; оси в очках намерений: 26; тег: 11.
+
+Очки намерений (`spinalScore`) читают 7 осей из 8 — **`tempo` не читается вовсе**; сдвиг на Δ пунктов двигает очки намерения на вес×Δ/100. Для сравнения: бонус удержания текущего намерения **0.08**; разрыв между лидером и вторым в рабочих решениях — см. пункт 6а ниже. Столбец «сдвиг очков» — наибольший по модулю сдвиг очков одного намерения от осей этого кристалла (после зажима).
+
+| кристалл | оси (факт после зажима) | рычаги силы | тег (наклон) | где участвует в выборе | сдвиг очков (макс.) | решений изменено | условие тега верно / переворот |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT · BODY/ROOT (a1) · Heavy Hit | weight+14 | strikePower+4% | — | очки: только оси | strike +0.049 | 0.6% | — |
+| ONSLAUGHT · BODY/DRIVE (a2) · Guard Crush | weight+8 | strikePower+7% blockPenetration+40% | — | очки: только оси | strike +0.028 | 0.3% | — |
+| ONSLAUGHT · BODY/GRIND (a3) · Unshaken | resilience+14 | strikePower+10% interruptResist+70% | — | очки: только оси | hold +0.056 | 0.0% | — |
+| ONSLAUGHT · MIND/WATCH (b1) · Hard Entry | distance-8 initiative+6 | — | — | очки: только оси | press +0.046 | 2.2% | — |
+| ONSLAUGHT · MIND/TIMING (b2) · Run-Down | distance-6 stick+8 | — | chase_strike→press [longFight] +0.12 | очки: оси + наклон тега | press +0.036 | 2.5% | 40% / 0.1% |
+| ONSLAUGHT · MIND/FEINT (b3) · Cut Off | stick+10 | — | — | очки: только оси | press +0.030 | 2.4% | — |
+| ONSLAUGHT · MIND/ADAPT (b4) · Cling | distance-6 stick+10 | — | — | очки: только оси | press +0.042 | 2.3% | — |
+| ONSLAUGHT · MIND/COLD (b5) · Lockdown | distance-8 stick+14 | — | lockdown→hold [close] +0.2 | очки: оси + наклон тега | press +0.058 | 2.4% | 91% / 0.0% |
+| ONSLAUGHT · WILL/HOLD (c1) · Long Combo | tempo+8 | — | — | в выбор намерения не входит (tempo/рычаги — только тело) | 0 | 0.0% | — |
+| ONSLAUGHT · WILL/SPITE (c2) · No Pause | tempo+10 | — | — | в выбор намерения не входит (tempo/рычаги — только тело) | 0 | 0.0% | — |
+| ONSLAUGHT · WILL/HUNGER (c4) · No Breather | tempo+6 stick+6 | — | no_breather→press [foeHpLow] +0.12 | очки: оси + наклон тега | press +0.018 | 1.6% | 13% / 0.1% |
+| RAIDER · BODY/DRIVE (a2) · Pinpoint Entry | initiative+6 | accuracy+35% | — | очки: только оси | press +0.030 | 3.0% | — |
+| RAIDER · MIND/WATCH (b1) · Fake-In | tempo+4 | feintChance+20% | — | в выбор намерения не входит (tempo/рычаги — только тело) | 0 | 0.0% | — |
+| RAIDER · MIND/TIMING (b2) · Punish Reaction | tempo+4 | feintPayoff+50% | — | в выбор намерения не входит (tempo/рычаги — только тело) | 0 | 0.0% | — |
+| RAIDER · WILL/HOLD (c1) · Read the Tell | initiative-6 | strikePower+4% accuracy+30% | — | очки: только оси | press -0.030 | 4.2% | — |
+| RAIDER · WILL/SPITE (c2) · Strike the Open | initiative+4 | strikePower+7% | punish_exhausted→strike [foeWindLow] +0.12 | очки: оси + наклон тега | press +0.020 | 2.7% | 6% / 0.1% |
+| BULWARK · BODY/ROOT (a1) · Tough Hide | resilience+8 | toughness+4% | — | очки: только оси | hold +0.032 | 0.7% | — |
+| BULWARK · BODY/DRIVE (a2) · Steady Guard | resilience+10 | toughness+7% | — | очки: только оси | hold +0.040 | 0.7% | — |
+| BULWARK · BODY/GRIND (a3) · Catch Breath | resilience+6 | toughness+10% staminaRegen+60% | — | очки: только оси | hold +0.024 | 0.5% | — |
+| BULWARK · BODY/ANVIL (a5) · Unbreakable | resilience+8 | toughness+22% blockMitigation+60% | fortress→hold [selfHpLow] +0.2 | очки: оси + наклон тега | hold +0.032 | 3.5% | 9% / 2.9% |
+| BULWARK · MIND/WATCH (b1) · Riposte | stick+6 counter+8 | toughness+4% blockCounter+50% | — | очки: только оси | catch +0.036 | 1.1% | — |
+| BULWARK · MIND/TIMING (b2) · Catch & Punish | counter+8 | toughness+7% interruptBonus+50% | — | очки: только оси | catch +0.036 | 0.8% | — |
+| BULWARK · MIND/FEINT (b3) · Hard Meet | stick+6 counter+10 | toughness+10% | — | очки: только оси | catch +0.045 | 1.1% | — |
+| BULWARK · MIND/ADAPT (b4) · Retaliation | counter+8 | toughness+14% | retaliate_ramp→strike [hpDropped] +0.12 | очки: оси + наклон тега | catch +0.036 | 0.8% | 12% / 0.0% |
+| BULWARK · MIND/COLD (b5) · Sea Wall | stick+6 counter+8 | toughness+22% blockCounter+100% interruptBonus+100% | counter_trap→catch [longFight] +0.2 | очки: оси + наклон тега | catch +0.036 | 2.1% | 45% / 1.0% |
+| BULWARK · WILL/HOLD (c1) · Body Shove | distance-6 stick+8 | — | — | очки: только оси | press +0.036 | 1.2% | — |
+| BULWARK · WILL/SPITE (c2) · Heavy Slam | weight+10 | blockPenetration+35% | — | очки: только оси | strike +0.035 | 0.7% | — |
+| BULWARK · WILL/VOW (c3) · No Way Around | stick+10 | — | — | очки: только оси | press +0.030 | 1.1% | — |
+| AMBUSH · BODY/ROOT (a1) · Hard Counter | counter+8 | — | — | очки: только оси | catch +0.036 | 2.0% | — |
+| AMBUSH · BODY/DRIVE (a2) · Slip Counter | slip+6 | dodgeCounter+50% | — | очки: только оси | break +0.030 | 0.5% | — |
+| AMBUSH · BODY/GRIND (a3) · Punish Aggression | counter+8 | — | punish_aggression→catch [hpDropped] +0.12 | очки: оси + наклон тега | catch +0.036 | 2.3% | 17% / 0.3% |
+| AMBUSH · BODY/BREAK (a4) · Punish Whiff | distance+6 | missCounter+50% | — | очки: только оси | sting +0.027 | 1.3% | — |
+| AMBUSH · BODY/ANVIL (a5) · Perfect Trap | counter+8 slip+4 | dodgeCounter+100% missCounter+100% | perfect_trap→strike [foeHpLow&foeQuiet] +0.2 | очки: оси + наклон тега | catch +0.036 | 2.3% | 2% / 0.2% |
+| AMBUSH · MIND/WATCH (b1) · Long Slip | distance+6 slip+10 | — | — | очки: только оси | sting +0.057 | 4.1% | — |
+| AMBUSH · MIND/TIMING (b2) · Hard to Reach | distance+6 slip+8 | — | — | очки: только оси | sting +0.051 | 4.0% | — |
+| AMBUSH · MIND/ADAPT (b4) · Open Window | slip+8 | dodgeCounter+40% | — | очки: только оси | break +0.040 | 1.0% | — |
+| AMBUSH · WILL/HOLD (c1) · Loaded Hit | distance+6 | strikePower+4% chargePower+50% | — | очки: только оси | sting +0.027 | 1.3% | — |
+| AMBUSH · WILL/SPITE (c2) · Long Charge | distance+6 initiative-6 | strikePower+7% chargeMax+60% | — | очки: только оси | press -0.042 | 1.5% | — |
+| AMBUSH · WILL/VOW (c3) · Hit the Opening | initiative-6 | strikePower+10% | vulnerable_strike→strike [foeOpen] +0.12 | очки: оси + наклон тега | press -0.030 | 1.6% | 23% / 0.3% |
+| AMBUSH · WILL/HUNGER (c4) · Pierce | distance+6 | strikePower+14% chargePen+60% | — | очки: только оси | sting +0.027 | 1.4% | — |
+| AMBUSH · WILL/STILL (c5) · Execution | distance+6 | strikePower+22% chargePower+80% | execute→strike [foeHpLow] +0.2 | очки: оси + наклон тега | sting +0.027 | 2.2% | 13% / 0.8% |
+
+### 6а. Восемь «тегов-пустышек»
+
+**Гипотеза «прибавка тега меньше бонуса удержания 0.08» — опровергнута числами:** вес обычного тега 0.12, вершины 0.20 — оба больше 0.08 (`combatBalance.js` `grani.tagLean`, `vertexLean`; удержание — `intentions.js`, `+0.08` текущему намерению). Реальных причин три (и у каждой пустышки одна или две):
+1. наклон смотрит туда, куда ядро и так идёт (наклонное намерение уже лидер): ONSLAUGHT Run-Down, No Breather;
+2. запас лидера больше веса наклона: Lockdown, Sea Wall, Punish Aggression, Hit the Opening, Retaliation, Execution — очки разных намерений различаются на десятые, а тег двигает на 0.12–0.20;
+3. решение принимает нужда, а не очки (только BULWARK и AMBUSH): 61–72% решений с верным условием — нужда «ответ на замах», где очки вообще не читаются.
+
+### Пункт 6а. Восемь «тегов-пустышек»: почему условие верно, а выбор не меняется
+
+Кристалл в одиночку против 4 голых ядер, 400 зёрен на врага. Для каждого решения, где условие тега верно, считаются очки всех намерений (`spinalScore` — после наклонов, накала и бонуса удержания): **уже лидер** — наклонное намерение и без того впереди; **решила нужда** — решение принял жёсткий порог, очки не смотрелись; **запас** — на сколько очков лидер опережает наклонное намерение, когда оно не лидер (чтобы наклон сработал, вес тега должен быть больше запаса); **переворот** — выбор меняется, если наклон убрать.
+
+| кристалл | тег | условие верно (доля решений) | из них решила нужда | из остальных: наклонное намерение уже лидер | запас до лидера, когда не лидер: p10 / медиана / p90 | вес наклона | переворот, % всех решений | переворот, % при верном условии |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT MIND/TIMING (b2) Run-Down | chase_strike→PRESS [longFight] | 39.5% | 1% | 100% | 0.03 / **0.03** / 0.03 (n=2) | 0.12 | 0.10% | 0.26% |
+| ONSLAUGHT MIND/COLD (b5) Lockdown | lockdown→HOLD [close] | 91.5% | 0% | 0% | 0.08 / **0.15** / 1.28 (n=72324) | 0.20 | 0.02% | 0.02% |
+| ONSLAUGHT WILL/HUNGER (c4) No Breather | no_breather→PRESS [foeHpLow] | 13.0% | 1% | 100% | 0.05 / **0.05** / 0.06 (n=7) | 0.12 | 0.10% | 0.78% |
+| BULWARK MIND/ADAPT (b4) Retaliation | retaliate_ramp→STRIKE [hpDropped] | 11.7% | 70% | 86% | 0.25 / **0.57** / 0.64 (n=461) | 0.12 | 0.03% | 0.28% |
+| BULWARK MIND/COLD (b5) Sea Wall | counter_trap→CATCH [longFight] | 45.1% | 61% | 8% | 0.16 / **0.64** / 0.95 (n=14035) | 0.20 | 1.01% | 2.24% |
+| AMBUSH BODY/GRIND (a3) Punish Aggression | punish_aggression→CATCH [hpDropped] | 17.4% | 64% | 27% | 0.22 / **0.73** / 1.02 (n=3747) | 0.12 | 0.27% | 1.57% |
+| AMBUSH WILL/VOW (c3) Hit the Opening | vulnerable_strike→STRIKE [foeOpen] | 22.9% | 72% | 34% | 0.11 / **0.35** / 0.86 (n=3469) | 0.12 | 0.31% | 1.34% |
+| AMBUSH WILL/STILL (c5) Execution | execute→STRIKE [foeHpLow] | 13.2% | 61% | 93% | 0.02 / **0.17** / 0.50 (n=289) | 0.20 | 0.80% | 6.09% |
+
+**Гипотеза «прибавка тега меньше бонуса удержания 0.08» — опровергнута в том виде, как сформулирована:** вес обычного тега 0.12 и вершины 0.20, оба больше 0.08. Бонус удержания (0.08 текущему намерению) лишь добавляется к запасу. Настоящих причин три, и у каждой пустышки одна или две из них:
+1. **Наклон смотрит туда, куда ядро и так идёт** (наклонное намерение уже лидер): ONSLAUGHT Run-Down, No Breather — PRESS у ONSLAUGHT впереди ≈ 99% времени; сдвигать нечего.
+2. **Запас лидера больше веса наклона** (медиана запаса в таблице vs 0.12 / 0.20): Lockdown (HOLD против PRESS), Sea Wall, Punish Aggression, Hit the Opening, Retaliation — очки разных намерений различаются на десятые доли, а тег двигает на 0.12–0.2 (и он не может вытянуть намерение, которое и с наклоном остаётся вторым).
+3. **Решение принимает нужда, а не очки** — только у BULWARK и AMBUSH: «ответ на замах» занимает ≈ половину решений (пункт 1) и очки тегов в этих решениях не читаются; столбец «из них решила нужда».
+
+## Пункт 7. Четыре перекоса — ПОДТВЕРЖДЕНО
+
+Воспроизведено: Unshaken +39.5 (в ТЗ +38), Breakthrough +32.6 (+31), Unbreakable +23.6 (+25), Perfect Trap +18.7 (+21) — база здесь «4 голых ядра, 400 зёрен на врага», расхождение ≤ 2–3 п.п. Что именно даёт прибавку:
+
+| кристалл | ось | рамп силы/прочности | рычаги | тег |
+| --- | --- | --- | --- | --- |
+| ONSLAUGHT Unshaken (BODY/GRIND) | +22.6 | +9.3 | +8.6 (`interruptResist` +70%) | тега нет |
+| ONSLAUGHT Breakthrough (BODY/ANVIL) | **−6.3** | +19.3 | +19.4 (`blockPenetration` +95%) | +3.5 |
+| BULWARK Unbreakable (BODY/ANVIL) | +11.9 | +2.7 | **+16.9** (`blockMitigation` +60%) | −0.9 |
+| AMBUSH Perfect Trap (BODY/ANVIL) | +7.2 | — | +10.5 (`dodgeCounter` +7.6, `missCounter` +2.9) | +0.3 |
+
+**Вывод:** перекосы создают рычаги силы (рамп, пробитие/митигация блока, контрудары) и оси; тег — ≈ ноль (кроме +3.5 у Breakthrough). Каналы складываются почти аддитивно (Unshaken, Breakthrough, Perfect Trap); у Unbreakable каналы заметно усиливают друг друга (сумма частей +30.7 против +23.6 целого — то есть частично перекрываются). Все рычаги — данные `upgradeData.js`, читаются в `buildFighter.js` 🔒 и `boutCore.js`.
+
+### Пункт 7. Четыре перекоса: откуда прибавка
+
+Каждый из четырёх кристаллов в одиночку (ядро + этот кристалл) против 4 голых ядер, 400 зёрен на врага (два набора), разложен на каналы: копия кристалла, где оставлены только перечисленные части — **оси** (сдвиги осей), **рамп** (рост силы удара/прочности по глубине грани), **extra:X** (добавочные рычаги: blockPenetration, blockMitigation, interruptResist, dodgeCounter, missCounter), **тег** (наклон выбора намерения). Сдвиг — парный к голому ядру (тот же враг, то же зерно), п.п. с 95% интервалом; в скобках — повтор на втором наборе.
+
+#### ONSLAUGHT BODY/GRIND (a3) Unshaken
+
+ось resilience +14 · рамп strikePower +10% · interruptResist +70% · тега нет
+
+| канал (что оставлено) | сдвиг к голому ядру, п.п. [95%] | набор 1 / набор 2 | доля побед, % |
+| --- | --- | --- | --- |
+| axes | **+22.6 [+19.5…+25.8]** | +19.9 / +25.4 | 69.6 |
+| ramp | **+9.3 [+7.8…+10.7]** | +9.3 / +9.3 | 56.2 |
+| extra:interruptResist | **+8.6 [+5.3…+11.9]** | +4.9 / +12.4 | 55.6 |
+| axes + ramp | **+30.4 [+27.4…+33.4]** | +28.1 / +32.6 | 77.3 |
+| axes + ramp + extra:interruptResist | **+39.5 [+36.6…+42.4]** | +38.0 / +41.0 | 86.4 |
+
+Сумма отдельных каналов (axes, ramp, extra:interruptResist): +40.5 п.п.; полный набор (axes + ramp + extra:interruptResist): +39.5 п.п. — в пределах шума сумма частей равна целому (каналы складываются).
+
+#### ONSLAUGHT BODY/ANVIL (a5) Breakthrough
+
+ось weight +10 · рамп strikePower +22% · blockPenetration +95% · тег overload_strike→STRIKE [foeHpLow] +0.2
+
+| канал (что оставлено) | сдвиг к голому ядру, п.п. [95%] | набор 1 / набор 2 | доля побед, % |
+| --- | --- | --- | --- |
+| axes | **-6.3 [-9.6…-2.9]** | -8.8 / -3.8 | 40.7 |
+| ramp | **+19.3 [+17.4…+21.2]** | +20.0 / +18.6 | 66.3 |
+| extra:blockPenetration | **+19.4 [+17.5…+21.4]** | +18.8 / +20.1 | 66.4 |
+| tag | **+3.5 [+1.5…+5.5]** | +3.5 / +3.5 | 50.4 |
+| axes + ramp + extra:blockPenetration | **+32.3 [+29.1…+35.4]** | +31.4 / +33.1 | 79.2 |
+| axes + ramp + extra:blockPenetration + tag | **+32.6 [+29.4…+35.8]** | +31.1 / +34.0 | 79.5 |
+
+Сумма отдельных каналов (axes, ramp, extra:blockPenetration, tag): +36.0 п.п.; полный набор (axes + ramp + extra:blockPenetration + tag): +32.6 п.п. — в пределах шума сумма частей равна целому (каналы складываются).
+
+#### BULWARK BODY/ANVIL (a5) Unbreakable
+
+ось resilience +8 · рамп toughness +22% · blockMitigation +60% · тег fortress→HOLD [selfHpLow] +0.2
+
+| канал (что оставлено) | сдвиг к голому ядру, п.п. [95%] | набор 1 / набор 2 | доля побед, % |
+| --- | --- | --- | --- |
+| axes | **+11.9 [+9.8…+14.0]** | +14.6 / +9.3 | 83.7 |
+| ramp | **+2.7 [+1.9…+3.5]** | +3.3 / +2.1 | 74.4 |
+| extra:blockMitigation | **+16.9 [+15.1…+18.8]** | +18.4 / +15.5 | 88.7 |
+| tag | **-0.9 [-2.3…+0.5]** | -1.1 / -0.6 | 70.9 |
+| axes + ramp + extra:blockMitigation | **+23.9 [+21.7…+26.1]** | +26.0 / +21.8 | 95.6 |
+| axes + ramp + extra:blockMitigation + tag | **+23.6 [+21.4…+25.8]** | +25.3 / +22.0 | 95.4 |
+
+Сумма отдельных каналов (axes, ramp, extra:blockMitigation, tag): +30.7 п.п.; полный набор (axes + ramp + extra:blockMitigation + tag): +23.6 п.п. — каналы **усиливают друг друга** (сумма частей заметно меньше целого).
+
+#### AMBUSH BODY/ANVIL (a5) Perfect Trap
+
+оси counter +8, slip +4 · рычаги dodgeCounter +100%, missCounter +100% · тег perfect_trap→STRIKE [foeHpLow&foeQuiet] +0.2
+
+| канал (что оставлено) | сдвиг к голому ядру, п.п. [95%] | набор 1 / набор 2 | доля побед, % |
+| --- | --- | --- | --- |
+| axes | **+7.2 [+4.0…+10.5]** | +8.3 / +6.3 | 50.2 |
+| extra:dodgeCounter | **+7.6 [+6.3…+8.9]** | +7.2 / +7.9 | 50.6 |
+| extra:missCounter | **+2.9 [+2.1…+3.7]** | +3.0 / +2.8 | 45.9 |
+| tag | **+0.3 [-0.3…+0.9]** | -0.1 / +0.8 | 43.3 |
+| extras | **+10.5 [+9.0…+12.0]** | +9.6 / +11.4 | 53.5 |
+| axes + extras | **+18.2 [+14.9…+21.5]** | +20.1 / +16.3 | 61.2 |
+| axes + extras + tag | **+18.7 [+15.4…+21.9]** | +20.8 / +16.6 | 61.7 |
+
+Сумма отдельных каналов (axes, extra:dodgeCounter, extra:missCounter, tag): +18.0 п.п.; полный набор (axes + extras + tag): +18.7 п.п. — в пределах шума сумма частей равна целому (каналы складываются).
+
+## Пункт 8. Шесть вершин, поглощённых гранью — ЧАСТИЧНО
+
+Поглощение по правилу перезамера: вершина в одиночку меняет исход (или ≥ 5% решений), а внутри полной грани — нет. Причины у шести разные:
+- **ось на упоре** — только ONSLAUGHT Rampage (tempo 100 уже набран) и AMBUSH Phantom (slip и distance уже 100);
+- **тег дублирует резонанс ветви** — пять из шести (кроме Killing Run): резонанс (при ≥ 3 кристаллах в грани) тянет то же намерение «всегда» (+0.3/+0.15), а тег вершины — «по условию» (+0.2);
+- **тег перекрыт соседним наклоном к тому же намерению** — Breakthrough (a4 close_damage_ramp), Rampage (c3 hit_accel), Perfect Prick (a4 clean_chain);
+- **резонанс тянет к другому намерению и поднимает его над намерением тега** — RAIDER Killing Run (дом: strike + sting, тег → press).
+Внутри полной грани «сдвиг» вершины иногда не нулевой (Killing Run +14.0, Clinch +5.9, Perfect Prick +3.0) — поглощено именно влияние на *решения* (< 1–5% переворотов), а рычаги силы остаются и складываются.
+
+### Пункт 8. Шесть вершин, поглощённых гранью
+
+«Поглощена» по правилу перезамера: вершина в одиночку меняет исход (или ≥ 5% решений), а внутри своей полной грани — нет. Колонка «что поглощено» — какая половина флага пропала. Разбор по каналам вершины: оси (есть ли упор в полной грани), рычаги силы (они складываются и не поглощаются), тег (наклон +0.2 «по условию» против наклонов резонанса +0.3/+0.15 «всегда» и теги соседей того же намерения).
+
+| вершина | что поглощено | в одиночку: сдвиг п.п. / решений | в грани: сдвиг п.п. / решений | оси | рычаги | тег (наклон) | в грани: условие верно / переворот | чем поглощена |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT · BODY/ANVIL (a5) · Breakthrough | РЕШЕНИЯ | +31.1 / 13.5% | +2.8 / 0.04% | weight+10: без него 83 → с ним 93 | strikePower +22%, blockPenetration +95% | overload_strike→strike [foeHpLow] +0.2 | 22% / 0.01% | тег дублирует резонанс ветви (дом ветви: strike + press; +0.3/0.15 «всегда» против +0.2 «по условию»); тег перекрыт соседним наклоном к тому же намерению: a4 close_damage_ramp [close] |
+| ONSLAUGHT · WILL/STILL (c5) · Rampage | ИСХОД + РЕШЕНИЯ | +4.5 / 10.9% | +0.8 / 0.55% | tempo+12: без него 100 → с ним 100 (упор) | — | rampage→strike [selfHpLow] +0.2 | 16% / 0.55% | ось на упоре (итог оси не меняется); тег дублирует резонанс ветви (дом ветви: strike + press; +0.3/0.15 «всегда» против +0.2 «по условию»); тег перекрыт соседним наклоном к тому же намерению: c3 hit_accel [longFight] |
+| RAIDER · BODY/ANVIL (a5) · Perfect Prick | РЕШЕНИЯ | +1.1 / 13.2% | +3.0 / 2.47% | initiative+10: без него 76 → с ним 86; distance+8: без него 73 → с ним 81; slip+6: без него 71 → с ним 77 | — | perfect_jab→sting [foeQuiet] +0.2 | 30% / 0.87% | тег дублирует резонанс ветви (дом ветви: sting; +0.3/0.15 «всегда» против +0.2 «по условию»); тег перекрыт соседним наклоном к тому же намерению: a4 clean_chain [always] |
+| RAIDER · WILL/STILL (c5) · Killing Run | РЕШЕНИЯ | +12.0 / 18.1% | +14.0 / 1.06% | distance+6: без него 61 → с ним 67 | strikePower +22%, chargePower +60% | lethal_entry→press [foeHpLow] +0.2 | 17% / 0.51% | резонанс ветви тянет к ДРУГОМУ намерению (дом: strike + sting «всегда» +0.3/0.15) и поднимает его над намерением тега (press); см. пункт 8 по очкам |
+| BULWARK · WILL/STILL (c5) · Clinch | РЕШЕНИЯ | +8.0 / 16.5% | +5.9 / 4.44% | stick+14: без него 96 → с ним 100; weight+8: без него 75 → с ним 83 | blockPenetration +50% | clinch→press [close] +0.2 | 83% / 5.07% | тег дублирует резонанс ветви (дом ветви: hold + press; +0.3/0.15 «всегда» против +0.2 «по условию») |
+| AMBUSH · MIND/COLD (b5) · Phantom | ИСХОД + РЕШЕНИЯ | +13.6 / 9.3% | -1.4 / 1.16% | slip+12: без него 100 → с ним 100 (упор); distance+6: без него 100 → с ним 100 (упор) | — | phantom→break [hpDropped] +0.2 | 13% / 1.16% | ось на упоре (итог оси не меняется); тег дублирует резонанс ветви (дом ветви: break + sting; +0.3/0.15 «всегда» против +0.2 «по условию») |
+
+### Пункт 8 (по очкам). Вершина в одиночку и в своей грани
+
+Те же счётчики, но для шести поглощённых вершин: «в одиночку» (ядро + вершина) и «в грани» (полная грань 5 из 5: резонанс включён). **Перевернул выбор** — доля решений, где без наклона вершины выбор стал бы другим; **запас лидера** — когда наклонное намерение лидер: на сколько оно опережает второе (наклон сработает, только если запас меньше его веса 0.2).
+
+| вершина | где | наклон к | условие верно | из них решила нужда | из остальных: наклонное уже лидер | если лидер: запас над вторым p10 / медиана | если не лидер: отставание от лидера p10 / медиана | переворот, % всех решений |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT BODY/ANVIL (a5) Breakthrough | в одиночку | strike | 16.7% | 1% | 84% | 0.12 / **0.15** (n=10122) | 0.01 / 0.01 (n=1891) | 12.67% |
+| ONSLAUGHT BODY/ANVIL (a5) Breakthrough | в полной грани | strike | 21.2% | 4% | 94% | 0.50 / **0.50** (n=12973) | 0.36 / 0.42 (n=765) | 0.02% |
+| ONSLAUGHT WILL/STILL (c5) Rampage | в одиночку | strike | 15.8% | 2% | 76% | 0.11 / **0.12** (n=9303) | 0.00 / 0.03 (n=2895) | 11.19% |
+| ONSLAUGHT WILL/STILL (c5) Rampage | в полной грани | strike | 16.4% | 4% | 96% | 0.25 / **0.25** (n=11879) | 0.40 / 0.53 (n=540) | 0.55% |
+| RAIDER BODY/ANVIL (a5) Perfect Prick | в одиночку | sting | 28.8% | 2% | 78% | 0.09 / **0.26** (n=17436) | 0.03 / 0.24 (n=4871) | 6.55% |
+| RAIDER BODY/ANVIL (a5) Perfect Prick | в полной грани | sting | 29.4% | 5% | 96% | 0.36 / **0.73** (n=21939) | 0.02 / 0.07 (n=830) | 0.93% |
+| RAIDER WILL/STILL (c5) Killing Run | в одиночку | press | 14.0% | 8% | 98% | 0.01 / **0.17** (n=9564) | 0.01 / 0.05 (n=197) | 11.91% |
+| RAIDER WILL/STILL (c5) Killing Run | в полной грани | press | 17.1% | 11% | 8% | 0.10 / **0.24** (n=823) | 0.31 / 0.43 (n=9657) | 0.48% |
+| BULWARK WILL/STILL (c5) Clinch | в одиночку | press | 83.9% | 59% | 54% | 0.01 / **0.11** (n=16611) | 0.06 / 0.14 (n=14303) | 15.44% |
+| BULWARK WILL/STILL (c5) Clinch | в полной грани | press | 83.0% | 61% | 43% | 0.10 / **0.24** (n=12364) | 0.14 / 0.40 (n=16405) | 5.00% |
+| AMBUSH MIND/COLD (b5) Phantom | в одиночку | break | 16.0% | 65% | 15% | 0.04 / **0.17** (n=704) | 0.26 / 0.84 (n=4042) | 0.82% |
+| AMBUSH MIND/COLD (b5) Phantom | в полной грани | break | 13.6% | 65% | 23% | 0.15 / **0.29** (n=980) | 0.18 / 0.52 (n=3360) | 0.16% |
+
+## Пункт 9. Полные грани — ПОДТВЕРЖДЕНО; две отрицательные — ЧАСТИЧНО
+
+Таблица — пересчёт сырья перезамера (800 боёв на грань).
+
+### Пункт 9. Полные грани (5 из 5) против голых четырёх ядер
+
+Пересчёт из сырых данных перезамера (`docs/crystal-remeasure/out/raw`, 800 боёв на грань, парный сдвиг к голому ядру на тех же зёрнах).
+
+| ядро | грань | доля побед, % | сдвиг к голому, п.п. [95%] | медиана, с | дольше 100 с | максимум, с |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | BODY (RAM) | 98.1 | +49.4 [+45.8…+53.0] | 42.2 | 0 | 69.1 |
+| ONSLAUGHT | MIND (CHASE) | 46.4 | -2.4 [-7.1…+2.4] | 49.7 | 0 | 72.5 |
+| ONSLAUGHT | WILL (FRENZY) | 54.0 | +5.3 [+0.4…+10.1] | 49.2 | 0 | 68.9 |
+| RAIDER | BODY (JAB) | 44.0 | +3.4 [-1.2…+8.0] | 50.5 | 0 | 77.5 |
+| RAIDER | MIND (FEINT) | 36.1 | -4.5 [-9.1…+0.1] | 49.0 | 0 | 72.2 |
+| RAIDER | WILL (HUNT) | 78.4 | +37.8 [+33.5…+42.0] | 44.3 | 0 | 63.4 |
+| BULWARK | BODY (BASTION) | 97.9 | +27.4 [+24.1…+30.7] | 59.0 | 1 | 106.5 |
+| BULWARK | MIND (BREAKER) | 92.1 | +21.6 [+18.0…+25.3] | 53.4 | 0 | 77.8 |
+| BULWARK | WILL (VICE) | 84.0 | +13.5 [+9.5…+17.5] | 55.6 | 0 | 88.9 |
+| AMBUSH | BODY (TRAP) | 71.5 | +29.4 [+25.0…+33.7] | 50.2 | 0 | 88.6 |
+| AMBUSH | MIND (SHADOW) | 67.6 | +25.5 [+20.9…+30.1] | 55.9 | 0 | 91.3 |
+| AMBUSH | WILL (STING) | 70.4 | +28.2 [+23.7…+32.8] | 48.6 | 0 | 78.9 |
+
+**Две отрицательные (гипотеза → проверка по каналам, 400 зёрен на врага):**
+- **ONSLAUGHT MIND −2.4** — почти наверняка шум: на 400 зёрен полная грань −0.3 [−3.6…+3.0] (набор 1 −2.4, набор 2 +1.8). Но **наклоны** (резонанс + теги) сами по себе вредят (−3.9 [−7.3…−0.6]): они перестраивают выбор — голое ядро PRESS 99%, полная грань PRESS 56% / HOLD 43% — а оси дают +1.7. Сдвиг к HOLD создают резонанс и теги вместе (по отдельности ≈ 0: −0.1 и −0.3; вместе −3.9) — в первую очередь тег Lockdown (→HOLD при «близко», условие верно в 91% решений); ядру же выгоден постоянный напор.
+- **RAIDER MIND −4.5** — отрицательна на обоих наборах (−4.5 / −1.8; вместе −3.1 [−6.4…+0.1]). Оси дают +3.9, резонанс ветви −8.4: он переводит выбор из strike 54% в sting 58% (жалящие удары слабее по урону). Гипотеза: наклон «дома ветви» противоречит профилю ядра. Проверка — строка «только резонанс ветви» в таблице.
+
+### Пункт 9 (гипотеза). Почему MIND у ONSLAUGHT (−2.4) и RAIDER (−4.5) хуже голого ядра
+
+Полная грань MIND (5 из 5) против 4 голых ядер, 400 зёрен на врага; варианты: **оси** (только сдвиги осей и рамп), **резонанс** (только наклон «родных» намерений ветви, срабатывает при ≥ 3 кристаллах), **теги** (только наклоны тегов), **наклоны** (резонанс + теги без осей), **оси без наклонов**, **полная**.
+
+#### ONSLAUGHT
+
+| что оставлено | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 |
+| --- | --- | --- |
+| полная грань | **-0.3 [-3.6…+3.0]** | -2.4 / +1.8 |
+| только оси (наклонов нет, рычагов нет) | **+1.7 [-1.7…+5.1]** | +0.1 / +3.3 |
+| оси + рычаги, без наклонов | **+1.7 [-1.7…+5.1]** | +0.1 / +3.3 |
+| только наклоны (резонанс + теги) | **-3.9 [-7.3…-0.6]** | -3.5 / -4.4 |
+| только резонанс ветви | **-0.1 [-1.1…+0.9]** | -0.1 / +0.0 |
+| только теги | **-0.3 [-1.0…+0.5]** | -0.6 / +0.1 |
+
+Намерения (доля тиков игрока): голое — press 99%, strike 1%, sting 0%, hold 0%, break 0%, breathe 0%, catch 0%; полная грань — press 56%, strike 0%, sting 0%, hold 43%, break 0%, breathe 0%, catch 0%.
+
+#### RAIDER
+
+| что оставлено | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 |
+| --- | --- | --- |
+| полная грань | **-3.1 [-6.4…+0.1]** | -4.5 / -1.8 |
+| только оси (наклонов нет, рычагов нет) | **+3.9 [+1.0…+6.9]** | +2.5 / +5.4 |
+| оси + рычаги, без наклонов | **+1.3 [-1.7…+4.4]** | -0.9 / +3.5 |
+| только наклоны (резонанс + теги) | **-8.0 [-11.2…-4.8]** | -9.5 / -6.5 |
+| только резонанс ветви | **-8.4 [-11.6…-5.2]** | -9.8 / -7.1 |
+| только теги | **-5.3 [-8.5…-2.2]** | -4.6 / -6.0 |
+
+Намерения (доля тиков игрока): голое — press 6%, strike 54%, sting 17%, hold 0%, break 14%, breathe 3%, catch 6%; полная грань — press 2%, strike 37%, sting 58%, hold 0%, break 0%, breathe 3%, catch 0%.
+
+## Пункт 10. Сборки на 7 кристаллов — ЗАМЕРЕНО (новый замер)
+
+**Код (подтверждено чтением).** Условий зажигания нет: `buildTree(coreId, lit)` (`src/data/upgradeTree.js`) зажигает кристалл, если он открыт (`open`), укладывается в пул `RESOURCE = 7` (`src/data/upgradeData.js:14`) и в предел грани (`limit` 5). Порог «3 кристалла одной грани» — это **резонанс грани**: при ≥ 3 зажжённых кристаллах грани включается наклон «родных» намерений (`src/data/branchThreshold.js` `resolveLeans`, дом грани `BRANCH_HOME`; веса `combatBalance.js` `grani.homeLean` 0.30/0.15, порог `grani.threshold` 3), плюс теги (`TAG_LEANS`, веса `tagLean` 0.12, `vertexLean` 0.20).
+
+**Состав замера.** 27 сборок на ядро + голое: 5+2 (6), 4+3 (6), 3+3+1 (3), плюс сверх ТЗ 3+2+2 (3), 5+1+1 (3), 4+2+1 (6). «Россыпь из 7 без порога» невозможна (принцип Дирихле: 3 грани × максимум 2 кристалла без порога = 6 < 7) — ближайшее к ней 3+2+2 (порог набирает ровно одна грань). Поля: «4 голых ядра»; «4 ядра со сборками ботов». 400 зёрен на врага × 4 врага = 1600 боёв на сборку на поле; два набора зёрен.
+
+**Главное.**
+- Самая сильная сборка каждого ядра (доля побед против голых / против ботов): ONSLAUGHT **a5c2** — 99.1 / 91.6; RAIDER **c5a2** — 79.6 / 65.2; BULWARK **a5c2** — 99.3 / 84.4; AMBUSH **a5b2** — 83.3 / 69.7 (буквы — грани, число — кристаллов в грани: a = BODY, b = MIND, c = WILL).
+- Отрыв от второй: значим только у RAIDER (+3.6 [+1.0…+6.2] против голых; +3.4 [+0.4…+6.5] против ботов) и AMBUSH против голых (+2.3 [+0.4…+4.2]). Остальные вершины статистически неотличимы от 2–3 соседей (ONSLAUGHT против ботов — 3, BULWARK — 3 на обоих полях). Оптимум плоский: «лучшую сборку» надо читать как «любая из верхних».
+- Решает не рисунок (5+2, 5+1+1, 3+2+2 — среднее +33.4 / +33.1 / +32.7; 4+2+1 +31.2; 3+3+1 +28.0; 4+3 +27.8), а **какая грань набрана**: у ONSLAUGHT все сборки с BODY ≥ 3 кристаллов дают 91.6–99.1%, с BODY ≤ 2 — 49–67%; у RAIDER грань WILL (+37.8 в одиночку), у BULWARK BODY, у AMBUSH почти любая.
+- Есть сборки **хуже голого ядра**: RAIDER a4b3 30.7% (−8.9 против голых), RAIDER b4a3 (−4.5 против ботов). Для RAIDER MIND как грань вредит (см. пункт 9).
+
+**Как боты собирают кристаллы сейчас.** `src/services/collapseRun.js` `buildBotSide` → `src/data/foeCompose.js` `composeFoe`/`randomLitIds`: число кристаллов N тянется одно на сторону равномерно от `COMBAT_BALANCE.collapse.botFacetsMin` = 0 до `botFacetsMax` = 7 (`combatBalance.js`; потолок ботов задан отдельно от `RESOURCE` игрока, намеренно), сами кристаллы — N случайных из 15 (Фишер–Йейтс по всему списку, потом `buildTree`) без учёта граней. Среднее 3.5, порог резонанса (3 в одной грани) набирается случайно. В рейде охрана и босс без кристаллов (`composeRaid`). Воспроизведено в замере как поле «боты» (сборка бота одна на пару «ядро × зерно»).
+
+| ядро | поле | голое ядро, % | лучшая сборка (число кристаллов по граням) | её доля побед, % | вторая | отрыв от второй, п.п. [95%] (набор 1 / набор 2) | неотличимы от лучшей (95%) | худшая сборка: доля побед, % (сдвиг к голому) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | голые ядра | 46.9 | **a5c2** | 99.1 | a5b2 (98.1) | +1.0 [+0.2…+1.8] (+0.6 / +1.4) | 1: a5c2 | b5a1c1: 49.3 (+2.4) |
+| ONSLAUGHT | боты со сборками | 26.6 | **a5c2** | 91.6 | a5b1c1 (91.6) | +0.0 [-1.8…+1.8] (-1.4 / +1.4) | 3: a5c2, a5b1c1, a5b2 | b5c2: 30.3 (+3.7) |
+| RAIDER | голые ядра | 39.6 | **c5a2** | 79.6 | c5a1b1 (76.1) | +3.6 [+1.0…+6.2] (+4.8 / +2.4) | 1: c5a2 | a4b3: 30.7 (-8.9) |
+| RAIDER | боты со сборками | 24.8 | **c5a2** | 65.2 | c5b2 (61.8) | +3.4 [+0.4…+6.5] (+1.4 / +5.5) | 1: c5a2 | b4a3: 20.3 (-4.5) |
+| BULWARK | голые ядра | 71.8 | **a5c2** | 99.3 | a5b1c1 (99.2) | +0.1 [-0.6…+0.7] (-0.3 / +0.4) | 3: a5c2, a5b1c1, a5b2 | c4b3: 86.9 (+15.1) |
+| BULWARK | боты со сборками | 48.0 | **a5c2** | 84.4 | a5b2 (83.9) | +0.5 [-1.5…+2.5] (+0.6 / +0.4) | 3: a5c2, a5b2, b5a2 | c4b3: 63.0 (+15.0) |
+| AMBUSH | голые ядра | 43.0 | **a5b2** | 83.3 | a5b1c1 (81.0) | +2.3 [+0.4…+4.2] (+2.0 / +2.6) | 1: a5b2 | a4c3: 65.1 (+22.1) |
+| AMBUSH | боты со сборками | 26.9 | **a5b2** | 69.7 | a5b1c1 (68.5) | +1.2 [-1.0…+3.4] (+0.3 / +2.1) | 2: a5b2, a5b1c1 | a4c3: 47.1 (+20.2) |
+
+Полные таблицы по каждому ядру и полю (27 сборок, интервалы, два набора, ранги) — ниже.
+
+### Пункт 10. Сборки на 7 кристаллов
+
+**В коде (подтверждено чтением).** Условий зажигания нет: `buildTree(coreId, lit)` (`src/data/upgradeTree.js`) зажигает кристалл, если он `open`, укладывается в пул `RESOURCE = 7` (`src/data/upgradeData.js:14`, одно значение на проект; до 30.09.2026 было 5) и в предел ветви `limit = 5`. Порядок шагов внутри грани не проверяется — зажечь можно любой набор. Потолок **7 из 15**. Резонанс ветви включается порогом `COMBAT_BALANCE.grani.threshold = 3` (`combatBalance.js:290`): ≥ 3 зажжённых кристалла **одной** грани → наклон «родных» намерений ветви (`branchThreshold.js` BRANCH_HOME: главное +0.3, второстепенное +0.15, условие «всегда»). Ниже порога ветвь вклада не даёт, а три отдельных кристалла разных граней порога не набирают.
+
+**«Россыпь из 7 без порога» невозможна:** три грани × максимум 2 кристалла без порога = 6 < 7 (принцип Дирихле) — при 7 кристаллах хотя бы одна грань набирает 3. Ближайшее к «россыпи» — 3+2+2 (порог набирает ровно одна грань); оно измерено. Сверх списка ТЗ измерены ещё 5+1+1 и 4+2+1.
+
+**Как боты собирают кристаллы сейчас** (`src/services/collapseRun.js` `buildBotSide` → `src/data/foeCompose.js` `composeFoe` / `randomLitIds`): число зажжённых кристаллов N тянется **одно на сторону** равномерно от `COMBAT_BALANCE.collapse.botFacetsMin = 0` до `botFacetsMax = 7` (`combatBalance.js`; потолок ботов задан отдельно от `RESOURCE` игрока, намеренно); сами кристаллы — N **случайных из 15** (Фишер–Йейтс по всему списку, потом `buildTree`), без учёта граней и порядка. Получаются в среднем 3.5 кристалла, равновероятно 0…7; порог резонанса (3 в одной грани) набирается случайно. В рейде охрана и босс идут без кристаллов вовсе (`composeRaid`), союзники получают столько же, сколько у игрока. Этот способ воспроизведён в замере как поле «боты» (для каждой пары «ядро врага × зерно» сборка одна и та же у всех измеряемых сборок — сравнение парное).
+
+#### ONSLAUGHT — поле «4 голых ядра»
+
+Голое ядро против этого поля: **46.9%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | a5c2 | 5+2 | 99.1 | +52.2 [+49.7…+54.7] | +50.1 / +54.3 | 1 / 1 | 41.5 |
+| 2 | a5b2 | 5+2 | 98.1 | +51.2 [+48.6…+53.7] | +49.5 / +52.9 | 2 / 2 | 42.0 |
+| 3 | a5b1c1 | 5+1+1 | 97.9 | +51.0 [+48.4…+53.6] | +49.5 / +52.5 | 3 / 3 | 41.5 |
+| 4 | a4b3 | 4+3 | 95.2 | +48.3 [+45.6…+50.9] | +45.6 / +50.9 | 7 / 4 | 45.6 |
+| 5 | a4c3 | 4+3 | 94.9 | +48.0 [+45.3…+50.7] | +47.0 / +49.0 | 4 / 7 | 44.9 |
+| 6 | a4c2b1 | 4+2+1 | 94.4 | +47.4 [+44.8…+50.1] | +45.5 / +49.4 | 8 / 6 | 45.3 |
+| 7 | a3b3c1 | 3+3+1 | 94.3 | +47.3 [+44.6…+50.0] | +46.3 / +48.4 | 6 / 9 | 46.4 |
+| 8 | a4b2c1 | 4+2+1 | 94.1 | +47.2 [+44.5…+49.9] | +46.9 / +47.5 | 5 / 11 | 45.4 |
+| 9 | b4a3 | 4+3 | 93.9 | +47.0 [+44.3…+49.7] | +44.5 / +49.5 | 9 / 5 | 46.7 |
+| 10 | a3b2c2 | 3+2+2 | 92.9 | +45.9 [+43.2…+48.6] | +42.9 / +49.0 | 11 / 8 | 46.3 |
+| 11 | c4a3 | 4+3 | 92.8 | +45.8 [+43.1…+48.5] | +43.9 / +47.8 | 10 / 10 | 46.4 |
+| 12 | a3c3b1 | 3+3+1 | 91.6 | +44.7 [+41.9…+47.4] | +42.3 / +47.1 | 12 / 12 | 46.3 |
+| 13 | c3a2b2 | 3+2+2 | 67.3 | +20.4 [+17.1…+23.7] | +18.6 / +22.1 | 13 / 13 | 47.9 |
+| 14 | b3a2c2 | 3+2+2 | 66.6 | +19.6 [+16.3…+23.0] | +17.9 / +21.4 | 14 / 14 | 47.9 |
+| 15 | c4a2b1 | 4+2+1 | 65.2 | +18.3 [+14.9…+21.6] | +17.1 / +19.4 | 15 / 16 | 48.0 |
+| 16 | b4a2c1 | 4+2+1 | 64.1 | +17.2 [+13.9…+20.5] | +14.6 / +19.8 | 17 / 15 | 48.1 |
+| 17 | c5a2 | 5+2 | 64.0 | +17.1 [+13.7…+20.4] | +15.6 / +18.5 | 16 / 17 | 48.4 |
+| 18 | b5a2 | 5+2 | 62.6 | +15.7 [+12.3…+19.1] | +13.6 / +17.8 | 18 / 18 | 48.7 |
+| 19 | c5b2 | 5+2 | 54.8 | +7.9 [+4.4…+11.3] | +8.5 / +7.2 | 19 / 23 | 49.2 |
+| 20 | b3c3a1 | 3+3+1 | 54.8 | +7.8 [+4.5…+11.2] | +6.5 / +9.1 | 21 / 20 | 49.1 |
+| 21 | c4b3 | 4+3 | 54.1 | +7.1 [+3.8…+10.5] | +7.5 / +6.8 | 20 / 24 | 49.3 |
+| 22 | c5a1b1 | 5+1+1 | 53.9 | +7.0 [+3.7…+10.3] | +5.0 / +9.0 | 23 / 21 | 49.0 |
+| 23 | b4c3 | 4+3 | 53.4 | +6.5 [+3.2…+9.8] | +3.4 / +9.6 | 24 / 19 | 49.4 |
+| 24 | c4b2a1 | 4+2+1 | 52.9 | +5.9 [+2.6…+9.3] | +3.3 / +8.6 | 25 / 22 | 49.1 |
+| 25 | b4c2a1 | 4+2+1 | 52.3 | +5.4 [+1.9…+8.8] | +5.4 / +5.4 | 22 / 26 | 49.3 |
+| 26 | b5c2 | 5+2 | 51.7 | +4.8 [+1.5…+8.1] | +3.0 / +6.6 | 26 / 25 | 49.8 |
+| 27 | b5a1c1 | 5+1+1 | 49.3 | +2.4 [-1.0…+5.8] | -0.1 / +4.9 | 27 / 27 | 49.9 |
+
+**Лучшая: a5c2** (99.1%). Отрыв от второй (a5b2, 98.1%): +1.0 [+0.2…+1.8]; на наборах +0.6 / +1.4. Среднее по остальным 26: 73.4% (отрыв лучшей +25.8 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 4+3: +33.8 (6 сб.); 3+3+1: +33.3 (3 сб.); 3+2+2: +28.6 (3 сб.); 5+2: +24.8 (6 сб.); 4+2+1: +23.6 (6 сб.); 5+1+1: +20.1 (3 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 53.5 (4) | 52.6 (5) | 65.0 (6) | 93.1 (5) | 94.7 (4) | 98.4 (3) |
+| MIND | 87.7 (4) | 80.6 (5) | 76.7 (6) | 73.0 (5) | 66.0 (4) | 54.6 (3) |
+| WILL | 87.5 (4) | 80.0 (5) | 76.2 (6) | 72.4 (5) | 66.2 (4) | 57.6 (3) |
+
+#### ONSLAUGHT — поле «4 ядра со сборками ботов»
+
+Голое ядро против этого поля: **26.6%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | a5c2 | 5+2 | 91.6 | +65.0 [+62.5…+67.5] | +66.0 / +64.0 | 2 / 1 | 42.5 |
+| 2 | a5b1c1 | 5+1+1 | 91.6 | +65.0 [+62.5…+67.5] | +67.4 / +62.6 | 1 / 2 | 42.5 |
+| 3 | a5b2 | 5+2 | 90.9 | +64.3 [+61.8…+66.8] | +66.0 / +62.6 | 3 / 3 | 42.8 |
+| 4 | a4c2b1 | 4+2+1 | 82.1 | +55.5 [+52.8…+58.2] | +58.8 / +52.3 | 4 / 6 | 45.7 |
+| 5 | a4c3 | 4+3 | 81.6 | +55.0 [+52.3…+57.7] | +56.1 / +53.9 | 6 / 4 | 45.5 |
+| 6 | a4b2c1 | 4+2+1 | 80.3 | +53.8 [+51.1…+56.4] | +57.0 / +50.5 | 5 / 8 | 45.8 |
+| 7 | a4b3 | 4+3 | 79.1 | +52.5 [+49.8…+55.2] | +52.4 / +52.6 | 8 / 5 | 46.1 |
+| 8 | a3b3c1 | 3+3+1 | 77.9 | +51.4 [+48.6…+54.2] | +51.9 / +50.9 | 10 / 7 | 46.8 |
+| 9 | a3b2c2 | 3+2+2 | 77.5 | +50.9 [+48.2…+53.7] | +53.6 / +48.3 | 7 / 9 | 46.8 |
+| 10 | c4a3 | 4+3 | 76.6 | +50.1 [+47.3…+52.9] | +52.0 / +48.1 | 9 / 10 | 47.1 |
+| 11 | b4a3 | 4+3 | 75.3 | +48.8 [+46.0…+51.5] | +50.0 / +47.5 | 11 / 12 | 47.3 |
+| 12 | a3c3b1 | 3+3+1 | 74.6 | +48.0 [+45.2…+50.8] | +48.3 / +47.8 | 12 / 11 | 46.9 |
+| 13 | b3a2c2 | 3+2+2 | 45.1 | +18.5 [+15.5…+21.5] | +21.3 / +15.8 | 13 / 13 | 47.0 |
+| 14 | c3a2b2 | 3+2+2 | 44.4 | +17.9 [+14.9…+20.8] | +20.1 / +15.6 | 14 / 14 | 47.1 |
+| 15 | c5a2 | 5+2 | 42.1 | +15.5 [+12.6…+18.4] | +17.5 / +13.5 | 15 / 17 | 47.4 |
+| 16 | c4a2b1 | 4+2+1 | 41.8 | +15.3 [+12.2…+18.3] | +16.5 / +14.0 | 16 / 16 | 47.1 |
+| 17 | b5a2 | 5+2 | 41.3 | +14.8 [+11.8…+17.7] | +14.4 / +15.1 | 18 / 15 | 47.8 |
+| 18 | b4a2c1 | 4+2+1 | 39.8 | +13.2 [+10.3…+16.1] | +16.0 / +10.4 | 17 / 18 | 47.2 |
+| 19 | c5b2 | 5+2 | 33.2 | +6.6 [+3.7…+9.6] | +8.0 / +5.3 | 20 / 20 | 47.8 |
+| 20 | c5a1b1 | 5+1+1 | 32.9 | +6.4 [+3.6…+9.2] | +7.5 / +5.3 | 21 / 21 | 47.9 |
+| 21 | b3c3a1 | 3+3+1 | 32.7 | +6.1 [+3.3…+9.0] | +7.1 / +5.1 | 22 / 22 | 47.9 |
+| 22 | b4c2a1 | 4+2+1 | 32.7 | +6.1 [+3.2…+9.0] | +8.3 / +4.0 | 19 / 24 | 47.8 |
+| 23 | c4b2a1 | 4+2+1 | 31.7 | +5.1 [+2.3…+7.9] | +5.5 / +4.8 | 25 / 23 | 47.8 |
+| 24 | b5a1c1 | 5+1+1 | 31.5 | +4.9 [+2.1…+7.8] | +4.5 / +5.4 | 26 / 19 | 48.3 |
+| 25 | b4c3 | 4+3 | 31.2 | +4.6 [+1.7…+7.5] | +5.9 / +3.4 | 23 / 27 | 48.0 |
+| 26 | c4b3 | 4+3 | 31.2 | +4.6 [+1.7…+7.5] | +5.8 / +3.5 | 24 / 26 | 48.0 |
+| 27 | b5c2 | 5+2 | 30.3 | +3.7 [+0.9…+6.5] | +3.8 / +3.6 | 27 / 25 | 48.3 |
+
+**Лучшая: a5c2** (91.6%). Отрыв от второй (a5b1c1, 91.6%): +0.0 [-1.8…+1.8]; на наборах -1.4 / +1.4. Среднее по остальным 26: 55.0% (отрыв лучшей +36.6 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 4+3: +35.9 (6 сб.); 3+3+1: +35.2 (3 сб.); 3+2+2: +29.1 (3 сб.); 5+2: +28.3 (6 сб.); 5+1+1: +25.4 (3 сб.); 4+2+1: +24.8 (6 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 31.5 (4) | 32.3 (5) | 42.4 (6) | 76.4 (5) | 80.8 (4) | 91.3 (3) |
+| MIND | 73.0 (4) | 64.6 (5) | 59.7 (6) | 53.2 (5) | 44.7 (4) | 34.4 (3) |
+| WILL | 71.6 (4) | 64.2 (5) | 59.9 (6) | 52.9 (5) | 45.3 (4) | 36.1 (3) |
+
+#### RAIDER — поле «4 голых ядра»
+
+Голое ядро против этого поля: **39.6%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | c5a2 | 5+2 | 79.6 | +40.0 [+37.0…+43.0] | +39.8 / +40.3 | 1 / 1 | 43.4 |
+| 2 | c5a1b1 | 5+1+1 | 76.1 | +36.4 [+33.4…+39.5] | +35.0 / +37.9 | 2 / 2 | 44.1 |
+| 3 | c5b2 | 5+2 | 75.4 | +35.8 [+32.7…+38.8] | +34.6 / +36.9 | 3 / 3 | 43.9 |
+| 4 | c4a3 | 4+3 | 69.6 | +29.9 [+26.7…+33.2] | +30.9 / +29.0 | 4 / 4 | 46.1 |
+| 5 | c4b2a1 | 4+2+1 | 66.6 | +27.0 [+23.9…+30.1] | +26.8 / +27.3 | 5 / 6 | 45.9 |
+| 6 | c4a2b1 | 4+2+1 | 65.3 | +25.6 [+22.4…+28.9] | +23.6 / +27.6 | 6 / 5 | 45.7 |
+| 7 | c4b3 | 4+3 | 59.6 | +20.0 [+16.7…+23.3] | +18.3 / +21.8 | 8 / 7 | 46.5 |
+| 8 | c3a2b2 | 3+2+2 | 58.7 | +19.1 [+15.8…+22.3] | +17.9 / +20.3 | 9 / 8 | 46.9 |
+| 9 | a4c3 | 4+3 | 57.3 | +17.7 [+14.4…+21.0] | +19.5 / +15.9 | 7 / 10 | 48.0 |
+| 10 | a3c3b1 | 3+3+1 | 56.9 | +17.3 [+14.0…+20.5] | +17.5 / +17.0 | 10 / 9 | 48.2 |
+| 11 | a5c2 | 5+2 | 53.5 | +13.9 [+10.6…+17.2] | +13.0 / +14.8 | 11 / 11 | 49.7 |
+| 12 | a3b2c2 | 3+2+2 | 49.4 | +9.8 [+6.5…+13.1] | +10.3 / +9.4 | 12 / 12 | 49.1 |
+| 13 | b4c3 | 4+3 | 49.2 | +9.6 [+6.2…+12.9] | +10.3 / +8.9 | 13 / 15 | 47.3 |
+| 14 | b3c3a1 | 3+3+1 | 48.9 | +9.3 [+5.9…+12.7] | +9.6 / +9.0 | 14 / 14 | 47.3 |
+| 15 | b3a2c2 | 3+2+2 | 47.6 | +7.9 [+4.6…+11.3] | +6.5 / +9.4 | 17 / 13 | 48.5 |
+| 16 | a5b1c1 | 5+1+1 | 47.1 | +7.5 [+4.2…+10.8] | +7.0 / +8.0 | 15 / 17 | 50.6 |
+| 17 | a4c2b1 | 4+2+1 | 47.1 | +7.4 [+4.1…+10.7] | +7.0 / +7.9 | 16 / 18 | 49.3 |
+| 18 | b5c2 | 5+2 | 46.9 | +7.3 [+3.9…+10.7] | +6.1 / +8.5 | 18 / 16 | 48.0 |
+| 19 | a5b2 | 5+2 | 43.6 | +4.0 [+0.7…+7.3] | +3.8 / +4.3 | 19 / 20 | 51.0 |
+| 20 | b4c2a1 | 4+2+1 | 42.8 | +3.1 [-0.2…+6.4] | +0.1 / +6.1 | 22 / 19 | 49.0 |
+| 21 | a4b2c1 | 4+2+1 | 42.1 | +2.5 [-0.8…+5.8] | +3.4 / +1.6 | 20 / 22 | 49.9 |
+| 22 | b4a2c1 | 4+2+1 | 40.1 | +0.4 [-2.9…+3.8] | -2.6 / +3.5 | 24 / 21 | 49.3 |
+| 23 | b5a1c1 | 5+1+1 | 39.5 | -0.1 [-3.4…+3.2] | +0.9 / -1.1 | 21 / 23 | 49.0 |
+| 24 | a3b3c1 | 3+3+1 | 38.4 | -1.3 [-4.5…+2.0] | -0.8 / -1.8 | 23 / 24 | 50.5 |
+| 25 | b5a2 | 5+2 | 36.9 | -2.8 [-6.0…+0.5] | -2.8 / -2.8 | 25 / 25 | 49.2 |
+| 26 | b4a3 | 4+3 | 32.2 | -7.4 [-10.6…-4.3] | -7.1 / -7.8 | 26 / 26 | 51.1 |
+| 27 | a4b3 | 4+3 | 30.7 | -8.9 [-12.0…-5.8] | -9.0 / -8.9 | 27 / 27 | 51.2 |
+
+**Лучшая: c5a2** (79.6%). Отрыв от второй (c5a1b1, 76.1%): +3.6 [+1.0…+6.2]; на наборах +4.8 / +2.4. Среднее по остальным 26: 50.8% (отрыв лучшей +28.8 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 5+2: +16.4 (6 сб.); 5+1+1: +14.6 (3 сб.); 3+2+2: +12.3 (3 сб.); 4+2+1: +11.0 (6 сб.); 4+3: +10.1 (6 сб.); 3+3+1: +8.4 (3 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 57.8 (4) | 54.8 (5) | 54.7 (6) | 49.3 (5) | 44.3 (4) | 48.1 (3) |
+| MIND | 65.0 (4) | 58.5 (5) | 56.0 (6) | 45.0 (5) | 41.0 (4) | 41.1 (3) |
+| WILL | 35.8 (4) | 41.4 (5) | 47.9 (6) | 54.2 (5) | 65.3 (4) | 77.0 (3) |
+
+#### RAIDER — поле «4 ядра со сборками ботов»
+
+Голое ядро против этого поля: **24.8%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | c5a2 | 5+2 | 65.2 | +40.4 [+37.6…+43.3] | +41.3 / +39.6 | 1 / 1 | 43.1 |
+| 2 | c5b2 | 5+2 | 61.8 | +37.0 [+34.1…+39.9] | +39.9 / +34.1 | 2 / 2 | 43.5 |
+| 3 | c5a1b1 | 5+1+1 | 58.6 | +33.8 [+30.9…+36.8] | +35.0 / +32.6 | 3 / 3 | 43.8 |
+| 4 | c4a3 | 4+3 | 50.6 | +25.8 [+22.8…+28.8] | +29.9 / +21.8 | 4 / 5 | 46.2 |
+| 5 | c4a2b1 | 4+2+1 | 49.8 | +25.1 [+22.1…+28.0] | +26.9 / +23.3 | 5 / 4 | 45.3 |
+| 6 | c4b2a1 | 4+2+1 | 47.3 | +22.5 [+19.6…+25.4] | +24.6 / +20.4 | 6 / 6 | 45.0 |
+| 7 | c4b3 | 4+3 | 43.7 | +18.9 [+16.0…+21.9] | +17.8 / +20.1 | 8 / 7 | 46.0 |
+| 8 | c3a2b2 | 3+2+2 | 42.8 | +18.1 [+15.1…+21.1] | +18.0 / +18.1 | 7 / 8 | 45.8 |
+| 9 | a5c2 | 5+2 | 40.1 | +15.3 [+12.5…+18.2] | +16.0 / +14.6 | 9 / 9 | 49.4 |
+| 10 | a4c3 | 4+3 | 39.9 | +15.1 [+12.2…+18.0] | +15.6 / +14.6 | 10 / 10 | 47.6 |
+| 11 | a3c3b1 | 3+3+1 | 39.6 | +14.9 [+11.9…+17.9] | +15.5 / +14.2 | 11 / 11 | 47.4 |
+| 12 | b4c3 | 4+3 | 37.6 | +12.9 [+10.0…+15.8] | +13.3 / +12.5 | 12 / 12 | 47.0 |
+| 13 | b3c3a1 | 3+3+1 | 35.9 | +11.1 [+8.1…+14.1] | +12.0 / +10.3 | 13 / 13 | 46.7 |
+| 14 | a3b2c2 | 3+2+2 | 33.3 | +8.6 [+5.6…+11.5] | +9.0 / +8.1 | 14 / 15 | 47.9 |
+| 15 | b5c2 | 5+2 | 32.6 | +7.9 [+4.9…+10.8] | +7.2 / +8.5 | 17 / 14 | 47.2 |
+| 16 | a5b1c1 | 5+1+1 | 32.3 | +7.6 [+4.7…+10.4] | +7.4 / +7.8 | 16 / 16 | 50.1 |
+| 17 | a4c2b1 | 4+2+1 | 31.2 | +6.4 [+3.5…+9.4] | +8.1 / +4.8 | 15 / 18 | 48.7 |
+| 18 | b3a2c2 | 3+2+2 | 30.4 | +5.6 [+2.8…+8.5] | +6.0 / +5.3 | 18 / 17 | 47.6 |
+| 19 | a5b2 | 5+2 | 28.2 | +3.5 [+0.7…+6.3] | +4.4 / +2.6 | 19 / 19 | 50.3 |
+| 20 | a4b2c1 | 4+2+1 | 27.3 | +2.6 [-0.3…+5.4] | +3.4 / +1.8 | 20 / 21 | 48.8 |
+| 21 | b4c2a1 | 4+2+1 | 26.8 | +2.1 [-0.7…+4.8] | +1.8 / +2.4 | 22 / 20 | 48.0 |
+| 22 | b5a1c1 | 5+1+1 | 26.4 | +1.6 [-1.2…+4.5] | +3.4 / -0.1 | 21 / 23 | 48.1 |
+| 23 | b4a2c1 | 4+2+1 | 25.6 | +0.9 [-1.8…+3.6] | +0.4 / +1.4 | 24 / 22 | 48.2 |
+| 24 | a3b3c1 | 3+3+1 | 23.8 | -0.9 [-3.7…+1.8] | -0.1 / -1.8 | 25 / 24 | 49.5 |
+| 25 | b5a2 | 5+2 | 23.3 | -1.5 [-4.3…+1.3] | +0.8 / -3.8 | 23 / 25 | 48.0 |
+| 26 | a4b3 | 4+3 | 21.1 | -3.6 [-6.3…-1.0] | -2.1 / -5.1 | 26 / 26 | 50.3 |
+| 27 | b4a3 | 4+3 | 20.3 | -4.5 [-7.1…-1.9] | -3.1 / -5.9 | 27 / 27 | 50.2 |
+
+**Лучшая: c5a2** (65.2%). Отрыв от второй (c5b2, 61.8%): +3.4 [+0.4…+6.5]; на наборах +1.4 / +5.5. Среднее по остальным 26: 35.8% (отрыв лучшей +29.4 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 5+2: +17.1 (6 сб.); 5+1+1: +14.3 (3 сб.); 4+3: +10.8 (6 сб.); 3+2+2: +10.8 (3 сб.); 4+2+1: +9.9 (6 сб.); 3+3+1: +8.4 (3 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 43.9 (4) | 39.0 (5) | 39.5 (6) | 33.5 (5) | 29.9 (4) | 33.5 (3) |
+| MIND | 48.9 (4) | 42.3 (5) | 40.1 (6) | 31.0 (5) | 27.6 (4) | 27.4 (3) |
+| WILL | 23.2 (4) | 27.1 (5) | 32.4 (6) | 39.2 (5) | 47.8 (4) | 61.8 (3) |
+
+#### BULWARK — поле «4 голых ядра»
+
+Голое ядро против этого поля: **71.8%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | a5c2 | 5+2 | 99.3 | +27.5 [+25.2…+29.8] | +28.6 / +26.4 | 2 / 1 | 57.5 |
+| 2 | a5b1c1 | 5+1+1 | 99.2 | +27.4 [+25.2…+29.7] | +28.9 / +26.0 | 1 / 2 | 57.8 |
+| 3 | a5b2 | 5+2 | 98.8 | +27.1 [+24.8…+29.3] | +28.6 / +25.5 | 3 / 3 | 55.9 |
+| 4 | b5a2 | 5+2 | 97.3 | +25.5 [+23.2…+27.8] | +26.9 / +24.1 | 4 / 5 | 53.9 |
+| 5 | b5a1c1 | 5+1+1 | 97.3 | +25.5 [+23.2…+27.8] | +26.8 / +24.3 | 5 / 4 | 53.5 |
+| 6 | c3a2b2 | 3+2+2 | 96.5 | +24.8 [+22.4…+27.1] | +26.4 / +23.1 | 6 / 7 | 55.5 |
+| 7 | a3b2c2 | 3+2+2 | 95.6 | +23.9 [+21.5…+26.3] | +25.1 / +22.6 | 8 / 8 | 54.8 |
+| 8 | b4c2a1 | 4+2+1 | 95.6 | +23.8 [+21.4…+26.3] | +24.1 / +23.5 | 13 / 6 | 55.5 |
+| 9 | b3a2c2 | 3+2+2 | 95.5 | +23.8 [+21.4…+26.1] | +25.3 / +22.3 | 7 / 10 | 55.7 |
+| 10 | b3c3a1 | 3+3+1 | 95.0 | +23.3 [+20.8…+25.7] | +24.3 / +22.3 | 11 / 11 | 55.8 |
+| 11 | a4b3 | 4+3 | 94.9 | +23.2 [+20.8…+25.6] | +25.1 / +21.3 | 9 / 16 | 55.8 |
+| 12 | c5a2 | 5+2 | 94.7 | +22.9 [+20.5…+25.4] | +24.3 / +21.6 | 12 / 15 | 56.2 |
+| 13 | a3c3b1 | 3+3+1 | 94.7 | +22.9 [+20.5…+25.4] | +23.4 / +22.5 | 19 / 9 | 56.5 |
+| 14 | a4c2b1 | 4+2+1 | 94.7 | +22.9 [+20.5…+25.4] | +24.0 / +21.9 | 14 / 14 | 55.9 |
+| 15 | b4a2c1 | 4+2+1 | 94.6 | +22.8 [+20.3…+25.3] | +24.4 / +21.3 | 10 / 17 | 56.7 |
+| 16 | b4a3 | 4+3 | 94.5 | +22.8 [+20.3…+25.2] | +23.5 / +22.0 | 18 / 12 | 56.5 |
+| 17 | a4c3 | 4+3 | 94.2 | +22.4 [+20.0…+24.9] | +23.9 / +21.0 | 15 / 18 | 57.9 |
+| 18 | c5a1b1 | 5+1+1 | 94.2 | +22.4 [+20.0…+24.9] | +22.9 / +22.0 | 20 / 13 | 55.0 |
+| 19 | a4b2c1 | 4+2+1 | 94.0 | +22.3 [+19.8…+24.7] | +23.6 / +20.9 | 17 / 19 | 56.2 |
+| 20 | a3b3c1 | 3+3+1 | 93.8 | +22.1 [+19.6…+24.6] | +23.9 / +20.3 | 16 / 20 | 56.4 |
+| 21 | c4a2b1 | 4+2+1 | 93.1 | +21.3 [+18.8…+23.8] | +22.8 / +19.9 | 21 / 23 | 56.8 |
+| 22 | b5c2 | 5+2 | 92.6 | +20.9 [+18.3…+23.4] | +21.9 / +19.9 | 22 / 24 | 52.8 |
+| 23 | c4a3 | 4+3 | 92.6 | +20.8 [+18.3…+23.3] | +21.5 / +20.1 | 23 / 21 | 58.1 |
+| 24 | c4b2a1 | 4+2+1 | 92.4 | +20.6 [+18.1…+23.2] | +21.3 / +20.0 | 24 / 22 | 55.6 |
+| 25 | c5b2 | 5+2 | 90.1 | +18.4 [+15.7…+21.0] | +19.6 / +17.1 | 25 / 25 | 53.7 |
+| 26 | b4c3 | 4+3 | 87.9 | +16.1 [+13.5…+18.8] | +15.6 / +16.6 | 26 / 26 | 55.2 |
+| 27 | c4b3 | 4+3 | 86.9 | +15.1 [+12.5…+17.7] | +15.0 / +15.3 | 27 / 27 | 55.2 |
+
+**Лучшая: a5c2** (99.3%). Отрыв от второй (a5b1c1, 99.2%): +0.1 [-0.6…+0.7]; на наборах -0.3 / +0.4. Среднее по остальным 26: 94.2% (отрыв лучшей +5.0 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 5+1+1: +25.1 (3 сб.); 3+2+2: +24.1 (3 сб.); 5+2: +23.7 (6 сб.); 3+3+1: +22.8 (3 сб.); 4+2+1: +22.3 (6 сб.); 4+3: +20.1 (6 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 89.4 (4) | 94.9 (5) | 95.3 (6) | 94.2 (5) | 94.5 (4) | 99.1 (3) |
+| MIND | 95.2 (4) | 95.2 (5) | 94.6 (6) | 93.2 (5) | 93.1 (4) | 95.7 (3) |
+| WILL | 96.4 (4) | 95.8 (5) | 95.5 (6) | 93.7 (5) | 91.2 (4) | 93.0 (3) |
+
+#### BULWARK — поле «4 ядра со сборками ботов»
+
+Голое ядро против этого поля: **48.0%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | a5c2 | 5+2 | 84.4 | +36.4 [+33.7…+39.0] | +37.1 / +35.6 | 1 / 1 | 58.4 |
+| 2 | a5b2 | 5+2 | 83.9 | +35.9 [+33.3…+38.4] | +36.5 / +35.3 | 2 / 2 | 57.4 |
+| 3 | b5a2 | 5+2 | 82.3 | +34.3 [+31.6…+37.0] | +34.8 / +33.9 | 3 / 3 | 55.0 |
+| 4 | a5b1c1 | 5+1+1 | 81.5 | +33.5 [+30.9…+36.1] | +34.4 / +32.6 | 4 / 5 | 58.8 |
+| 5 | b5a1c1 | 5+1+1 | 79.9 | +31.9 [+29.2…+34.6] | +30.4 / +33.5 | 6 / 4 | 54.7 |
+| 6 | a3b2c2 | 3+2+2 | 77.9 | +29.9 [+27.2…+32.7] | +30.9 / +29.0 | 5 / 6 | 55.6 |
+| 7 | a4b3 | 4+3 | 76.1 | +28.1 [+25.4…+30.8] | +29.6 / +26.6 | 7 / 11 | 57.3 |
+| 8 | b3a2c2 | 3+2+2 | 76.1 | +28.1 [+25.3…+30.8] | +27.1 / +29.0 | 10 / 7 | 56.5 |
+| 9 | c5a2 | 5+2 | 74.9 | +26.9 [+24.1…+29.8] | +27.4 / +26.5 | 9 / 12 | 57.2 |
+| 10 | a4c2b1 | 4+2+1 | 74.8 | +26.8 [+24.0…+29.5] | +25.5 / +28.0 | 15 / 9 | 56.8 |
+| 11 | b4a3 | 4+3 | 74.6 | +26.6 [+23.9…+29.3] | +25.6 / +27.6 | 14 / 10 | 57.1 |
+| 12 | a4b2c1 | 4+2+1 | 74.6 | +26.6 [+23.9…+29.3] | +27.1 / +26.1 | 11 / 13 | 56.5 |
+| 13 | c5a1b1 | 5+1+1 | 74.4 | +26.4 [+23.6…+29.3] | +29.1 / +23.8 | 8 / 19 | 55.6 |
+| 14 | a3c3b1 | 3+3+1 | 74.4 | +26.4 [+23.6…+29.1] | +24.5 / +28.2 | 20 / 8 | 57.2 |
+| 15 | b4c2a1 | 4+2+1 | 74.3 | +26.3 [+23.6…+29.0] | +26.6 / +26.0 | 12 / 14 | 56.6 |
+| 16 | a3b3c1 | 3+3+1 | 73.6 | +25.6 [+22.8…+28.3] | +25.4 / +25.8 | 17 / 15 | 57.8 |
+| 17 | b3c3a1 | 3+3+1 | 73.3 | +25.3 [+22.6…+28.0] | +26.1 / +24.5 | 13 / 17 | 56.0 |
+| 18 | b5c2 | 5+2 | 73.1 | +25.1 [+22.3…+27.8] | +24.8 / +25.4 | 19 / 16 | 53.6 |
+| 19 | c3a2b2 | 3+2+2 | 72.9 | +24.9 [+22.2…+27.7] | +25.5 / +24.4 | 16 / 18 | 56.4 |
+| 20 | b4a2c1 | 4+2+1 | 71.9 | +23.9 [+21.2…+26.7] | +24.9 / +23.0 | 18 / 20 | 57.9 |
+| 21 | c4a2b1 | 4+2+1 | 71.1 | +23.1 [+20.3…+25.9] | +23.5 / +22.6 | 21 / 22 | 57.0 |
+| 22 | c4b2a1 | 4+2+1 | 70.5 | +22.5 [+19.7…+25.3] | +22.9 / +22.1 | 22 / 23 | 56.0 |
+| 23 | a4c3 | 4+3 | 70.4 | +22.4 [+19.6…+25.1] | +21.8 / +23.0 | 23 / 21 | 58.3 |
+| 24 | c4a3 | 4+3 | 68.1 | +20.1 [+17.3…+22.9] | +19.8 / +20.4 | 25 / 24 | 58.1 |
+| 25 | c5b2 | 5+2 | 67.7 | +19.7 [+16.7…+22.7] | +20.8 / +18.6 | 24 / 25 | 53.6 |
+| 26 | b4c3 | 4+3 | 64.2 | +16.2 [+13.3…+19.1] | +15.0 / +17.4 | 27 / 26 | 54.8 |
+| 27 | c4b3 | 4+3 | 63.0 | +15.0 [+12.2…+17.8] | +15.3 / +14.8 | 26 / 27 | 54.6 |
+
+**Лучшая: a5c2** (84.4%). Отрыв от второй (a5b2, 83.9%): +0.5 [-1.5…+2.5]; на наборах +0.6 / +0.4. Среднее по остальным 26: 73.8% (отрыв лучшей +10.5 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 5+1+1: +30.6 (3 сб.); 5+2: +29.7 (6 сб.); 3+2+2: +27.6 (3 сб.); 3+3+1: +25.8 (3 сб.); 4+2+1: +24.9 (6 сб.); 4+3: +21.4 (6 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 67.0 (4) | 74.5 (5) | 74.9 (6) | 73.7 (5) | 74.0 (4) | 83.3 (3) |
+| MIND | 74.4 (4) | 75.2 (5) | 74.6 (6) | 72.4 (5) | 71.3 (4) | 78.4 (3) |
+| WILL | 79.2 (4) | 76.3 (5) | 76.8 (6) | 71.0 (5) | 68.2 (4) | 72.4 (3) |
+
+#### AMBUSH — поле «4 голых ядра»
+
+Голое ядро против этого поля: **43.0%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | a5b2 | 5+2 | 83.3 | +40.3 [+37.3…+43.3] | +42.3 / +38.4 | 1 / 1 | 50.5 |
+| 2 | a5b1c1 | 5+1+1 | 81.0 | +38.0 [+34.9…+41.1] | +40.3 / +35.8 | 2 / 5 | 49.3 |
+| 3 | c5b2 | 5+2 | 80.6 | +37.6 [+34.7…+40.6] | +38.0 / +37.3 | 3 / 2 | 48.6 |
+| 4 | a3b2c2 | 3+2+2 | 79.6 | +36.6 [+33.6…+39.7] | +37.1 / +36.1 | 4 / 4 | 52.0 |
+| 5 | a4b2c1 | 4+2+1 | 79.5 | +36.5 [+33.5…+39.5] | +36.3 / +36.8 | 7 / 3 | 52.3 |
+| 6 | c4b3 | 4+3 | 77.9 | +34.9 [+31.8…+38.0] | +36.6 / +33.3 | 5 / 7 | 52.4 |
+| 7 | b4c3 | 4+3 | 77.4 | +34.4 [+31.4…+37.5] | +36.5 / +32.4 | 6 / 10 | 53.0 |
+| 8 | c5a1b1 | 5+1+1 | 77.3 | +34.3 [+31.2…+37.4] | +34.8 / +33.9 | 10 / 6 | 48.8 |
+| 9 | a5c2 | 5+2 | 76.7 | +33.7 [+30.6…+36.8] | +36.3 / +31.1 | 8 / 14 | 49.1 |
+| 10 | c3a2b2 | 3+2+2 | 76.6 | +33.6 [+30.5…+36.7] | +35.8 / +31.5 | 9 / 13 | 52.2 |
+| 11 | c5a2 | 5+2 | 76.2 | +33.2 [+30.1…+36.3] | +33.5 / +32.9 | 11 / 8 | 47.6 |
+| 12 | b4a2c1 | 4+2+1 | 75.7 | +32.7 [+29.6…+35.8] | +32.8 / +32.6 | 16 / 9 | 53.3 |
+| 13 | a3b3c1 | 3+3+1 | 75.6 | +32.6 [+29.5…+35.7] | +33.5 / +31.8 | 12 / 12 | 53.8 |
+| 14 | a4c2b1 | 4+2+1 | 75.5 | +32.5 [+29.4…+35.6] | +33.1 / +31.9 | 13 / 11 | 51.7 |
+| 15 | b4a3 | 4+3 | 74.9 | +31.9 [+28.8…+35.0] | +33.0 / +30.8 | 14 / 15 | 53.8 |
+| 16 | c4a2b1 | 4+2+1 | 74.4 | +31.4 [+28.3…+34.5] | +32.9 / +29.9 | 15 / 18 | 50.5 |
+| 17 | b3a2c2 | 3+2+2 | 74.3 | +31.3 [+28.2…+34.4] | +32.4 / +30.3 | 17 / 16 | 54.4 |
+| 18 | b5a2 | 5+2 | 74.3 | +31.3 [+28.1…+34.4] | +32.3 / +30.3 | 18 / 17 | 54.0 |
+| 19 | b4c2a1 | 4+2+1 | 73.4 | +30.4 [+27.3…+33.6] | +31.4 / +29.5 | 19 / 19 | 54.5 |
+| 20 | b5a1c1 | 5+1+1 | 73.3 | +30.3 [+27.1…+33.5] | +31.1 / +29.5 | 20 / 20 | 54.3 |
+| 21 | a4b3 | 4+3 | 72.8 | +29.8 [+26.7…+32.9] | +30.8 / +28.9 | 21 / 22 | 54.6 |
+| 22 | a3c3b1 | 3+3+1 | 72.7 | +29.7 [+26.5…+32.8] | +30.6 / +28.7 | 22 / 23 | 51.8 |
+| 23 | b5c2 | 5+2 | 72.6 | +29.6 [+26.3…+32.8] | +29.8 / +29.4 | 24 / 21 | 54.6 |
+| 24 | c4b2a1 | 4+2+1 | 71.9 | +28.9 [+25.8…+32.0] | +30.6 / +27.1 | 23 / 25 | 51.7 |
+| 25 | b3c3a1 | 3+3+1 | 70.9 | +27.9 [+24.8…+31.1] | +28.1 / +27.8 | 26 / 24 | 54.7 |
+| 26 | c4a3 | 4+3 | 70.4 | +27.4 [+24.2…+30.7] | +28.2 / +26.6 | 25 / 26 | 49.3 |
+| 27 | a4c3 | 4+3 | 65.1 | +22.1 [+18.8…+25.4] | +23.1 / +21.1 | 27 / 27 | 50.5 |
+
+**Лучшая: a5b2** (83.3%). Отрыв от второй (a5b1c1, 81.0%): +2.3 [+0.4…+4.2]; на наборах +2.0 / +2.6. Среднее по остальным 26: 75.0% (отрыв лучшей +8.3 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 5+2: +34.3 (6 сб.); 5+1+1: +34.2 (3 сб.); 3+2+2: +33.9 (3 сб.); 4+2+1: +32.1 (6 сб.); 4+3: +30.1 (6 сб.); 3+3+1: +30.1 (3 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 77.1 (4) | 73.4 (5) | 75.2 (6) | 74.7 (5) | 73.2 (4) | 80.3 (3) |
+| MIND | 72.1 (4) | 76.2 (5) | 78.6 (6) | 74.3 (5) | 75.4 (4) | 73.4 (3) |
+| WILL | 76.3 (4) | 77.0 (5) | 75.4 (6) | 72.6 (5) | 73.7 (4) | 78.0 (3) |
+
+#### AMBUSH — поле «4 ядра со сборками ботов»
+
+Голое ядро против этого поля: **26.9%**. 27 сборок на 7 кристаллов, 1600 боёв на сборку (4 врага × 400 зёрен); сдвиг — парный к голому ядру; ранг — по каждому набору зёрен отдельно (1–200 / 201–400).
+
+| # | сборка (число кристаллов по граням) | рисунок | доля побед, % | сдвиг к голому, п.п. [95%] | набор 1 / набор 2 | ранг 1 / 2 | медиана боя, с |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | a5b2 | 5+2 | 69.7 | +42.8 [+39.9…+45.8] | +43.3 / +42.4 | 2 / 1 | 50.5 |
+| 2 | a5b1c1 | 5+1+1 | 68.5 | +41.6 [+38.6…+44.6] | +43.0 / +40.3 | 3 / 2 | 49.5 |
+| 3 | c5b2 | 5+2 | 65.9 | +39.1 [+36.1…+42.0] | +43.5 / +34.6 | 1 / 3 | 49.0 |
+| 4 | a4b2c1 | 4+2+1 | 63.5 | +36.6 [+33.6…+39.6] | +41.6 / +31.6 | 4 / 6 | 52.0 |
+| 5 | a3b2c2 | 3+2+2 | 63.1 | +36.2 [+33.2…+39.2] | +38.6 / +33.8 | 5 / 4 | 52.2 |
+| 6 | a5c2 | 5+2 | 60.6 | +33.7 [+30.7…+36.6] | +35.1 / +32.3 | 11 / 5 | 48.7 |
+| 7 | c3a2b2 | 3+2+2 | 59.8 | +32.9 [+29.8…+35.9] | +37.0 / +28.7 | 6 / 10 | 53.0 |
+| 8 | c5a1b1 | 5+1+1 | 59.6 | +32.7 [+29.7…+35.7] | +36.8 / +28.6 | 9 / 12 | 48.8 |
+| 9 | c4b3 | 4+3 | 59.1 | +32.3 [+29.3…+35.2] | +37.0 / +27.5 | 7 / 15 | 52.9 |
+| 10 | c5a2 | 5+2 | 59.0 | +32.1 [+29.1…+35.1] | +35.1 / +29.1 | 12 / 8 | 48.0 |
+| 11 | c4a2b1 | 4+2+1 | 59.0 | +32.1 [+29.2…+35.1] | +35.5 / +28.7 | 10 / 11 | 51.0 |
+| 12 | b4c3 | 4+3 | 58.5 | +31.6 [+28.7…+34.6] | +36.9 / +26.4 | 8 / 17 | 53.5 |
+| 13 | b4a2c1 | 4+2+1 | 57.9 | +31.0 [+28.0…+34.0] | +32.0 / +30.0 | 15 / 7 | 53.8 |
+| 14 | a4c2b1 | 4+2+1 | 57.1 | +30.2 [+27.2…+33.2] | +31.3 / +29.1 | 16 / 9 | 51.2 |
+| 15 | b4a3 | 4+3 | 56.7 | +29.8 [+26.8…+32.8] | +34.6 / +25.0 | 14 / 20 | 54.2 |
+| 16 | a3b3c1 | 3+3+1 | 56.7 | +29.8 [+26.8…+32.8] | +34.8 / +24.9 | 13 / 21 | 54.1 |
+| 17 | c4b2a1 | 4+2+1 | 56.3 | +29.4 [+26.4…+32.4] | +31.1 / +27.6 | 18 / 14 | 52.2 |
+| 18 | b3a2c2 | 3+2+2 | 55.8 | +28.9 [+26.0…+31.9] | +31.3 / +26.6 | 17 / 16 | 54.2 |
+| 19 | a3c3b1 | 3+3+1 | 55.4 | +28.6 [+25.5…+31.6] | +29.0 / +28.1 | 22 / 13 | 51.8 |
+| 20 | b4c2a1 | 4+2+1 | 54.9 | +28.1 [+25.1…+31.0] | +30.4 / +25.8 | 21 / 18 | 54.5 |
+| 21 | c4a3 | 4+3 | 53.6 | +26.8 [+23.8…+29.7] | +28.2 / +25.3 | 23 / 19 | 49.6 |
+| 22 | b5c2 | 5+2 | 53.3 | +26.4 [+23.5…+29.4] | +30.6 / +22.3 | 20 / 25 | 54.8 |
+| 23 | a4b3 | 4+3 | 53.3 | +26.4 [+23.4…+29.4] | +30.8 / +22.0 | 19 / 26 | 54.8 |
+| 24 | b5a2 | 5+2 | 52.9 | +26.1 [+23.1…+29.1] | +27.3 / +24.9 | 25 / 22 | 54.5 |
+| 25 | b3c3a1 | 3+3+1 | 52.4 | +25.6 [+22.5…+28.6] | +28.1 / +23.0 | 24 / 24 | 54.5 |
+| 26 | b5a1c1 | 5+1+1 | 51.9 | +25.1 [+22.1…+28.1] | +26.4 / +23.8 | 26 / 23 | 55.0 |
+| 27 | a4c3 | 4+3 | 47.1 | +20.2 [+17.2…+23.1] | +21.8 / +18.6 | 27 / 27 | 50.5 |
+
+**Лучшая: a5b2** (69.7%). Отрыв от второй (a5b1c1, 68.5%): +1.2 [-1.0…+3.4]; на наборах +0.3 / +2.1. Среднее по остальным 26: 57.4% (отрыв лучшей +12.3 п.п.).
+
+По рисункам (среднее сдвига к голому по сборкам рисунка): 5+2: +33.4 (6 сб.); 5+1+1: +33.1 (3 сб.); 3+2+2: +32.7 (3 сб.); 4+2+1: +31.2 (6 сб.); 3+3+1: +28.0 (3 сб.); 4+3: +27.8 (6 сб.).
+
+Среднее число побед, %, по сборкам, где в грани ровно k кристаллов (в скобках — сколько таких сборок из 27):
+
+| грань | k = 0 | k = 1 | k = 2 | k = 3 | k = 4 | k = 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| BODY | 59.2 (4) | 55.0 (5) | 57.4 (6) | 57.1 (5) | 55.2 (4) | 66.3 (3) |
+| MIND | 55.1 (4) | 59.9 (5) | 63.0 (6) | 55.5 (5) | 57.0 (4) | 52.7 (3) |
+| WILL | 58.1 (4) | 59.7 (5) | 57.5 (6) | 54.6 (5) | 57.0 (4) | 61.5 (3) |
+
+## Пункт 11. Клич: ОТХОД и ВПЕРЁД — ПОДТВЕРЖДЕНО; польза ОТХОДА — нет
+
+Ссылка на `docs/klich-reach/REPORT.md` (раунд 3): ОТХОД −1.5…−2 п.п. почти во всех составах, ВПЕРЁД у ONSLAUGHT без эффекта (он и так давит, PRESS ≈ 100%). Новый замер здесь дал ОТХОД **−2.1 [−3.7…−0.5]** и ВПЕРЁД +0.3 [−1.3…+1.9]. Ответ на «есть ли хоть какая-то польза у ОТХОДА»: **нет**. Запас сил в окне клича выше лишь на +0.3 п.п. (86.8% против 86.5%, на конец окна даже ниже), полученный урон не падает (+0.09 ±0.19 HP за окно — вплоть до нуля), а нанесённый падает на 2.43 HP (с 5.12 до 2.69), замахов 1.3 против 2.3. ОТХОД вдвое урезает собственный выход без защитного выигрыша. Гипотеза: клич меняет только оси (distance +90, initiative −30, tempo −10, stick −35 — `klichBalance.js`), а блоку/сопротивлению/запасу сил не помогает.
+
+### Пункт 11. Клич: ОТХОД и ВПЕРЁД
+
+**Ссылка на отчёт клича** (`docs/klich-reach/REPORT.md`, раунд 3, 4 ядра × 5 составов × 200+200 зёрен): ОТХОД снижает долю побед на **1.5…2 п.п.** почти во всех составах (повторилось на обоих наборах), ВПЕРЁД и ДЕРЖАТЬ — в пределах шума; у ONSLAUGHT ВПЕРЁД «почти ничего не меняет» (он и так давит, PRESS ≈ 100%). Длина боя с кличем не меняется.
+
+**НОВЫЙ ЗАМЕР — что делают запас сил и полученный урон в окне клича.** Клич брошен на бойца-игрока в t = 5 с (как в прошлых замерах), окно 8 с (6 с полной силы + 2 с затухание); голые ядра против 4 голых, 4 ядра × 4 врага × 400 зёрен = 6400 боёв на режим; все режимы на одних и тех же зёрнах (парное сравнение). «Запас сил» — доля от полного, среднее по тикам окна и значение в конце окна.
+
+| режим | доля побед, % (сдвиг к «без клича» [95%]) | запас сил в окне (среднее) | запас сил на конец окна | получено HP за окно | Δ к «без клича» (парно, HP)  | нанесено HP за окно | Δ (парно, HP) | замахов за окно | дистанция до врага | скорость, ед./с | свободное время | вне радиуса 1.45 | в блоке |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| без клича | 50.3 | 86.5% | 83.7% | 4.97 | — | 5.12 | — | 2.3 | 1.53 | 0.40 | 44% | 35% | 14% |
+| ВПЕРЁД (push) | 50.7 (+0.3 [-1.3…+1.9]) | 84.5% | 81.6% | 5.05 | +0.08 ±0.17 | 6.99 | +1.87 ±0.21 | 2.8 | 1.36 | 0.35 | 38% | 27% | 14% |
+| ОТХОД (fallback) | 48.2 (-2.1 [-3.7…-0.5]) | 86.8% | 82.9% | 5.07 | +0.09 ±0.19 | 2.69 | -2.43 ±0.17 | 1.3 | 1.76 | 0.60 | 61% | 47% | 11% |
+| ДЕРЖАТЬ (hold) | 50.1 (-0.2 [-1.7…+1.3]) | 89.3% | 87.3% | 4.93 | -0.04 ±0.18 | 3.72 | -1.40 ±0.19 | 1.8 | 1.59 | 0.37 | 51% | 39% | 19% |
+
+**ОТХОД по ядрам** (t = 5 с, 1600 боёв на ядро):
+
+| ядро | сдвиг доли побед, п.п. [95%] | запас сил в окне: ОТХОД vs без | запас на конец окна | Δ получено HP | Δ нанесено HP | дистанция |
+| --- | --- | --- | --- | --- | --- | --- |
+| ONSLAUGHT | -2.9 [-6.3…+0.6] | 85.3% vs 84.3% | 81.1% vs 82.2% | +0.02 ±0.25 | -3.13 ±0.22 | 1.67 vs 1.23 |
+| RAIDER | -2.6 [-5.8…+0.6] | 86.9% vs 84.7% | 82.9% vs 80.3% | +0.15 ±0.44 | -3.44 ±0.42 | 1.83 vs 1.66 |
+| BULWARK | -1.1 [-4.0…+1.9] | 88.3% vs 88.2% | 85.9% vs 86.6% | -0.14 ±0.18 | -2.30 ±0.27 | 1.79 vs 1.51 |
+| AMBUSH | -1.9 [-5.1…+1.4] | 86.8% vs 89.0% | 81.8% vs 85.6% | +0.34 ±0.53 | -0.87 ±0.36 | 1.76 vs 1.72 |
+
+**Есть ли у ОТХОДА польза сейчас.** За окно ОТХОД даёт: запас сил 86.8% против 86.5% (+0.3 п.п.), на конец окна 82.9% против 83.7%; полученный урон +0.09 ±0.19 HP за окно (парно; отрицательное = получает меньше); нанесённый -2.43 ±0.17 HP; дистанция до врага 1.76 против 1.53. Итог на исход: -2.1 [-3.7…-0.5] п.п.
+
+## Пункт 12. Клич против выживания — ПОДТВЕРЖДЕНО
+
+### Пункт 12. Клич против выживания
+
+**Порядок выбора в коде (подтверждено чтением).** `chooseIntentionSpinal` (`src/data/intentions.js:129`): жёсткая нужда (`hardNeed`) → очки (`spinalScore`); в гибриде с думающей моделью `chooseIntentionModel` (строки 118–124): жёсткая нужда → **свежий ответ модели** → очки. Клич в очках режет выбор до группы только на полной силе (`self.klich.k ≥ 1`, строки 246–253) и **только внутри очков**: нужду не затрагивает; модель о кличе не знает (долг №1 в отчёте клича).
+
+**Жёсткой нужды по здоровью нет.** В `hardNeed` три нужды — запас сил, ответ на замах, заряд; здоровья (`hp01`) функция не читает вовсе (проверено чтением и подсчётом решений ниже: `hp01` входит только в условия тегов `selfHpLow` / `hpDropped`). Боец на 5% здоровья решает так же, как на 100%.
+
+**НОВЫЙ ЗАМЕР.** Клич брошен в момент, когда здоровье бойца-игрока **впервые упало до 20% и ниже** (а не в фиксированную секунду); окно 8 с; те же зёрна и враги для всех режимов; 4 ядра × 4 врага × 400 зёрен, но клич бросается только в боях, где здоровье дошло до 20% (остальное — игрок выигрывал чисто).
+
+| режим | боёв с падением до 20% | доля побед в этих боях, % (сдвиг) | боец погиб за окно | решений в окне при здоровье ≤ 20% (на бой) | …из них PRESS или STRIKE (на бой) | доля PRESS/STRIKE среди них | замахов за окно (на бой) | получено HP за окно | Δ парно, HP |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| без клича | 4314 | 26.3 | 58.8% | 4.0 | 2.6 | 65% | 2.1 | 8.31 | — |
+| ВПЕРЁД | 4314 | 26.9 (+0.6 [-0.4…+1.6]) | 58.6% | 3.9 | 2.6 | 65% | 2.1 | 8.30 | -0.01 ±0.13 |
+| ОТХОД | 4314 | 24.9 (-1.4 [-2.6…-0.2]) | 57.2% | 4.2 | 0.3 | 7% | 2.1 | 8.31 | -0.00 ±0.16 |
+| ДЕРЖАТЬ | 4314 | 23.8 (-2.5 [-3.6…-1.4]) | 55.5% | 4.4 | 0.3 | 8% | 1.9 | 8.40 | +0.10 ±0.15 |
+
+**Сколько раз боец с ≤ 20% здоровья под ВПЕРЁД выполняет ВПЕРЁД и идёт в размен.** На бой (в среднем): решений при здоровье ≤ 20% в окне — 3.9; из них PRESS/STRIKE — 2.6 (65%); под полной силой клича (k = 1) решений при ≤ 20% — 3.6, из них в группе ВПЕРЁД 2.4. Без клича те же бойцы выбирали PRESS/STRIKE в 65% решений; замахов за окно: 2.1 против 2.1. Погибло за окно: 58.6% против 58.8% без клича.
+
+**Ответ на замах при ВПЕРЁД идёт «как без клича» — ПОДТВЕРЖДЕНО.** В коде: `swingReply` ограничивает выбор множеством {CATCH, BREAK, HOLD} (строка 159); группа ВПЕРЁД = {PRESS, STRIKE} с ним не пересекается → `cut` пуст → `pool = only` (строки 247–251). В замере (режим ВПЕРЁД при t = 5 с и при ≤ 20%, решения с k = 1 и нуждой «замах»): ответ совпал с ответом без клича в 4771 из 4771 случаев при hp20, а по t5: 7172 из 7172.
+
+## Пункт 13. Баффы — ЗАМЕРЕНО (новый замер)
+
+**Схема бота найдена и повторена для игрока:** `src/services/buffs.js` `tickBot`; числа — `src/data/buffBalance.js` `BUFF_BALANCE.bot`. **Итог:** набор по правилу бота даёт игроку +30.3 [+28.9…+31.8] п.п. (TOWEL +14.7, DICE +21.6, BUCKET −0.2); при одинаковом наборе у обеих сторон +0.1 (баффы — рычаг *разности* набора). **BUCKET: «скорость не даёт выигрыша» — ПОДТВЕРЖДЕНО** (−0.2 [−1.7…+1.4]; в окне броска +30% записанных дают +11.3% средней скорости, дистанция до врага не меняется, замахов и урона столько же). **Гипотеза про плиту — ЧАСТИЧНО:** на игровой плите 5×3 выигрыш −0.7 [−2.3…+0.9] (сближение быстрее на 0.13 с); на большой 12×9 всё же лишь +2.3 [+0.7…+3.9] — то есть плита не единственная причина: бой состоит из обмена, а не ходьбы, а ведро (`setBuffPace`) ускоряет только ход. Клич + бафф на одном бойце: слои независимы (разные поля: `klichDelta`/`klichId` и `buffPaceMul`/`hp`/`staggerUntil`/заряды `buffStrike`), сдвиги складываются (9 пар, все аддитивны в шуме).
+
+### Пункт 13. Баффы
+
+#### Что делает каждый бафф (числа, где живёт, сколько длится)
+
+| бафф | что делает в числах | сколько длится | где числа | где механика | что делает боец (рычаг) |
+| --- | --- | --- | --- | --- | --- |
+| TOWEL | лечит 20% полного здоровья равномерно (4.00 HP/с при maxHp 100); выход из сбива ×0.5 по времени | 5 с | `src/data/buffBalance.js` `BUFF_BALANCE.towel` | `src/services/buffs.js` `applyBuff` + `buffTick` | `heal(frac)`, `shortenStagger(mul)` в `buildFighter.js` (защищён) |
+| BUCKET | множитель скорости ХОДА ×1.3 (+30%); частоту ударов не трогает (решение 22.09.2026) | 5 с | `BUFF_BALANCE.bucket` | `buffs.js` `applyBuff` | `setBuffPace(mul)` → `buffPaceMul` в скорости полосы хода (`buildFighter.js:1551`) |
+| DICE | заряжает следующие N **попавших** ударов множителем урона: грани 1…6 = (1 удар ×1.5), (2 ×1.5), (2 ×2.0), (3 ×2.0), (3 ×2.5), (3 ×3.0 + вспышка); равновероятно | пока не истратит заряженные попадания (без таймера) | `BUFF_BALANCE.dice.faces`, бросок — `rollDie()` | `buffs.js`; заряды — `src/services/buffStrike.js`; множитель читает `src/scene/boutCore.js:168` (`diceMulFor`) | урон умножается снаружи бойца (в обвязке боя) |
+
+Одновременно на одном бойце — один бафф (правило 2, `effects.has(unit)`). Откат карточки 8 с на вид, общий на сторону игрока; у бота свой набор (тот же полный, по одному) и пауза между бросками 6 с.
+
+#### Как использует бот (`src/services/buffs.js` `tickBot`) и как повторён для игрока
+
+Бот каждый кадр (не чаще чем раз в 6 с, и только если на нём нет баффа) смотрит по порядку: **TOWEL**, если своё здоровье < 40%; иначе **BUCKET**, если до цели < 2.2; иначе **DICE**, если здоровье цели < 50% или t ≥ 20 с. Набор — полный, по одному каждого. Схема повторена в замере для игрока дословно теми же вызовами бойца (`heal`, `shortenStagger`, `setBuffPace`, `armDiceCharge`) и теми же числами — «правило бота». Поскольку цель ближе 2.2 уже через 0.4 с, бот в реальности бросает **BUCKET на первой же секунде**, DICE — на 20-й секунде, TOWEL — когда здоровье < 40%.
+
+Сдвиг доли побед игрока (п.п., парный к бою без баффа на тех же зёрнах; 4 ядра × 4 голых врага × 400 зёрен = 6400 боёв на строку; враг без баффов, кроме последней строки):
+
+| схема | сдвиг [95%] | по ядрам | доля боёв с броском | Δ медианы боя, с |
+| --- | --- | --- | --- | --- |
+| весь набор по правилу бота | **+30.3 [+28.9…+31.8]** | ONS +32.9 · RAI +35.0 · BUL +22.6 · AMB +30.9 | 100% | -3.6 |
+| TOWEL по правилу бота | **+14.7 [+13.8…+15.6]** | ONS +16.4 · RAI +14.9 · BUL +14.4 · AMB +13.0 | 84% | +1.8 |
+| BUCKET по правилу бота | **-0.2 [-1.7…+1.4]** | ONS +0.0 · RAI -1.8 · BUL +1.8 · AMB -0.6 | 100% | -0.2 |
+| DICE по правилу бота | **+21.6 [+20.1…+23.1]** | ONS +22.9 · RAI +22.6 · BUL +18.1 · AMB +22.9 | 100% | -4.2 |
+| TOWEL, бросок на 10-й секунде | **+6.4 [+5.8…+7.1]** | ONS +7.2 · RAI +7.4 · BUL +5.0 · AMB +6.1 | 100% | +0.8 |
+| BUCKET, бросок на 10-й секунде | **-0.3 [-1.7…+1.1]** | ONS -1.3 · RAI +0.1 · BUL +0.5 · AMB -0.4 | 100% | -0.1 |
+| DICE, бросок на 10-й секунде (случайная грань) | **+17.8 [+16.3…+19.4]** | ONS +17.6 · RAI +21.7 · BUL +14.1 · AMB +18.1 | 100% | -3.5 |
+| BUCKET с самого начала (0.5 с) | **-0.3 [-1.9…+1.4]** | ONS +0.4 · RAI -2.4 · BUL +0.5 · AMB +0.5 | 100% | -0.1 |
+| набор по правилу бота у ОБЕИХ сторон (игрок vs враг с тем же набором) | **+0.1 [-1.5…+1.7]** | ONS +1.1 · RAI +0.4 · BUL +0.0 · AMB -1.1 | 100% | -4.4 |
+
+DICE по граням (бросок на 10-й секунде, грань зафиксирована):
+
+| грань | попаданий × множитель | сдвиг, п.п. [95%] |
+| --- | --- | --- |
+| 1 | 1 × 1.5 | +3.3 [+2.9…+3.8] |
+| 2 | 2 × 1.5 | +6.8 [+6.2…+7.4] |
+| 3 | 2 × 2 | +13.5 [+12.6…+14.3] |
+| 4 | 3 × 2 | +21.5 [+20.5…+22.5] |
+| 5 | 3 × 2.5 | +29.1 [+28.0…+30.2] |
+| 6 | 3 × 3 | +34.3 [+33.1…+35.4] |
+
+TOWEL по правилу бота: брошен в 84% боёв (здоровье < 40% достигается не всегда); средний приток 18.7 HP за бросок (потолок 20 HP); на 10-й секунде здоровье почти полное, поэтому бросок «вслепую» лечит мало — отсюда разница строк «по правилу бота» и «на 10-й секунде».
+
+#### BUCKET: скорость не даёт выигрыша — почему
+
+Окно 5 с с 10-й секунды, игрок: BUCKET брошен в t = 10 с против того же боя без баффа (те же зёрна); среднее по тикам окна.
+
+| показатель в окне [10 с, 15 с) | без баффа | BUCKET | разница |
+| --- | --- | --- | --- |
+| скорость хода, ед./с | 0.360 | 0.400 | +11.3% |
+| дистанция до врага | 1.388 | 1.389 | +0.001 |
+| вне радиуса удара (≥ 1.45) | 27.7% | 27.4% | -0.2 п.п. |
+| свободное время | 37.7% | 37.3% | -0.4 п.п. |
+| замахов за окно | 1.63 | 1.64 | +0.01 |
+| нанесено HP за окно | 3.97 | 4.09 | +0.12 |
+| получено HP за окно | 3.88 | 3.82 | -0.06 |
+
+**Почему:** ведро ускоряет только ХОД (а частоту ударов нарочно не трогает). Боец идёт, лишь пока не в радиусе удара — «вне радиуса» 28% времени, а до врага на плите 5 × 3 ед. (`PLATFORM`: width 6 → x ±2.5, outerZ 2 → z ±1.5; выходят на расстоянии 2.9) всего ≈ 1.5 ед. между точкой выхода и радиусом удара. Ускорение на 30% сокращает эти 1–2 с сближения на доли секунды, а дальше ход «не нужен» — идёт обмен ударами, скорость которого ведро не меняет. Гипотеза о плите подтверждается **частично**: плита действительно тесная (максимальный путь сближения 2.9 ед.), но решающий довод — доля времени в движении: бой почти целиком состоит из обмена, а не из ходьбы.
+
+#### Гипотеза о плите проверена прямо: ведро на тесной и на большой плите
+
+BUCKET включён с 0.5 с на 5 с (как в игре), 4 ядра × 4 врага × 400 зёрен = 6400 боёв на строку; «игровая» плита — 5 × 3 (границы ±2.5 × ±1.5, выход на расстоянии 2.9, как на арене), «большая» — 12 × 9 (границы ±6 × ±4.5, выход на расстоянии 7.0). Время до первого сближения — первый тик, когда дистанция до врага < 1.45. Сдвиг доли побед — парный к бою без ведра на той же плите.
+
+| плита | до сближения без ведра | с ведром | Δ (парно) | путь за 6 с без ведра, ед. | с ведром | сдвиг доли побед, п.п. [95%] |
+| --- | --- | --- | --- | --- | --- | --- |
+| игровая 5×3 (выход 2.9) | 2.68 с | 2.55 с | -0.13 с ±0.05 | 3.38 | 3.61 | **-0.7 [-2.3…+0.9]** |
+| большая 12×9 (выход 7.0) | 3.64 с | 3.34 с | -0.30 с ±0.07 | 5.47 | 6.12 | **+2.3 [+0.7…+3.9]** |
+
+### Пункт 13 (продолжение). Клич и бафф одновременно на одном бойце
+
+**В коде — независимые слои, которые не мешают друг другу.** Клич (`applyKlich` / `setKlichId`) пишет только во внутреннюю дельту осей `klichDelta` и в `klichId` (читает выбор намерения); бафф — в `buffPaceMul` (BUCKET), `hp` (`heal`, TOWEL), `staggerUntil` (TOWEL) и в Map зарядов `buffStrike` (DICE) — ни одно поле не пересекается. Единственная точка встречи — скорость хода: ось `distance`/`initiative` решает КУДА идти, а `buffPaceMul` множит, КАК БЫСТРО (то есть складываются как «направление × скорость»). «Один бафф на бойце» не блокирует клич, а клич заменяет клич (пункт 14), но не бафф.
+
+Замер: клич в t = 5 с и бафф в t = 5 с (BUCKET / DICE) на одном бойце; 4 ядра × 4 врага × 400 зёрен = 6400 боёв на строку, парно к бою без всего. Проверка аддитивности: сдвиг пары ≈ сумма сдвигов по отдельности?
+
+| пара | клич один | бафф один | вместе | сумма по отдельности | вывод |
+| --- | --- | --- | --- | --- | --- |
+| ВПЕРЁД + BUCKET | +0.3 [-1.3…+1.9] | -0.3 [-1.7…+1.2] | **+0.3 [-1.3…+1.9]** | +0.1 | аддитивно (в шуме) |
+| ВПЕРЁД + DICE | +0.3 [-1.3…+1.9] | +16.0 [+14.5…+17.6] | **+17.9 [+16.3…+19.4]** | +16.3 | аддитивно (в шуме) |
+| ВПЕРЁД + набор бота | +0.3 [-1.3…+1.9] | +30.3 [+28.9…+31.8] | **+29.8 [+28.3…+31.3]** | +30.7 | аддитивно (в шуме) |
+| ОТХОД + BUCKET | -2.1 [-3.7…-0.5] | -0.3 [-1.7…+1.2] | **-1.5 [-3.1…+0.0]** | -2.4 | аддитивно (в шуме) |
+| ОТХОД + DICE | -2.1 [-3.7…-0.5] | +16.0 [+14.5…+17.6] | **+16.3 [+14.7…+17.8]** | +13.9 | аддитивно (в шуме) |
+| ОТХОД + набор бота | -2.1 [-3.7…-0.5] | +30.3 [+28.9…+31.8] | **+28.7 [+27.2…+30.2]** | +28.2 | аддитивно (в шуме) |
+| ДЕРЖАТЬ + BUCKET | -0.2 [-1.7…+1.3] | -0.3 [-1.7…+1.2] | **-0.0 [-1.6…+1.5]** | -0.5 | аддитивно (в шуме) |
+| ДЕРЖАТЬ + DICE | -0.2 [-1.7…+1.3] | +16.0 [+14.5…+17.6] | **+17.2 [+15.7…+18.8]** | +15.8 | аддитивно (в шуме) |
+| ДЕРЖАТЬ + набор бота | -0.2 [-1.7…+1.3] | +30.3 [+28.9…+31.8] | **+30.5 [+29.0…+32.0]** | +30.1 | аддитивно (в шуме) |
+
+Исключений нет: все задачи завершились без ошибок (наложение клича и баффа на одного бойца ничего не ломает). Максимальная длина боя в этих прогонах — 90.4 с, далеко от потолка 240 с.
+
+## Пункт 14. Заряды и перезарядка — ПОДТВЕРЖДЕНО
+
+Числа — в таблице «Где живут числа» ниже. Второй клич заменяет первый (`applyKlich` **присваивает**, не прибавляет; зонд: 20/20 боёв, и «A и B одновременно» даёт бит в бит бой с одним B). Заряды: 3 заряда одного клича бой успевает использовать всегда (3-е — в 17 с), все 9 — лишь в 44% боёв. «Сразу» хуже «по бою» для ВПЕРЁД (−3.0 [−4.6…−1.4]) и для баффов (−7.7 [−9.1…−6.4]); для ОТХОДА и ДЕРЖАТЬ разницы нет. Практически: баффы выгоднее распределять по бою (BUCKET 10 с, DICE 25 с, TOWEL 40 с = +31.7 против +24.0 «всё в первые секунды»), а клич имеет смысл только один-два раза; ОТХОД ×3 стоит −4.8…−5.2 п.п., серия из 9 кличей по кругу — −5.8 п.п.
+
+### Пункт 14. Заряды и перезарядка
+
+**Где живут числа:**
+
+| что | значение | где |
+| --- | --- | --- |
+| зарядов клича | 3 на каждый из 3 кличей (всего 9), на бой; запас, не восстанавливается | `src/data/klichBalance.js` `chargesPerKlich` |
+| пауза после клича | 6 с, **на каждый клич отдельно**, общая на сторону игрока (не на бойца); не перезарядка запаса | `klichBalance.js` `cooldownSec`; `src/services/klich.js` `coolUntil[id]` |
+| длительность клича | 6 с полной силы + 2 с затухания | `klichBalance.js` `holdSec`, `fadeSec`; `buildFighter.js` `tickKlich` |
+| пауза после баффа | 8 с, на каждый вид отдельно, общая на сторону игрока | `src/data/buffBalance.js` `cooldownSec`; `src/services/buffs.js` `coolUntil[id]` |
+| зарядов баффа | по одному на вид за бой (набор = список `BUFF_IDS`: TOWEL, BUCKET, DICE); числа нет нарочно | `buffBalance.js` `BUFF_IDS`; `buffs.js` `buffStartFight` |
+| один бафф на бойце | пока действует, второй не бросить | `buffs.js` `applyBuff` (`effects.has(unit)`) |
+
+**Второй клич заменяет первый, а не складывается — подтверждено** (см. раздел «замена» ниже): `applyKlich` (`buildFighter.js:850`) **присваивает** (`klichPeak.* = axes.*`, `klichUntil = lastT + hold + fade`, `klichId = null` до следующего `setKlichId`), а не прибавляет.
+
+#### Сколько зарядов бой успевает использовать
+
+Длины боёв в этом замере (голое ядро игрока, 6400 боёв): медиана 52.0 с, 10% дольше 63.3 с, максимум 83.0 с. Клич можно бросать не раньше, чем через 6 с после предыдущего **того же вида**, то есть серия из k применений одного клича занимает ≥ 6·(k−1) с. Если бросать первый в t = 5 с и каждый следующий сразу, как кончится откат (кличи по кругу), k-е применение приходится на t = 5 + 6·(k−1) с:
+
+| применение № | момент, с | доля боёв, которые ещё идут |
+| --- | --- | --- |
+| 1 | 5 | 100% |
+| 2 | 11 | 100% |
+| 3 | 17 | 100% |
+| 4 | 23 | 100% |
+| 5 | 29 | 100% |
+| 6 | 35 | 99% |
+| 7 | 41 | 97% |
+| 8 | 47 | 79% |
+| 9 | 53 | 44% |
+
+То есть **3 заряда одного клича** бой успевает использовать всегда (3-е — в 17 с), **9 зарядов** (все три клича по разу…по три) — лишь в 44% боёв, и то лишь при непрерывном броске без пропусков; при этом каждое следующее применение **заменяет** предыдущее, так что до конца боя хватает покрытия, а не добавочной силы. Баффы: всего 3 броска на бой (по одному на вид), один на бойце одновременно; в замере по правилу бота в среднем 2.55 броска на бой.
+
+#### Выгоднее ли бросить всё в первые секунды или распределить по бою
+
+Парный сдвиг доли побед к бою без клича/баффа (6400 боёв на строку: 4 ядра × 4 врага × 400 зёрен):
+
+| схема | сдвиг, п.п. [95%] | баффов брошено на бой |
+| --- | --- | --- |
+| ВПЕРЁД ×1, 5 с | **+0.3 [-1.3…+1.9]** | — |
+| ВПЕРЁД ×3 подряд, 1 / 7 / 13 с | **-2.2 [-3.8…-0.6]** | — |
+| ВПЕРЁД ×3 по бою, 10 / 25 / 40 с | **+0.8 [-0.7…+2.4]** | — |
+| ОТХОД ×1, 5 с | **-2.1 [-3.7…-0.5]** | — |
+| ОТХОД ×3 подряд, 1 / 7 / 13 с | **-4.8 [-6.4…-3.1]** | — |
+| ОТХОД ×3 по бою, 10 / 25 / 40 с | **-5.2 [-6.8…-3.6]** | — |
+| ДЕРЖАТЬ ×1, 5 с | **-0.2 [-1.7…+1.3]** | — |
+| ДЕРЖАТЬ ×3 подряд, 1 / 7 / 13 с | **+0.2 [-1.4…+1.7]** | — |
+| ДЕРЖАТЬ ×3 по бою, 10 / 25 / 40 с | **-0.7 [-2.2…+0.9]** | — |
+| по кругу ×3 (ВПЕРЁД, ДЕРЖАТЬ, ОТХОД), 5 / 11 / 17 с | **-0.5 [-2.1…+1.1]** | — |
+| по кругу ×3 по бою, 10 / 25 / 40 с | **-3.3 [-4.8…-1.7]** | — |
+| по кругу ×9 каждые 6 с с 5-й секунды | **-5.8 [-7.4…-4.2]** | — |
+| баффы сразу: DICE, затем BUCKET, затем TOWEL подряд с 1 с | **+24.0 [+22.5…+25.5]** | 2.81 |
+| баффы по бою: BUCKET 10 с, DICE 25 с, TOWEL 40 с | **+31.7 [+30.3…+33.1]** | 2.73 |
+| баффы по правилу бота | **+30.3 [+28.9…+31.8]** | 2.55 |
+
+Прямое сравнение «сразу» против «по бою» (парно): ВПЕРЁД: сразу − по бою = -3.0 [-4.6…-1.4]; ОТХОД: сразу − по бою = +0.4 [-1.2…+2.0]; ДЕРЖАТЬ: сразу − по бою = +0.8 [-0.8…+2.4]; баффы: сразу − по бою = -7.7 [-9.1…-6.4].
+
+#### Замена клича (аналог приёмки Г5 прошлого отчёта)
+
+Зонд-журнал решений, 20 боёв: клич A в t = 5 с, клич B в t = 11 с (через откат 6 с): в журнале после замены стоит только B (id и сила 1 на первом решении), A — никогда — **20/20**. Клич A и B в один и тот же момент против одного B — **бой бит в бит тот же, что с одним B** (оси и группа A после замены не действуют) — **20/20**.
+
+# Какими ручками крутить
+
+Колонки «суммы» — результат прямой проверки: одна маленькая правка накладывалась на отдельную копию дерева, гонялись обе регрессии (`scripts/fight-regression.mjs` — А, голые ядра; `scripts/fight-regression-builds.mjs` — Б, сборки), правка откатывалась (`scripts/balance-recon-lever-sums.py`, результат — `out/lever-sums.json`). «Изменилась» = контрольная сумма ушла от эталона. Защищённые файлы (`CLAUDE.md` / `hexlash-core` §5): `buildArena.js`, `arenaTextures.js`, `arenaPresence.js`, `buildFighter.js`, `ArenaScene.vue`, `hpIndicator.js`. Все «данные» ниже лежат в **не**защищённых файлах.
+
+| вид чисел | где живёт | данные или код | файл защищён? | меняет суммы? (А / Б) | заметка |
+| --- | --- | --- | --- | --- | --- |
+| **профиль ядра** (8 осей на ядро) | `src/data/behavior.js` `CORE_PROFILES` | данные | нет | да / да (tempo 80→81 у ONSLAUGHT) | единственное, чем ядра отличаются в бою |
+| **множители тела из осей** (скорость ×0.6…1.4, разгон, входящий урон ×1.15…0.38, тяга к блоку) | `src/scene/buildFighter.js` (стр. 635–640, 736) | код (константы `lerp`) | **да** 🔒 | не проверялось (правка запрещена) | читают `weight`/`resilience`/`stick` — главная асимметрия ядер (BULWARK ×0.457); крутится только владельцем с разрешением |
+| **сдвиги осей кристаллов** | `src/data/upgradeData.js` `CRYSTALS` (`shifts: [s('weight', 14)]`) | данные | нет | нет / да (weight 14→15 у Heavy Hit) | суммы А — голые ядра, кристаллов там нет |
+| **рычаги силы кристаллов** (рамп strikePower/toughness, `blockPenetration`, `blockMitigation`, `interruptResist`, `dodgeCounter`, `missCounter`, `feintChance`…) | `upgradeData.js`, читаются в `buildFighter.js` 🔒 / `boutCore.js` | данные | данные нет, место чтения — да | не проверялось напрямую (ожидаемо как сдвиг оси: только Б) | именно они дают перекосы пункта 7 |
+| **веса тегов и вершин** | `src/data/combatBalance.js` `grani.tagLean` 0.12, `vertexLean` 0.20 | данные | нет | нет / да (при шаге 0.01 сумма Б не сдвигается — шаг мал; на 0.40 сдвигается) | |
+| **резонанс грани** (вес 0.30/0.15, порог 3 кристалла) | `combatBalance.js` `grani.homeLean`, `grani.threshold`; `branchThreshold.js` `BRANCH_HOME` | данные | нет | нет / да | |
+| **привязка тега к намерению** | `src/data/branchThreshold.js` `TAG_LEANS` | данные | нет | нет / да (dig_in H→C) | |
+| **пороги жёсткой нужды** | `src/data/intentions.js` `hardNeed`: запас сил 0.22, ворота `counter > 0.55`, дальность 0.8, заряд 0.85 | **код** (числа зашиты, кроме `bend`) | нет | да / да (запас сил 0.23; ворота 0.65 [0.56 ни одно ядро не пересекает]); дальность 0.9 — нет / да; заряд 0.40 — да / да (0.86 — ни один бой не меняется) | главный рычаг пункта 1 |
+| **`hardNeed.bend`** (зависимость нужды от характера) | `combatBalance.js:281` | данные | нет | да / да (0→0.1) | сейчас 0 |
+| **бонус удержания намерения 0.08** | `intentions.js` (`s[self.current] += 0.08`) | код | нет | да / да | |
+| **клич** (оси, `holdSec` 6, `fadeSec` 2, группы) | `src/data/klichBalance.js` | данные | нет | **нет / нет** (distance −70→−71, группа HOLD) | ⚠ обе регрессии клич не гоняют: суммы клич не защищают |
+| **заряды клича** (`chargesPerKlich` 3) | `klichBalance.js` | данные | нет | нет / нет | то же |
+| **перезарядка клича** (`cooldownSec` 6, на каждый клич; вид `coolUntil[id]`) | `klichBalance.js`; `src/services/klich.js` | данные | нет | нет / нет | то же |
+| **баффы** (TOWEL 20%/5 с, BUCKET ×1.30/5 с, грани DICE, порог бота) | `src/data/buffBalance.js` | данные | нет | нет / нет (heal 0.21, paceMul 1.31, грань 3.1, порог бота 0.41) | ⚠ суммы баффы не защищают |
+| **перезарядка баффов** (`cooldownSec` 8) | `buffBalance.js`; `src/services/buffs.js` | данные | нет | нет / нет | |
+| **общий урон** | `combatBalance.js` `damageFracBase` | данные | нет | да / да | двигает всё сразу |
+| **потолок прокачки** `RESOURCE` 7 | `src/data/upgradeData.js:14` | данные | нет | нет / нет (7→6) | суммы Б задают сборки явно |
+| **потолок кристаллов у ботов** `botFacetsMax` 7 | `combatBalance.js` `collapse` | данные | нет | нет / нет | |
+
+**Вывод для правок.** Всё, что надо для балансировки, лежит в незащищённых файлах. Но чисто «крутить числа» не получится в двух местах: (1) пороги нужд зашиты числами в `intentions.js` (кроме `bend`); (2) множители тела, главная асимметрия ядер, — в защищённом `buildFighter.js`. Любая правка баланса, влияющая на выбор намерений, обязана повторить обе метрики на пределе (вне радиуса 25.07% при пороге ≥ 25; свободное время 34.95% при пороге ≤ 35) — запас у них 0.07 и 0.05 п.п.
+
+# Новые находки (всё сломанное вне 14 пунктов)
+
+1. **Ворота `counter > 0.55` зашиты в код и вредят (пункт 1).** Нужда «ответ на замах» всегда даёт CATCH (пассивный ответ) — в 50–60% срабатываний это не совпадает с обычным выбором по очкам. Не управляется `bend`, не видна в данных. Вывод по контрфакту: BULWARK +10.3 п.п. при закрытых воротах, ONSLAUGHT −9.6 и RAIDER −3.8 при открытых. Порог 0.55 лежит между counter RAIDER (0.45) и BULWARK (0.60): ядро либо «всегда в нужде», либо «никогда» — непрерывного перехода нет.
+2. **`tempo` не читается выбором намерений вообще** (`spinalScore` — 7 осей из 8). Кристаллы, двигающие только `tempo` (ONSLAUGHT WILL: Long Combo, No Pause; RAIDER MIND: Fake-In/Punish Reaction по оси), могут действовать только через тело.
+3. **ОТХОД не даёт защиты.** Полученный урон не меняется ни в одном режиме клича (Δ +0.08 / +0.09 / −0.04 HP ±0.18), запас сил тоже; зато своя отдача падает на 2.4 HP за окно. Текст `does` для ОТХОДА в `src/data/klichBalance.js:46` («breaks contact, buys him room and time») обещает то, чего замер не видит; его читает мозг модели/командный слой (`services/command.js`) — может вводить в заблуждение.
+4. **Мозг-модель не знает про клич** (известный долг №1 в `docs/klich-reach/REPORT.md`): порядок «нужда → свежий ответ модели → очки» означает, что клич действует только внутри очков.
+5. **BUCKET пуст.** +30% записаны, +11% средней скорости в окне реально, на игровой плите 5×3 выигрыш −0.7 п.п. (шум), набор бота бросает его на первой секунде (цель ближе 2.2 уже через 0.4 с) — то есть трата хода кулдауна впустую. На плите 12×9 выигрыш лишь +2.3.
+6. **Баффы — огромный односторонний рычаг.** Набор по правилу бота даёт +30.3 п.п. против врага без баффов; при наборе у обеих сторон +0.1. Разброс граней DICE: от +3.3 (грань 1) до +34.3 (грань 6). Ожидаемое +17.8 п.п. за один бросок на 10 с. Защиты от перекоса нет, пока баффы только у игрока.
+7. **Плоский оптимум сборок (пункт 10).** Топ-3 сборок у ONSLAUGHT (против ботов) и BULWARK статистически неотличимы; «правильной» сборки нет, но есть заведомо плохие: RAIDER a4b3 (−8.9 к голому).
+8. **Боты слабее разумных сборок и устроены случайно.** Кристаллы ботов — N случайных из 15 без учёта граней (среднее 3.5): грани без порога резонанса, часто мёртвые кристаллы. Лучшая сборка игрока против поля ботов 65–92%, голое ядро — 25–48%. Если ботов нужно делать «умными», это отдельная разработка.
+9. **Метрики на пределе (пункт 3):** вне радиуса 25.07% (порог ≥ 25, запас 0.07 п.п.), свободное время 34.95% (порог ≤ 35, запас 0.05 п.п.). Любая правка, двигающая `distance`/`tempo`/`weight` ядер, вероятнее всего сломает одну из них, даже если меняется в лучшую сторону.
+10. **Множественные сравнения.** Из 60 ячеек перезамера около 1–2 «значимо вредных» ожидаются от шума. Вердикты «вредит» по Run-Down и Cling (пункт 4) на втором наборе зёрен не повторились; решения, опирающиеся на единственную ячейку, нужно перепроверять.
+11. **Регрессионные суммы не защищают клич и баффы** (пункты 11–14): правка любого их числа оставляет обе суммы прежними. Изменения там проверяются только специальными замерами (`scripts/balance-recon-*`).
+12. **Зеркальная асимметрия на границе шума (пункт 3).** ONSLAUGHT против RAIDER и RAIDER против ONSLAUGHT дают в сумме 107.3% (должно быть ≈ 100; остальные пары 95.5–99.8). ≈ 2σ на 400 зёрнах: либо шум, либо перекос стороны плиты/порядка в паре. Проверка — повторить пару на новых зёрнах (не делалось).
+13. **Рассинхрон описания кристаллов и эффекта.** Карточка показывает полный сдвиг оси, а в полной грани до бойца доходит меньше (пункт 2): у ONSLAUGHT сгорает 34% записанных сдвигов, у AMBUSH 29%, у BULWARK 20%. «Карточка не врёт» (`hexlash-combat` §3) выполняется только для одиночного кристалла.
+14. **Теги мертвы почти полностью.** 11 из 41 «не меняющих решения» ячеек имеют тег, тег даёт ≤ 1–6% переворота решений; четыре тега «по условию верно» и вовсе не меняют выбор (Run-Down, No Breather и др.). Оживлять по одному по `hexlash-combat` §4 имеет смысл только после решения по воротам нужды (находка 1) — иначе в BULWARK/AMBUSH очки вообще не читаются в половине решений.
+
+# Контрольные суммы
+
+| скрипт | сумма | эталон |
+| --- | --- | --- |
+| `scripts/fight-regression.mjs` | `ec148d29dba29092ab735e129779a37e60bcb1b124b79cc093da79ff9e86400c` | `ec148d29…86400c` ✔ |
+| `scripts/fight-regression-builds.mjs` | `5b0a65d4e0481cdc834c89a1dc89610e79011cd10695b11c679755bdb52bbd27` | `5b0a65d4…bd27` ✔ |
+
+Сняты в конце работы на чистой копии (`git diff d9327e02 -- src` пуст; `main` = `b7515df7`, отличается от `d9327e02` только экраном загрузки).
+

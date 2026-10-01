@@ -28,43 +28,74 @@ const P = 'press', ST = 'strike', SG = 'sting', H = 'hold', BR = 'break', C = 'c
 /* Тег → [намерение, условие, вершина?]. Черновые соответствия по смыслу тега (комментарии в upgradeData.js). */
 export const TAG_LEANS = {
   // ONSLAUGHT
-  close_damage_ramp: [ST, 'close'],
-  overload_strike: [ST, 'foeHpLow', true],     // вершина RAM: добивает раненого (было: заряд ≥ 0.5 — почти не наступал)
-  chase_strike: [P, 'longFight'],              // CHASE: гонит всё настойчивее с длиной боя (было: враг далеко — 4%)
-  lockdown: [H, 'close', true],                // вершина CHASE: прижав вплотную — держит (было: PRESS вблизи, как шаг 2)
-  hit_accel: [ST, 'longFight'],                // FRENZY: разгоняется с длиной боя (было: всегда)
-  no_breather: [P, 'foeHpLow'],                // FRENZY: не даёт раненому врагу перевести дух (было: всегда)
-  rampage: [ST, 'selfHpLow', true],            // вершина FRENZY: вразнос, когда прижали (было: всегда)
+  guard_crush: [ST, 'foeGuard', false, 0.12],   // a2
+  unshaken: [H, 'foeSwing', false, 0.27],   // a3
+  close_damage_ramp: [ST, 'close', false, 0.05],   // a4
+  overload_strike: [ST, 'foeHpLow', true, 0.45],   // a5
+  hard_entry: [ST, 'always', false, 0.05],   // b1
+  chase_strike: [ST, 'foeQuiet', false, 0.14],   // b2
+  cut_off: [H, 'close', false, 0.27],   // b3
+  cling: [H, 'close', false, 0.45],   // b4
+  lockdown: [H, 'close', true, 0.27],   // b5
+  long_combo: [ST, 'close', false, 0.05],   // c1
+  no_pause: [ST, 'foeOpen', false, 0.09],   // c2
+  hit_accel: [ST, 'longFight', false, 0.09],   // c3
+  no_breather: [ST, 'foeQuiet', false, 0.14],   // c4
+  rampage: [ST, 'always', true, 0.3],   // c5
   // RAIDER
-  clean_chain: [SG, 'always'],
-  perfect_jab: [SG, 'foeQuiet', true],         // вершина JAB: свободные тычки по пассивному (было: враг далеко — 3%)
-  rhythm_break: [BR, 'close'],
-  feint_interrupt: [SG, 'foeSwing'],
-  feint_combo: [ST, 'close', true],
-  punish_exhausted: [ST, 'foeWindLow'],        // HUNT: карает выдохшегося (было: враг открыт)
-  hunt_reply: [ST, 'foeSwing'],                // HUNT·4, бывший punish_aggression: атакующая ветка отвечает ударом, а не ловит
-  lethal_entry: [P, 'foeHpLow', true],         // вершина HUNT: вход на добивание (было: враг далеко — 5%)
+  quick_out: [BR, 'close', false, 0.15],   // a1
+  pinpoint_entry: [P, 'foeQuiet', false, 0.3],   // a2
+  clean_chain: [SG, 'always', false, 0.10],   // a4
+  perfect_jab: [SG, 'foeQuiet', true, 0.45],   // a5
+  fake_in: [BR, 'foeSwing', false, 0.15],   // b1
+  punish_reaction: [P, 'foeGuard', false, 0.18],   // b2
+  rhythm_break: [BR, 'close', false, 0.15],   // b3
+  feint_interrupt: [SG, 'foeSwing', false, 0.18],   // b4
+  feint_combo: [ST, 'close', true, 0.45],   // b5
+  read_tell: [C, 'foeSwing', false, 0.31],   // c1
+  punish_exhausted: [P, 'foeOpen', false, 0.18],   // c2
+  charged_run: [SG, 'always', false, 0.10],   // c3
+  hunt_reply: [ST, 'foeSwing', false, 0.45],   // c4
+  lethal_entry: [P, 'charged', true, 0.45],   // c5
   // BULWARK
-  dig_in: [H, 'close'],
-  fortress: [H, 'selfHpLow', true],            // вершина BASTION: несокрушим, когда прижали (было: всегда)
-  retaliate_ramp: [ST, 'hpDropped'],           // BREAKER: получил — отдаёт (было: CATCH по «враг бил» — мертво по устройству)
-  counter_trap: [C, 'longFight', true],        // вершина BREAKER: стена, которая с длиной боя только крепнет
-  pin: [H, 'close'],
-  clinch: [P, 'close', true],
+  tough_hide: [H, 'close', false, 0.25],   // a1
+  steady_guard: [H, 'foeSwing', false, 0.31],   // a2
+  catch_breath: [H, 'foeQuiet', false, 0.27],   // a3
+  dig_in: [H, 'close', false, 0.25],   // a4
+  fortress: [H, 'always', true, 0.15],   // a5
+  riposte: [P, 'foeSwing', false, 0.19],   // b1
+  catch_punish: [P, 'foeOpen', false, 0.45],   // b2
+  hard_meet: [P, 'close', false, 0.17],   // b3
+  retaliate_ramp: [ST, 'foeSwing', false, 0.45],   // b4
+  counter_trap: [C, 'longFight', true, 0.45],   // b5
+  body_shove: [P, 'close', false, 0.17],   // c1
+  heavy_slam: [ST, 'close', false, 0.26],   // c2
+  no_way_around: [H, 'foeGuard', false, 0.45],   // c3
+  pin: [H, 'close', false, 0.25],   // c4
+  clinch: [P, 'close', true, 0.17],   // c5
   // AMBUSH
-  punish_aggression: [C, 'hpDropped'],         // TRAP·3: осталось CATCH; условие из нового словаря
-  perfect_trap: [ST, 'foeHpLow&foeQuiet', true], // вершина TRAP: добивает переставшего сопротивляться — враг ранен И затих (было: просто «затих» — 68–72%, переодетое «всегда»)
-  exhaust: [SG, 'longFight'],                  // SHADOW: изматывает с длиной боя (было: враг далеко — 5%)
-  phantom: [BR, 'hpDropped', true],            // вершина SHADOW: уходит из-под удара после попадания
-  vulnerable_strike: [ST, 'foeOpen'],
-  execute: [ST, 'foeHpLow', true],             // вершина STING: казнь раненого (было: враг открыт, как шаг 3)
+  hard_counter: [ST, 'foeSwing', false, 0.45],   // a1
+  slip_counter: [ST, 'foeQuiet', false, 0.45],   // a2
+  punish_aggression: [ST, 'foeSwing', false, 0.45],   // a3
+  punish_whiff: [ST, 'foeOpen', false, 0.6],   // a4
+  perfect_trap: [ST, 'foeQuiet', true, 0.45],   // a5
+  long_slip: [SG, 'foeSwing', false, 0.45],   // b1
+  hard_to_reach: [SG, 'longFight', false, 0.40],   // b2
+  exhaust: [SG, 'longFight', false, 0.40],   // b3
+  open_window: [ST, 'foeOpen', false, 0.45],   // b4
+  phantom: [SG, 'hpDropped', true, 0.45],   // b5
+  loaded_hit: [ST, 'charged', false, 0.45],   // c1
+  long_charge: [SG, 'charged', false, 0.3],   // c2
+  vulnerable_strike: [ST, 'foeOpen', false, 0.45],   // c3
+  pierce: [ST, 'foeGuard', false, 0.45],   // c4
+  execute: [ST, 'close', true, 0.35],   // c5
 };
 
 /* Резонанс ветки: [главное намерение, второстепенное|null]. Ключ: ядро → id ветки (a/b/c). */
 export const BRANCH_HOME = {
-  natisk: { a: [ST, P], b: [H, P], c: [ST, P] },   // RAM · CHASE · FRENZY (ядро и так давит в 99% тиков — PRESS главным был бы холостым: CHASE «пришивает» вплотную, FRENZY рубит сериями)
-  nalet: { a: [SG, null], b: [SG, BR], c: [ST, SG] }, // JAB · FEINT · HUNT
-  skala: { a: [H, C], b: [C, null], c: [H, P] },   // BASTION · BREAKER · VICE
+  natisk: { a: [ST, P], b: [P, ST], c: [ST, P] },   // RAM · CHASE · FRENZY (ядро и так давит в 99% тиков — PRESS главным был бы холостым: CHASE «пришивает» вплотную, FRENZY рубит сериями)
+  nalet: { a: [SG, null], b: [SG, P], c: [ST, SG] }, // JAB · FEINT · HUNT
+  skala: { a: [C, H], b: [C, null], c: [P, H] },   // BASTION · BREAKER · VICE
   zasada: { a: [C, null], b: [BR, SG], c: [SG, C] }, // TRAP · SHADOW · STING
 };
 
@@ -79,7 +110,7 @@ export function resolveLeans(coreId, litFacets) {
     if (f.branch) count[f.branch] = (count[f.branch] || 0) + 1;
     for (const tag of [...(f.conditionals || []), ...(f.effects || [])]) {
       const t = TAG_LEANS[tag];
-      if (t) leans.push({ i: t[0], w: t[2] ? G.vertexLean : G.tagLean, when: t[1], tag });
+      if (t) leans.push({ i: t[0], w: t[3] != null ? t[3] : t[2] ? G.vertexLean : G.tagLean, when: t[1], tag });
     }
   }
   for (const [b, n] of Object.entries(count)) {

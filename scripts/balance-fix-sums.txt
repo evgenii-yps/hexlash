@@ -1,0 +1,8 @@
+| регрессия | сумма (sha256) | боёв |
+| --- | --- | --- |
+| голые ядра (`fight-regression.mjs`) | `0a1893bb8e9b327ee4dbe2f86a1bd630c9bc49af0c5ad5aebabe953339f6587f` | 48 |
+| сборки (`fight-regression-builds.mjs`) | `6a8871d301c386a87d42a8a8d6eea428faf4de792ffb55b3caf67136e9000577` | 36 |
+| клич (`fight-regression-klich.mjs`) | `ccad48b6cae7ffd7fe3cbda07310b5285ec4dcf52e6038f11f4ab10ef7160112` | 48 |
+| баффы (`fight-regression-buffs.mjs`) | `b65bddd7f7d028f630bdbc8e5627ce18201e7220c146959dd9f5371a326fe2ed` | 108 |
+
+Голые не менялись с этапа Б (бой ядер финален); сборки, клич и баффы менялись на этапах В–Е вместе с содержимым.

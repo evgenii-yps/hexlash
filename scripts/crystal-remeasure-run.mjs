@@ -16,10 +16,13 @@ import { join } from 'node:path';
 const WT = process.env.WT;
 if (!WT) throw new Error('задайте WT=<копия дерева с патчем зонда>');
 const REPO = new URL('..', import.meta.url).pathname;
-const RAW = join(REPO, 'docs/crystal-remeasure/out/raw');
+const RAW = join(REPO, process.env.CR_OUT || 'docs/crystal-remeasure/out', 'raw'); // CR_OUT — своя папка (TZ_balance_fix_v2)
 const stage = process.argv[2];
 const JOBS = Number((process.argv.find((a) => a.startsWith('--jobs=')) || '--jobs=4').split('=')[1]);
 const SEEDS = 200;
+const SET = Number(process.env.CR_SET || 1); // CR_SET=2 — второй набор зёрен 201–400 (имена файлов с суффиксом -set2; нулевой замер — блок b2 стадии zero)
+const SUF = SET > 1 ? `-set${SET}` : '';
+const S0 = SEEDS * (SET - 1); // сдвиг зёрен
 const CORES = ['natisk', 'nalet', 'skala', 'zasada'];
 const BR = ['a', 'b', 'c'];
 
@@ -27,7 +30,7 @@ for (const f of ['crystal-remeasure-worker.mjs']) copyFileSync(join(REPO, 'scrip
 mkdirSync(RAW, { recursive: true });
 
 const jobs = [];
-const add = (name, spec) => jobs.push({ name, spec: { ...spec, foes: spec.foes || CORES, out: join(RAW, name + '.json') } });
+const add = (name, spec) => jobs.push({ name: name + (spec.kind === 'zero' ? '' : SUF), spec: { ...spec, ...(spec.kind === 'zero' ? {} : { seedFrom: spec.seedFrom + S0, seedTo: spec.seedTo + S0 }), foes: spec.foes || CORES, out: join(RAW, name + (spec.kind === 'zero' ? '' : SUF) + '.json') } });
 if (stage === 'zerocheck') for (const core of CORES) add(`zerocheck-${core}`, { kind: 'zero', core, seedFrom: 1, seedTo: SEEDS, noswap: true });
 if (stage === 'zero') for (const core of CORES) for (let b = 0; b < 5; b++) add(`zero-${core}-b${b + 1}`, { kind: 'zero', core, seedFrom: 200 * b + 1, seedTo: 200 * (b + 1) });
 if (stage === 'solo') for (const core of CORES) for (const br of BR) for (let i = 1; i <= 5; i++) add(`solo-${core}-${br}${i}`, { kind: 'solo', core, branch: br, idx: i, amp: 1, seedFrom: 1, seedTo: SEEDS });
@@ -47,7 +50,8 @@ if (stage === 'build') {
 }
 if (!jobs.length) throw new Error('нет задач для этапа ' + stage);
 
-const todo = jobs.filter((j) => !existsSync(j.spec.out));
+const ONLY = (process.env.CR_ONLY || '').split(',').filter(Boolean); // CR_ONLY=solo-natisk,build-nalet-c — только задачи, в имени которых есть подстрока (TZ_balance_fix_v2)
+const todo = jobs.filter((j) => !existsSync(j.spec.out) && (!ONLY.length || ONLY.some((o) => j.name.includes(o))));
 console.error(`[${stage}] задач ${jobs.length}, осталось ${todo.length}, процессов ${JOBS}`);
 let running = 0, done = 0, failed = 0;
 const t0 = Date.now();

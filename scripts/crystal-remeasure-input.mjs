@@ -9,7 +9,7 @@
 import { mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { openHarness } from './lib/bout-harness.mjs';
 
-const OUT = new URL('../docs/crystal-remeasure/out/', import.meta.url).pathname;
+const OUT = process.env.CR_OUT ? new URL('../' + process.env.CR_OUT + '/', import.meta.url).pathname : new URL('../docs/crystal-remeasure/out/', import.meta.url).pathname; // CR_OUT — своя папка (TZ_balance_fix_v2)
 mkdirSync(OUT, { recursive: true });
 const H = await openHarness();
 const { load, resolveBehavior, CORE_IDS } = H;

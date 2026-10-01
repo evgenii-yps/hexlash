@@ -41,11 +41,11 @@ export const KLICH_IDS = ['push', 'fallback', 'hold'];
  */
 export const KLICH_META = {
   push:     { id: 'push',     name: 'PUSH',     mono: 'P', glyph: 'forward',
-              does: 'drives him forward into the exchange, no backing off' },
+              does: 'drives him forward into the exchange and keeps him swinging faster, no backing off' },
   fallback: { id: 'fallback', name: 'FALL BACK', mono: 'F', glyph: 'back',
-              does: 'breaks contact, buys him room and time' },
+              does: 'breaks contact, gets his wind back faster, takes less damage and hits back harder while he backs off' },
   hold:     { id: 'hold',     name: 'HOLD',     mono: 'H', glyph: 'anchor',
-              does: 'digs him in, guard up, rides out the series' },
+              does: 'digs him in, guard up, takes less damage and answers harder while he rides out the series' },
 };
 
 /**
@@ -117,18 +117,46 @@ export const KLICH_BALANCE = {
    * ⚠️ Состав групп — id намерений строками (как в branchThreshold.js): файл не ввозит
    *    intentions.js, которому самому нужны эти данные.
    */
+  /**
+   * ПЕРЕКОС ВНУТРИ ГРУППЫ (balance-fix, этап Д): прибавка к очкам намерения, пока клич на полной силе. Нужен там, где группа клича —
+   * это уже и так выбор бойца: ONSLAUGHT давит (PRESS) ~100% времени, поэтому «ВПЕРЁД» внутри {PRESS, STRIKE} ничего не меняло (замер: доля
+   * PRESS 100% → 100%, замахов за 6 с 5.1 → 5.1). Прибавка к STRIKE переводит его в рубящий режим: серии и комбо вместо одиночных, больше
+   * темпа (дельты осей STRIKE) — видно сразу. Тот же приём у «ДЕРЖАТЬ»: HOLD вместо CATCH. Ключ — id намерения.
+   */
+  bias: {
+    push: { strike: 0.6 },
+    hold: { hold: 0.8 }, // BULWARK и AMBUSH и так ловят (CATCH 82–86%): без перекоса «ДЕРЖАТЬ» на них не читался (сдвиг распределения намерений 11–14 п.п.); с ним CATCH → HOLD, 93–95 п.п.
+  },
+
   groups: {
     push:     ['press', 'strike'],
     fallback: ['break', 'sting', 'breathe'],
     hold:     ['hold', 'catch'],
   },
 
+  /**
+   * ЭФФЕКТЫ НА ПОЛНОЙ СИЛЕ (balance-fix, этап Д). Множители, которые боец применяет, ПОКА клич держится весь `holdSec`; в сход на нет
+   * (`fadeSec`) они снимаются сразу — иначе плавный хвост читался бы как обрыв в другую сторону. Ключи читает scene/buildFighter.js (`klichFx`):
+   *   regenMul    — множитель восстановления сил: больше 1 — отдышивается быстрее
+   *   dmgTakenMul — множитель входящего урона: меньше 1 — берёт меньше
+   *   dmgDealtMul — множитель исходящего урона: больше 1 — отвечает сильнее
+   *
+   * ⚠️ ШАПКА ФАЙЛА («клич не трогает силу») ОСТАЁТСЯ ВЕРНОЙ ДЛЯ ВПЕРЁД: у него нет ни одного множителя силы — только перекос выбора намерения
+   *    (`bias` ниже). ОТХОД получил быстрое восстановление сил и меньший входящий урон по ТЗ balance_fix_v2 (этап Д). Оба оборонительных клича
+   *    получили ещё и «отвечает сильнее»: без этого они проигрывали бою — замер до правки: ОТХОД на BULWARK −6.8 п.п., ДЕРЖАТЬ −4.8 (значимо);
+   *    боец в обороне почти не бьёт, и одной защиты на этом выигрыша не давало (входящий урон −45% почти не двигал исход).
+   */
+  effects: {
+    fallback: { regenMul: 2.5, dmgTakenMul: 0.55, dmgDealtMul: 1.8 },
+    hold:     { dmgTakenMul: 0.7, dmgDealtMul: 1.8 },
+  },
+
   axes: {
     // ВПЕРЁД — идёт вперёд, чаще размен, меньше разрывов дистанции.
     push:     { distance: -70, initiative: 35, tempo: 10, stick: 25 },
     // ОТХОД — рвёт дистанцию, уходит от прессинга, реже атакует.
-    fallback: { distance: 90, initiative: -30, tempo: -10, stick: -35 },
+    fallback: { distance: 90, initiative: -15, tempo: 0, stick: -35 },
     // ДЕРЖАТЬ — упирается, держит оборону, терпит серию.
-    hold:     { distance: -5, initiative: -25, tempo: -20, stick: 40 },
+    hold:     { distance: -5, initiative: -10, tempo: -5, stick: 10 },
   },
 };
