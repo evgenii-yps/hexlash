@@ -85,7 +85,7 @@ export const BUFF_BALANCE = {
   // Бот получает то же самое: его бросок идёт через те же функции (powerOf / towelHealFrac / diceRow / bucketReact).
   corePower: {
     towel: { natisk: 1, nalet: 1, skala: 1, zasada: 1 },
-    bucket: { natisk: 1, nalet: 1, skala: 1, zasada: 1 },
+    bucket: { natisk: 1.5, nalet: 1, skala: 1, zasada: 1 }, // ONSLAUGHT: ВЕДРО давало +1.8 / +3.3 п.п. (цель +3…+8 на обоих наборах по 800) — сила реакции ×1.5: +3.8 / +3.9; ×2 выбило «все сразу» на +15.2
     dice: { natisk: 1, nalet: 1, skala: 1, zasada: 1 },
   },
 
