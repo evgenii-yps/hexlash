@@ -32,9 +32,12 @@ a:hover{color:#F6F4F6}
 .langbtn.nr{border-right:none}
 .langbtn:hover{border-color:rgba(255,255,255,0.16);color:#F6F4F6}
 .langbtn.on{color:#F6F4F6;border-color:rgba(255,255,255,0.16)}
-.fight{height:48px;padding:0 32px;background:#16161B;border:1px solid #FF0069;color:#F6F4F6;font:900 18px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(255,0,105,0.30),0 0 18px rgba(255,0,105,0.45),inset 0 1px 0 rgba(255,105,150,0.55);transition:box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)}
-.fight:hover{box-shadow:0 0 40px rgba(255,0,105,0.42),0 0 18px rgba(255,0,105,0.60),inset 0 1px 0 rgba(255,105,150,0.75);transform:translateY(-1px)}
-.fight:active{box-shadow:0 0 14px rgba(255,0,105,0.55),inset 0 1px 0 rgba(255,105,150,0.35);transform:translateY(1px)}
+/* Кнопка-ссылка раздела 03. В покое матовая: нейтральная рамка, без заливки и свечения (правило деки).
+   Розовый — только при наведении и нажатии. */
+.fight{height:48px;padding:0 32px;background:#16161B;border:1px solid rgba(255,255,255,0.16);color:#F6F4F6;font:900 18px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:border-color 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)}
+.fight:hover{border-color:#FF0069;box-shadow:0 0 18px rgba(255,0,105,0.35);transform:translateY(-1px)}
+.fight:active{border-color:#FF0069;box-shadow:0 0 10px rgba(255,0,105,0.45);transform:translateY(1px)}
+.fight:focus-visible{outline:2px solid #F6F4F6;outline-offset:3px}
 /* Кнопка-ссылка раздела 03 («ПЕРЕЙТИ» / «GO») — тот же вид, что был у кнопки боя. Это <a>, не <button>:
    работает без JavaScript. Высота 48 — касание больше 44. Кириллица — JetBrains Mono (правило деки). */
 a.fight{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
@@ -1402,7 +1405,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <div class="dk-pass" style="padding:0 16px;max-width:1180px;margin:0 auto">
     <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">03</span><span>ЖИВОЙ БОЙ</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Игрок никогда не бьёт сам</span></h2>
-    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ни кнопки удара, ни блока, ни комбо. Боец дерётся сам — своей головой, характером и привычками. Ниже — настоящий бой из игры, не ролик и не симуляция.</p>
+    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ни кнопки удара, ни блока, ни комбо. Боец дерётся сам — своей головой, характером и привычками. Это не ролик и не симуляция. Кнопка ниже открывает саму игру — выберите режим и запустите бой.</p>
   </div>
   <div class="dk-go" style="padding:0 16px;max-width:1180px;margin:32px auto 0">
     <p style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0 0 20px">НАСТОЯЩАЯ ИГРА · ВЫБЕРИТЕ РЕЖИМ И ЗАПУСТИТЕ БОЙ</p>
@@ -2028,7 +2031,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <div class="dk-pass" style="padding:0 16px;max-width:1180px;margin:0 auto">
     <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">03</span><span>LIVE FIGHT</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The player never throws a punch</span></h2>
-    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No attack button, no block, no combos. The fighter fights on his own — with his own head, character and habits. Below is a real fight from the game, not a video and not a simulation.</p>
+    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No attack button, no block, no combos. The fighter fights on his own — with his own head, character and habits. Not a video, not a simulation. The button below opens the game itself — pick a mode and start a fight.</p>
   </div>
   <div class="dk-go" style="padding:0 16px;max-width:1180px;margin:32px auto 0">
     <p style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0 0 20px">THE REAL GAME · PICK A MODE AND START A FIGHT</p>
