@@ -81,7 +81,7 @@ export const TAG_LEANS = {
   perfect_trap: [ST, 'foeQuiet', true, 0.45],   // a5
   long_slip: [SG, 'foeSwing', false, 0.45],   // b1
   hard_to_reach: [SG, 'longFight', false, 0.40],   // b2
-  exhaust: [SG, 'longFight', false, 0.12],   // b3 · LONG GAME / Run 'Em Ragged (было 0.40 → STING 24.5% и вытеснял CATCH: в одиночку −1.3 п.п.; 0.12 → STING ≈ 8%, исход ≥ 0; заход 6, группа 1)
+  exhaust: [SG, 'longFight', false, 0.18],   // b3 · LONG GAME / Run 'Em Ragged (было 0.40 → STING 24.5% и вытеснял CATCH: в одиночку −1.3 п.п.; 0.12 → STING ≈ 8%, но решений меняло 4.0% < 5% (Ц4); 0.18 → STING ≈ 10%, решений 6.3%, исход ≈ 0 в шуме; заход 6, группа 1)
   open_window: [ST, 'foeOpen', false, 0.45],   // b4
   phantom: [SG, 'hpDropped', true, 0.45],   // b5
   loaded_hit: [ST, 'charged', false, 0.45],   // c1
