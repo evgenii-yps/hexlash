@@ -268,7 +268,9 @@
       }
       window.__vt.pre = driveFrame;
 
+      let renders = 0, inSub = false;   // сколько раз игра сама нарисовала сцену нашей камерой (нужно, чтобы заметить пропущенный кадр: см. window.__director.rendered)
       renderer.render = (scene, camera) => {
+        if (camera === cam && T.on && !inSub) renders++;
         if (!T.on || camera !== cam) return orig(scene, camera);
         if (cfg.drive) {
           // камера уже поставлена настоящей (до цикла игры), поэтому сцена (легенда над боем и т. п.) считает от неё; здесь только крен — на отрисовке
@@ -302,6 +304,9 @@
       };
       window.__director.start = (f0) => { T.f0 = f0; T.on = true; base = null; lastPose.v = null; keysR = null; };
       window.__director.stop = () => { T.on = false; };
+      // Рисовала ли игра сцену с прошлого вопроса. Часть сцен сама рисует каждый второй кадр (зал FORGE в состоянии «карточка бойца открыта»: 30 кадр/с) —
+      // тогда съёмка получала бы дубль кадра, а наша камера стояла бы на месте. Сессия в таком случае дорисовывает кадр нашей камерой (sub(0)).
+      window.__director.rendered = () => { const r = renders > 0; renders = 0; return r; };
       // Подкадр размытия движения: ТОЛЬКО камера сдвигается на s кадров от текущего, всё остальное в сцене стоит как на этом кадре.
       // Рисуем ещё раз прямо сейчас (после шага игры) и возвращаем камеру как была. Вернёт false, если камера в этот кадр отдана игре.
       window.__director.sub = (s) => {
@@ -309,12 +314,12 @@
         const f = window.__vt.frame - T.f0;
         if (f < 0 || (cfg.release && f + s >= cfg.release.at)) return false;
         const sp = cam.position.clone(), sq = cam.quaternion.clone(), sf = cam.fov, c = st.controls, ct = c ? c.target.clone() : null;
-        T.sub = s;
+        T.sub = s; inSub = true;
         try {
           if (cfg.drive) drivePose(f + s);
           renderer.render(st.scene, cam);
         } finally {
-          T.sub = 0;
+          T.sub = 0; inSub = false;
           cam.position.copy(sp); cam.quaternion.copy(sq);
           if (cam.fov !== sf) { cam.fov = sf; cam.updateProjectionMatrix(); }
           if (c) c.target.copy(ct);

@@ -46,7 +46,8 @@ export function averagePngs(bufs) {
     for (let c = 0; c < 3; c++) { let a = 0; for (const im of ims) a += TO_LIN[im.data[i + c]]; out.data[i + c] = fromLin(a / n); }
     out.data[i + 3] = 255;
   }
-  return PNG.sync.write(out);
+  // RGB без альфы, как у обычных снимков окна: смена формата кадров посреди последовательности пересобирает граф фильтров ffmpeg, и фильтры с памятью (tmix) теряют кадры
+  return PNG.sync.write(out, { colorType: 2, inputColorType: 6, inputHasAlpha: true });
 }
 // Смещения подкадров (в кадрах симуляции) для затвора шириной span: центры четырёх равных долей, симметрично вокруг кадра
 export const BLUR_SUBFRAMES = 4;
@@ -187,7 +188,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
     /** Прогоняет кадры боя [0, offset+len) и сохраняет снимки окна. capture:false — только расчёт (подбор зёрен). */
     async run({ outDir, every = 1, capture = true, frames, onFrame, stopWhen, ranges, blur = true, blurSpan }) {   // ranges: [[от, до), …] в кадрах плана — снимать только их (имя файла = номер кадра / every)
       if (capture) { rmSync(outDir, { recursive: true, force: true }); mkdirSync(outDir, { recursive: true }); }
-      const hashes = {}; const journal = []; let seq = 0;
+      const hashes = {}; const journal = []; let seq = 0; let fillCount = 0;
       const total = frames ?? (offset + plan.len);
       for (let b = 0; b < total; b++) {
         for (const a of actionsAt.get(b) || []) await doAction(a, b);
@@ -205,6 +206,8 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
             }
           }
           let buf;
+          // игра пропустила кадр (сама рисует реже 60 кадр/с) — дорисовываем его нашей камерой, иначе кадр будет дублем предыдущего
+          if (plan.camera) { const drew = await page.evaluate(() => window.__director.rendered()); if (!drew) { await page.evaluate(() => window.__director.sub(0)); await page.evaluate(() => window.__vt.settle()); fillCount++; } }
           // размытие движения: на быстрых участках плана (plan.blur — [[от, до), …]) кадр = среднее четырёх подкадров камеры, затвор 180° кадра ролика
           if (blur && plan.camera && (plan.blur || []).some(([a, z]) => f >= a && f < z)) {
             const shots = [];
@@ -222,7 +225,7 @@ export async function openSession({ base, plan, size = [1280, 720], log = consol
         }
       }
       if (capture) writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify({ plan: plan.id, offset, len: plan.len, every, size, hashes }, null, 1));
-      return { hashes, journal };
+      return { hashes, journal, filled: fillCount };
     },
     /** Снимок «как стоит», без шага времени. Снимаем, пока два подряд не совпадут:
      *  показ кадра GPU и съёмка страницы идут независимыми путями. */

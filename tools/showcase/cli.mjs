@@ -27,6 +27,7 @@ import { startServer, REPO } from './lib/server.mjs';
 import { openSession, warm } from './lib/session.mjs';
 import { encode } from './lib/ffmpeg.mjs';
 import { provenance } from './lib/provenance.mjs';
+import { checkNoFreezes } from './lib/freeze.mjs';
 import { lockStatus, refreshFights, resolvePlan, readLock, analyze, journalHash } from './lib/fights.mjs';
 import { encodeTimeline, encodeExcerpt, buildMarks, writeMarks, copyStills, layout, fmt } from './lib/assemble.mjs';
 import { plans, excerpts, FPS, music, musicVariants } from './plan/trailer.plan.mjs';
@@ -39,7 +40,7 @@ const { values: o, positionals: [cmd = 'help', arg] } = parseArgs({
   allowPositionals: true,
   options: {
     range: { type: 'string' }, size: { type: 'string', default: '1280x720' }, every: { type: 'string', default: '2' },
-    crf: { type: 'string' }, preset: { type: 'string' }, tag: { type: 'string' }, out: { type: 'string' }, only: { type: 'string' }, name: { type: 'string' }, video: { type: 'string' }, bamgain: { type: 'string' }, 'no-verify': { type: 'boolean', default: false }, reuse: { type: 'boolean', default: false },
+    crf: { type: 'string' }, preset: { type: 'string' }, tag: { type: 'string' }, fps: { type: 'string' }, out: { type: 'string' }, only: { type: 'string' }, name: { type: 'string' }, video: { type: 'string' }, bamgain: { type: 'string' }, 'no-verify': { type: 'boolean', default: false }, reuse: { type: 'boolean', default: false },
   },
 });
 const size = o.size.split('x').map(Number);
@@ -82,6 +83,15 @@ async function verifySample(base, plan, first, { sz = size } = {}) {
   const compared = fs.filter((f) => first.hashes[f] !== undefined).length;
   if (bad.length === 0) rmSync(dir, { recursive: true, force: true });   // при расхождении снимки второго рендера остаются для разбора
   return { compared, mismatched: bad.length, firstBad: bad[0] ?? null, net: second.net };
+}
+
+/** Обязательная проверка «нет стоп-кадров» на выходном файле. Падает с указанием секунды. */
+async function assertNoFreezes(file, fps, dir) {
+  const r = await checkNoFreezes(file, fps);
+  writeFileSync(path.join(dir, `freeze-${path.basename(file, '.mp4')}.json`), JSON.stringify(r, null, 1));
+  console.log(`  стоп-кадры ${path.basename(file)}: ${r.freezes.length} (вне белого списка стоп-кадров: ${r.problems.length}; тихих моментов с живыми кадрами: ${r.quiet.length}), новых кадров по секундам min ${Math.min(...r.perSecond.filter((_, i) => !r.freezes.some((z) => i + 1 > z.start && i < z.end)))}`);
+  if (!r.ok) throw new Error(`СТОП-КАДРЫ вне белого списка в ${path.basename(file)}: ` + r.problems.map((z) => `${z.start.toFixed(2)}–${Number.isFinite(z.end) ? z.end.toFixed(2) : 'конец'} с`).join('; '));
+  return r;
 }
 
 const sumNet = (list) => list.reduce((a, n) => ({
@@ -254,6 +264,8 @@ try {
       encodeTimeline({ root: outRoot, every, out: mp4, size, crf: Number(o.crf || 16), preset: o.preset || 'medium' });
       // 60 кадр/с сняты → веб-версия 30 кадр/с собирается из тех же кадров (каждый кадр = среднее двух соседних, как затвор 180° при 30)
       if (every === 1) encodeTimeline({ root: outRoot, every, out: path.join(dir, `stage3-draft-${size[1]}p30.mp4`), size, crf: Number(o.crf || 18), preset: o.preset || 'medium', blend30: true });
+      await assertNoFreezes(mp4, FPS / every, dir);
+      if (every === 1) await assertNoFreezes(path.join(dir, `stage3-draft-${size[1]}p30.mp4`), 30, dir);
       writeMarks(dir, buildMarks({ results }));
       const stills = copyStills({ root: outRoot, every, dir: path.join(dir, 'stills') });
       writeFileSync(path.join(dir, 'stills.json'), JSON.stringify(stills, null, 1));
@@ -305,6 +317,8 @@ try {
     const tag = o.tag || `${size[1]}p${FPS / every}`;
     const outSound = path.join(dir, `${name}-music-draft-${tag}.mp4`), outSilent = path.join(dir, `${name}-silent-draft-${tag}.mp4`);
     muxVideo({ ffmpeg: ffm, video, wav, outSound, outSilent, bitrate: music.bitrate, dur: t.dur });
+    const vfps = Number(o.fps || FPS / every);
+    await assertNoFreezes(outSound, vfps, dir); await assertNoFreezes(outSilent, vfps, dir);
     const rep = writeBeatReports({ dir, beatmap, t, marks, music, m0 });
     writeFileSync(path.join(dir, 'music-info.json'), JSON.stringify({ variant: vid, times: t, loudness: { measuredBeforeNorm: mix.measured, check: chk, target: { I: music.lufs, TP: music.tp } }, ...rep.info }, null, 1));
     console.log('  громкость готового звука:', JSON.stringify(chk));
@@ -334,6 +348,18 @@ try {
       console.log(`  ${id}: ${desc}\n     громкость ${JSON.stringify(chk)}`);
     }
     writeFileSync(path.join(dir, 'music-variants.json'), JSON.stringify(report, null, 1));
+  } else if (cmd === 'assemble') {
+    // только сборка видео из уже снятых кадров (без съёмки): мастер и, при every=1, веб-30; затем обязательная проверка «нет стоп-кадров»
+    const dir = path.join(outRoot, 'trailer'); mkdirSync(dir, { recursive: true });
+    const mp4 = path.join(dir, `stage3-draft-${size[1]}p${FPS / every}.mp4`);
+    encodeTimeline({ root: outRoot, every, out: mp4, size, crf: Number(o.crf || 16), preset: o.preset || 'medium' });
+    const web = path.join(dir, `stage3-draft-${size[1]}p30.mp4`);
+    if (every === 1) encodeTimeline({ root: outRoot, every, out: web, size, crf: Number(o.crf || 18), preset: o.preset || 'medium', blend30: true });
+    await assertNoFreezes(mp4, FPS / every, dir);
+    if (every === 1) await assertNoFreezes(web, 30, dir);
+  } else if (cmd === 'check-video') {
+    const r = await assertNoFreezes(path.resolve(arg), Number(o.fps || 30), path.join(outRoot, 'trailer'));
+    console.log(JSON.stringify(r.perSecond));
   } else if (cmd === 'guard') {
     await guard(arg || 'origin/main');
   } else if (cmd === 'regress') {

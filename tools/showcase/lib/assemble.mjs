@@ -67,6 +67,11 @@ export function encodeTimeline({ root, every, out, crf = 16, preset = 'medium', 
     }
     const file = path.join(tmp, `part${String(i).padStart(2, '0')}.nut`);
     run([...input, '-vf', `${f},fps=${outFps},format=rgb24`, '-r', String(outFps), '-frames:v', String(p.len / every / (blend30 ? 2 : 1)), '-c:v', 'ffv1', '-level', '3', '-threads', '4', '-an', file]);
+    // каждый кусок обязан получиться ровно нужной длины: недобор молча добивался бы повтором последнего кадра (стоп-кадр в ролике)
+    const want = p.len / every / (blend30 ? 2 : 1);
+    const probe = spawnSync(ff, ['-hide_banner', '-stats', '-i', file, '-map', '0:v:0', '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1 << 26 });
+    const got = Number(((probe.stderr || '').replace(/\r/g, '\n').match(/frame=\s*(\d+)/g) || []).pop()?.replace(/\D/g, ''));
+    if (got !== want) throw new Error(`кусок ${p.id}: в файл попало ${got} кадров из ${want} — недобор, ролик бы получил стоп-кадр`);
     files.push(file);
   });
   const list = path.join(tmp, 'list.txt'); writeFileSync(list, files.map((x, i) => `file '${path.resolve(x)}'\nduration ${(parts[i].len / every / (blend30 ? 2 : 1) / outFps).toFixed(6)}`).join('\n') + '\n');
