@@ -45,7 +45,7 @@
 //               buffEndFight, buffTick, useBuffCard.
 import { reactive, watch } from 'vue';
 import * as THREE from 'three';
-import { BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie } from '@/data/buffBalance.js';
+import { BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie, towelHealFrac, diceRow } from '@/data/buffBalance.js';
 import { selectState, selectedUnit } from './fighterSelect.js';
 import { DEV_MODE } from './devMode.js';
 import { createRng } from '@/scene/boutRandom.js';
@@ -386,7 +386,7 @@ function applyBuff(id, unit, own) {
   if (id === 'towel') {
     const o = BUFF_BALANCE.towel;
     e.until = nowT + o.durationSec;
-    e.healRate = o.healFracOfMax / o.durationSec; // ровно, за всё время
+    e.healRate = towelHealFrac(unit.coreId) / o.durationSec; // ровно, за всё время (с поправкой силы по ядру)
     // Если боец сбит ПРЯМО СЕЙЧАС — укоротить этот сбив сразу.
     if (f.isStaggered && f.isStaggered()) { f.shortenStagger(o.staggerRecoverMul); e.staggerHandled = true; }
   } else if (id === 'bucket') {
@@ -397,7 +397,7 @@ function applyBuff(id, unit, own) {
   } else if (id === 'dice') {
     // Служебная грань — только под ?dev=1; у игрока здесь всегда честный бросок.
     const face = (DEV_MODE && devFace) || rollDie(dieRng); // ЕДИНСТВЕННЫЙ бросок на всю игру
-    const row = BUFF_BALANCE.dice.faces[face];
+    const row = diceRow(face, unit.coreId); // грань с поправкой силы по ядру
     e.face = face;
     e.until = Infinity;                          // у кубика не время, а заряженные удары
     armDiceCharge(f, row.mul, row.hits);

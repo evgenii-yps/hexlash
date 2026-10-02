@@ -5,7 +5,7 @@
 export function makeActions(H, mods) {
   const { INSTANT_DT, strike } = H;
   const { KLICH_BALANCE } = mods.klich;
-  const { BUFF_BALANCE: B, rollDie } = mods.buff;
+  const { BUFF_BALANCE: B, rollDie, towelHealFrac, diceRow } = mods.buff;
 
   /** Бросить клич на бойца (как services/klich.js). */
   const castKlich = (f, id) => {
@@ -46,9 +46,9 @@ export function makeActions(H, mods) {
       if (!pick) return;
       items.splice(items.indexOf(pick), 1); lastThrow = now;
       const rec = { id: pick, t: Math.round(now * 100) / 100, hp01: Math.round(hp01 * 1000) / 1000 };
-      if (pick === 'towel') { eff = { id: 'towel', until: now + B.towel.durationSec, rate: B.towel.healFracOfMax / B.towel.durationSec, sh: false }; if (f.isStaggered()) { f.shortenStagger(B.towel.staggerRecoverMul); eff.sh = true; } }
+      if (pick === 'towel') { eff = { id: 'towel', until: now + B.towel.durationSec, rate: towelHealFrac(me.coreId) / B.towel.durationSec, sh: false }; if (f.isStaggered()) { f.shortenStagger(B.towel.staggerRecoverMul); eff.sh = true; } }
       else if (pick === 'bucket') { f.setBuffPace(B.bucket.paceMul); f.setBuffReact(true); eff = { id: 'bucket', until: now + B.bucket.durationSec }; }
-      else { const fc = face || rollDie(rollRng || undefined); const row = B.dice.faces[fc]; strike.armDiceCharge(f, row.mul, row.hits); eff = { id: 'dice', until: Infinity }; rec.face = fc; }
+      else { const fc = face || rollDie(rollRng || undefined); const row = diceRow(fc, me.coreId); strike.armDiceCharge(f, row.mul, row.hits); eff = { id: 'dice', until: Infinity }; rec.face = fc; }
       log.push(rec);
     };
     return d;

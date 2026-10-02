@@ -9,7 +9,7 @@
 // Что здесь НЕ живёт: правила боя (data/combatBalance.js) и вид предметов
 // (scene/buffItems.js). Бафф ничего из них не переписывает.
 //
-// Экспортирует: BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie.
+// Экспортирует: BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie, powerOf, towelHealFrac, diceRow, bucketReact.
 
 /** Порядок предметов — он же порядок карточек в панели и слотов перед боем. */
 export const BUFF_IDS = ['towel', 'bucket', 'dice'];
@@ -72,6 +72,21 @@ export const BUFF_BALANCE = {
       6: { hits: 3, mul: 1.3 }, // + особая вспышка
     },
     bigFace: 6, // на этой грани вспышка заметно сильнее
+  },
+
+  // ── ПОПРАВКА СИЛЫ ПО ЯДРУ ── (TZ_buffs_per_core_v1) ОДНА ТАБЛИЦА НА ВСЕ ПРЕДМЕТЫ.
+  //
+  // Предмет сам по себе одинаков у всех, но один и тот же бонус по-разному весит у разных ядер (у ядра, которое и так почти всегда
+  // выигрывает размен, прибавка меньше). Эта таблица — множитель к УЖЕ существующим числам силы предмета, по ядру:
+  //   towel  — восстановление (healFracOfMax);
+  //   bucket — сила реакции: прибавки dodgeAdd / counterAdd и отклонения delayMul / missMul / reactMul / cooldownMul от единицы;
+  //   dice   — надбавка грани к урону (mul − 1); число ударов hits не меняется.
+  // 1 = как в таблицах выше. НЕТ записи = 1. Менять только силу: заряды, откат, длительность, момент срабатывания, тексты и вид — не здесь.
+  // Бот получает то же самое: его бросок идёт через те же функции (powerOf / towelHealFrac / diceRow / bucketReact).
+  corePower: {
+    towel: { natisk: 1, nalet: 1, skala: 1, zasada: 1 },
+    bucket: { natisk: 1, nalet: 1, skala: 1, zasada: 1 },
+    dice: { natisk: 1, nalet: 1, skala: 1, zasada: 1 },
   },
 
   // ── БОТ ── когда соперник бросает свой набор
@@ -141,4 +156,41 @@ export const BUFF_BALANCE = {
  */
 export function rollDie(rnd = Math.random) {
   return 1 + Math.floor(rnd() * 6);
+}
+
+// ── СИЛА ПРЕДМЕТА С ПОПРАВКОЙ ПО ЯДРУ ── единственные места, где предмет читает свою силу для конкретного бойца.
+// Читают их: services/buffs.js (игрок и бот), scene/buildFighter.js (BUCKET), scripts/lib/bout-actions.mjs (замеры).
+
+/** Множитель силы предмета для ядра (corePower). Нет записи — 1. */
+export function powerOf(id, coreId) {
+  const t = BUFF_BALANCE.corePower && BUFF_BALANCE.corePower[id];
+  const p = t && t[coreId];
+  return p > 0 ? p : 1;
+}
+
+/** Доля полного здоровья, которую TOWEL вернёт за всё время действия. */
+export function towelHealFrac(coreId) {
+  return BUFF_BALANCE.towel.healFracOfMax * powerOf('towel', coreId);
+}
+
+/** Грань кубика для ядра: `hits` прежнее, надбавка к урону (mul − 1) умножена на поправку. */
+export function diceRow(face, coreId) {
+  const r = BUFF_BALANCE.dice.faces[face];
+  const p = powerOf('dice', coreId);
+  return p === 1 ? r : { hits: r.hits, mul: 1 + (r.mul - 1) * p };
+}
+
+/**
+ * Числа реакции BUCKET для ядра. При поправке 1 отдаётся сам объект bucket.react (ровно прежние числа).
+ * Прибавки (dodgeAdd, counterAdd) и растущий множитель (reactMul) — растягиваются линейно от нейтрали; множители меньше единицы
+ * (delayMul, missMul, cooldownMul) — степенью, чтобы не уйти в ноль и в минус.
+ */
+export function bucketReact(coreId) {
+  const r = BUFF_BALANCE.bucket.react;
+  const p = powerOf('bucket', coreId);
+  if (p === 1) return r;
+  return {
+    delayMul: r.delayMul ** p, missMul: r.missMul ** p, cooldownMul: r.cooldownMul ** p,
+    reactMul: 1 + (r.reactMul - 1) * p, dodgeAdd: r.dodgeAdd * p, counterAdd: r.counterAdd * p,
+  };
 }
