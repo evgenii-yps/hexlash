@@ -1,0 +1,39 @@
+seed=1 natisk:s1 vs natisk -> winner=foe sec=44.6333 capped=false winHp=0.289092
+seed=1 natisk:ba vs natisk -> winner=player sec=34.7833 capped=false winHp=0.597910
+seed=1 natisk:xab vs natisk -> winner=player sec=39.5667 capped=false winHp=0.365387
+seed=1 nalet:s1 vs nalet -> winner=foe sec=50.4000 capped=false winHp=0.154458
+seed=1 nalet:ba vs nalet -> winner=player sec=41.7667 capped=false winHp=0.579557
+seed=1 nalet:xab vs nalet -> winner=player sec=44.6667 capped=false winHp=0.502225
+seed=1 skala:s1 vs skala -> winner=foe sec=51.6667 capped=false winHp=0.319319
+seed=1 skala:ba vs skala -> winner=player sec=46.5500 capped=false winHp=0.541403
+seed=1 skala:xab vs skala -> winner=player sec=62.3333 capped=false winHp=0.261022
+seed=1 zasada:s1 vs zasada -> winner=foe sec=51.7333 capped=false winHp=0.041999
+seed=1 zasada:ba vs zasada -> winner=player sec=38.3667 capped=false winHp=0.799061
+seed=1 zasada:xab vs zasada -> winner=foe sec=51.1833 capped=false winHp=0.740863
+seed=7 natisk:s1 vs natisk -> winner=player sec=45.4167 capped=false winHp=0.031604
+seed=7 natisk:ba vs natisk -> winner=player sec=39.9000 capped=false winHp=0.299211
+seed=7 natisk:xab vs natisk -> winner=foe sec=43.1167 capped=false winHp=0.215719
+seed=7 nalet:s1 vs nalet -> winner=player sec=45.3833 capped=false winHp=0.147722
+seed=7 nalet:ba vs nalet -> winner=player sec=42.3833 capped=false winHp=0.333575
+seed=7 nalet:xab vs nalet -> winner=player sec=40.1500 capped=false winHp=0.584899
+seed=7 skala:s1 vs skala -> winner=player sec=46.1667 capped=false winHp=0.560433
+seed=7 skala:ba vs skala -> winner=player sec=45.9000 capped=false winHp=0.344945
+seed=7 skala:xab vs skala -> winner=player sec=51.0667 capped=false winHp=0.383313
+seed=7 zasada:s1 vs zasada -> winner=player sec=49.8333 capped=false winHp=0.395362
+seed=7 zasada:ba vs zasada -> winner=foe sec=34.8500 capped=false winHp=0.983964
+seed=7 zasada:xab vs zasada -> winner=player sec=35.8000 capped=false winHp=0.693073
+seed=12345 natisk:s1 vs natisk -> winner=player sec=35.7333 capped=false winHp=0.600772
+seed=12345 natisk:ba vs natisk -> winner=player sec=39.6833 capped=false winHp=0.311783
+seed=12345 natisk:xab vs natisk -> winner=foe sec=41.4833 capped=false winHp=0.061092
+seed=12345 nalet:s1 vs nalet -> winner=player sec=43.4833 capped=false winHp=0.401247
+seed=12345 nalet:ba vs nalet -> winner=player sec=46.9667 capped=false winHp=0.000057
+seed=12345 nalet:xab vs nalet -> winner=foe sec=42.4167 capped=false winHp=0.290177
+seed=12345 skala:s1 vs skala -> winner=player sec=52.5000 capped=false winHp=0.491704
+seed=12345 skala:ba vs skala -> winner=player sec=52.2500 capped=false winHp=0.268141
+seed=12345 skala:xab vs skala -> winner=player sec=44.5333 capped=false winHp=0.428225
+seed=12345 zasada:s1 vs zasada -> winner=player sec=35.0500 capped=false winHp=0.822711
+seed=12345 zasada:ba vs zasada -> winner=player sec=52.1500 capped=false winHp=0.144873
+seed=12345 zasada:xab vs zasada -> winner=player sec=46.1167 capped=false winHp=0.061978
+---
+fights: 36
+checksum: 83e72428d7cc750aa40108af8d9a5835daea6ad650070018da51e92f64610776
