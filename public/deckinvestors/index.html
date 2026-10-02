@@ -599,7 +599,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
   transition:width 220ms cubic-bezier(.2,.8,.2,1),background-color 220ms cubic-bezier(.2,.8,.2,1)}
 .dk-tk.is-pass>i{background:rgba(246,244,246,.42)}
 .dk-tk.is-cur>i{width:12px;height:3px;margin-top:-1.5px;background:var(--tk)}
-.dk-tk::before{content:attr(data-label);position:absolute;right:30px;top:50%;transform:translateY(-50%);
+.dk-tk::before{content:attr(data-label);position:absolute;right:22px;top:50%;transform:translateY(-50%);
   padding:6px 10px;white-space:nowrap;background:rgba(8,8,10,.94);border:1px solid rgba(255,255,255,.16);
   font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;
   opacity:0;pointer-events:none;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)}
@@ -607,6 +607,27 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 .dk-tk:hover::before,.dk-tk:focus-visible::before{opacity:1}
 @media (hover:hover){.dk-tk:hover>i{background:#F6F4F6}.dk-tk.is-cur:hover>i{background:var(--tk)}}
 @media (min-width:1024px){.dk-scale{display:flex}}
+
+/* Надпись текущего раздела — всегда на виду («02 · МОДЕЛЬ»), в той же рамке, что и
+   подпись при наведении. Компьютер: стоит у засечки текущего раздела и за ~0,3 с
+   переезжает к следующей (.is-side). Не хватает места справа от контента (до 1180 по
+   центру) — показывается только номер; нет места и под номер, а также на телефоне —
+   маленькая плашка у левого края под полосой глав (без .is-side). Подпись при
+   наведении на другую засечку рисуется поверх (засечка шкалы выше по слоям), у
+   текущей засечки своей подписи нет — она и так стоит рядом (.has-side).
+   Без свечения, без розового. Без сценария надписи нет вовсе; «уменьшить движение» —
+   общее правило страницы гасит переезд. */
+.dk-now{position:fixed;left:8px;top:10px;z-index:14;max-width:calc(100vw - 16px);padding:4px 6px;
+  white-space:nowrap;background:rgba(8,8,10,.94);border:1px solid rgba(255,255,255,.16);
+  font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;
+  opacity:0;pointer-events:none;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)}
+.dk-now.is-on{opacity:1}
+.dk-now.is-side{left:auto;right:22px;top:0;padding:6px 9px;font-size:10px;
+  transition:opacity 150ms cubic-bezier(.2,.8,.2,1),transform 300ms cubic-bezier(.2,.8,.2,1)}
+.dk-now.is-side.is-num{padding:6px 5px}
+.dk-now.is-side.is-num::after{content:'';display:inline-block;width:0;margin-right:-.16em}
+.dk-now.no-tr{transition:none !important}
+.dk-scale.has-side .dk-tk.is-cur::before{display:none}
 
 .dk-strip{position:fixed;left:0;right:0;top:0;height:4px;gap:2px;padding:0 2px;z-index:20;pointer-events:none}
 .dk-strip>i{flex:1 1 0;min-width:0;background:rgba(255,255,255,.1)}
@@ -2963,24 +2984,29 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 
   /* --- открытый языковой слой ----------------------------------------- */
   function layerEl() { return main.querySelector(':scope > [data-layer]:not(.off)'); }
-  var layer = null, secs = [], tops = [], cur = -2;
+  var layer = null, secs = [], tops = [], cur = -2, labels = [];
   var scaleEl = document.createElement('nav');
   var stripEl = document.createElement('div');
   scaleEl.className = 'dk-scale'; stripEl.className = 'dk-strip'; stripEl.setAttribute('aria-hidden', 'true');
   document.body.appendChild(scaleEl);
   document.body.appendChild(stripEl);
+  var nowEl = document.createElement('div');
+  nowEl.className = 'dk-now'; nowEl.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(nowEl);
+  var wide = window.matchMedia ? window.matchMedia('(min-width:1024px)') : { matches: false };
 
   function build() {
     layer = layerEl();
     secs = layer ? [].slice.call(layer.querySelectorAll(':scope > section')) : [];
     var ru = layer && layer.getAttribute('data-layer') === 'ru';
     scaleEl.setAttribute('aria-label', ru ? 'Шкала разделов' : 'Section scale');
-    scaleEl.textContent = ''; stripEl.textContent = '';
+    scaleEl.textContent = ''; stripEl.textContent = ''; labels = [];
     secs.forEach(function (s, i) {
       var n = i + 1;
       var label = (s.getAttribute('data-screen-label') || '').replace(' ', ' · ');
       var a = document.createElement('a');
       a.className = 'dk-tk' + (CH_FIRST.indexOf(n) > 0 ? ' dk-gap' : '');
+      labels.push(label);
       a.href = '#' + s.id; a.setAttribute('data-label', label); a.setAttribute('aria-label', label);
       a.style.setProperty('--tk', coreColor(i));
       a.appendChild(document.createElement('i'));
@@ -3010,6 +3036,45 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
     schedule();
   }
 
+  /* --- надпись текущего раздела --------------------------------------------- */
+  var nowShown = false, nowText = '';
+  var CONTENT_W = 1180;                       // ширина колонки страницы (тот же max-width у разделов)
+  function place() {
+    if (cur === -2) return;                   // пересборка (смена языка): ждём кадр, надпись не трогаем
+    if (cur < 0 || !labels[cur]) {
+      nowEl.classList.remove('is-on'); nowShown = false; nowText = ''; return;
+    }
+    var full = labels[cur], num = full.split(' · ')[0];
+    var side = false, useNum = false;
+    var tk = scaleEl.children[cur];
+    if (wide.matches && tk) {
+      var vw = document.documentElement.clientWidth;
+      var room = vw - 22 - Math.min(vw, (vw + CONTENT_W) / 2);
+      nowEl.classList.add('is-side'); nowEl.classList.remove('is-num');
+      nowEl.textContent = full;
+      if (nowEl.offsetWidth <= room) side = true;
+      else {
+        nowEl.classList.add('is-num'); nowEl.textContent = num;
+        if (nowEl.offsetWidth <= room) { side = true; useNum = true; }
+      }
+    }
+    scaleEl.classList.toggle('has-side', side);
+    nowEl.classList.toggle('is-side', side);
+    nowEl.classList.toggle('is-num', useNum);
+    nowEl.textContent = useNum ? num : full;
+    var jump = !nowShown || nowText === '';
+    if (side) {
+      var r = tk.getBoundingClientRect();
+      var y = Math.round(r.top + r.height / 2);
+      if (jump) nowEl.classList.add('no-tr');
+      nowEl.style.transform = 'translateY(' + (y - Math.round(nowEl.offsetHeight / 2)) + 'px)';
+      if (jump) { void nowEl.offsetWidth; nowEl.classList.remove('no-tr'); }
+    } else {
+      nowEl.style.transform = '';
+    }
+    nowEl.classList.add('is-on'); nowShown = true; nowText = full;
+  }
+
   /* --- подсветка шкалы и главы --------------------------------------------- */
   var navLinks = [].slice.call(document.querySelectorAll('header nav[data-layer] a.navlink'));
   function paint() {
@@ -3022,6 +3087,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       segs[i].className = c ? (sb ? sb + ' ' + c : c) : sb;
       if (i === cur) ticks[i].setAttribute('aria-current', 'location'); else ticks[i].removeAttribute('aria-current');
     }
+    place();
     var ch = cur >= 0 ? chapterOf(cur + 1) : -1;
     navLinks.forEach(function (a) {
       var on = Number(a.getAttribute('data-ch')) === ch;
@@ -3066,7 +3132,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
     }
   }
   window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', function () { measure(); });
+  window.addEventListener('resize', function () { measure(); place(); });
   if (window.ResizeObserver) new ResizeObserver(function () { measure(); }).observe(main);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
   window.addEventListener('load', measure);
