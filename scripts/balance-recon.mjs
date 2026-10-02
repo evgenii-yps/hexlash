@@ -189,7 +189,7 @@ function sectionBias() {
 // ── РАЗДЕЛ table: ядро × кристалл → фактическая дельта (4.1, 4.2) ─────────────
 // «Кристалл» здесь — словарь ТЗ: один из 5 шагов внутри грани (BODY/MIND/WILL).
 // В коде это `face` внутри `branch` (a|b|c), см. upgradeData.js. Показываемый
-// игроку текст — crystalTexts.js (свой у каждого ядра с 02.10.2026; CLAIMS ниже написаны под прежний общий набор и не пересмотрены); механика — upgradeData.js
+// игроку текст — crystalTexts.js (свой у каждого ядра с 02.10.2026; CLAIMS ниже — свои на каждое ядро, 60 заявок); механика — upgradeData.js
 // (своя у каждого ядра).
 function fighterStats(coreId, litFaces) {
   const behavior = resolveBehavior(coreId, litFaces);
@@ -200,26 +200,86 @@ function fighterStats(coreId, litFaces) {
 }
 const faceOf = (coreId, br, i) => CRYSTALS[coreId].find((c) => c.id === br).faces[i];
 
-// Что кристалл ОБЕЩАЕТ ИГРОКУ по тексту, по осям темперамента. Это МОЁ ЧТЕНИЕ
-// строк effect/character из crystalTexts.js — правится здесь, одним местом. Пусто
-// ({}) = текст описывает механику, для которой в движке нет ни оси, ни рычага
-// (память боя, обучение, «злость» и т.п.). Знак: + ось растёт, − падает.
+// Что кристалл ОБЕЩАЕТ ИГРОКУ по тексту. Это МОЁ ЧТЕНИЕ строк effect/character из crystalTexts.js — правится здесь, одним
+// местом. ТЕКСТЫ СВОИ У КАЖДОГО ЯДРА (с 02.10.2026), поэтому и заявки свои: CLAIMS[ядро][ветка + номер] (a0..c4).
+// Ключ без знака — ОСЬ темперамента, `$имя` — число-рычаг из f.stats (strikePower, toughness, blockMitigation, blockPenetration,
+// accuracy, chargeMax, chargeGainPerSec, chargePowerBonusMax, chargePenetrationBonusMax). Знак: +1 растёт, −1 падает.
+// Правила чтения: «hits harder / heavier» → $strikePower (+ weight, если сказано про вес/тяжесть); «quicker / pace» → tempo;
+// «closer in / short distance» → distance −1, «keeps distance / long range» → distance +1; «stays on / glued / holds ground /
+// never lets go» → stick; «goes in first / attacks when quiet / swings at every chance» → initiative; «waits / answers / counter /
+// punishes» → counter (если ещё и «waits for the swing» — initiative −1); «slips / hard to touch / elusive» → slip; «tougher /
+// takes hits / not knocked off» → $toughness или resilience; «guard stronger / stops damage» → $blockMitigation; «breaks the
+// guard» → $blockPenetration (у заряженного удара — $chargePenetrationBonusMax). Пусто ({}) = текст про механику, для которой нет
+// ни оси, ни рычага. ДВУСМЫСЛЕННОЕ не заявляется вовсе (напр. ZASADA c4 «Close in, he goes for the finish»).
 const CLAIMS = {
-  'a0': { resilience: +1, stick: +1, distance: -1 },          // ROOT: не отступает под давлением
-  'a1': { weight: +1, initiative: +1 },                       // DRIVE: вес в ударе; открывает размен первым
-  'a2': { resilience: +1, stick: +1 },                        // GRIND: не выдыхается, терпит, остаётся в размене
-  'a3': { initiative: +1, counter: +1 },                      // BREAK: ловит момент и проламывает; жаден до финиша
-  'a4': { resilience: +1, counter: +1 },                      // ANVIL: принимает и возвращает; спокоен под давлением
-  'b0': { counter: +1, initiative: -1 },                      // WATCH: читает раньше; входит позже
-  'b1': { tempo: -1, counter: +1 },                           // TIMING: попадает в паузы; меньше слепых ударов
-  'b2': { tempo: -1 },                                        // FEINT: обманывает; теряет темп
-  'b3': {},                                                   // ADAPT: не повторяет провальное (память боя)
-  'b4': { resilience: +1 },                                   // COLD: не сбивается с плана
-  'c0': {},                                                   // HOLD: быстрее восстанавливается между обменами (дыхание)
-  'c1': {},                                                   // SPITE: чем хуже, тем опаснее (условие по здоровью)
-  'c2': {},                                                   // VOW: держит приказ (командование)
-  'c3': {},                                                   // HUNGER: учится внутри боя (память)
-  'c4': { tempo: -1 },                                        // STILL: замедляется в решающий миг; живость падает
+  natisk: {
+    a0: { $strikePower: +1, weight: +1, tempo: -1 },        // HEAVY HIT: hits harder, more weight; heavy and unhurried
+    a1: { $blockPenetration: +1 },                          // GUARD CRUSH: blows break through a raised guard
+    a2: { resilience: +1 },                                 // UNSHAKEN: a hit no longer knocks him off his swing
+    a3: { $strikePower: +1, distance: -1 },                 // INSIDE WORK: hits harder, fights from closer in
+    a4: { $blockPenetration: +1, initiative: +1 },          // BREAKTHROUGH: through the guard; goes for the finish
+    b0: { distance: -1, initiative: +1, $accuracy: +1 },    // HARD ENTRY: closes the gap fast, goes in first, first blow rarely misses
+    b1: { $strikePower: +1, distance: -1, initiative: +1 }, // RUN-DOWN: hits a little harder, short distance, attacks when quiet
+    b2: { stick: +1, $blockPenetration: +1 },               // STICKY: stays on the opponent; breaks through guards
+    b3: { resilience: +1, stick: +1, distance: -1 },        // CLING: hard to knock off his swing; glued in close
+    b4: { $strikePower: +1, $blockPenetration: +1, stick: +1, distance: -1 }, // LOCKDOWN: harder, breaks guards, right on top
+    c0: { tempo: +1, $strikePower: +1, initiative: +1 },    // LONG COMBO: a touch quicker and heavier; throws instead of waiting
+    c1: { tempo: +1, $strikePower: +1, initiative: +1 },    // NO PAUSE: quicker pace, harder hits; swings when caught off balance
+    c2: { tempo: +1, $strikePower: +1, initiative: +1 },    // LATE FIRE: picks up the pace, hits a little harder; swings more
+    c3: { tempo: +1, $strikePower: +1, stick: +1, initiative: +1 }, // NO LETUP: quicker, harder, stays on him; does not stop
+    c4: { $strikePower: +1, initiative: +1 },               // RAMPAGE: biggest gain in hitting power; swings at every chance
+  },
+  nalet: {
+    a0: { $strikePower: +1, distance: +1 },                 // QUICK OUT: hits harder, keeps more distance; breaks off
+    a1: { $accuracy: +1, initiative: +1 },                  // PINPOINT ENTRY: entry rarely misses; takes the initiative
+    a2: { $strikePower: +1, distance: +1, slip: +1 },       // FAR BOUNCE: harder, bounces far out, slips more; long range
+    a3: { tempo: +1, $strikePower: +1 },                    // CLEAN EXCHANGE: quicker in and out, harder hits; quick pokes
+    a4: { $strikePower: +1, slip: +1, initiative: +1, distance: +1 }, // PERFECT PRICK: in-hit-out, hard to touch, darts in when quiet
+    b0: { slip: +1 },                                       // FAKE-IN: fakes more often; steps off instead of meeting the swing
+    b1: { $strikePower: +1, initiative: +1 },               // PUNISH REACTION: answer hits harder; presses in when he covers up
+    b2: { tempo: +1, $strikePower: +1 },                    // BROKEN RHYTHM: quicker pace, harder hits
+    b3: { tempo: +1, $strikePower: +1, counter: +1 },       // STING THE SWING: quicker and harder; answers the swing with a poke
+    b4: { $strikePower: +1, $blockPenetration: +1, distance: -1 }, // SETUP COMBO: follow-up hits hardest, breaks guards; commits up close
+    c0: { $strikePower: +1, $accuracy: +1, counter: +1, initiative: -1 }, // READ THE TELL: harder, more accurate; waits for the swing, answers
+    c1: { $strikePower: +1, initiative: +1 },               // SEIZE THE OPEN: hits harder; goes in when he is off balance
+    c2: { $strikePower: +1, $chargeGainPerSec: +1, distance: +1 }, // CHARGED RUN: harder, builds the power blow faster; keeps distance
+    c3: { $strikePower: +1, counter: +1 },                  // PUNISH AGGRESSION: harder, punishes openings; answers aggression
+    c4: { $chargePowerBonusMax: +1, initiative: +1 },       // KILLING RUN: charged blow lands harder; goes in to spend it
+  },
+  skala: {
+    a0: { $toughness: +1, $blockMitigation: +1, stick: +1 }, // TOUGH HIDE: takes hits better, slightly stronger guard; holds ground
+    a1: { resilience: +1, $blockMitigation: +1, stick: +1 }, // STEADY GUARD: harder to knock off rhythm, stronger guard; holds ground
+    a2: { $toughness: +1 },                                 // CATCH BREATH: tougher, recovers wind faster (дыхание — не ось)
+    a3: { $toughness: +1, $blockMitigation: +1, distance: -1, stick: +1 }, // DIG IN: tougher, much stronger guard; plants closer
+    a4: { $blockMitigation: +1, resilience: +1 },           // UNBREAKABLE: guard stops more damage; ready to stand and absorb
+    b0: { $toughness: +1, counter: +1 },                    // RIPOSTE: tougher; answer after a block hits harder; steps into the attack
+    b1: { counter: +1, initiative: +1 },                    // CATCH & PUNISH: catching a swing hurts more; pushes in when off balance
+    b2: { counter: +1, stick: +1, distance: -1 },           // HARD MEET: catching hurts more; steps forward into anyone close
+    b3: { counter: +1 },                                    // RETALIATION: answer after a block hits harder; swings back
+    b4: { counter: +1 },                                    // SEA WALL: strongest answer after a block; waits for the swing and punishes
+    c0: { distance: -1, stick: +1, $blockPenetration: +1 }, // BODY SHOVE: fights closer, breaks guards a little; leans on him in close
+    c1: { $blockPenetration: +1, weight: +1 },              // HEAVY SLAM: blows break a guard; heavier on his feet
+    c2: { stick: +1 },                                      // NO WAY AROUND: stays on the opponent; keeps him in front
+    c3: { distance: -1, stick: +1 },                        // PIN: fights closer and stays there; holds him in place
+    c4: { $blockPenetration: +1, stick: +1, distance: -1 }, // CLINCH: breaks guards, stays fully on him; grinds forward in close
+  },
+  zasada: {
+    a0: { counter: +1 },                                    // HARD COUNTER: counters come more readily; answers a swing with a swing
+    a1: { slip: +1, counter: +1, initiative: +1 },          // SLIP COUNTER: a slipped blow arms a stronger counter; strikes when quiet
+    a2: { counter: +1 },                                    // ANSWER THE SWING: punishes openings more; his attack is the cue
+    a3: { counter: +1 },                                    // PUNISH WHIFF: his miss opens a counter; strikes when off balance
+    a4: { counter: +1, slip: +1 },                          // PERFECT TRAP: a slip arms his strongest counter; misses punished too
+    b0: { slip: +1, distance: +1 },                         // LONG SLIP: slips further, keeps more distance; pokes from range
+    b1: { slip: +1, distance: +1 },                         // HARD TO REACH: harder to hit and reach; works from range
+    b2: { distance: +1, slip: +1 },                         // LONG GAME: keeps distance, slips more; pokes from range
+    b3: { slip: +1, counter: +1 },                          // OPEN WINDOW: a slip sets up the next blow; strikes when off balance
+    b4: { slip: +1, distance: +1 },                         // PHANTOM: the hardest to touch; goes elusive and pokes
+    c0: { $strikePower: +1, $chargePowerBonusMax: +1 },     // LOADED HIT: hits harder; charged blow lands heavier
+    c1: { $strikePower: +1, $chargeMax: +1 },               // LONG CHARGE: hits harder; can store a bigger charge
+    c2: { $strikePower: +1, initiative: -1 },               // HIT THE OPENING: hits harder; waits for the opening
+    c3: { $chargePenetrationBonusMax: +1 },                 // PIERCE: charged blow breaks through a guard
+    c4: { $chargePowerBonusMax: +1 },                       // EXECUTION: the heaviest charged blow (дистанция в тексте двусмысленна — не заявлена)
+  },
 };
 // Какие «бонусные» рычаги видны в f.stats (остальные живут только в данных).
 const STAT_SEAMS = ['strikePower', 'toughness', 'accuracy', 'blockMitigation', 'blockPenetration', 'chargeMax', 'chargeGainPerSec', 'chargePowerBonusMax', 'chargePenetrationBonusMax'];
@@ -298,20 +358,21 @@ function sectionTable() {
         const liveSeam = (face.statBonus ? [face.statBonus.stat] : []).concat((face.extraBonuses || []).map((e) => e.stat)).some((k) => wiring[k] && wiring[k].wired);
         const tags = [...(face.conditionals || []), ...(face.effects || [])];
         const text = CRYSTAL_TEXTS[coreId][br][i];
-        const claim = CLAIMS[br + i];
-        // Сверка обещанного с фактом. Только по осям, которые текст называет.
-        const claimAxes = Object.keys(claim);
+        const claim = CLAIMS[coreId][br + i];
+        // Сверка обещанного с фактом: оси — по Δ осей, `$рычаги` — по Δ stats (замер у живого бойца).
+        const claimKeys = Object.keys(claim);
+        const delta = (k) => (k[0] === '$' ? dStats[k.slice(1)] : dAxes[k]);
         let verdict;
-        if (!claimAxes.length) verdict = 'НЕТ ОСИ: текст про механику, которой у оси нет';
+        if (!claimKeys.length) verdict = 'НЕТ ОСИ: текст про механику, которой у оси нет';
         else {
-          const hit = claimAxes.filter((ax) => dAxes[ax] && Math.sign(dAxes[ax]) === claim[ax]);
-          const opp = claimAxes.filter((ax) => dAxes[ax] && Math.sign(dAxes[ax]) === -claim[ax]);
-          const none = claimAxes.filter((ax) => !dAxes[ax]);
-          if (hit.length === claimAxes.length) verdict = 'совпало';
-          else if (hit.length && !opp.length) verdict = 'частично';
+          const hit = claimKeys.filter((k) => delta(k) && Math.sign(delta(k)) === claim[k]);
+          const opp = claimKeys.filter((k) => delta(k) && Math.sign(delta(k)) === -claim[k]);
+          const none = claimKeys.filter((k) => !delta(k));
+          if (hit.length === claimKeys.length) verdict = 'совпало';
+          else if (hit.length && !opp.length) verdict = 'частично (не двигаются: ' + none.join(',') + ')';
           else if (opp.length && !hit.length) verdict = 'ПРОТИВОПОЛОЖНО (' + opp.join(',') + ')';
           else if (hit.length && opp.length) verdict = 'смешано (' + hit.join(',') + ' верно; ' + opp.join(',') + ' наоборот)';
-          else verdict = 'не совпало (оси ' + none.join(',') + ' не двигаются)';
+          else verdict = 'не совпало (' + none.join(',') + ' не двигаются)';
         }
         cells.push({
           core: coreId, branch: br, idx: i, facet: FACET_NAMES[br], crystal: text.name,
@@ -339,7 +400,7 @@ function sectionTable() {
   ]);
   const head = ['ядро', 'грань/кристалл', 'имя в данных', 'Δ осей (факт, от старта ядра)', 'бонусы (% к рычагу)', 'Δ stats у бойца (замер)', 'теги (мертвы)', 'CHARACTER, что видит игрок', 'текст vs механика'];
   const verdictCount = {};
-  const vkey = (v) => (v.startsWith('НЕТ ОСИ') ? 'нет оси у механики' : v.startsWith('не совпало') ? 'не совпало' : v.startsWith('ПРОТИВОПОЛОЖНО') ? 'противоположно' : v.startsWith('смешано') ? 'смешано' : v);
+  const vkey = (v) => (v.startsWith('НЕТ ОСИ') ? 'нет оси у механики' : v.startsWith('частично') ? 'частично' : v.startsWith('не совпало') ? 'не совпало' : v.startsWith('ПРОТИВОПОЛОЖНО') ? 'противоположно' : v.startsWith('смешано') ? 'смешано' : v);
   for (const c of cells) { const k = vkey(c.verdict); verdictCount[k] = (verdictCount[k] || 0) + 1; }
   const text = [
     '«Кристалл» = один из 5 шагов внутри грани (в коде `face` в ветке a|b|c). 15 кристаллов × 4 ядра = 60 ячеек.',
