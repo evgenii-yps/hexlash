@@ -53,8 +53,9 @@ export async function openHarness() {
 
   /** Одна дуэль. Игрок — coreA (sideId 'player'), соперник — coreB ('foe'). swap меняет
    *  порядок в списке и точки выхода местами. */
-  function duel({ seed, coreA, coreB, behA = null, behB = null, swap = false, onStep = null, posA = GAME_DUEL_POS.player, posB = GAME_DUEL_POS.foe }) {
+  function duel({ seed, coreA, coreB, behA = null, behB = null, swap = false, onStep = null, posA = GAME_DUEL_POS.player, posB = GAME_DUEL_POS.foe, preBurn = 0 }) {
     seedRandom(seed);
+    for (let i = 0; i < preBurn; i++) Math.random(); // «картинка» берёт числа ДО создания бойцов (только тест изоляции; по умолчанию 0)
     const a = { sideId: 'player', coreId: coreA, behavior: behA || resolveBehavior(coreA), side: 'player', pos: swap ? posB : posA };
     const b = { sideId: 'foe', coreId: coreB, behavior: behB || resolveBehavior(coreB), side: 'opponent', pos: swap ? posA : posB };
     const r = runInstantBout(swap ? [b, a] : [a, b], onStep ? { onStep } : {});
