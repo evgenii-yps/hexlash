@@ -229,6 +229,16 @@ a:hover{color:#F6F4F6}
 [data-arena].dk-corners::after{inset:0}
 @media (max-width:400px){.dk-corners::after{--l:12px}}
 
+/* --- Д. Окно с записью из игры (раздел 03, зал FORGE) ----------------------
+   Заставка — картинка, видео лежит поверх и невидимо, пока не пошло: нет
+   JavaScript, режим энергосбережения iOS или видео не загрузилось — остаётся
+   заставка (она же первый кадр петли). Подгрузка и пауза — в третьем скрипте.
+   ⚠️ overflow:hidden здесь нельзя: уголки .dk-corners::after лежат на 1px
+   снаружи и обрезались бы. Картинка и видео и так вписаны в рамку. */
+.dk-clip .dk-clip-poster,.dk-clip .dk-clip-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.dk-clip .dk-clip-video{opacity:0;transition:opacity .4s}
+.dk-clip.is-playing .dk-clip-video{opacity:1}
+
 /* --- Г. Рамки блоков-карточек ---------------------------------------------
    По образцу карточек TRAIN / FIGHT / RISE на лендинге: волосяная рамка плюс
    едва заметная заливка градиентом от одного угла.
@@ -1397,8 +1407,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">Главная награда — не предмет, а свобода: игра продолжается и без тебя.</p>
   <figure data-frame="1" style="margin:32px 0 0">
-    <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: зал с бойцами]</span></div>
-    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">место под кадр · отбирает владелец</figcaption>
+    <div class="dk-corners dk-clip" data-clip="hall" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="Зал FORGE: легенда парит над залом, бойцы внизу" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">запись из игры · зал FORGE</figcaption>
   </figure>
 </section>
 
@@ -2001,8 +2011,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">The top reward isn't an item. It's freedom: the game goes on without you.</p>
   <figure data-frame="1" style="margin:32px 0 0">
-    <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[FRAME: the hall with fighters]</span></div>
-    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">reserved for a game shot · owner selects</figcaption>
+    <div class="dk-corners dk-clip" data-clip="hall" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="The FORGE hall: the legend floats above the hall, fighters below" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">in-game footage · FORGE hall</figcaption>
   </figure>
 </section>
 
@@ -3305,6 +3315,61 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
     afterLang();
   });
   build();
+})();
+</script>
+<script>
+/* Запись из игры в разделе 03 (зал FORGE). Не качается, пока до раздела больше
+   экрана; играет, когда окно видно хотя бы на четверть; вне экрана — пауза.
+   «Уменьшить движение», нет IntersectionObserver или ошибка видео — остаётся
+   заставка. Режим энергосбережения iOS запрещает автозапуск — пробуем снова на
+   первом касании. Файл: до 700 точек ширины — 720p, иначе 1080p. */
+(function () {
+  var boxes = [].slice.call(document.querySelectorAll('[data-clip="hall"]'));
+  if (!boxes.length || !window.IntersectionObserver) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var SRC = window.innerWidth <= 700 ? '/deckinvestors/hall-loop-720.mp4' : '/deckinvestors/hall-loop-1080.mp4';
+  var items = boxes.map(function (box) {
+    return { box: box, v: box.querySelector('video'), seen: false, loaded: false, failed: false };
+  });
+  function play(it) {
+    if (it.failed || !it.loaded || !it.seen || document.hidden) return;
+    it.v.muted = true;
+    var p = it.v.play();
+    if (p && p.then) p.then(null, function () { armRetry(); });
+  }
+  var armed = false;
+  var EV = ['touchstart', 'pointerdown', 'keydown'];
+  function retry() {
+    items.forEach(play);
+    if (items.some(function (it) { return it.seen && it.loaded && !it.v.paused; })) disarm();
+  }
+  function armRetry() { if (armed) return; armed = true; EV.forEach(function (e) { document.addEventListener(e, retry, { passive: true }); }); }
+  function disarm() { armed = false; EV.forEach(function (e) { document.removeEventListener(e, retry); }); }
+  items.forEach(function (it) {
+    it.v.addEventListener('playing', function () { it.box.classList.add('is-playing'); });
+    it.v.addEventListener('error', function () { it.failed = true; it.box.classList.remove('is-playing'); });
+  });
+  var near = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var it = items[boxes.indexOf(e.target)];
+      if (it.loaded) return;
+      it.loaded = true; near.unobserve(e.target);
+      it.v.preload = 'auto'; it.v.src = SRC; it.v.load();
+      play(it);
+    });
+  }, { rootMargin: '100% 0px' });
+  var vis = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      var it = items[boxes.indexOf(e.target)];
+      it.seen = e.isIntersecting;
+      if (it.seen) play(it); else if (it.loaded) it.v.pause();
+    });
+  }, { threshold: 0.25 });
+  boxes.forEach(function (b) { near.observe(b); vis.observe(b); });
+  document.addEventListener('visibilitychange', function () {
+    items.forEach(function (it) { if (document.hidden) { if (it.loaded) it.v.pause(); } else play(it); });
+  });
 })();
 </script>
 
