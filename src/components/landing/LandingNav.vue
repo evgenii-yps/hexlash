@@ -12,7 +12,7 @@
     </a>
     <nav class="nav-links">
       <a href="#gameplay"><span>GAMEPLAY</span></a>
-      <a href="#hex"><span>$HXL</span></a>
+      <a href="#token"><span>$HXL</span></a>
       <a href="#roadmap"><span>ROADMAP</span></a>
     </nav>
     <div class="nav-social">

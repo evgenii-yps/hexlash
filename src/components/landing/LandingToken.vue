@@ -1,5 +1,5 @@
 <template>
-  <section class="sec sec-hex" id="hex">
+  <section class="sec sec-token" id="token">
     <div class="wrap">
       <div class="eyebrow" data-reveal>
         <span class="eyebrow-line"></span>

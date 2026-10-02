@@ -54,7 +54,7 @@ export const STATIONS = [
   { at: () => ({ x: 0, y: 0 }), zoom: 0,    block: null        },
   { at: () => ringVertex(2, 5), zoom: 0.25, block: 'manifesto' },
   { at: () => ringVertex(1, 2), zoom: 0.50, block: 'gameplay'  },
-  { at: () => ringVertex(0, 4), zoom: 0.75, block: 'hex'       },
+  { at: () => ringVertex(0, 4), zoom: 0.75, block: 'token'     },
   { at: () => ({ x: 0, y: 0 }), zoom: 1,    block: 'roadmap'   },
 ];
 
