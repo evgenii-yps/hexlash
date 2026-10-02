@@ -136,8 +136,9 @@ export const CRYSTALS = {
     // Movement: weight UP = a heavier, slower gait — manner, NOT damage (that's
     // strikePower). No counter (not RAM's home).
     mkBranch('a', 'RAM', [
-      // Heavier, slower, more crushing blow: strikePower (ramp) + a weightier gait.
-      { name: 'Heavy Hit', shifts: [s('weight', 14)] },
+      // Heavier, slower, more crushing blow: strikePower (ramp + facetBonus +8%) + a weightier gait. Темп −25 — компенсация внутри кристалла
+      // («Heavy and unhurried. Trades speed for mass»): без неё +8% силы выводили Ц2 ONS BODY к +23 (≤ +25).
+      { name: 'Heavy Hit', shifts: [s('weight', 14), s('tempo', -25)] },
       // Caves a raised guard: really pierces part of the block (blockPenetration seam, +12%).
       { name: 'Guard Crush', shifts: [s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramGuardCrushPen)], conditionals: ['guard_crush'] },
       // Hard to knock off the swing: interrupt-resistance seam (+10%) + holds steady.
