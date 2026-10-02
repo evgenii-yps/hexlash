@@ -2576,7 +2576,10 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   setLang(lang, false);
 
   function glow(k) {
-    if (k === 'pink-select') return '0 0 14px rgba(255,0,105,0.45)';
+    /* pink-select — карточка ступени 1 (раздел 03). Розовое кольцо выбора снято по
+       решению владельца 02.10.2026: рамка как у остальных карточек, без свечения и
+       без розового. Атрибут data-glow остаётся в разметке, отдаёт «ничего». */
+    if (k === 'pink-select') return 'none';
     if (k === 'amber-soft') return '0 0 14px rgba(255,178,29,0.28)';
     /* amber-hero — карточка ступени 2 (раздел 03). Постоянное золотое свечение
        снято по решению владельца 02.10.2026: единственное свечение раздела —
@@ -2586,7 +2589,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
     return 'none';
   }
   function rim(k) {
-    if (k === 'pink-select') return '#FF0069';
+    if (k === 'pink-select') return 'rgba(255,255,255,0.09)';
     if (k === 'amber-soft') return 'rgba(255,178,29,0.45)';
     if (k === 'amber-hero') return '#FFB21D';
     if (k === 'chrome') return 'rgba(216,227,234,0.45)';
