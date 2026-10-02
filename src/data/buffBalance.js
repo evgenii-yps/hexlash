@@ -132,8 +132,13 @@ export const BUFF_BALANCE = {
  *    нечем, и переход на сервер придётся искать по всему коду.
  *    Решение и причина — Decisions Log 22.09.2026, запись 100.
  *
+ * ИСТОЧНИК ЧИСЛА. Без аргумента — общий Math.random (старое поведение). В бою звать с генератором боя
+ * (scene/boutRandom.js): тогда грань не зависит от того, сколько чисел до броска взяла картинка.
+ * Подмена на сервер по-прежнему одна — правится только тело этой функции.
+ *
+ * @param {() => number} [rnd] генератор [0, 1)
  * @returns {number} 1..6, равновероятно
  */
-export function rollDie() {
-  return 1 + Math.floor(Math.random() * 6);
+export function rollDie(rnd = Math.random) {
+  return 1 + Math.floor(rnd() * 6);
 }

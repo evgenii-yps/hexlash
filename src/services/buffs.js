@@ -48,6 +48,7 @@ import * as THREE from 'three';
 import { BUFF_IDS, BUFF_META, BUFF_BALANCE, rollDie } from '@/data/buffBalance.js';
 import { selectState, selectedUnit } from './fighterSelect.js';
 import { DEV_MODE } from './devMode.js';
+import { createRng } from '@/scene/boutRandom.js';
 import { buildTowel, buildBucket, buildDice, buildActionGlow } from '@/scene/buffItems.js';
 import {
   armDiceCharge, clearDiceCharge, clearAllDiceCharges, diceChargeOf, watchDiceCharge,
@@ -101,6 +102,8 @@ const effects = new Map();
 const flying = [];
 /** Время боя, которое отдаёт арена. Нужно эффектам и боту. */
 let nowT = 0;
+// Свой источник числа для броска кубика (scene/boutRandom.js): грань не зависит от картинки. Пересеивается на старте боя.
+let dieRng = createRng();
 
 let unwatchDice = null;
 
@@ -188,6 +191,7 @@ export function unbindBuffArena() {
 export function buffStartFight() {
   if (!A) return;
   clearEffects();
+  dieRng = createRng(); // новый бой — новое зерно броска кубика
 
   // ── БОЙ ИЗ SPAR ──
   // Набор берётся прямо со слотов экрана настройки, обеим сторонам. Ни одной
@@ -392,7 +396,7 @@ function applyBuff(id, unit, own) {
     f.setBuffReact(true);
   } else if (id === 'dice') {
     // Служебная грань — только под ?dev=1; у игрока здесь всегда честный бросок.
-    const face = (DEV_MODE && devFace) || rollDie(); // ЕДИНСТВЕННЫЙ бросок на всю игру
+    const face = (DEV_MODE && devFace) || rollDie(dieRng); // ЕДИНСТВЕННЫЙ бросок на всю игру
     const row = BUFF_BALANCE.dice.faces[face];
     e.face = face;
     e.until = Infinity;                          // у кубика не время, а заряженные удары

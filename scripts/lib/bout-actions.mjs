@@ -14,8 +14,8 @@ export function makeActions(H, mods) {
   };
 
   /** Драйвер баффов одной стороны — те же вызовы бойца и числа, что services/buffs.js (applyBuff / buffTick / tickBot).
-   *  rule: 'bot' (правило бота) | 'fixed' (kit[0] в момент fixedAt) | 'script' (plan:[{at,id}]). face — зафиксировать грань DICE. */
-  function makeBuffDriver({ side = 'player', kit, rule = 'bot', fixedAt = 10, plan = null, face = null }) {
+   *  rule: 'bot' (правило бота) | 'fixed' (kit[0] в момент fixedAt) | 'script' (plan:[{at,id}]). face — зафиксировать грань DICE; rollRng — генератор броска DICE (как dieRng в services/buffs.js), иначе общий Math.random. */
+  function makeBuffDriver({ side = 'player', kit, rule = 'bot', fixedAt = 10, plan = null, face = null, rollRng = null }) {
     const items = [...kit]; let lastThrow = -1e9, eff = null, planIdx = 0;
     const log = []; const d = { log, healed: 0 };
     d.step = (now, alive) => {
@@ -48,7 +48,7 @@ export function makeActions(H, mods) {
       const rec = { id: pick, t: Math.round(now * 100) / 100, hp01: Math.round(hp01 * 1000) / 1000 };
       if (pick === 'towel') { eff = { id: 'towel', until: now + B.towel.durationSec, rate: B.towel.healFracOfMax / B.towel.durationSec, sh: false }; if (f.isStaggered()) { f.shortenStagger(B.towel.staggerRecoverMul); eff.sh = true; } }
       else if (pick === 'bucket') { f.setBuffPace(B.bucket.paceMul); f.setBuffReact(true); eff = { id: 'bucket', until: now + B.bucket.durationSec }; }
-      else { const fc = face || rollDie(); const row = B.dice.faces[fc]; strike.armDiceCharge(f, row.mul, row.hits); eff = { id: 'dice', until: Infinity }; rec.face = fc; }
+      else { const fc = face || rollDie(rollRng || undefined); const row = B.dice.faces[fc]; strike.armDiceCharge(f, row.mul, row.hits); eff = { id: 'dice', until: Infinity }; rec.face = fc; }
       log.push(rec);
     };
     return d;
