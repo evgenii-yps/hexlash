@@ -29,7 +29,7 @@ export const BUFF_META = {
   bucket: { id: 'bucket', name: 'BUCKET', mono: 'B',
             does: 'sharpens his reactions for a while: he reads the foe\'s swings sooner and answers them more often' },
   dice: { id: 'dice', name: 'DICE', mono: 'D',
-          does: 'a gamble: it can swing his next exchange either way' },
+          does: 'a bonus roll: extra damage on his next exchange, never a bad roll' },
 };
 
 export const BUFF_BALANCE = {
