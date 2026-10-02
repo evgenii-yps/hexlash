@@ -8,6 +8,7 @@
 //        'solo'  — ядро + ровно ОДИН кристалл (branch a|b|c, idx 1..5)
 //        'axes'  — то же, но только сдвиги осей кристалла (склонности выбора выключены)
 //        'leans' — то же, но только склонности выбора (оси остаются голыми)
+//        'full'  — ядро + ВСЯ ветка branch (пять кристаллов; это Ц2)
 // ЧТО ПИШЕТ: суммы по боям игрока против каждого врага (голого ядра): запуски ударов, контакты и их урон, финты / «клюнул» / расплата, уворот,
 // окна «враг открыт», «остаётся вплотную после обмена», «враг затих», расход сил врага под давлением, доли намерений.
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -25,7 +26,9 @@ const CLOSE = 1.6; // «вплотную»
 const faceOf = (core, br, idx) => CRYSTALS[core].find((x) => x.id === br).faces[idx - 1];
 
 let behT = null;
-if (job.mode !== 'bare') {
+if (job.mode === 'full') {
+  behT = resolveBehavior(job.core, [1, 2, 3, 4, 5].map((i) => faceOf(job.core, job.branch, i)));
+} else if (job.mode !== 'bare') {
   const face = faceOf(job.core, job.branch, job.idx);
   behT = resolveBehavior(job.core, [face]);
   if (job.mode === 'axes') behT = { ...behT, leans: [] };

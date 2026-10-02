@@ -7,6 +7,8 @@
 import sys, os, shutil
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WT = os.path.abspath(sys.argv[1])
+# --cb='js' --ud='js' --bt='js' --bb='js' --it='js': пробные правки чисел ТОЛЬКО в копии (дописываются в конец файла)
+OV = {a.split('=', 1)[0][2:]: a.split('=', 1)[1] for a in sys.argv[2:] if a.startswith('--') and '=' in a}
 os.makedirs(WT, exist_ok=True)
 for d in ['src', 'scripts']:
     shutil.rmtree(f'{WT}/{d}', ignore_errors=True)
@@ -45,4 +47,8 @@ patch(B, "if (feintBaited && feintAdvUntil && t < feintAdvUntil) { feintPayoffAc
 # 6. свой уворот
 patch(B, "      play(DODGE); // slip the hit: no HP loss, no rhythm hitch\n",
       f"      play(DODGE); // slip the hit: no HP loss, no rhythm hitch\n      {PR}dodge(lastT, sb.dodgeCounter || 0);\n")
-print('копия с зондом готова:', WT)
+FILES = {'cb': 'src/data/combatBalance.js', 'ud': 'src/data/upgradeData.js', 'bt': 'src/data/branchThreshold.js', 'bb': 'src/data/buffBalance.js', 'it': 'src/data/intentions.js'}
+for key, rel in FILES.items():
+    if key in OV:
+        open(f'{WT}/{rel}', 'a').write('\n/* --- ПРОБНЫЕ ПРАВКИ (только копия) --- */\n' + OV[key] + '\n')
+print('копия с зондом готова:', WT, ('правки: ' + str(list(OV))) if OV else '')
