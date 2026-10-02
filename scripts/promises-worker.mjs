@@ -50,7 +50,7 @@ const sum0 = () => ({
   launches: 0, lFirst: 0, lLast: 0, lN: [0, 0, 0, 0], lGapSum: 0, lGapN: 0,
   reachSteps: 0, reachLaunches: 0,
   contacts: 0, sd: 0, sdNorm: 0, bonus: 0, pen: 0,
-  ripN: 0, ripBonus: 0, ripSd: 0, fpN: 0, fpBonus: 0, fpPen: 0, fpSd: 0, nfpN: 0, nfpPen: 0, nfpSd: 0, punchN: 0, punchSdNorm: 0,
+  ripN: 0, ripBonus: 0, ripSd: 0, ripDN: 0, ripDBonus: 0, ripDSd: 0, fpN: 0, fpBonus: 0, fpPen: 0, fpSd: 0, nfpN: 0, nfpPen: 0, nfpSd: 0, punchN: 0, punchSdNorm: 0,
   feints: 0, baits: 0, payoffs: 0, dodges: 0, dodgeRip: 0,
   foeHits: 0, foeDealt: 0, taken: 0,
   openEntries: 0, openResponded: 0,
@@ -133,6 +133,8 @@ function bout(core, foe, seed, S) {
     S.contacts++; S.sd += c.sd * (1 + c.bonus); S.sdNorm += c.dm ? c.sd / c.dm : 0; S.bonus += c.bonus; S.pen += c.pen;
     if (c.dm && Math.abs(c.dm - dm) < 1e-9) { S.punchN++; S.punchSdNorm += c.sd / c.dm; }
     if (c.rip) { S.ripN++; S.ripBonus += c.rip; S.ripSd += c.sd * (1 + c.bonus); }
+    // ответ именно после УВОРОТА (окно 1.5 с, бонус = дарёный уворотом sb.dodgeCounter) — отдельно от ответов на промах врага / блок
+    if (c.rip && R.dodges.some((d) => d.amt > 0 && c.t >= d.t && c.t <= d.t + 1.6 && Math.abs(c.rip - d.amt) < 1e-9)) { S.ripDN++; S.ripDBonus += c.rip; S.ripDSd += c.sd * (1 + c.bonus); }
     if (c.fp) { S.fpN++; S.fpBonus += c.bonus; S.fpPen += c.pen; S.fpSd += c.sd * (1 + c.bonus); }
     else { S.nfpN++; S.nfpPen += c.pen; S.nfpSd += c.sd * (1 + c.bonus); }
   }
