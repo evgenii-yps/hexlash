@@ -18,6 +18,7 @@ import { KLICH_BALANCE } from '../data/klichBalance.js';
 import { BUFF_BALANCE } from '../data/buffBalance.js';
 import { COMBAT_BALANCE, readDelaySec, readMissChance, readFalseChance, readWindupReactChance, readOpenReactChance } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
+import { createRng } from './boutRandom.js';
 // Материал тела и яркости ядра — из общего файла токенов сцены (ТЗ-01 §9).
 // Раньше это были литералы прямо здесь, из-за чего материал бойца и материал
 // плиты арены разошлись по числам, хотя по правилу это ОДИН материал.
@@ -49,8 +50,12 @@ export function buildFighter(
   // `getFoePhase` (optional, like getFoeReacting) → the foe's CURRENT action phase
   // string ('windup' | 'commit' | 'recovery' | 'stagger' | 'neutral'); the reading
   // subsystem noises it by this fighter's counter (читать-навык) before acting.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, startHp = null, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, getFoePhase = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, startHp = null, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, getFoePhase = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null, rng = null } = {},
 ) {
+  // СВОЙ источник случайности (scene/boutRandom.js): боевые решения не берут числа из общего
+  // Math.random, которым пользуется картинка. `rng` (необязателен) — готовый генератор, иначе
+  // заводится новый от зерна из общего потока в момент создания бойца.
+  const rand = rng || createRng();
   const group = new THREE.Group();
 
   // Side ('player' / 'opponent'). The arena is open — there is no seam barrier;
@@ -622,7 +627,7 @@ export function buildFighter(
   const ax = (behavior && behavior.axes) || resolveBehavior(coreId).axes;
   const n01 = (v) => THREE.MathUtils.clamp(v, 0, 100) / 100;
   const lerp = THREE.MathUtils.lerp;
-  const jit = (amp) => (Math.random() * 2 - 1) * amp; // ±amp bounded liveliness
+  const jit = (amp) => (rand() * 2 - 1) * amp; // ±amp bounded liveliness
 
   // Desired-range window (numbers: combatBalance.distance). The far end now lies OUTSIDE the
   // strike radius (hand 1.0 + tol 0.45), so a fighter has two working zones: inside (trade)
@@ -732,7 +737,7 @@ export function buildFighter(
     B.missChanceBase + ((B.accuracyMid - stats.accuracy) / 100) * B.accuracyMissSwing,
     B.missChanceFloor, B.missChanceCap,
   );
-  const rollMiss = () => Math.random() < missChance;
+  const rollMiss = () => rand() < missChance;
   // resilience → incoming-damage / stagger multipliers, derived in takeDamage
   // from the fighter's resilience axis (manner — constant this pass).
   const RES = COMBAT_BALANCE.resilience; // 🔒 числа вынесены в combatBalance.resilience (TZ_balance_fix_v2, этап Б)
@@ -756,10 +761,10 @@ export function buildFighter(
     aggrJit: jit(0.08),
     range: 0, // set just below + refreshed each frame from effective distance
     aggression: 0, // set just below + refreshed each frame from effective initiative
-    strafeBias: Math.random() < 0.5 ? -1 : 1, // default circling sense (CW / CCW)
+    strafeBias: rand() < 0.5 ? -1 : 1, // default circling sense (CW / CCW)
     decideMin: Math.max(0.18, lerp(0.55, 0.22, tempo01) + jit(0.05)), // fast tempo → quick decisions
     decideJit: Math.max(0.2, lerp(0.7, 0.3, tempo01) + jit(0.08)),
-    approachArc: 0.4 + Math.random() * 0.45, // lateral arc on the way in (rad)
+    approachArc: 0.4 + rand() * 0.45, // lateral arc on the way in (rad)
   };
   // Initial range + aggression from the base profile (refreshed each frame).
   character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + character.rangeJit, CONTACT_SOFT, RANGE_MAX);
@@ -1227,7 +1232,7 @@ export function buildFighter(
       // occasionally straight back (forward is local -Z, so back is +Z).
       move.vx = 0; move.vz = 0;
       const ry = group.rotation.y;
-      const r = Math.random();
+      const r = rand();
       const lx = r < 0.45 ? 1 : r < 0.9 ? -1 : 0;
       const lz = r < 0.9 ? 0 : 1;
       dodgeRun = {
@@ -1785,9 +1790,9 @@ export function buildFighter(
     const fw = B.footwork;
     // Slip-dodge weave only for the mobile, non-committing styles (an elusive
     // character still flickers aside) — never while committing a strike.
-    if (m.style !== 'plant' && m.style !== 'strike' && !clip && slip01 > 0 && Math.random() < slip01 * 0.18) {
+    if (m.style !== 'plant' && m.style !== 'strike' && !clip && slip01 > 0 && rand() < slip01 * 0.18) {
       play(DODGE);
-      nav.until = t + character.decideMin + Math.random() * character.decideJit;
+      nav.until = t + character.decideMin + rand() * character.decideJit;
       return;
     }
     const tanx = -uz * character.strafeBias; // tangential (circling) unit ⟂ the foe line
@@ -1814,11 +1819,11 @@ export function buildFighter(
     if (t >= nav.phaseUntil) {
       if (nav.phase === 'settle') {
         nav.phase = 'move';
-        nav.phaseUntil = t + fw.moveMin + Math.random() * fw.moveJit;
-        if (Math.random() < fw.flipChance) character.strafeBias *= -1;
+        nav.phaseUntil = t + fw.moveMin + rand() * fw.moveJit;
+        if (rand() < fw.flipChance) character.strafeBias *= -1;
       } else {
         nav.phase = 'settle';
-        nav.phaseUntil = t + fw.settleMin + Math.random() * fw.settleJit;
+        nav.phaseUntil = t + fw.settleMin + rand() * fw.settleJit;
       }
     }
     if (nav.phase === 'settle') { intentionStance(bs); return; } // brief устой — micro-life keeps it alive (no full freeze)
@@ -1848,8 +1853,8 @@ export function buildFighter(
   // clamped inside the plate — so the fight travels to the sides / edges / diagonals.
   const pickAnchor = (f, bias) => {
     const br = B.breath;
-    const R = (br.breakDist + Math.random() * br.breakWide) * THREE.MathUtils.clamp(bias, 0.7, 1.4);
-    const th = Math.random() * Math.PI * 2;
+    const R = (br.breakDist + rand() * br.breakWide) * THREE.MathUtils.clamp(bias, 0.7, 1.4);
+    const th = rand() * Math.PI * 2;
     nav.anchor.x = THREE.MathUtils.clamp(f.x + Math.cos(th) * R, -BX * br.boundMargin, BX * br.boundMargin);
     nav.anchor.z = THREE.MathUtils.clamp(f.z + Math.sin(th) * R, -BZ * br.boundMargin, BZ * br.boundMargin);
   };
@@ -1861,13 +1866,13 @@ export function buildFighter(
     const bias = breakBias(m);
     if (nav.macro === 'break') {
       nav.macro = 'engage';
-      nav.macroUntil = t + (br.engageMin + Math.random() * br.engageJit) / THREE.MathUtils.clamp(bias, 0.4, 1.6); // press engages longer
-    } else if (Math.random() < THREE.MathUtils.clamp(br.breakChance * bias, 0, 0.92)) {
+      nav.macroUntil = t + (br.engageMin + rand() * br.engageJit) / THREE.MathUtils.clamp(bias, 0.4, 1.6); // press engages longer
+    } else if (rand() < THREE.MathUtils.clamp(br.breakChance * bias, 0, 0.92)) {
       nav.macro = 'break';
-      nav.macroUntil = t + (br.breakMin + Math.random() * br.breakJit) * THREE.MathUtils.clamp(bias, 0.4, 1.6); // spacer breaks longer
+      nav.macroUntil = t + (br.breakMin + rand() * br.breakJit) * THREE.MathUtils.clamp(bias, 0.4, 1.6); // spacer breaks longer
       pickAnchor(f, bias);
     } else {
-      nav.macroUntil = t + br.engageMin * 0.5 + Math.random() * br.engageJit; // stayed engaged — re-roll later
+      nav.macroUntil = t + br.engageMin * 0.5 + rand() * br.engageJit; // stayed engaged — re-roll later
     }
   };
   // BREAK movement: stride to the roam anchor (real weighted steps across the plate);
@@ -1917,7 +1922,7 @@ export function buildFighter(
       // others arc. (BREAK/BREATHE sit at a high range, so they rarely land here.)
       if (nav.mode !== 'approach') {
         nav.mode = 'approach';
-        nav.approachAngle = (Math.random() < 0.5 ? -1 : 1) * character.approachArc * (0.5 + Math.random() * 0.5);
+        nav.approachAngle = (rand() < 0.5 ? -1 : 1) * character.approachArc * (0.5 + rand() * 0.5);
       }
       const closeFrac = THREE.MathUtils.clamp((d - engage) / (FAR - engage), 0, 1);
       const a = nav.approachAngle * closeFrac * (m.style === 'press' ? 0.25 : 1); // PRESS straightens the line (cuts off the retreat)
@@ -2058,7 +2063,7 @@ export function buildFighter(
     // per hit. No resource / cooldown yet — fatigue may cap it in a later pass.
     // ВЕДРО (этап Е): быстрая реакция на замах = рефлекторный уворот чаще на dodgeAdd (потолок тот же dodgeChanceMax — бой обязан доигрываться).
     const dodgeChance = Math.min(B.dodgeChanceMax, B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve) + (buffReactOn ? BUFF_BALANCE.bucket.react.dodgeAdd : 0));
-    if (dodgeChance > 0 && Math.random() < dodgeChance) {
+    if (dodgeChance > 0 && rand() < dodgeChance) {
       play(DODGE); // slip the hit: no HP loss, no rhythm hitch
       armRiposte((sb.dodgeCounter || 0) + (buffReactOn ? BUFF_BALANCE.bucket.react.counterAdd : 0)); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window · ВЕДРО: уворот отвечает сильнее (counterAdd)
       return 0; // fully evaded → no exchange (накал keeps building on pure dodging)
@@ -2114,9 +2119,9 @@ export function buildFighter(
     const rclip = playReaction(zone, strong, contactPoint);
     // Rhythm hitch on top of the recoil scales with stagger resistance — a tough
     // fighter barely loses its tempo after eating a hit.
-    ai.nextAt = Math.max(ai.nextAt, lastT + rclip.dur + (0.4 + Math.random() * 0.6) * stagMulFor(res01));
+    ai.nextAt = Math.max(ai.nextAt, lastT + rclip.dur + (0.4 + rand() * 0.6) * stagMulFor(res01));
     // counter → chance to punish straight out of the recoil: press in + strike back fast.
-    if (Math.random() < counter01 * 0.7) {
+    if (rand() < counter01 * 0.7) {
       nav.mode = 'press';
       nav.until = lastT + HURT.dur + 0.3;
       ai.nextAt = lastT + HURT.dur + 0.05;
@@ -2202,7 +2207,7 @@ export function buildFighter(
       B.blockTendencyBase + resLive * B.blockTendencyResWeight + stickLive * B.blockTendencyStickWeight + intentionFlags.guard,
       0, B.blockTendencyMax,
     );
-    if (Math.random() < tend) enterBlock(B.blockHoldSec); // raise the guard for this exchange
+    if (rand() < tend) enterBlock(B.blockHoldSec); // raise the guard for this exchange
   };
 
   // КАПКАН-4 «наказывает промах врага» — the foe's whiff opens this fighter's
@@ -2244,7 +2249,7 @@ export function buildFighter(
     // to the reflex chance, still capped by feintChanceMax. Only a feint facet
     // raises it; everyone else → base counter-led rate.
     const chance = THREE.MathUtils.clamp(B.feintChanceBase + counter01 * B.feintChanceCounterWeight + (sb.feintChance || 0), 0, B.feintChanceMax);
-    if (Math.random() < chance) { doFeint(t); return true; }
+    if (rand() < chance) { doFeint(t); return true; }
     return false;
   };
   // --- TEMPORARY reflex: "decide to release the charge" — fire the empowered
@@ -2287,19 +2292,19 @@ export function buildFighter(
     // frequent light" read) even at equal tempo. LOW STAMINA stretches the pause
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
-    const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
+    const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + rand() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
     ai.nextAt = t + atk.dur + pause * B.distance.attackPauseMul; // pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
     const pressFollow = THREE.MathUtils.clamp(character.aggression * 0.6 + stickEff * 0.3, 0, 0.95);
-    if (Math.random() < pressFollow) {
+    if (rand() < pressFollow) {
       nav.mode = 'press';
-      nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
+      nav.until = t + atk.dur + 0.25 + rand() * 0.4;
     } else {
-      nav.mode = Math.random() < 0.5 ? 'circle' : 'bait';
-      if (nav.mode === 'circle' && Math.random() < 0.5) character.strafeBias *= -1;
-      nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
+      nav.mode = rand() < 0.5 ? 'circle' : 'bait';
+      if (nav.mode === 'circle' && rand() < 0.5) character.strafeBias *= -1;
+      nav.until = t + atk.dur + 0.25 + rand() * 0.4;
     }
   };
 
@@ -2328,8 +2333,8 @@ export function buildFighter(
     if (truePhase !== truePhaseSeen) {
       truePhaseSeen = truePhase;
       const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: быстрее читает и реже пропускает
-      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + Math.random() * 0.5); // jittered latency
-      const missed = Math.random() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition
+      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + rand() * 0.5); // jittered latency
+      const missed = rand() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition
       readPendingAt = t + delay;
       readPendingPhase = missed ? null : truePhase; // null = miss → perception stays stale (didn't see it)
     }
@@ -2353,11 +2358,11 @@ export function buildFighter(
     let phase = perceivedPhase;
     let phantom = false;
     // ложное чтение — believe in an opening that isn't there (rare; worse at low counter).
-    if (phase === 'neutral' && Math.random() < readFalseChance(c) * boost) { phase = 'recovery'; phantom = true; }
+    if (phase === 'neutral' && rand() < readFalseChance(c) * boost) { phase = 'recovery'; phantom = true; }
     const dist = Math.hypot(f.x - group.position.x, f.z - group.position.z);
     if (phase === 'windup') {
       if (dist > STRIKE) return false; // must be in reach to land inside the foe's vuln window
-      if (Math.random() > Math.min(1, readWindupReactChance(c) * boost * rx)) return false;
+      if (rand() > Math.min(1, readWindupReactChance(c) * boost * rx)) return false;
       readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);
       lastReadAction = 'sbiv'; lastReadActionAt = t;
       launchStrike(t, INTERCEPT); // fast intercept jab → catch the windup in time (→ staggerInterrupt in the foe)
@@ -2366,7 +2371,7 @@ export function buildFighter(
     if (phase === 'recovery' || phase === 'stagger') {
       const reach = Math.min(character.range + RANGE_HYST, STRIKE);
       if (dist > reach) return false; // open but out of reach — let nav close in normally
-      if (Math.random() > Math.min(1, readOpenReactChance(c) * boost * rx)) return false;
+      if (rand() > Math.min(1, readOpenReactChance(c) * boost * rx)) return false;
       readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);
       gatherUntil = t + B.read.gatherSec; // visible coil → the lunge fires on expiry (in update)
       lastReadAction = phantom ? 'contra?' : 'contra'; lastReadActionAt = t;
@@ -2447,12 +2452,12 @@ export function buildFighter(
   const pickPowerHand = (d, style) => {
     const H = B.hands;
     if (d <= H.closeMaxGap) {
-      const r = Math.random(); // вплотную — all three land; manner leans the pick
+      const r = rand(); // вплотную — all three land; manner leans the pick
       if (style === 'heavy') return r < 0.4 ? UPPERCUT : r < 0.75 ? HOOK : BODY_SHOT; // STRIKE — power shots
       if (style === 'light') return r < 0.5 ? BODY_SHOT : r < 0.8 ? HOOK : UPPERCUT; // STING — snappy body shot
       return r < 0.34 ? BODY_SHOT : r < 0.67 ? UPPERCUT : HOOK; // free — even mix
     }
-    if (d <= H.hookMaxGap) return Math.random() < 0.6 ? HOOK : UPPERCUT; // close-mid — the hook's arc reaches
+    if (d <= H.hookMaxGap) return rand() < 0.6 ? HOOK : UPPERCUT; // close-mid — the hook's arc reaches
     return null; // beyond → straight stands (lunge / навигация closes)
   };
 
@@ -2475,9 +2480,9 @@ export function buildFighter(
     // light favours the single PUNCH, heavy commits the bigger moves).
     let atk;
     if (intentionFlags.attack === 'light') atk = PUNCH; // жалить — quick pokes
-    else if (intentionFlags.attack === 'heavy') atk = Math.random() < 0.5 ? DOUBLE : COMBO; // рубить — heavy series
+    else if (intentionFlags.attack === 'heavy') atk = rand() < 0.5 ? DOUBLE : COMBO; // рубить — heavy series
     else {
-      const r = Math.random();
+      const r = rand();
       const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
       atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     }
@@ -2487,14 +2492,14 @@ export function buildFighter(
     // stay primary; kicks vary the bout without dominating. All numbers: COMBAT_BALANCE.kicks.
     const kick = pickKick(d, intentionFlags.attack);
     let kicked = false;
-    if (kick && Math.random() < kickShareFor(intentionFlags.attack)) { atk = kick; kicked = true; }
+    if (kick && rand() < kickShareFor(intentionFlags.attack)) { atk = kick; kicked = true; }
     // Power hands in the mix — only if NO kick was thrown (so kick frequencies stay as
     // shipped): a chance the straight becomes a hook / uppercut / body shot suiting the
     // close exchange. Distance decides WHICH; intention tints HOW OFTEN. All numbers in
     // COMBAT_BALANCE.hands. Straights stay the backbone — the variety just colours the trade.
     if (!kicked) {
       const power = pickPowerHand(d, intentionFlags.attack);
-      if (power && Math.random() < handShareFor(intentionFlags.attack)) atk = power;
+      if (power && rand() < handShareFor(intentionFlags.attack)) atk = power;
     }
     const reach = atk.reach || character.range;
     if (d > reach + B.reachStepMax) return false; // too far even to step in → navigate closes neutral spacing first
@@ -2528,18 +2533,18 @@ export function buildFighter(
     stamina = THREE.MathUtils.clamp(stamina - B.staminaCostPunch, 0, staminaMax); // spend силы (punch-equivalent)
     // Cadence tracks tempo (+ a weight term), stretched by LOW STAMINA, so the
     // static fallback reads fast-light vs slow-heavy AND tires like the animated path.
-    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, effTempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, effTempo01)) * staminaCadenceMul(); // effTempo01 folds in the intention's tempo bias
+    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, effTempo01) + lerp(-0.15, 0.45, weight01)) + rand() * lerp(0.9, 0.4, effTempo01)) * staminaCadenceMul(); // effTempo01 folds in the intention's tempo bias
   };
   const setAI = (b) => {
     ai.on = b;
     if (b) {
-      ai.nextAt = lastT + 0.3 + Math.random() * 0.6;
-      nav.until = lastT + Math.random() * character.decideJit; // desync decision phase
-      nav.mode = Math.random() < 0.5 ? 'circle' : 'approach';
+      ai.nextAt = lastT + 0.3 + rand() * 0.6;
+      nav.until = lastT + rand() * character.decideJit; // desync decision phase
+      nav.mode = rand() < 0.5 ? 'circle' : 'approach';
       // Start the distance-breathing on an ENGAGE window (close first, then it breaks
       // on its own), desynced per fighter so the two don't break in lock-step.
       nav.macro = 'engage';
-      nav.macroUntil = lastT + B.breath.engageMin * (0.6 + Math.random() * 0.8);
+      nav.macroUntil = lastT + B.breath.engageMin * (0.6 + rand() * 0.8);
       applyIntention(INTENTIONS.HOLD); // start neutral; the first tick re-picks
       // Deterministic intention desync (opponent picks half a tick out of phase)
       // so the two never re-pick in lock-step — no random, replay stays stable.
