@@ -808,6 +808,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 .dk-finale>[data-dk-in]{width:100%;text-align:center}
 /* Шрифт — стеком в классе, а не инлайном: правило RU-слоя ловит только инлайн
    со словом Saira, а здесь кириллице нужен запасной JetBrains Mono. */
+.dk-finale-ep{margin:0 0 22px;font:900 clamp(13px,1.8vw,18px)/1 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.32em;text-transform:uppercase;color:#F6F4F6}
+.dk-finale-ep::after{content:'';display:block;width:28px;height:1px;margin:16px auto 0;background:#FF0069}
 .dk-finale-h{font:900 clamp(34px,8vw,92px)/0.96 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0 auto;max-width:18ch;text-wrap:balance}
 .dk-finale-q{font:900 clamp(22px,4.4vw,48px)/1.12 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:56px auto 0;max-width:30em;text-wrap:balance}
 [data-layer="ru"] .dk-finale-h{font-size:clamp(24px,5.2vw,56px);max-width:16em}
@@ -888,8 +890,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
      Порядок: I ИГРА 01–10 · II ЭКОНОМИКА 11–15 · III РЫНОК И ПЛАН 16–19 · IV РАУНД 20–21.
      Новые разделы: 04 «Боец», 05 «Что делает игрок», 17 «Арена агентов»; бывший 04
      «Живой бой» стал 03, бывшая «Лестница» — 06 (дополнена блоками «Восхождение» и
-     «Ведёт легенда»). Между 19 и 20 — экран-финал без номера (.dk-finale, <div>).
-     Пауза-фраза переехала вместе с разделом, перед которым стояла: перед 03, 09, 11, 18, 20.
+     «Ведёт легенда»). Между 19 и 20 — экран-финал без номера (.dk-finale, <div>), эпиграф NEVER GIVE UP над его заголовком.
+     Пауза-фраза переехала вместе с разделом, перед которым стояла: перед 03, 09, 11, 18. Паузы перед финалом нет: NEVER GIVE UP — эпиграф над заголовком финала (.dk-finale-ep).
      ⚠️ Номера sNN/eNN, data-screen-label и надзаголовок у каждого раздела вписаны
      вручную и обязаны совпадать между языковыми слоями (смена языка держит место по
      id sNN ↔ eNN). Меняя порядок — менять номера в обоих слоях, CH_FIRST/chapterOf во
@@ -1521,7 +1523,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
   <figure class="dk-fl" data-fx="fl" style="margin:32px 0 0">
     <div class="dk-fl-ax"><span>0 С</span><span>≈ 60 С</span></div>
-    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i class="m" style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i class="m" style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i class="m" style="--k:51"></i><i style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
+    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i class="m" style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i class="m" style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i class="m" style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i class="m" style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i class="m" style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i class="m" style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i class="m" style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i style="--k:51"></i><i class="m" style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
     <p class="dk-fl-lg"><span class="s1">БЫСТРЫЙ СЛОЙ · ≈ 1 РЕШЕНИЕ В СЕКУНДУ</span><span class="s2">ЯЗЫКОВАЯ МОДЕЛЬ · ПО СОБЫТИЯМ БОЯ</span></p>
     <figcaption class="dk-fl-cap">ДУЭЛЬ, ОДИН БОЕЦ · ≈ 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР 02.10.2026) · РАССТАНОВКА — ИЛЛЮСТРАЦИЯ</figcaption>
   </figure>
@@ -1914,9 +1916,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">NEVER</span> <span class="dk-w" style="--i:1">GIVE</span> <span class="dk-w" style="--i:2" data-w="UP">UP</span></p></div></div>
-
 <div class="dk-finale"><div data-dk-in>
+  <p class="dk-finale-ep" lang="en">NEVER GIVE UP</p>
   <h2 class="dk-finale-h"><span class="dk-hm">Мы строим настоящий продукт</span></h2>
   <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px auto 0;max-width:62ch;text-wrap:pretty">hexlash.com сегодня — не игра, а работающий прототип: визуальный язык, настоящий бой и направление. Всё, что на странице работает, работает по-настоящему — мы не имитируем ни одной цифры и ни одного боя. Всего задуманного там пока нет, и мы не делаем вид, что есть.</p>
   <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;margin:24px auto 0;max-width:62ch;text-wrap:pretty">Мы ищем не просто деньги, а тех, кто поможет превратить прототип в продукт.</p>
@@ -2168,7 +2169,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
   <figure class="dk-fl" data-fx="fl" style="margin:32px 0 0">
     <div class="dk-fl-ax"><span>0 S</span><span>≈ 60 S</span></div>
-    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i class="m" style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i class="m" style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i class="m" style="--k:51"></i><i style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
+    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i class="m" style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i class="m" style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i class="m" style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i class="m" style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i class="m" style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i class="m" style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i class="m" style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i style="--k:51"></i><i class="m" style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
     <p class="dk-fl-lg"><span class="s1">FAST LAYER · ≈ 1 DECISION PER SECOND</span><span class="s2">LANGUAGE MODEL · ON FIGHT EVENTS</span></p>
     <figcaption class="dk-fl-cap">DUEL, ONE FIGHTER · ≈ 8 CALLS PER FIGHT (MEASURED 02.10.2026) · PLACEMENT IS ILLUSTRATIVE</figcaption>
   </figure>
@@ -2561,9 +2562,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">NEVER</span> <span class="dk-w" style="--i:1">GIVE</span> <span class="dk-w" style="--i:2" data-w="UP">UP</span></p></div></div>
-
 <div class="dk-finale"><div data-dk-in>
+  <p class="dk-finale-ep" lang="en">NEVER GIVE UP</p>
   <h2 class="dk-finale-h"><span class="dk-hm">We're building a real product</span></h2>
   <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px auto 0;max-width:62ch;text-wrap:pretty">hexlash.com today is not a game but a working prototype: a visual language, a real fight and a direction. Everything that works on this page works for real — we don't fake a single number or a single fight. Not everything we've planned is there yet, and we don't pretend it is.</p>
   <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;margin:24px auto 0;max-width:62ch;text-wrap:pretty">We're not looking just for money, but for people who will help turn the prototype into a product.</p>
