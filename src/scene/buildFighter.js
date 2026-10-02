@@ -15,7 +15,7 @@ import { resolveBehavior } from '../data/behavior.js';
 import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { motionFor } from '../data/intentionMotion.js';
 import { KLICH_BALANCE } from '../data/klichBalance.js';
-import { BUFF_BALANCE } from '../data/buffBalance.js';
+import { bucketReact } from '../data/buffBalance.js';
 import { COMBAT_BALANCE, readDelaySec, readMissChance, readFalseChance, readWindupReactChance, readOpenReactChance } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
 import { createRng } from './boutRandom.js';
@@ -1192,6 +1192,7 @@ export function buildFighter(
   //    сходится. Ровно это написано и на карточке в магазине.
   let buffPaceMul = 1; // ВЕДРО: >1 — двигается быстрее. 1 = баффа нет (с этапа Е ведро шаг не ускоряет — paceMul = 1)
   let buffReactOn = false; // ВЕДРО (этап Е): быстрая реакция на замах врага — чтение фазы быстрее и реже мимо, реакция чаще (buffBalance.bucket.react)
+  const bucketRx = bucketReact(coreId); // числа реакции ВЕДРА с поправкой силы по ядру (buffBalance.corePower)
   let lastHitBlocked = false; // ОТМЕТКА ДЛЯ КУБИКА: последний прилетевший удар ушёл в блок
 
   // --- Charge (заряд) — built by patience, spent on one empowered strike. `charge`
@@ -2062,10 +2063,10 @@ export function buildFighter(
     // incoming impact calls takeDamage on its own, so a DOUBLE / COMBO rolls this
     // per hit. No resource / cooldown yet — fatigue may cap it in a later pass.
     // ВЕДРО (этап Е): быстрая реакция на замах = рефлекторный уворот чаще на dodgeAdd (потолок тот же dodgeChanceMax — бой обязан доигрываться).
-    const dodgeChance = Math.min(B.dodgeChanceMax, B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve) + (buffReactOn ? BUFF_BALANCE.bucket.react.dodgeAdd : 0));
+    const dodgeChance = Math.min(B.dodgeChanceMax, B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve) + (buffReactOn ? bucketRx.dodgeAdd : 0));
     if (dodgeChance > 0 && rand() < dodgeChance) {
       play(DODGE); // slip the hit: no HP loss, no rhythm hitch
-      armRiposte((sb.dodgeCounter || 0) + (buffReactOn ? BUFF_BALANCE.bucket.react.counterAdd : 0)); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window · ВЕДРО: уворот отвечает сильнее (counterAdd)
+      armRiposte((sb.dodgeCounter || 0) + (buffReactOn ? bucketRx.counterAdd : 0)); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window · ВЕДРО: уворот отвечает сильнее (counterAdd)
       return 0; // fully evaded → no exchange (накал keeps building on pure dodging)
     }
     // The hit LANDED (past miss + dodge). INTERRUPT: are we caught in the EARLY
@@ -2332,7 +2333,7 @@ export function buildFighter(
     const truePhase = getFoePhase ? getFoePhase() : 'neutral';
     if (truePhase !== truePhaseSeen) {
       truePhaseSeen = truePhase;
-      const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: быстрее читает и реже пропускает
+      const BRX = buffReactOn ? bucketRx : null; // ведро: быстрее читает и реже пропускает
       const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + rand() * 0.5); // jittered latency
       const missed = rand() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition
       readPendingAt = t + delay;
@@ -2353,7 +2354,7 @@ export function buildFighter(
     if (!f) return false;
     const c = counter01;
     const boost = intentionId === INTENTIONS.CATCH ? B.read.catchBoost : intentionId === INTENTIONS.HOLD ? B.read.holdBoost : 1;
-    const BRX = buffReactOn ? BUFF_BALANCE.bucket.react : null; // ведро: чаще решается на сбив/контру, паузы между реакциями короче
+    const BRX = buffReactOn ? bucketRx : null; // ведро: чаще решается на сбив/контру, паузы между реакциями короче
     const rx = BRX ? BRX.reactMul : 1;
     let phase = perceivedPhase;
     let phantom = false;
