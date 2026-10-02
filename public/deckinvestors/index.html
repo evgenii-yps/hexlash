@@ -366,8 +366,8 @@ html.dk-fight .dk-dust::before,html.dk-fight .dk-dust::after{animation-play-stat
 
    Прокрутка не перехватывается: ни «магнитных» разделов, ни перехвата колеса.
    Цифры не анимируются — заглушки [XXX K] и любые числа читаются сразу. */
-html.dk-anim [data-dk-in]>*{opacity:0;transform:translateY(16px)}
-html.dk-anim [data-dk-in].dk-in>*{
+html.dk-anim [data-dk-in]>:where(:not(h2,.dk-pass)){opacity:0;transform:translateY(16px)}
+html.dk-anim [data-dk-in].dk-in>:where(:not(h2,.dk-pass)){
   opacity:1;transform:none;
   transition:opacity 320ms cubic-bezier(.2,.8,.2,1),transform 320ms cubic-bezier(.2,.8,.2,1);
 }
@@ -545,6 +545,213 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
      дефект, ради которого этот слой переписан. */
   .dk-dust::before,.dk-dust::after{display:none}
 }
+
+/* ===========================================================================
+   ГЛАВЫ, ШКАЛА ПРОГРЕССА И ДВИЖЕНИЕ КОНТЕНТА (02.10.2026, TZ_deckinvestors_motion_v1)
+   ===========================================================================
+
+   ЗАЧЕМ. Дека получила структуру (четыре главы, шкала прогресса) и движение,
+   которое что-то объясняет: набегающие цифры, таблица «было → стало», лестница,
+   схема одного боя, отметки статуса, линия роадмапа. Чистого украшательства здесь
+   нет; фон с ядром, паузы, шрифты, окно арены и тексты разделов не тронуты.
+
+   ⚠️ ДВИЖЕНИЕ ЖИВЁТ НА ТЕХ ЖЕ МЕХАНИЗМАХ, ЧТО И ПРЕЖНЕЕ.
+     · Скрытое состояние задаёт только признак html.dk-anim (его вешает сценарий и
+       НЕ вешает при «уменьшить движение» или без наблюдателя) — поэтому без
+       сценария и при уменьшенном движении всё стоит в конечном виде. Конечный вид —
+       это обычные правила БЕЗ анимаций; анимация лишь приходит к нему.
+     · Один раз — через .fx-on, который сценарий вешает при первом появлении блока
+       на экране; назад он не снимается. Смена языка не перезапускает сыгранное:
+       блок, уже игравший в другом слое, получает .fx-on + .fx-skip и стоит готовым.
+     · Привязанное к прокрутке (лестница, роадмап) ведёт одна переменная --p,
+       которую сценарий пишет не чаще раза за кадр и только пока блок рядом с
+       экраном. Без сценария --p = 1 — полоса залита целиком.
+     · Свечения: розовый — только в момент события и гаснет (вспышки модели в
+       схеме боя). Золото легенды — одна короткая вспышка номера ступени 2.
+       Ободок карточек — холодный, как у вторичных кнопок: только на наведение/касание.
+
+   ЗНАЧЕНИЯ ВПИСАНЫ ЧИСЛАМИ по той же причине, что и выше по файлу. Золото легенды
+   #FFB21D — AMBER из src/data/sceneTokens.js (им же сердце легенды в
+   src/scene/legendPresence.js). Хром — --chrome-rim / --chrome-bloom из tokens.css. */
+
+/* --- 1. Надзаголовок с названием главы ---------------------------------- */
+.dk-eyebrow-c{font-size:10px;letter-spacing:.16em;color:#A9A5AF;white-space:nowrap}
+@media (max-width:400px){.dk-eyebrow-c{font-size:9px;letter-spacing:.1em}}
+@media (max-width:360px){.dk-eyebrow{flex-wrap:wrap;row-gap:6px}.dk-eyebrow::after{display:none}}
+
+/* --- 2. Навигация по главам: текущая — белая, остальные приглушены -------- */
+.navlink.is-cur{color:#F6F4F6;font-weight:700}
+
+/* --- 3. Шкала прогресса --------------------------------------------------
+   Компьютер (от 1024) — вертикальная шкала у правого края: 18 засечек, между
+   главами промежуток. Телефон — тонкая полоса сверху: 18 сегментов, только показ.
+   Строит и ведёт сценарий (из разделов открытого языка). Цвет текущей — цвет ядра
+   раздела, тот же, что ведёт фон; без ореола.
+   Шаг засечек сжимается на низком окне, зона нажатия у каждой — 44 точки, соседние
+   зоны при сжатии перекрываются (побеждает нижняя), центр каждой остаётся своим. */
+.dk-scale,.dk-strip{display:none}
+.dk-scale{--tk-h:clamp(24px,calc((100vh - 130px - 48px) / 18),44px);
+  position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:15;flex-direction:column;align-items:flex-end;pointer-events:none}
+.dk-tk{position:relative;display:block;width:30px;height:44px;margin:calc((var(--tk-h) - 44px) / 2) 0;
+  text-decoration:none;--tk:#FF0069;pointer-events:auto}
+.dk-tk.dk-gap{margin-top:calc((var(--tk-h) - 44px) / 2 + 16px)}
+.dk-tk>i{position:absolute;right:4px;top:50%;width:8px;height:2px;margin-top:-1px;background:rgba(255,255,255,.13);
+  transition:width 220ms cubic-bezier(.2,.8,.2,1),background-color 220ms cubic-bezier(.2,.8,.2,1)}
+.dk-tk.is-pass>i{background:rgba(246,244,246,.42)}
+.dk-tk.is-cur>i{width:12px;height:3px;margin-top:-1.5px;background:var(--tk)}
+.dk-tk::before{content:attr(data-label);position:absolute;right:30px;top:50%;transform:translateY(-50%);
+  padding:6px 10px;white-space:nowrap;background:rgba(8,8,10,.94);border:1px solid rgba(255,255,255,.16);
+  font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;
+  opacity:0;pointer-events:none;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)}
+.dk-tk:hover{z-index:1}
+.dk-tk:hover::before,.dk-tk:focus-visible::before{opacity:1}
+@media (hover:hover){.dk-tk:hover>i{background:#F6F4F6}.dk-tk.is-cur:hover>i{background:var(--tk)}}
+@media (min-width:1024px){.dk-scale{display:flex}}
+
+.dk-strip{position:fixed;left:0;right:0;top:0;height:4px;gap:2px;padding:0 2px;z-index:20;pointer-events:none}
+.dk-strip>i{flex:1 1 0;min-width:0;background:rgba(255,255,255,.1)}
+.dk-strip>i.dk-gap{margin-left:6px}
+.dk-strip>i.is-pass{background:rgba(246,244,246,.42)}
+.dk-strip>i.is-cur{background:var(--tk)}
+@media (max-width:1023px){.dk-strip{display:flex}.dk-prog{display:none}}
+
+/* --- 4. Заголовки разделов выезжают из-под маски --------------------------
+   Заменяет прежнее подъёмное появление заголовка (он исключён из общего правила
+   «Ж»). Маска — clip-path на заголовке: сверху и по бокам запас, чтобы не резать
+   надстрочные знаки (Й), снизу запас под хвост Щ; текст стартует ниже маски и
+   прозрачным, поэтому «слепой» запас снизу его не показывает. */
+html.dk-anim [data-dk-in] h2{clip-path:inset(-.3em -4px -.22em -4px)}
+html.dk-anim [data-dk-in] h2.dk-hd{clip-path:none}
+html.dk-anim [data-dk-in] h2 .dk-hm{display:block;opacity:0;transform:translateY(120%)}
+html.dk-anim [data-dk-in].dk-in h2 .dk-hm{
+  opacity:1;transform:none;
+  transition:opacity 260ms cubic-bezier(.2,.8,.2,1) 60ms,transform 500ms cubic-bezier(.2,.8,.2,1) 60ms;
+}
+html.dk-anim [data-dk-in].dk-nt h2 .dk-hm,html.dk-anim [data-dk-in].dk-nt>*{transition:none}
+/* Блок раздела 04: шапка сложена в обёртку. Заголовок в ней идёт под маской, а
+   остальное — обычным подъёмом, как раньше. */
+html.dk-anim [data-dk-in]>.dk-pass>:where(:not(h2)){opacity:0;transform:translateY(16px)}
+html.dk-anim [data-dk-in].dk-in>.dk-pass>:where(:not(h2)){
+  opacity:1;transform:none;
+  transition:opacity 320ms cubic-bezier(.2,.8,.2,1),transform 320ms cubic-bezier(.2,.8,.2,1);
+}
+html.dk-anim [data-dk-in].dk-in>.dk-pass>:nth-child(3){transition-delay:120ms}
+html.dk-anim [data-dk-in].dk-in>.dk-pass>:nth-child(n+4){transition-delay:180ms}
+html.dk-anim [data-dk-in].dk-nt>.dk-pass>*{transition:none}
+
+/* --- 5. Карточки отвечают как вторичные кнопки «матовый хром» -------------
+   Холодный ободок + слабое свечение + подъём на 1 точку; в покое не светятся,
+   розового нет. Ободок — псевдоэлемент: у карточек без боковых отступов он
+   стоит чуть снаружи и не липнет к тексту. Касание — :active (наведения у
+   телефона нет); нажатие быстрее наведения. */
+.dk-hov{position:relative;transition:transform 220ms cubic-bezier(.2,.8,.2,1)}
+.dk-hov::after{content:"";position:absolute;inset:-6px -8px;pointer-events:none;opacity:0;
+  box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22);
+  transition:opacity 220ms cubic-bezier(.2,.8,.2,1)}
+.dk-hov--cell::after,.dk-card.dk-hov::after{inset:0}
+.dk-hov:active{transition-duration:120ms;transform:translateY(-1px);z-index:1}
+.dk-hov:active::after{opacity:1;transition-duration:120ms}
+@media (hover:hover){
+  .dk-hov:hover{transform:translateY(-1px);z-index:1}
+  .dk-hov:hover::after{opacity:1}
+}
+
+/* --- 6. Появление по одному: общий механизм .fx-on ------------------------ */
+@keyframes dkRowIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes dkFade{from{opacity:0}to{opacity:1}}
+
+/* 6а. Раздел 02, таблица: строки по одной (шаг 150 мс — задаёт сценарий через --d).
+   Ячейка PLAY-TO-EARN входит обычной и за 0,4 с гаснет в серый, ячейка HEXLASH
+   в то же время доходит до полной яркости. Розового нет. */
+/* Прячется СОДЕРЖИМОЕ строки, а не она сама: у контейнера серая подложка (линии
+   в 1 точку между строками), и скрытая строка открывала бы её серым прямоугольником. */
+html.dk-anim [data-fx="row"]:not(.fx-on)>*{opacity:0}
+html.dk-anim [data-fx="row"].fx-on:not(.fx-skip)>*{animation:dkRowIn 420ms cubic-bezier(.2,.8,.2,1) var(--d,0ms) both}
+@keyframes dkOld{from{color:#A9A5AF}}
+@keyframes dkNew{from{opacity:.5}}
+html.dk-anim [data-fx="row"].fx-on:not(.fx-skip) .dk-t-old p{animation:dkOld 400ms ease-out calc(var(--d,0ms) + 320ms) both}
+html.dk-anim [data-fx="row"].fx-on:not(.fx-skip) .dk-t-new{animation:dkNew 400ms ease-out calc(var(--d,0ms) + 320ms) both}
+
+/* 6б. Раздел 03, лестница: полоса «ТЫ → ИИ» наливается вместе с прокруткой.
+   --p (0…1) ведёт сценарий по положению полосы на экране: крутишь назад — убывает.
+   Три сегмента делят путь поровну. Под полосой — тусклая дорожка. */
+.dk-bar{position:relative;--p:1}
+.dk-bar::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:rgba(255,255,255,.09)}
+.dk-bar>i{position:relative;transform-origin:left;transform:scaleX(clamp(0,calc(var(--p) * 3 - var(--k)),1))}
+/* Одна золотая вспышка номера ступени 2, когда полоса дошла до неё. */
+.dk-st2.dk-flash{animation:dkGold 420ms ease-out both}
+@keyframes dkGold{
+  0%{text-shadow:0 0 0 rgba(255,178,29,0)}
+  35%{text-shadow:0 0 10px #FFB21D,0 0 22px rgba(255,178,29,.55)}
+  100%{text-shadow:0 0 0 rgba(255,178,29,0)}
+}
+
+/* 6в. Раздел 05, схема одного боя: 60 тиков = 60 секунд. Пробег слева направо за
+   ~2,5 с; на трёх местах тик выше и вспыхивает розовым в момент, когда до него
+   доходит пробег, затем гаснет до тускло-розового контура. Это СХЕМА, не данные:
+   ни счётчиков, ни таймеров, ни слова «live». */
+.dk-fl .dk-fl-ax{display:flex;justify-content:space-between;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66}
+.dk-fl-tr{display:flex;align-items:flex-end;gap:2px;height:34px;margin-top:10px}
+.dk-fl-tr>i{flex:1 1 0;min-width:0;height:10px;background:#5D5D66;transform-origin:bottom}
+.dk-fl-tr>i.m{height:30px;background:transparent;border:1px solid rgba(255,0,105,.45)}
+.dk-fl-lg{display:flex;flex-wrap:wrap;gap:8px 24px;margin:14px 0 0;font:500 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF}
+.dk-fl-lg span{display:inline-flex;align-items:center;gap:8px}
+.dk-fl-lg span::before{content:"";flex:0 0 auto;width:10px;height:2px;background:#5D5D66}
+.dk-fl-lg .s2::before{width:6px;height:6px;background:rgba(255,0,105,.55)}
+.dk-fl-cap{margin:10px 0 0;font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66}
+html.dk-anim [data-fx="fl"]:not(.fx-on) .dk-fl-tr>i{opacity:.25}
+html.dk-anim [data-fx="fl"].fx-on:not(.fx-skip) .dk-fl-tr>i{animation:dkTk 300ms ease-out calc(var(--k) * 41.7ms) both}
+html.dk-anim [data-fx="fl"].fx-on:not(.fx-skip) .dk-fl-tr>i.m{animation:dkMd 900ms ease-out calc(var(--k) * 41.7ms) both}
+/* Бег — только прозрачность и transform (без перекраски 60 узлов): тик зажигается и
+   на миг вытягивается, пока до него доходит пробег. Конечный кадр = обычное правило. */
+@keyframes dkTk{
+  0%{opacity:.25;transform:scaleY(.7)}
+  35%{opacity:1;transform:scaleY(1.7)}
+  100%{opacity:1;transform:none}
+}
+@keyframes dkMd{
+  0%{opacity:.25;background-color:transparent;border-color:rgba(255,0,105,0);box-shadow:0 0 0 rgba(255,0,105,0)}
+  12%{opacity:1;background-color:#FF0069;border-color:#FF0069;box-shadow:0 0 12px rgba(255,0,105,.9)}
+  100%{opacity:1;background-color:transparent;border-color:rgba(255,0,105,.45);box-shadow:0 0 0 rgba(255,0,105,0)}
+}
+@media (max-width:400px){.dk-fl-lg{letter-spacing:.1em}.dk-fl-cap{letter-spacing:.2em}}
+
+/* 6г. Раздел 07: отметки колонки РАБОТАЕТ по очереди (шаг 120 мс), потом целиком
+   приглушённая колонка В РАЗРАБОТКЕ. Отметка стоит в поле карточки слева от
+   пункта — текст не сдвигается. */
+.dk-mk{position:relative}
+.dk-mk::before{content:"";position:absolute;left:-18px;top:.42em;width:9px;height:5px;
+  border-left:1.5px solid #F6F4F6;border-bottom:1.5px solid #F6F4F6;transform:rotate(-45deg)}
+html.dk-anim [data-fx="work"]:not(.fx-on) .dk-mk::before{opacity:0;transform:rotate(-45deg) scale(0)}
+html.dk-anim [data-fx="work"].fx-on:not(.fx-skip) .dk-mk::before{animation:dkMark 260ms cubic-bezier(.2,.8,.2,1) calc(var(--d,0ms) + var(--k) * 120ms) both}
+@keyframes dkMark{from{opacity:0;transform:rotate(-45deg) scale(0)}to{opacity:1;transform:rotate(-45deg) scale(1)}}
+html.dk-anim [data-fx="dev"]:not(.fx-on){opacity:0}
+html.dk-anim [data-fx="dev"].fx-on:not(.fx-skip){animation:dkFade 420ms ease-out var(--d,0ms) both}
+
+/* 6д. Раздел 08: статус ставится штампом в форме игрового SOON — тот же наклон,
+   что у косых печатей в интерфейсе (--soon-a, наименьший из игровых — 14°); влетает
+   чуть крупнее, садится с коротким толчком, по очереди (шаг 140 мс). Цвета прежние:
+   НЕ ПРОВЕРЕНО — приглушённый серый, ЧАСТИЧНО — белый. Розового нет.
+   ⚠️ Наклон — единственная переменная --stamp-a. */
+.dk-stamp{--stamp-a:14deg;transform:rotate(var(--stamp-a))}
+html.dk-anim [data-fx="stamp"]:not(.fx-on){opacity:0}
+html.dk-anim [data-fx="stamp"].fx-on:not(.fx-skip){animation:dkStamp 380ms cubic-bezier(.2,.8,.2,1) var(--d,0ms) both}
+@keyframes dkStamp{
+  0%{opacity:0;transform:rotate(var(--stamp-a)) scale(1.5)}
+  55%{opacity:1;transform:rotate(var(--stamp-a)) scale(.94)}
+  78%{transform:rotate(var(--stamp-a)) scale(1.03)}
+  100%{opacity:1;transform:rotate(var(--stamp-a)) scale(1)}
+}
+
+/* 6е. Раздел 15: линия между этапами прорисовывается вместе с прокруткой
+   (--p, как у лестницы); этап загорается полным цветом, когда до него дошла
+   линия, до этого приглушён. СЕЙЧАС — первым. */
+.dk-road{position:relative;--p:1}
+.dk-road-line{position:absolute;left:0;top:0;bottom:0;width:2px;background:rgba(246,244,246,.55);
+  transform-origin:top;transform:scaleY(var(--p));pointer-events:none}
+html.dk-anim .dk-road .dk-stg{opacity:.4;transition:opacity 300ms cubic-bezier(.2,.8,.2,1)}
+html.dk-anim .dk-road .dk-stg.is-lit{opacity:1}
+html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 </style>
 
 <!-- =========================================================================
@@ -607,6 +814,15 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
      слову владельца. В окне арены языковая модель ВЫКЛЮЧЕНА (режим показа,
      ?showcase=1 → brainMode = spinal) — подпись под окном в разделе 04 это
      говорит прямо. Включат модель в окне — подпись надо поправить.
+
+     ДВИЖЕНИЕ И СТРУКТУРА 02.10.2026 (ТЗ TZ_deckinvestors_motion_v1). Добавлены: четыре
+     главы (название главы стоит в надзаголовке каждого раздела, навигация шапки — по
+     главам), шкала прогресса, набегающие цифры, таблица раздела 02, лестница раздела 03,
+     схема одного боя в разделе 05, отметки и штампы в 07–08, линия роадмапа в 15, ответ
+     карточек на наведение и касание, заголовки из-под маски. Новые тексты — только
+     названия глав и подпись схемы; остальные тексты разделов не менялись. Механизмы —
+     те же, что у прежнего появления блоков (html.dk-anim, .dk-in), см. блок «ГЛАВЫ,
+     ШКАЛА ПРОГРЕССА…» в стилях и второй <script> в конце файла.
 
      ЗАКРЫТА ОТ ПОИСКА мета-запретом (он уже в выгрузке) плюс заголовком
      X-Robots-Tag в vercel.json. В robots.txt путь НЕ упоминается намеренно:
@@ -1018,7 +1234,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <!-- ЯДРО:КОНЕЦ -->
   </div>
 </div>
-<div style="position:fixed;top:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.09);z-index:20"><div data-progress="1" style="height:2px;background:#FF0069;transform:scaleX(0);transform-origin:left"></div></div>
+<div class="dk-prog" style="position:fixed;top:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.09);z-index:20"><div data-progress="1" style="height:2px;background:#FF0069;transform:scaleX(0);transform-origin:left"></div></div>
 
 <header style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:16px;max-width:1180px;margin:0 auto;border-bottom:1px solid rgba(255,255,255,0.09)">
   <div style="display:flex;align-items:center;gap:14px">
@@ -1030,18 +1246,16 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <a href="?lang=ru" data-lang-btn="ru" lang="ru" class="langbtn">RU</a>
   </div>
   <nav data-layer="ru" class="off" aria-label="Разделы" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 16px">
-    <a href="#s01" class="navlink">ПРОБЛЕМА</a>
-    <a href="#s03" class="navlink">ИГРА</a>
-    <a href="#s09" class="navlink">ЭКОНОМИКА</a>
-    <a href="#s17" class="navlink">РАУНД</a>
-    <a href="#s18" class="navlink">КОМАНДА</a>
+    <a href="#s01" class="navlink" data-ch="0">ИГРА</a>
+    <a href="#s09" class="navlink" data-ch="1">ЭКОНОМИКА</a>
+    <a href="#s14" class="navlink" data-ch="2">РЫНОК И ПЛАН</a>
+    <a href="#s17" class="navlink" data-ch="3">РАУНД</a>
   </nav>
   <nav data-layer="en" aria-label="Sections" lang="en" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 16px">
-    <a href="#e01" class="navlink">PROBLEM</a>
-    <a href="#e03" class="navlink">GAME</a>
-    <a href="#e09" class="navlink">ECONOMICS</a>
-    <a href="#e17" class="navlink">ROUND</a>
-    <a href="#e18" class="navlink">TEAM</a>
+    <a href="#e01" class="navlink" data-ch="0">GAME</a>
+    <a href="#e09" class="navlink" data-ch="1">ECONOMICS</a>
+    <a href="#e14" class="navlink" data-ch="2">MARKET &amp; PLAN</a>
+    <a href="#e17" class="navlink" data-ch="3">ROUND</a>
   </nav>
 </header>
 
@@ -1056,28 +1270,28 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div data-layer="ru" class="off">
 
 <section data-dk-in id="s01" data-screen-label="01 ПРОБЛЕМА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">01</span><span>ПРОБЛЕМА</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Почему три из четырёх web3-игр умерли</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">01</span><span>ПРОБЛЕМА</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Почему три из четырёх web3-игр умерли</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Анатомия play-to-earn: три конструктивных дефекта, а не рыночный цикл.</p>
   <div data-anim="frame" style="margin-top:32px;padding:32px 0;border-top:1px solid rgba(255,255,255,0.16);border-bottom:1px solid rgba(255,255,255,0.16);display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));align-items:end">
-    <div style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">75,5%</div>
+    <div data-fx="count" style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">75,5%</div>
     <div>
       <p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:0;text-wrap:pretty">из 2 817 web3-игр, запущенных в 2018–2023, стали неактивны</p>
       <p style="font:500 10px/1.5 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0;text-wrap:balance">COINGECKO&nbsp;· НОЯБРЬ 2023&nbsp;· НЕАКТИВНА&nbsp;=&nbsp;АКТИВНОСТЬ УПАЛА НА&nbsp;99%+ ОТ&nbsp;ПИКА</p>
     </div>
   </div>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">01</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Токен = единственное, что удерживало.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Игрок приходит за доходностью. Доходность падает — игрок уходит. Игра как таковая не удерживает.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">02</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Эмиссия больше спроса.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Награды печатаются быстрее, чем появляются причины покупать токен. Единственный сток — вход новых игроков.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">03</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Игра никому не нужна.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Убери выплаты — ноль DAU. Продукт был финансовой схемой с игровым интерфейсом.</p>
@@ -1087,43 +1301,43 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s02" data-screen-label="02 МОДЕЛЬ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">02</span><span>МОДЕЛЬ</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Платят за облик, а не за силу</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">02</span><span>МОДЕЛЬ</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Платят за облик, а не за силу</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Разворот play-to-earn: сила бойца растёт только временем, деньги покупают только внешний вид.</p>
   <div style="margin-top:32px;display:grid;gap:1px;background:rgba(255,255,255,0.09)">
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">За что платит игрок</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">За право фармить токен</p></div>
-        <div data-anim="row" data-anim-i="0" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">За внешний вид: скины, эффекты, облик легенды</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">За право фармить токен</p></div>
+        <div data-anim="row" data-anim-i="0" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">За внешний вид: скины, эффекты, облик легенды</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Откуда сила бойца</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Покупается</p></div>
-        <div data-anim="row" data-anim-i="1" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Только из времени — своего или того, кто вырастил бойца</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Покупается</p></div>
+        <div data-anim="row" data-anim-i="1" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Только из времени — своего или того, кто вырастил бойца</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Что удерживает</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Курс токена</p></div>
-        <div data-anim="row" data-anim-i="2" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Боец, которого ты вырастил, и легенда</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Курс токена</p></div>
+        <div data-anim="row" data-anim-i="2" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Боец, которого ты вырастил, и легенда</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Если токен падает</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Игра умирает</p></div>
-        <div data-anim="row" data-anim-i="3" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Бой работает как работал — сила не зависит от курса</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Игра умирает</p></div>
+        <div data-anim="row" data-anim-i="3" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Бой работает как работал — сила не зависит от курса</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Бесплатный игрок</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Убыток — ему платят</p></div>
-        <div data-anim="row" data-anim-i="4" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Играет наравне: дневной лимит «думающих» боёв одинаков для всех</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Убыток — ему платят</p></div>
+        <div data-anim="row" data-anim-i="4" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Играет наравне: дневной лимит «думающих» боёв одинаков для всех</p></div>
       </div>
     </div>
   </div>
@@ -1131,8 +1345,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s03" data-screen-label="03 ЛЕСТНИЦА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">03</span><span>ЛЕСТНИЦА</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Лестница делегирования</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">03</span><span>ЛЕСТНИЦА</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Лестница делегирования</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Игрок постепенно отдаёт управление ИИ, которого вырастил сам.</p>
   <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
     <div data-anim="step" data-anim-i="0" data-glow="pink-select" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-right:clamp(0px,4vw,48px)">
@@ -1141,7 +1355,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Ты растишь бойцов и собираешь состав. В бою боец дерётся сам — ты подсказываешь кличами и поддерживаешь баффами.</p>
     </div>
     <div data-anim="step" data-anim-i="1" data-glow="amber-hero" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-left:clamp(0px,4vw,48px)">
-      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">СТУПЕНЬ 2</p>
+      <p class="dk-st2" style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">СТУПЕНЬ 2</p>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">Решает легенда</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Лучший боец проходит восхождение и становится легендой. Сам он больше не дерётся: тренирует ростер, пока тебя нет, и ведёт отряд в бою вместо тебя. Вернуть управление можно в любой момент.</p>
     </div>
@@ -1149,7 +1363,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
   <div style="margin-top:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">УПРАВЛЕНИЕ</span>
     <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ТЫ</span>
-    <span style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="flex:1;height:2px;background:#FF0069"></i><i style="flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="flex:1;height:2px;background:#FFB21D"></i></span>
+    <span class="dk-bar" style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="--k:0;flex:1;height:2px;background:#FF0069"></i><i style="--k:1;flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="--k:2;flex:1;height:2px;background:#FFB21D"></i></span>
     <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">ИИ</span>
   </div>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">Главная награда — не предмет, а свобода: игра продолжается и без тебя.</p>
@@ -1162,9 +1376,9 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">EVERYONE</span> <span class="dk-w" style="--i:1">HAS</span> <span class="dk-w" style="--i:2">A</span> <span class="dk-w" style="--i:3">PLAN</span> <span class="dk-w" style="--i:4">UNTIL</span> <span class="dk-w" style="--i:5">THEY</span> <span class="dk-w" style="--i:6">GET</span> <span class="dk-w" style="--i:7" data-w="PUNCHED">PUNCHED</span></p></div></div>
 
 <section data-dk-in id="s04" data-screen-label="04 ЖИВОЙ БОЙ" style="padding:48px 0;max-width:100%;margin:0 auto">
-  <div style="padding:0 16px;max-width:1180px;margin:0 auto">
-    <div class="dk-eyebrow"><span class="dk-eyebrow-n">04</span><span>ЖИВОЙ БОЙ</span></div>
-    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Боец дерётся сам</h2>
+  <div class="dk-pass" style="padding:0 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">04</span><span>ЖИВОЙ БОЙ</span></div>
+    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Боец дерётся сам</span></h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ни кнопки удара, ни блока. Это настоящий бой из игры — не ролик и не симуляция.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">АРЕНА · ЖИВОЙ БОЙ · <span data-arena-state="1">ПОКОЙ</span></p>
@@ -1194,8 +1408,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s05" data-screen-label="05 БАРЬЕР" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">05</span><span>БАРЬЕР</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Трудно не придумать, а удержать цену</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">05</span><span>БАРЬЕР</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Трудно не придумать, а удержать цену</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Каждый бой стоит денег. Мы говорим об этом первыми.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px;background:#0D0A0D">
@@ -1209,17 +1423,23 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Подключается только в переломные моменты и отвечает решением и фразой. Сейчас — у бойца в дуэли и у легенды.</p>
     </div>
   </div>
+  <figure class="dk-fl" data-fx="fl" style="margin:32px 0 0">
+    <div class="dk-fl-ax"><span>0 С</span><span>≈ 60 С</span></div>
+    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i class="m" style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i class="m" style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i class="m" style="--k:51"></i><i style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
+    <p class="dk-fl-lg"><span class="s1">БЫСТРЫЙ СЛОЙ · ≈ 1 РЕШЕНИЕ В СЕКУНДУ</span><span class="s2">ЯЗЫКОВАЯ МОДЕЛЬ · ТОЛЬКО ПЕРЕЛОМЫ</span></p>
+    <figcaption class="dk-fl-cap">СХЕМА ОДНОГО БОЯ · ЧИСЛО И МЕСТО ПЕРЕЛОМОВ — ИЛЛЮСТРАЦИЯ</figcaption>
+  </figure>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,007</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ОДНА ДУЭЛЬ</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$7</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$7</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ТЫСЯЧА ДУЭЛЕЙ</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">+≈$0,003</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">+≈$0,003</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ЛЕГЕНДА В БОЮ, КОТОРЫЙ ВЕДЁТ</p>
     </div>
   </div>
@@ -1235,26 +1455,26 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s06" data-screen-label="06 МИРЫ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-n">06</span><span>МИРЫ</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Бойцы из разных миров</h2>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">06</span><span>МИРЫ</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Бойцы из разных миров</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">У каждого бойца есть происхождение — мир, из которого он пришёл.</p>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px">
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">01</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Внешность.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Коллекции и кроссоверы.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">02</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Принадлежность.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Фракции мира и сезонный рейтинг миров.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">03</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Общая черта.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">То, как тело бойца отвечает на нагрузку.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">04</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Место в круге.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Каждый мир сильнее одного и уязвим перед другим; сильнейшего нет.</p>
@@ -1266,24 +1486,24 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">FALL</span> <span class="dk-w" style="--i:1">SEVEN</span> <span class="dk-w" style="--i:2">TIMES.</span> <span class="dk-w" style="--i:3">STAND</span> <span class="dk-w" style="--i:4">UP</span> <span class="dk-w" style="--i:5" data-w="EIGHT.">EIGHT.</span></p></div></div>
 
 <section data-dk-in id="s07" data-screen-label="07 СТАТУС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">07</span><span>СТАТУС</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Где мы сейчас</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">07</span><span>СТАТУС</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Где мы сейчас</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Без внешнего капитала. Статус на 02.10.2026.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-    <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
+    <div class="dk-card" data-fx="work" data-fx-n="8" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">РАБОТАЕТ</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Ростер и зал с тренировками</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Четыре ядра, три грани, пятнадцать кристаллов</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Два режима арены: ДУЭЛЬ и ОТРЯД</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Языковая модель у бойца в дуэли</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Кличи и баффы с откатом</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Восхождение и легенда</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Легенда ведёт отряд, обращается к модели и говорит</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Спарринг: сборка соперника</li>
+        <li class="dk-mk" style="--k:0;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Ростер и зал с тренировками</li>
+        <li class="dk-mk" style="--k:1;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Четыре ядра, три грани, пятнадцать кристаллов</li>
+        <li class="dk-mk" style="--k:2;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Два режима арены: ДУЭЛЬ и ОТРЯД</li>
+        <li class="dk-mk" style="--k:3;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Языковая модель у бойца в дуэли</li>
+        <li class="dk-mk" style="--k:4;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Кличи и баффы с откатом</li>
+        <li class="dk-mk" style="--k:5;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Восхождение и легенда</li>
+        <li class="dk-mk" style="--k:6;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Легенда ведёт отряд, обращается к модели и говорит</li>
+        <li class="dk-mk" style="--k:7;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Спарринг: сборка соперника</li>
       </ul>
     </div>
-    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" data-fx="dev" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">В РАЗРАБОТКЕ</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
         <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Четыре режима: ЦЕПЬ, РЕЙД, ОБВАЛ, ОХОТА</li>
@@ -1310,14 +1530,14 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s08" data-screen-label="08 ГИПОТЕЗЫ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">08</span><span>ГИПОТЕЗЫ</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Что нам предстоит доказать</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">08</span><span>ГИПОТЕЗЫ</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Что нам предстоит доказать</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Точные пороги успеха задаём до начала каждой проверки.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H1</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Смотреть бой, где игрок не бьёт сам, интересно</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">КАК ПРОВЕРЯЕМ</p>
@@ -1326,7 +1546,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H2</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Характер бойца виден глазами, без цифр</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">КАК ПРОВЕРЯЕМ</p>
@@ -1335,7 +1555,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H3</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">ЧАСТИЧНО</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">ЧАСТИЧНО</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Подсказки игрока ощущаются как влияние</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">КАК ПРОВЕРЯЕМ</p>
@@ -1345,7 +1565,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H4</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Передача управления удерживает</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">КАК ПРОВЕРЯЕМ</p>
@@ -1354,7 +1574,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H5</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">ЧАСТИЧНО</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">ЧАСТИЧНО</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">«Мышление» остаётся дешёвым во всех режимах</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">КАК ПРОВЕРЯЕМ</p>
@@ -1364,7 +1584,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H6</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">НЕ ПРОВЕРЕНО</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Платят за облик, а не за силу</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">КАК ПРОВЕРЯЕМ</p>
@@ -1376,8 +1596,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">TRAIN</span> <span class="dk-w" style="--i:1">HARD.</span> <span class="dk-w" style="--i:2">FIGHT</span> <span class="dk-w" style="--i:3" data-w="EASY.">EASY.</span></p></div></div>
 
 <section data-dk-in id="s09" data-screen-label="09 ЭКОНОМИКА ИГРОКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-n">09</span><span>ЭКОНОМИКА ИГРОКА</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Что продаётся, а что нет</h2>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">09</span><span>ЭКОНОМИКА ИГРОКА</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Что продаётся, а что нет</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">01</p>
@@ -1408,20 +1628,20 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s10" data-screen-label="10 ДОХОД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">10</span><span>ДОХОД</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">На чём зарабатывает студия</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">10</span><span>ДОХОД</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">На чём зарабатывает студия</span></h2>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">01</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Внешний вид за $HEX.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Скины, эффекты, оформление, облик легенды.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">02</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Рынок бойцов.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Комиссия <span class="dk-ph">[X%]</span> с каждой продажи бойца между игроками.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">03</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Партнёры.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Брендированные арены и скины для проектов экосистемы Base. Прецедент — интеграция с Clash of Coins (OWB Studio).</p>
@@ -1431,12 +1651,12 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s11" data-screen-label="11 ЮНИТ-ЭКОНОМИКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">11</span><span>ЮНИТ-ЭКОНОМИКА</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Сколько стоит один игрок</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">11</span><span>ЮНИТ-ЭКОНОМИКА</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Сколько стоит один игрок</span></h2>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:32px 0 0;max-width:34ch;text-wrap:balance">Расход на игрока в день = лимит думающих боёв × ≈$0,007</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,007</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ДУЭЛЬ</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -1456,8 +1676,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s12" data-screen-label="12 МАСШТАБ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">12</span><span>МАСШТАБ</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Сценарии масштаба</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">12</span><span>МАСШТАБ</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Сценарии масштаба</span></h2>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">DAU</p>
@@ -1491,8 +1711,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s13" data-screen-label="13 ТОКЕН" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">13</span><span>ТОКЕН</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">$HEX — токен внешнего вида</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">13</span><span>ТОКЕН</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">$HEX — токен внешнего вида</span></h2>
   <div style="margin-top:32px;display:grid;gap:0">
     <div style="border-top:1px solid rgba(255,255,255,0.09);padding:24px 0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr))">
       <h3 style="font:800 18px/1.2 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0">Силы не даёт.</h3>
@@ -1511,14 +1731,14 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s14" data-screen-label="14 РЫНОК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">14</span><span>РЫНОК</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Кто ещё растит ИИ-бойцов</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">14</span><span>РЫНОК</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Кто ещё растит ИИ-бойцов</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
-    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#A9A5AF;margin:0">AI Arena (ArenaX Labs)</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Ближайший аналог. Игрок обучает бойца, играя за него сам, — боец перенимает его действия. Раунд $6M в январе 2024 под руководством Framework Ventures; токен NRN.</p>
     </div>
-    <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px;border-left:2px solid #FF0069">
+    <div class="dk-card dk-hov" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px;border-left:2px solid #FF0069">
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0">HEXLASH</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Боец не копирует игрока — у него свой характер из ядра и кристаллов. И он вырастает в легенду, которая ведёт других вместо тебя.</p>
     </div>
@@ -1530,23 +1750,24 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">DON'T</span> <span class="dk-w" style="--i:1">COUNT</span> <span class="dk-w" style="--i:2">THE</span> <span class="dk-w" style="--i:3">DAYS.</span> <span class="dk-w" style="--i:4">MAKE</span> <span class="dk-w" style="--i:5">THE</span> <span class="dk-w" style="--i:6">DAYS</span> <span class="dk-w" style="--i:7" data-w="COUNT.">COUNT.</span></p></div></div>
 
 <section data-dk-in id="s15" data-screen-label="15 РОАДМАП" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">15</span><span>РОАДМАП</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Порядок работ</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">15</span><span>РОАДМАП</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Порядок работ</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Сроки — <span class="dk-ph">[СРОК]</span>. Это направления, а не обязательства.</p>
-  <div style="margin-top:32px;display:grid;gap:0">
-    <div style="border-left:2px solid rgba(255,255,255,0.16);padding:24px;background:#16161B">
+  <div class="dk-road" style="margin-top:32px;display:grid;gap:0">
+    <i class="dk-road-line" aria-hidden="true"></i>
+    <div class="dk-stg" style="border-left:2px solid rgba(255,255,255,0.16);padding:24px;background:#16161B">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">СЕЙЧАС</p>
       <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">баланс всех систем · прокачка и ресурсы · экономика LASH</p>
     </div>
-    <div style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-stg" style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ЭТАП 2</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">ЦЕПЬ, РЕЙД, ОБВАЛ, ОХОТА · модель у бойцов в отрядах · спарринг с настоящим боем · первые плейтесты (H1–H4)</p>
     </div>
-    <div style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-stg" style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ЭТАП 3 · ЗАПУСК</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">постоянные аккаунты · магазин $HEX · бойцы-NFT на Base · рынок бойцов · интеграция с Clash of Coins</p>
     </div>
-    <div style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-stg" style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">ЭТАП 4</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#5D5D66;margin:12px 0 0;text-wrap:pretty">миры и круг преимущества · кланы · сезоны и турниры</p>
     </div>
@@ -1556,30 +1777,30 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s16" data-screen-label="16 РИСКИ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">16</span><span>РИСКИ</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Что может пойти не так</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">16</span><span>РИСКИ</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Что может пойти не так</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">01</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Цена мышления.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Если лимит не окупается — уменьшаем лимит, а не продаём силу.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">02</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Удержание не доказано.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Гипотезы H1 и H4 ещё не проверены.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">03</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Правовой статус токена.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Юрлицо и заключение юриста по продаже $HEX — до закрытия раунда.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">04</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Маленькая команда.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Три со-основателя, burn <span class="dk-ph">[XX K]</span> в месяц.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">05</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Зависимость от внешней модели.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Мышление бойца завязано на внешнюю языковую модель; при сбое бой продолжается на быстром слое.</p>
@@ -1590,20 +1811,20 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">NEVER</span> <span class="dk-w" style="--i:1">GIVE</span> <span class="dk-w" style="--i:2" data-w="UP">UP</span></p></div></div>
 
 <section data-dk-in id="s17" data-screen-label="17 РАУНД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">17</span><span>РАУНД</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">PRIVATE ROUND</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV РАУНД ·</span><span class="dk-eyebrow-n">17</span><span>РАУНД</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">PRIVATE ROUND</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ангелы, фонды и комьюнити.</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div style="border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;padding:24px">
-      <p style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#FF0069;margin:0">$2 500 000</p>
+      <p data-fx="count" style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#FF0069;margin:0">$2 500 000</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">оценка проекта</p>
     </div>
     <div style="border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;padding:24px">
-      <p style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">$0,0025</p>
+      <p data-fx="count" style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">$0,0025</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">цена $HEX</p>
     </div>
     <div style="border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;padding:24px">
-      <p style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">1 000 000 000</p>
+      <p data-fx="count" style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">1 000 000 000</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">эмиссия $HEX</p>
     </div>
   </div>
@@ -1621,8 +1842,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="s18" data-screen-label="18 КОМАНДА" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">18</span><span>КОМАНДА</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Команда</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV РАУНД ·</span><span class="dk-eyebrow-n">18</span><span>КОМАНДА</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Команда</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div>
       <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
@@ -1653,28 +1874,28 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div data-layer="en" lang="en">
 
 <section data-dk-in id="e01" data-screen-label="01 PROBLEM" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">01</span><span>PROBLEM</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Why three out of four web3 games died</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">01</span><span>PROBLEM</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Why three out of four web3 games died</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The anatomy of play-to-earn: three structural defects, not a market cycle.</p>
   <div data-anim="frame" style="margin-top:32px;padding:32px 0;border-top:1px solid rgba(255,255,255,0.16);border-bottom:1px solid rgba(255,255,255,0.16);display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));align-items:end">
-    <div style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">75.5%</div>
+    <div data-fx="count" style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">75.5%</div>
     <div>
       <p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:0;text-wrap:pretty">of 2,817 web3 games launched in 2018–2023 went inactive</p>
       <p style="font:500 10px/1.5 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0;text-wrap:balance">COINGECKO&nbsp;· NOV 2023&nbsp;· INACTIVE&nbsp;=&nbsp;ACTIVITY DOWN 99%+ FROM&nbsp;PEAK</p>
     </div>
   </div>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
-      <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+      <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
         <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">01</span>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">The token was the only retention.</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Players came for yield. Yield falls, players leave. The game itself holds no one.</p>
       </div>
-      <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+      <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
         <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">02</span>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Emission outran demand.</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Rewards are printed faster than reasons to buy the token appear. The only sink is new players arriving.</p>
       </div>
-      <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+      <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
         <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">03</span>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Nobody wanted the game.</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Take the payouts away and DAU goes to zero. The product was a financial scheme with a game interface.</p>
@@ -1684,43 +1905,43 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e02" data-screen-label="02 MODEL" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">02</span><span>MODEL</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">They pay for looks, not for power</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">02</span><span>MODEL</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">They pay for looks, not for power</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Play-to-earn turned around: a fighter's power grows only with time; money buys only appearance.</p>
   <div style="margin-top:32px;display:grid;gap:1px;background:rgba(255,255,255,0.09)">
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">What the player pays for</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The right to farm a token</p></div>
-        <div data-anim="row" data-anim-i="0" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Appearance: skins, effects, the legend's look</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The right to farm a token</p></div>
+        <div data-anim="row" data-anim-i="0" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Appearance: skins, effects, the legend's look</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Where power comes from</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Bought</p></div>
-        <div data-anim="row" data-anim-i="1" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Only from time — yours or that of whoever raised the fighter</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Bought</p></div>
+        <div data-anim="row" data-anim-i="1" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Only from time — yours or that of whoever raised the fighter</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">What keeps players</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Token price</p></div>
-        <div data-anim="row" data-anim-i="2" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">The fighter you raised, and your legend</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Token price</p></div>
+        <div data-anim="row" data-anim-i="2" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">The fighter you raised, and your legend</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">If the token falls</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The game dies</p></div>
-        <div data-anim="row" data-anim-i="3" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Fights work as before — power doesn't depend on price</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The game dies</p></div>
+        <div data-anim="row" data-anim-i="3" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Fights work as before — power doesn't depend on price</p></div>
       </div>
     </div>
-    <div style="background:#08080A;padding:16px 0 8px">
+    <div data-fx="row" data-fx-step="150" style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Free player</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">A loss — he gets paid</p></div>
-        <div data-anim="row" data-anim-i="4" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Plays on equal terms: the daily limit of “thinking” fights is the same for everyone</p></div>
+        <div class="dk-card dk-t-old" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">A loss — he gets paid</p></div>
+        <div data-anim="row" data-anim-i="4" class="dk-card dk-t-new" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Plays on equal terms: the daily limit of “thinking” fights is the same for everyone</p></div>
       </div>
     </div>
   </div>
@@ -1728,8 +1949,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e03" data-screen-label="03 LADDER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">03</span><span>LADDER</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The delegation ladder</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">03</span><span>LADDER</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The delegation ladder</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The player gradually hands control to an AI they raised themselves.</p>
   <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
     <div data-anim="step" data-anim-i="0" data-glow="pink-select" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-right:clamp(0px,4vw,48px)">
@@ -1738,7 +1959,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">You raise fighters and build a lineup. In the fight the fighter acts on its own — you give calls and back it with buffs.</p>
     </div>
     <div data-anim="step" data-anim-i="1" data-glow="amber-hero" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-left:clamp(0px,4vw,48px)">
-      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">STEP 2</p>
+      <p class="dk-st2" style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">STEP 2</p>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">The legend decides</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Your best fighter goes through Ascension and becomes a legend. It no longer fights itself: it trains the roster while you're away and leads the squad in your place. You can take control back at any moment.</p>
     </div>
@@ -1746,7 +1967,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
   <div style="margin-top:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">CONTROL</span>
     <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">YOU</span>
-    <span style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="flex:1;height:2px;background:#FF0069"></i><i style="flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="flex:1;height:2px;background:#FFB21D"></i></span>
+    <span class="dk-bar" style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="--k:0;flex:1;height:2px;background:#FF0069"></i><i style="--k:1;flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="--k:2;flex:1;height:2px;background:#FFB21D"></i></span>
     <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">AI</span>
   </div>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">The top reward isn't an item. It's freedom: the game goes on without you.</p>
@@ -1759,9 +1980,9 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">EVERYONE</span> <span class="dk-w" style="--i:1">HAS</span> <span class="dk-w" style="--i:2">A</span> <span class="dk-w" style="--i:3">PLAN</span> <span class="dk-w" style="--i:4">UNTIL</span> <span class="dk-w" style="--i:5">THEY</span> <span class="dk-w" style="--i:6">GET</span> <span class="dk-w" style="--i:7" data-w="PUNCHED">PUNCHED</span></p></div></div>
 
 <section data-dk-in id="e04" data-screen-label="04 LIVE FIGHT" style="padding:48px 0;max-width:100%;margin:0 auto">
-  <div style="padding:0 16px;max-width:1180px;margin:0 auto">
-    <div class="dk-eyebrow"><span class="dk-eyebrow-n">04</span><span>LIVE FIGHT</span></div>
-    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The fighter fights on its own</h2>
+  <div class="dk-pass" style="padding:0 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">04</span><span>LIVE FIGHT</span></div>
+    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The fighter fights on its own</span></h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No punch button, no block. This is a real fight from the game — not a video, not a simulation.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ARENA · LIVE FIGHT · <span data-arena-state="1">IDLE</span></p>
@@ -1791,8 +2012,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e05" data-screen-label="05 BARRIER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">05</span><span>BARRIER</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The hard part isn't the idea — it's holding the price</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">05</span><span>BARRIER</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The hard part isn't the idea — it's holding the price</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Every fight costs money. We say so first.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px;background:#0D0A0D">
@@ -1806,17 +2027,23 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Joins only at turning points and answers with a decision and a line. Today — for the fighter in a duel and for the legend.</p>
     </div>
   </div>
+  <figure class="dk-fl" data-fx="fl" style="margin:32px 0 0">
+    <div class="dk-fl-ax"><span>0 S</span><span>≈ 60 S</span></div>
+    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i class="m" style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i class="m" style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i class="m" style="--k:51"></i><i style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
+    <p class="dk-fl-lg"><span class="s1">FAST LAYER · ≈ 1 DECISION PER SECOND</span><span class="s2">LANGUAGE MODEL · TURNING POINTS ONLY</span></p>
+    <figcaption class="dk-fl-cap">ONE FIGHT, SCHEMATIC · NUMBER AND PLACE OF TURNING POINTS ARE ILLUSTRATIVE</figcaption>
+  </figure>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.007</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ONE DUEL</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$7</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$7</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">A THOUSAND DUELS</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">+≈$0.003</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">+≈$0.003</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">LEGEND IN A FIGHT IT LEADS</p>
     </div>
   </div>
@@ -1832,26 +2059,26 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e06" data-screen-label="06 WORLDS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-n">06</span><span>WORLDS</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Fighters from different worlds</h2>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">06</span><span>WORLDS</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Fighters from different worlds</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Every fighter has an origin — the world it came from.</p>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px">
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">01</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Look.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Collections and crossovers.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">02</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Belonging.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">World factions and a seasonal ranking of worlds.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">03</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Shared trait.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">How the fighter's body responds to strain.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">04</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Place in the circle.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Each world beats one and is vulnerable to another; none is strongest.</p>
@@ -1863,24 +2090,24 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">FALL</span> <span class="dk-w" style="--i:1">SEVEN</span> <span class="dk-w" style="--i:2">TIMES.</span> <span class="dk-w" style="--i:3">STAND</span> <span class="dk-w" style="--i:4">UP</span> <span class="dk-w" style="--i:5" data-w="EIGHT.">EIGHT.</span></p></div></div>
 
 <section data-dk-in id="e07" data-screen-label="07 STATUS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">07</span><span>STATUS</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Where we are</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">07</span><span>STATUS</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Where we are</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No outside capital. Status as of 02.10.2026.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-    <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
+    <div class="dk-card" data-fx="work" data-fx-n="8" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">WORKING</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Roster and training hall</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Four cores, three branches, fifteen crystals</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Two arena modes: DUEL and SQUAD</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Language model for the fighter in a duel</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Calls and buffs with cooldown</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Ascension and the legend</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">The legend leads the squad, consults the model and speaks</li>
-        <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Sparring: building an opponent</li>
+        <li class="dk-mk" style="--k:0;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Roster and training hall</li>
+        <li class="dk-mk" style="--k:1;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Four cores, three branches, fifteen crystals</li>
+        <li class="dk-mk" style="--k:2;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Two arena modes: DUEL and SQUAD</li>
+        <li class="dk-mk" style="--k:3;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Language model for the fighter in a duel</li>
+        <li class="dk-mk" style="--k:4;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Calls and buffs with cooldown</li>
+        <li class="dk-mk" style="--k:5;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Ascension and the legend</li>
+        <li class="dk-mk" style="--k:6;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">The legend leads the squad, consults the model and speaks</li>
+        <li class="dk-mk" style="--k:7;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Sparring: building an opponent</li>
       </ul>
     </div>
-    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" data-fx="dev" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">IN DEVELOPMENT</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
         <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Four modes: CHAIN, RAID, COLLAPSE, HUNT</li>
@@ -1907,14 +2134,14 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e08" data-screen-label="08 HYPOTHESES" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">08</span><span>HYPOTHESES</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">What we still have to prove</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">08</span><span>HYPOTHESES</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What we still have to prove</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Exact success thresholds are set before each test begins.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H1</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Watching a fight you don't strike in is engaging</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">HOW WE TEST</p>
@@ -1923,7 +2150,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H2</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">A fighter's character reads by eye, without numbers</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">HOW WE TEST</p>
@@ -1932,7 +2159,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H3</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">PARTLY</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">PARTLY</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">The player's calls feel like influence</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">HOW WE TEST</p>
@@ -1942,7 +2169,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H4</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Handing over control retains players</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">HOW WE TEST</p>
@@ -1951,7 +2178,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H5</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">PARTLY</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0">PARTLY</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">“Thinking” stays cheap in every mode</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">HOW WE TEST</p>
@@ -1961,7 +2188,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">H6</p>
-        <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
+        <p class="dk-stamp" data-fx="stamp" data-fx-g="h" data-fx-step="140" style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0">NOT TESTED</p>
       </div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">People pay for looks, not power</h3>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">HOW WE TEST</p>
@@ -1973,8 +2200,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">TRAIN</span> <span class="dk-w" style="--i:1">HARD.</span> <span class="dk-w" style="--i:2">FIGHT</span> <span class="dk-w" style="--i:3" data-w="EASY.">EASY.</span></p></div></div>
 
 <section data-dk-in id="e09" data-screen-label="09 PLAYER ECONOMY" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-n">09</span><span>PLAYER ECONOMY</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">What's for sale and what isn't</h2>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">09</span><span>PLAYER ECONOMY</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What's for sale and what isn't</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">01</p>
@@ -2005,20 +2232,20 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e10" data-screen-label="10 REVENUE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">10</span><span>REVENUE</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">How the studio earns</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">10</span><span>REVENUE</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">How the studio earns</span></h2>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">01</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Appearance for $HEX.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Skins, effects, decor, the legend's look.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">02</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Fighter market.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">A <span class="dk-ph">[X%]</span> fee on every fighter sale between players.</p>
     </div>
-    <div style="background:#08080A;padding:24px">
+    <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">03</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Partners.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Branded arenas and skins for Base ecosystem projects. Precedent: the Clash of Coins integration (OWB Studio).</p>
@@ -2028,12 +2255,12 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e11" data-screen-label="11 UNIT ECONOMICS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">11</span><span>UNIT ECONOMICS</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">What one player costs</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">11</span><span>UNIT ECONOMICS</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What one player costs</span></h2>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:32px 0 0;max-width:34ch;text-wrap:balance">Cost per player per day = thinking-fight limit × ≈$0.007</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.007</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">DUEL</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -2053,8 +2280,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e12" data-screen-label="12 SCALE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">12</span><span>SCALE</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Scale scenarios</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">12</span><span>SCALE</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Scale scenarios</span></h2>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">DAU</p>
@@ -2088,8 +2315,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e13" data-screen-label="13 TOKEN" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">13</span><span>TOKEN</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">$HEX — a token for appearance</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">13</span><span>TOKEN</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">$HEX — a token for appearance</span></h2>
   <div style="margin-top:32px;display:grid;gap:0">
     <div style="border-top:1px solid rgba(255,255,255,0.09);padding:24px 0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr))">
       <h3 style="font:800 18px/1.2 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0">Gives no power.</h3>
@@ -2108,14 +2335,14 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e14" data-screen-label="14 MARKET" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">14</span><span>MARKET</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Who else raises AI fighters</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">14</span><span>MARKET</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Who else raises AI fighters</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
-    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#A9A5AF;margin:0">AI Arena (ArenaX Labs)</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">The closest analogue. The player trains a fighter by playing it themselves — the fighter imitates their actions. $6M round in January 2024 led by Framework Ventures; NRN token.</p>
     </div>
-    <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px;border-left:2px solid #FF0069">
+    <div class="dk-card dk-hov" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px;border-left:2px solid #FF0069">
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0">HEXLASH</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The fighter doesn't copy the player — it has its own character from its core and crystals. And it grows into a legend that leads others in your place.</p>
     </div>
@@ -2127,23 +2354,24 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">DON'T</span> <span class="dk-w" style="--i:1">COUNT</span> <span class="dk-w" style="--i:2">THE</span> <span class="dk-w" style="--i:3">DAYS.</span> <span class="dk-w" style="--i:4">MAKE</span> <span class="dk-w" style="--i:5">THE</span> <span class="dk-w" style="--i:6">DAYS</span> <span class="dk-w" style="--i:7" data-w="COUNT.">COUNT.</span></p></div></div>
 
 <section data-dk-in id="e15" data-screen-label="15 ROADMAP" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">15</span><span>ROADMAP</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Order of work</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">15</span><span>ROADMAP</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Order of work</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Timing — <span class="dk-ph">[TBD]</span>. These are directions, not commitments.</p>
-  <div style="margin-top:32px;display:grid;gap:0">
-    <div style="border-left:2px solid rgba(255,255,255,0.16);padding:24px;background:#16161B">
+  <div class="dk-road" style="margin-top:32px;display:grid;gap:0">
+    <i class="dk-road-line" aria-hidden="true"></i>
+    <div class="dk-stg" style="border-left:2px solid rgba(255,255,255,0.16);padding:24px;background:#16161B">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">NOW</p>
       <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">balance of all systems · progression and resources · LASH economy</p>
     </div>
-    <div style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-stg" style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">PHASE 2</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">CHAIN, RAID, COLLAPSE, HUNT · model for squad fighters · sparring with a real fight · first playtests (H1–H4)</p>
     </div>
-    <div style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-stg" style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">PHASE 3 · LAUNCH</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">persistent accounts · $HEX shop · fighter NFTs on Base · fighter market · Clash of Coins integration</p>
     </div>
-    <div style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-stg" style="border-left:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">PHASE 4</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#5D5D66;margin:12px 0 0;text-wrap:pretty">worlds and the circle of advantage · clans · seasons and tournaments</p>
     </div>
@@ -2153,30 +2381,30 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e16" data-screen-label="16 RISKS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">16</span><span>RISKS</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">What can go wrong</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">16</span><span>RISKS</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What can go wrong</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">01</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">The cost of thinking.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">If the limit doesn't pay off we cut the limit — we don't sell power.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">02</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Retention is unproven.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">H1 and H4 are not yet tested.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">03</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">The token's legal status.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">A legal entity and a lawyer's opinion on selling $HEX — before the round closes.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">04</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">A small team.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Three co-founders, burn <span class="dk-ph">[XX K]</span> per month.</p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
+    <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
       <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">05</span>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Dependence on an external model.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">The fighter's thinking relies on an external language model; on failure the fight continues on the fast layer.</p>
@@ -2187,20 +2415,20 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">NEVER</span> <span class="dk-w" style="--i:1">GIVE</span> <span class="dk-w" style="--i:2" data-w="UP">UP</span></p></div></div>
 
 <section data-dk-in id="e17" data-screen-label="17 ROUND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">17</span><span>ROUND</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">PRIVATE ROUND</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV ROUND ·</span><span class="dk-eyebrow-n">17</span><span>ROUND</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">PRIVATE ROUND</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Angels, funds and community.</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div style="border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;padding:24px">
-      <p style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#FF0069;margin:0">$2,500,000</p>
+      <p data-fx="count" style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#FF0069;margin:0">$2,500,000</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">project valuation</p>
     </div>
     <div style="border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;padding:24px">
-      <p style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">$0.0025</p>
+      <p data-fx="count" style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">$0.0025</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">$HEX price</p>
     </div>
     <div style="border:1px solid rgba(255,255,255,0.09);background:#0D0A0D;padding:24px">
-      <p style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">1,000,000,000</p>
+      <p data-fx="count" style="font:700 clamp(18px,2.6vw,28px)/1.05 'JetBrains Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:#F6F4F6;margin:0">1,000,000,000</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">$HEX supply</p>
     </div>
   </div>
@@ -2218,8 +2446,8 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 </section>
 
 <section data-dk-in id="e18" data-screen-label="18 TEAM" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-n">18</span><span>TEAM</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Team</h2>
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV ROUND ·</span><span class="dk-eyebrow-n">18</span><span>TEAM</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Team</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
       <div>
         <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
@@ -2335,6 +2563,9 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
     }
     lang = l;
     stopArena();
+    /* Сообщить второму сценарию (шкала, движение): слой сменился. Раньше свода —
+       сыгранное в другом слое он успеет поставить готовым, и свод его не запустит. */
+    document.dispatchEvent(new CustomEvent('dk-lang', { detail: l }));
     /* Слой, который до этого стоял скрытым, наблюдатель не видел — открыть
        вручную то, что уже в кадре. Проверка на функцию нужна потому, что
        первый вызов setLang случается раньше, чем заводится свод. */
@@ -2387,7 +2618,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
       } else if (t === 'frame') {
         setTimeout(function () { el.style.transition = 'border-color 800ms cubic-bezier(.2,.8,.2,1)'; el.style.borderTopColor = 'rgba(255,255,255,0.16)'; el.style.borderBottomColor = 'rgba(255,255,255,0.16)'; }, d);
       } else if (t === 'row') {
-        setTimeout(function () { el.style.transition = 'border-color 150ms cubic-bezier(.2,.8,.2,1)'; el.style.borderLeftColor = '#FF0069'; }, d);
+        setTimeout(function () { el.style.transition = 'border-color 150ms cubic-bezier(.2,.8,.2,1)'; el.style.borderLeftColor = '#FF0069'; }, reduce ? 0 : i * 150);
       } else if (t === 'step' || t === 'glow') {
         setTimeout(function () {
           el.style.transition = 'box-shadow 800ms cubic-bezier(.2,.8,.2,1),border-color 800ms cubic-bezier(.2,.8,.2,1)';
@@ -2689,6 +2920,304 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
       if (scope) start(scope);
     });
   });
+})();
+</script>
+<script>
+/* ===========================================================================
+   ГЛАВЫ, ШКАЛА ПРОГРЕССА И ДВИЖЕНИЕ КОНТЕНТА (02.10.2026, TZ_deckinvestors_motion_v1)
+   Стили и объяснение — блок «ГЛАВЫ, ШКАЛА ПРОГРЕССА…» в <style> наверху файла.
+
+   Что здесь:
+     1. шкала прогресса (вертикальная на компьютере, полоса на телефоне) и
+        подсветка текущей главы в шапке — по тому разделу, что пересекает середину
+        экрана; на паузе остаётся предыдущий раздел;
+     2. привязанное к прокрутке: лестница (раздел 03) и линия роадмапа (раздел 15) —
+        одна переменная --p, не чаще раза за кадр, только пока блок рядом с экраном;
+     3. «один раз при появлении»: таблица, схема боя, отметки, штампы, цифры;
+     4. смена языка: сыгранное в одном слое не играется заново в другом.
+
+   ⚠️ Скрытое состояние заводит ТОЛЬКО признак html.dk-anim (его вешает основной
+   сценарий выше). Нет признака (без сценария, без наблюдателя, «уменьшить движение»)
+   — анимации не создаются, всё стоит в конечном виде. Шкала и подсветка главы — это
+   навигация, а не движение, они работают и при уменьшенном движении (без переходов).
+
+   ⚠️ Цвета ядер здесь НЕ дублируются: значения читаются из таблицы .dk-wave[data-core]
+   (её пишет sync-core-figure.mjs) через скрытые пробные узлы. */
+(function () {
+  var root = document.documentElement;
+  var anim = root.classList.contains('dk-anim');
+  var main = document.querySelector('main');
+  if (!main) return;
+
+  var CH_FIRST = [1, 9, 14, 17];            // первый раздел каждой главы
+  function chapterOf(n) { return n >= 17 ? 3 : n >= 14 ? 2 : n >= 9 ? 1 : 0; }
+  var CYCLE = window.DK_CORE_CYCLE || ['pink'];
+
+  /* --- цвета ядер из общей таблицы ------------------------------------- */
+  var rgb = {};
+  CYCLE.forEach(function (name) {
+    if (rgb[name]) return;
+    var p = document.createElement('div');
+    p.className = 'dk-wave'; p.setAttribute('data-core', name); p.style.display = 'none';
+    document.body.appendChild(p);
+    rgb[name] = getComputedStyle(p).color;
+    document.body.removeChild(p);
+  });
+  function coreColor(sectionIndex) {          // 0-based; первый экран — ноль, раздел 01 — первый
+    return rgb[CYCLE[(sectionIndex + 1) % CYCLE.length]];
+  }
+
+  /* --- открытый языковой слой ----------------------------------------- */
+  function layerEl() { return main.querySelector(':scope > [data-layer]:not(.off)'); }
+  var layer = null, secs = [], tops = [], cur = -2;
+  var scaleEl = document.createElement('nav');
+  var stripEl = document.createElement('div');
+  scaleEl.className = 'dk-scale'; stripEl.className = 'dk-strip'; stripEl.setAttribute('aria-hidden', 'true');
+  var barEl = document.querySelector('[data-progress]');
+  if (barEl && barEl.parentNode) barEl.parentNode.classList.add('dk-prog');
+  document.body.appendChild(scaleEl);
+  document.body.appendChild(stripEl);
+
+  function build() {
+    layer = layerEl();
+    secs = layer ? [].slice.call(layer.querySelectorAll(':scope > section')) : [];
+    var ru = layer && layer.getAttribute('data-layer') === 'ru';
+    scaleEl.setAttribute('aria-label', ru ? 'Шкала разделов' : 'Section scale');
+    scaleEl.textContent = ''; stripEl.textContent = '';
+    secs.forEach(function (s, i) {
+      var n = i + 1;
+      var label = (s.getAttribute('data-screen-label') || '').replace(' ', ' · ');
+      var a = document.createElement('a');
+      a.className = 'dk-tk' + (CH_FIRST.indexOf(n) > 0 ? ' dk-gap' : '');
+      a.href = '#' + s.id; a.setAttribute('data-label', label); a.setAttribute('aria-label', label);
+      a.style.setProperty('--tk', coreColor(i));
+      a.appendChild(document.createElement('i'));
+      scaleEl.appendChild(a);
+      var seg = document.createElement('i');
+      seg.className = CH_FIRST.indexOf(n) > 0 ? 'dk-gap' : '';
+      seg.style.setProperty('--tk', coreColor(i));
+      stripEl.appendChild(seg);
+    });
+    cur = -2; measure(); paint();
+  }
+
+  /* --- кэш положений: на кадре прокрутки раскладка не читается -------------- */
+  var ladder = null, ladderTop = 0, road = null, roadTop = 0, roadH = 1, roadFr = [], stages = [], st2 = null;
+  function pageTop(el) { return el.getBoundingClientRect().top + window.scrollY; }
+  function measure() {
+    tops = secs.map(pageTop);
+    ladder = layer && layer.querySelector('.dk-bar');
+    st2 = layer && layer.querySelector('.dk-st2');
+    road = layer && layer.querySelector('.dk-road');
+    stages = road ? [].slice.call(road.querySelectorAll('.dk-stg')) : [];
+    ladderTop = ladder ? pageTop(ladder) : 0;
+    if (road) {
+      roadTop = pageTop(road); roadH = Math.max(1, road.offsetHeight);
+      roadFr = stages.map(function (s) { return s.offsetTop / roadH; });
+    }
+    schedule();
+  }
+
+  /* --- подсветка шкалы и главы --------------------------------------------- */
+  var navLinks = [].slice.call(document.querySelectorAll('header nav[data-layer] a.navlink'));
+  function paint() {
+    var ticks = scaleEl.children, segs = stripEl.children;
+    for (var i = 0; i < ticks.length; i++) {
+      var c = i < cur ? 'is-pass' : i === cur ? 'is-cur' : '';
+      var base = ticks[i].classList.contains('dk-gap') ? 'dk-tk dk-gap' : 'dk-tk';
+      ticks[i].className = c ? base + ' ' + c : base;
+      var sb = segs[i].classList.contains('dk-gap') ? 'dk-gap' : '';
+      segs[i].className = c ? (sb ? sb + ' ' + c : c) : sb;
+      if (i === cur) ticks[i].setAttribute('aria-current', 'location'); else ticks[i].removeAttribute('aria-current');
+    }
+    var ch = cur >= 0 ? chapterOf(cur + 1) : -1;
+    navLinks.forEach(function (a) {
+      var on = Number(a.getAttribute('data-ch')) === ch;
+      a.classList.toggle('is-cur', on);
+      if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+  }
+
+  /* --- кадр прокрутки ---------------------------------------------------- */
+  var queued = false, flashed = false, lastLad = -1, lastRoad = -1;
+  function schedule() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
+  function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function frame() {
+    queued = false;
+    var y = window.scrollY, vh = window.innerHeight, mid = y + vh * 0.5, idx = -1;
+    for (var i = 0; i < tops.length; i++) { if (tops[i] <= mid) idx = i; else break; }
+    if (idx !== cur) { cur = idx; paint(); }
+    if (!anim) return;
+    if (ladder && ladderTop > y - vh && ladderTop < y + vh * 2) {
+      var p = clamp((y + vh * 0.9 - ladderTop) / (vh * 0.5));
+      p = Math.round(p * 1000) / 1000;
+      if (p !== lastLad) { lastLad = p; ladder.style.setProperty('--p', p); }
+      /* Золотая вспышка номера ступени 2 — когда полоса дошла до последнего
+         сегмента. Один раз за заход; в скрытом слое не заводится. */
+      if (p >= 0.667 && !flashed && st2) {
+        flashed = true;
+        if (ladderTop > y && ladderTop < y + vh) {
+          st2.classList.add('dk-flash');
+          st2.addEventListener('animationend', function () { st2.classList.remove('dk-flash'); }, { once: true });
+        }
+      }
+    }
+    if (road && roadTop > y - vh - roadH && roadTop < y + vh * 2) {
+      var q = clamp((y + vh * 0.72 - roadTop) / roadH);
+      q = Math.round(q * 1000) / 1000;
+      if (q !== lastRoad) {
+        lastRoad = q; road.style.setProperty('--p', q);
+        stages.forEach(function (s, k) {
+          s.classList.toggle('is-lit', k === 0 ? q > 0.005 : q >= roadFr[k] + 0.02);
+        });
+      }
+    }
+  }
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', function () { measure(); });
+  if (window.ResizeObserver) new ResizeObserver(function () { measure(); }).observe(main);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  window.addEventListener('load', measure);
+
+  /* --- «один раз при появлении» ------------------------------------------- */
+  var played = {};
+  var fxEls = [].slice.call(document.querySelectorAll('[data-fx]'));
+  function fxKey(el) {
+    var sec = el.closest('section');
+    var id = sec && sec.id ? sec.id.replace(/^[se]/, '') : 'x';
+    var type = el.getAttribute('data-fx');
+    var peers = sec ? [].slice.call(sec.querySelectorAll('[data-fx="' + type + '"]')) : [el];
+    return id + ':' + type + ':' + peers.indexOf(el);
+  }
+  var workEnd = 0;
+
+  /* Число набегает от нуля до значения. Формат на каждом шаге — как в конечном
+     виде (группы разрядов, запятая в RU / точка в EN, знаки ≈ и $ с первого кадра).
+     В разметке лежит итог; по окончании он возвращается строкой как был. */
+  function parseNum(txt, ru) {
+    var m = txt.match(/^([^0-9]*)([0-9][0-9   ,.]*[0-9])(.*)$/);
+    if (!m) return null;
+    var body = m[2], dec = ru ? ',' : '.', grp = ru ? /[   ]/ : /,/;
+    var di = body.lastIndexOf(dec), decimals = 0, intPart = body;
+    if (di >= 0) { decimals = body.length - di - 1; intPart = body.slice(0, di); }
+    var gm = intPart.match(ru ? /[   ]/ : /,/);
+    var digits = intPart.replace(new RegExp(grp.source, 'g'), '') + (decimals ? '.' + body.slice(di + 1) : '');
+    return { pre: m[1], suf: m[3], value: parseFloat(digits), decimals: decimals, grp: gm ? gm[0] : '', dec: dec };
+  }
+  function fmtNum(p, v) {
+    var s = v.toFixed(p.decimals), parts = s.split('.'), ip = parts[0];
+    if (p.grp) ip = ip.replace(/\B(?=(\d{3})+(?!\d))/g, p.grp);
+    return p.pre + ip + (p.decimals ? p.dec + parts[1] : '') + p.suf;
+  }
+  function runCount(el, delay) {
+    var orig = el.textContent;
+    var layerRu = el.closest('[data-layer]');
+    var p = parseNum(orig, layerRu && layerRu.getAttribute('data-layer') === 'ru');
+    if (!p || !isFinite(p.value)) return;
+    var DUR = 900, t0 = null;
+    function step(t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0) / DUR), e = 1 - Math.pow(1 - k, 3);
+      if (k >= 1) { el.textContent = orig; return; }
+      el.textContent = fmtNum(p, p.value * e);
+      requestAnimationFrame(step);
+    }
+    setTimeout(function () { el.textContent = fmtNum(p, 0); requestAnimationFrame(step); }, delay);
+  }
+
+  function play(el, counters) {
+    var key = fxKey(el), type = el.getAttribute('data-fx');
+    if (played[key]) { el.classList.add('fx-on', 'fx-skip'); return; }
+    played[key] = 1;
+    var sec = el.closest('section'), g = (sec ? sec.id : '') + ':' + (el.getAttribute('data-fx-g') || type);
+    var i = counters[g] || 0; counters[g] = i + 1;
+    var step = Number(el.getAttribute('data-fx-step')) || 120, delay = i * step;
+    if (type === 'work') workEnd = performance.now() + Number(el.getAttribute('data-fx-n') || 0) * 120 + 400;
+    if (type === 'dev') delay = Math.max(0, workEnd - performance.now());
+    if (type === 'count') { runCount(el, 0); el.classList.add('fx-on'); return; }
+    el.style.setProperty('--d', delay + 'ms');
+    el.classList.add('fx-on');
+    settle(el);
+  }
+
+  /* Доигравшие анимации с «залипшим» конечным кадром держат слои композитинга и
+     числятся запущенными. Конечный кадр каждой совпадает с обычными правилами
+     (скачка нет), поэтому по окончании блок переходит в .fx-skip — анимации сняты,
+     вид тот же. Нет getAnimations — срок с запасом. */
+  function settle(el) {
+    if (el.classList.contains('fx-skip')) return;
+    var done = function () { el.classList.add('fx-skip'); };
+    if (el.getAnimations) {
+      var all = el.getAnimations({ subtree: true });
+      if (!all.length) return;
+      Promise.all(all.map(function (a) { return a.finished; })).then(done, function () {});
+    } else {
+      setTimeout(done, 5000);
+    }
+  }
+
+  var fio = null;
+  if (anim && window.IntersectionObserver) {
+    fio = new IntersectionObserver(function (es) {
+      var vis = es.filter(function (e) { return e.isIntersecting; }).map(function (e) { return e.target; });
+      vis.sort(function (a, b) { return a.compareDocumentPosition(b) & 4 ? -1 : 1; });
+      var counters = {};
+      vis.forEach(function (el) { fio.unobserve(el); play(el, counters); });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0 });
+    fxEls.forEach(function (el) { fio.observe(el); });
+  }
+
+  /* Слой, который стоял скрытым, наблюдатель не видел — после смены языка то, что
+     уже играло в другом слое, ставится готовым, а то, что в кадре и ещё не играло,
+     запускается вручную. */
+  function afterLang() {
+    if (!fio) return;
+    var counters = {};
+    fxEls.forEach(function (el) {
+      if (el.classList.contains('fx-on')) return;
+      if (played[fxKey(el)]) { fio.unobserve(el); el.classList.add('fx-on', 'fx-skip'); }
+    });
+    fxEls.forEach(function (el) {
+      if (el.classList.contains('fx-on') || !el.getClientRects().length) return;
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.9 && r.bottom > 0) { fio.unobserve(el); play(el, counters); }
+    });
+  }
+
+  /* Появление блоков и пауз (основной сценарий): уже показанное в другом слое
+     ставится готовым без перехода. Паузы сверяются по порядковому номеру. */
+  function seenSync() {
+    if (!anim) return;
+    var layers = [].slice.call(main.querySelectorAll(':scope > [data-layer]'));
+    function blocksOf(l) { return [].slice.call(l.querySelectorAll('section[data-dk-in]')); }
+    function pausesOf(l) { return [].slice.call(l.querySelectorAll('.dk-pause > [data-dk-in]')); }
+    layers.forEach(function (a) {
+      layers.forEach(function (b) {
+        if (a === b) return;
+        var ba = blocksOf(a), bb = blocksOf(b);
+        ba.forEach(function (el, i) {
+          if (bb[i] && bb[i].classList.contains('dk-in') && !el.classList.contains('dk-in')) el.classList.add('dk-in', 'dk-nt');
+        });
+        var pa = pausesOf(a), pb = pausesOf(b);
+        pa.forEach(function (el, i) {
+          if (pb[i] && pb[i].classList.contains('dk-in') && !el.classList.contains('dk-in')) el.classList.add('dk-in', 'dk-done', 'dk-nt');
+        });
+      });
+    });
+  }
+
+  document.addEventListener('transitionend', function (e) {
+    if (e.propertyName === 'transform' && e.target.classList && e.target.classList.contains('dk-hm')) {
+      e.target.parentNode.classList.add('dk-hd');
+    }
+  });
+
+  document.addEventListener('dk-lang', function () {
+    seenSync();
+    build();
+    afterLang();
+  });
+  build();
 })();
 </script>
 
