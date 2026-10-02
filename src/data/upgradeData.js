@@ -298,8 +298,9 @@ export const CRYSTALS = {
     mkBranch('a', 'TRAP', [
       // Bites back harder on the foe's attack — more punishing counter.
       { name: 'Hard Counter', shifts: [s('counter', 6)], conditionals: ['hard_counter'] },
-      // Off the line, a counter — a slipped hit arms the riposte (dodge-counter, a small +3%).
-      { name: 'Slip Counter', shifts: [s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)], conditionals: ['slip_counter'] },
+      // Off the line, a counter — a slipped hit arms the riposte (dodge-counter +30%, заход 6: обещание карточки «stronger counter» теперь читается;
+      // увод slip +4 → +1 — компенсация внутри кристалла, чтобы одиночка остался в Ц3 ≤ +12).
+      { name: 'Slip Counter', shifts: [s('slip', 1)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)], conditionals: ['slip_counter'] },
       // The harder the foe presses, the harder the answer (punish_aggression —
       // counter-ramp by foe aggression; conditional, approximated by counter).
       { name: 'Punish Aggression', shifts: [s('counter', 5)], conditionals: ['punish_aggression'] },

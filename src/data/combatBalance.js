@@ -1035,7 +1035,7 @@ export const COMBAT_BALANCE = {
   //                   (mirror of ВОЛНОЛОМ's blockCounter — same window, dodge trigger).
   //   miss-counter  — КАПКАН-4: the foe's whiff arms the riposte (activates onMiss).
   //   charge        — ЖАЛО: power (Loaded / Execution), ceiling (Long Charge), pierce.
-  trapDodgeCounter: 0.03, // КАПКАН-2 «уход + контр» — +3% dmg on the strike after a dodge (было +50%; урезано этапом В)
+  trapDodgeCounter: 0.30, // КАПКАН-2 «уход + контр» (Slip Counter, «a slipped blow arms a stronger counter») — +30% dmg on the strike after a dodge (было +3%: обещание не читалось; заход 6, группа 1). Компенсация внутри кристалла — увод slip +4 → +1 (upgradeData.js); вершина Perfect Trap выше: trapPerfectDodge
   trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +40% dmg after the foe whiffs (было +50%)
   trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-dodge riposte (было +100%)
   trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-whiff riposte (было +100%)
