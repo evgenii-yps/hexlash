@@ -80,14 +80,61 @@ function apply() {
   if (!el) return;
   if (shouldPlay()) {
     const p = el.play();
-    // Автозапуск запрещён (энергосбережение) — остаётся заставка, это норма.
-    if (p && p.catch) p.catch(() => {});
+    // Автозапуск запрещён (энергосбережение iPhone) — остаётся спокойная
+    // заставка, а запуск повторяется при первом касании, прокрутке или повороте
+    // (см. armRetry). Без кнопок и подсказок.
+    if (p && p.catch) p.catch(() => { if (el === boundEl) armRetry(); });
   } else {
     el.pause();
   }
 }
 
+/* Повтор запуска, пока самозапуск запрещён. Слушатели висят на окне и снимаются,
+   как только видео реально пошло (событие playing) или элемент ушёл.
+   Касание/клик — это те жесты, которые iOS засчитывает как разрешение; прокрутка
+   и поворот просто повторяют попытку (где запрет снят — она сработает). Частые
+   события (прокрутка, размер) пропускаем не чаще раза за RETRY_GAP_MS. */
+const RETRY_GAP_MS = 300;
+const GESTURES = ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'click'];
+const SOFT = ['scroll', 'resize', 'orientationchange'];
+let armed = false;
+let lastSoft = 0;
+
+function onGesture() { apply(); }
+function onSoft() {
+  const now = performance.now();
+  if (now - lastSoft < RETRY_GAP_MS) return;
+  lastSoft = now;
+  apply();
+}
+
+function armRetry() {
+  if (armed) return;
+  armed = true;
+  const opt = { passive: true, capture: true };
+  GESTURES.forEach((n) => window.addEventListener(n, onGesture, opt));
+  SOFT.forEach((n) => window.addEventListener(n, onSoft, opt));
+}
+
+function disarmRetry() {
+  if (!armed) return;
+  armed = false;
+  const opt = { capture: true };
+  GESTURES.forEach((n) => window.removeEventListener(n, onGesture, opt));
+  SOFT.forEach((n) => window.removeEventListener(n, onSoft, opt));
+}
+
+/* Видео реально играет — повторять больше нечего. */
+function onPlaying() { disarmRetry(); }
+
+/* Система остановила видео сама (энергосбережение включили на ходу) — как и
+   запрет самозапуска: ждём касания. Свои паузы (вне кадра, трейлер) не в счёт. */
+function onPaused() { if (shouldPlay() && boundEl && boundEl.paused) armRetry(); }
+
 function onFrame(t) {
+  // Кадр стоящего видео (запуск запрещён) не показываем и в эффекты не берём:
+  // до настоящего запуска остаётся заставка, а знак и слово лежат в покое.
+  if (boundEl && boundEl.paused) return;
   if (!ready.value) ready.value = true;
   emit('frame', t);
 }
@@ -107,7 +154,10 @@ function unbind() {
     if (rvfcId && boundEl.cancelVideoFrameCallback) boundEl.cancelVideoFrameCallback(rvfcId);
     boundEl.removeEventListener('playing', startRaf);
     boundEl.removeEventListener('pause', stopRaf);
+    boundEl.removeEventListener('playing', onPlaying);
+    boundEl.removeEventListener('pause', onPaused);
   }
+  disarmRetry();
   stopRaf();
   rvfcId = 0;
   boundEl = null;
@@ -119,10 +169,15 @@ function unbind() {
 function bind(el) {
   unbind();
   ready.value = false;
-  if (!el) { emit('reset'); return; }
+  // Новый (или пропавший) элемент — эффекты прежнего снимаем: без видео знак и
+  // удар слова не играют.
+  emit('reset');
+  if (!el) return;
   boundEl = el;
   el.muted = true;
   el.defaultMuted = true;
+  el.addEventListener('playing', onPlaying);
+  el.addEventListener('pause', onPaused);
   if ('requestVideoFrameCallback' in el) {
     const cb = (_now, meta) => {
       onFrame(meta.mediaTime);
