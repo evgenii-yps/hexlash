@@ -35,18 +35,11 @@ a:hover{color:#F6F4F6}
 .fight{height:48px;padding:0 32px;background:#16161B;border:1px solid #FF0069;color:#F6F4F6;font:900 18px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(255,0,105,0.30),0 0 18px rgba(255,0,105,0.45),inset 0 1px 0 rgba(255,105,150,0.55);transition:box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)}
 .fight:hover{box-shadow:0 0 40px rgba(255,0,105,0.42),0 0 18px rgba(255,0,105,0.60),inset 0 1px 0 rgba(255,105,150,0.75);transform:translateY(-1px)}
 .fight:active{box-shadow:0 0 14px rgba(255,0,105,0.55),inset 0 1px 0 rgba(255,105,150,0.35);transform:translateY(1px)}
+/* Кнопка-ссылка раздела 03 («ПЕРЕЙТИ» / «GO») — тот же вид, что был у кнопки боя. Это <a>, не <button>:
+   работает без JavaScript. Высота 48 — касание больше 44. Кириллица — JetBrains Mono (правило деки). */
+a.fight{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+[data-layer="ru"] .fight{font-family:'Saira Condensed','JetBrains Mono',monospace}
 @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
-/* --- добавлено к выгрузке: окно боя --------------------------------------- */
-/* Окно арены занимает сцену целиком. pointer-events:none — палец, ведущий по
-   окну, листает страницу, а не крутит камеру внутри арены. */
-.dk-frame{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0}
-/* Бегунок «идёт работа». Процента НЕ изображает — ходит туда-сюда: настоящего
-   процента арена не отдаёт, а выдуманного числа на странице быть не должно.
-   При системной «уменьшить движение» бегунок прячется, смысл несёт подпись. */
-.dk-busy{width:35%;animation:dkBusy 1300ms cubic-bezier(.45,0,.55,1) infinite alternate}
-@keyframes dkBusy{from{transform:translateX(0)}to{transform:translateX(186%)}}
-@media (prefers-reduced-motion: reduce){.dk-busy{width:0;animation:none}}
-.fight[disabled]{opacity:.45;cursor:default;box-shadow:none;transform:none}
 
 /* ===========================================================================
    СЛОЙ ОФОРМЛЕНИЯ И ДВИЖЕНИЯ (10.09.2026)
@@ -203,7 +196,7 @@ a:hover{color:#F6F4F6}
 @media (max-width:400px){.dk-eyebrow{gap:8px}.dk-eyebrow::before,.dk-eyebrow::after{width:18px}}
 
 /* --- В. Уголки-скобки -----------------------------------------------------
-   Только на окне арены, четырёх местах под кадры и трёх под портреты — как на
+   Только на четырёх местах под кадры и трёх под портреты — как на
    окне GAMEPLAY на лендинге. На всех блоках подряд они превращаются в шум.
    Побочная польза: пустые места перестают читаться как дыры и начинают
    читаться как слоты.
@@ -223,10 +216,6 @@ a:hover{color:#F6F4F6}
     linear-gradient(var(--c),var(--c)) 100% 100%/var(--l) 1px no-repeat,
     linear-gradient(var(--c),var(--c)) 100% 100%/1px var(--l) no-repeat;
 }
-/* Окно арены идёт во всю ширину экрана, поля вокруг него нет. Вынос уголков
-   наружу дал бы лишнюю точку прокрутки вбок на 320 — замерено. Только здесь
-   они лежат по внутреннему краю. */
-[data-arena].dk-corners::after{inset:0}
 @media (max-width:400px){.dk-corners::after{--l:12px}}
 
 /* --- Д. Окно с записью из игры (раздел 06, зал FORGE) ----------------------
@@ -315,8 +304,7 @@ a:hover{color:#F6F4F6}
    если читаешь.
 
    Плотность по ширине экрана: широкий — двенадцать точек, телефон — шесть
-   (блок «Узкий экран» ниже). На телефоне слабее железо, и в разделе 03
-   работает живая арена. */
+   (блок «Узкий экран» ниже). На телефоне слабее железо. */
 .dk-dust::before,.dk-dust::after{
   content:"";position:fixed;left:0;top:0;width:2px;height:2px;border-radius:50%;
   z-index:-1;pointer-events:none;background:transparent;
@@ -352,12 +340,6 @@ a:hover{color:#F6F4F6}
   50%{transform:translate3d(-44px,34px,0)}
   100%{transform:translate3d(0,0,0)}
 }
-/* Пока в окне раздела 03 идёт настоящий бой, пыль замирает: раздел 03 —
-   единственное живое доказательство на всей странице, и кадры арены важнее
-   частиц. Признак .dk-fight вешает на корень тот же сценарий, что уже слушает
-   сигналы окна ('ready' — бой пошёл, 'end' — бой доигран). Новых сигналов не
-   заведено, файлы арены не тронуты. */
-html.dk-fight .dk-dust::before,html.dk-fight .dk-dust::after{animation-play-state:paused}
 
 /* --- Ж. Появление блоков при прокрутке ------------------------------------
    Блок входит в кадр — его содержимое поднимается снизу и проявляется, по
@@ -528,7 +510,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
    Решётка крупнее: на 360 точках мелкая сетка превращается в грязь.
    Пыль не снимается, а редеет: шесть точек вместо двенадцати (решение
    владельца 10.09.2026, отменяет прежнее «только широкий экран»). Причина
-   потолка — слабее железо и живая арена в разделе 03. */
+   потолка — слабее железо. */
 @media (max-width:680px){
   /* «Вихрь» на телефоне чуть ярче: в кадр попадают только внутренние кольца,
      и на 360 точках они гаснут раньше, чем на широком экране. */
@@ -563,7 +545,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
    ЗАЧЕМ. Дека получила структуру (четыре главы, шкала прогресса) и движение,
    которое что-то объясняет: набегающие цифры, таблица «было → стало», лестница,
    схема одного боя, отметки статуса, линия роадмапа. Чистого украшательства здесь
-   нет; фон с ядром, паузы, шрифты, окно арены и тексты разделов не тронуты.
+   нет; фон с ядром, паузы, шрифты и тексты разделов не тронуты.
 
    ⚠️ ДВИЖЕНИЕ ЖИВЁТ НА ТЕХ ЖЕ МЕХАНИЗМАХ, ЧТО И ПРЕЖНЕЕ.
      · Скрытое состояние задаёт только признак html.dk-anim (его вешает сценарий и
@@ -850,8 +832,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
      ЧТО ДОБАВЛЕНО К ВЫГРУЗКЕ (три правки, всё остальное — как отдал дизайнер):
        1. шрифты вынуты наружу, на ту же строку Google, что в index.html;
        2. знак бренда — настоящий, из public/brand/, вместо места-заглушки;
-       3. окно боя — настоящая арена прода, вместо пустого места; состояния
-          окна ведут сигналы самой арены, а не таймер.
+       3. (окно боя из выгрузки снято 02.10.2026 — см. раздел 03)
      Тексты разделов, заглушки [XXX K] и пустые места под кадры и портреты
      не тронуты.
 
@@ -870,12 +851,11 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
      (ПРОБЛЕМА · МОДЕЛЬ · ЛЕСТНИЦА · ЖИВОЙ БОЙ · БАРЬЕР · МИРЫ · СТАТУС · ГИПОТЕЗЫ ·
      ЭКОНОМИКА ИГРОКА · ДОХОД · ЮНИТ-ЭКОНОМИКА · МАСШТАБ · ТОКЕН · РЫНОК · РОАДМАП ·
      РИСКИ · РАУНД · КОМАНДА) и пять пауз-фраз. Визуальная система, фон с ядром,
-     шрифты, знак, механика окна арены и скрытие от поиска не тронуты.
+     шрифты, знак и скрытие от поиска не тронуты.
      ⚠️ Заглушки в квадратных скобках — [N], [XX%], [ЖДЁТ ФИНМОДЕЛИ] и т.п. —
      честные: цифр, которых нет в ТЗ, на странице нет. Подставлять только по
-     слову владельца. В окне арены языковая модель ВЫКЛЮЧЕНА (режим показа,
-     ?showcase=1 → brainMode = spinal) — подпись под окном в разделе 03 это
-     говорит прямо. Включат модель в окне — подпись надо поправить.
+     слову владельца. Окна с живой ареной на странице больше нет (02.10.2026):
+     в разделе 03 стоит кнопка-ссылка в игру, на выбор режима арены.
 
      ДВИЖЕНИЕ И СТРУКТУРА 02.10.2026 (ТЗ TZ_deckinvestors_motion_v1). Добавлены: четыре
      главы (название главы стоит в надзаголовке каждого раздела, навигация шапки — по
@@ -1423,30 +1403,10 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
     <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">03</span><span>ЖИВОЙ БОЙ</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Игрок никогда не бьёт сам</span></h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ни кнопки удара, ни блока, ни комбо. Боец дерётся сам — своей головой, характером и привычками. Ниже — настоящий бой из игры, не ролик и не симуляция.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
-      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">АРЕНА · ЖИВОЙ БОЙ · <span data-arena-state="1">ПОКОЙ</span></p>
-      <p style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:0">Один на один. Около минуты.</p>
-    </div>
   </div>
-  <div style="width:100%;margin-top:12px">
-    <div style="max-width:1180px;margin:0 auto">
-      <div data-arena="1" class="dk-corners" style="aspect-ratio:16/10;background:#0D0A0D;border-top:1px solid rgba(255,255,255,0.09);border-bottom:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;position:relative;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 12px)">
-        <span data-arena-rest="1" style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:24px;position:relative;z-index:1">ЖИВАЯ АРЕНА ИЗ ИГРЫ · НАЖМИТЕ «ЗАПУСТИТЬ БОЙ»</span>
-        <div data-arena-load="1" class="off" style="width:min(320px,70%);position:relative;z-index:1">
-          <div style="height:2px;background:rgba(255,255,255,0.09)"><div data-arena-bar="1" class="dk-busy" style="height:2px;background:#FF0069;transform-origin:left"></div></div>
-          <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ЗАГРУЗКА СЦЕНЫ</p>
-        </div>
-        <div data-arena-note="1" class="off" style="padding:24px;max-width:60ch;position:relative;z-index:1">
-          <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">СОСТОЯНИЕ ОШИБКИ · АРЕНА НЕ ОТВЕЧАЕТ</p>
-          <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#5D5D66;margin:12px 0 0;text-wrap:pretty">Бой живёт на той же площадке, что и сама игра. Если она сейчас недоступна, страница от этого не ломается — остальные разделы читаются как обычно.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div style="padding:0 16px;max-width:1180px;margin:24px auto 0">
-    <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:0 0 24px;max-width:78ch;text-wrap:pretty">Быстрый слой примерно раз в секунду выбирает намерение, тело исполняет его рефлексом. Языковая модель подключается в переломные моменты боя. В этом окне языковая модель выключена — боец работает на быстром слое.</p>
-    <button type="button" data-fight="1" class="fight"><span style="position:relative;z-index:1">ЗАПУСТИТЬ БОЙ</span></button>
-    <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;padding-top:24px;border-top:1px solid rgba(255,255,255,0.09);text-wrap:pretty">Живой бой открывается по нажатию — для этого нужен JavaScript. Остальные разделы читаются как обычно. Окно воспроизводит бой из прода: быстрый слой выбирает намерение, тело исполняет его рефлексом.</p>
+  <div class="dk-go" style="padding:0 16px;max-width:1180px;margin:32px auto 0">
+    <p style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0 0 20px">НАСТОЯЩАЯ ИГРА · ВЫБЕРИТЕ РЕЖИМ И ЗАПУСТИТЕ БОЙ</p>
+    <a class="fight" href="/play/gate" target="_blank" rel="noopener"><span style="position:relative;z-index:1">ПЕРЕЙТИ</span></a>
   </div>
 </section>
 
@@ -2069,30 +2029,10 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
     <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">03</span><span>LIVE FIGHT</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The player never throws a punch</span></h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No attack button, no block, no combos. The fighter fights on his own — with his own head, character and habits. Below is a real fight from the game, not a video and not a simulation.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
-      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ARENA · LIVE FIGHT · <span data-arena-state="1">IDLE</span></p>
-      <p style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:0">One on one. About a minute.</p>
-    </div>
   </div>
-  <div style="width:100%;margin-top:12px">
-    <div style="max-width:1180px;margin:0 auto">
-      <div data-arena="1" class="dk-corners" style="aspect-ratio:16/10;background:#0D0A0D;border-top:1px solid rgba(255,255,255,0.09);border-bottom:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;position:relative;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 12px)">
-        <span data-arena-rest="1" style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:24px;position:relative;z-index:1">LIVE ARENA FROM THE GAME · PRESS “START THE FIGHT”</span>
-        <div data-arena-load="1" class="off" style="width:min(320px,70%);position:relative;z-index:1">
-          <div style="height:2px;background:rgba(255,255,255,0.09)"><div data-arena-bar="1" class="dk-busy" style="height:2px;background:#FF0069;transform-origin:left"></div></div>
-          <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">LOADING SCENE</p>
-        </div>
-        <div data-arena-note="1" class="off" style="padding:24px;max-width:60ch;position:relative;z-index:1">
-          <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ERROR STATE · ARENA NOT RESPONDING</p>
-          <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#5D5D66;margin:12px 0 0;text-wrap:pretty">The fight runs on the same servers as the game itself. If they are down right now, the page still works — every other section reads as usual.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div style="padding:0 16px;max-width:1180px;margin:24px auto 0">
-    <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:0 0 24px;max-width:78ch;text-wrap:pretty">A fast layer picks an intention about once a second and the body carries it out by reflex. The language model joins at the fight's turning points. In this window the language model is off — the fighter runs on the fast layer.</p>
-    <button type="button" data-fight="1" class="fight"><span style="position:relative;z-index:1">START THE FIGHT</span></button>
-    <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;padding-top:24px;border-top:1px solid rgba(255,255,255,0.09);text-wrap:pretty">The live fight opens on tap — that needs JavaScript. Every other section reads as usual. The window runs the fight from production: a fast layer picks an intention, the body carries it out by reflex.</p>
+  <div class="dk-go" style="padding:0 16px;max-width:1180px;margin:32px auto 0">
+    <p style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0 0 20px">THE REAL GAME · PICK A MODE AND START A FIGHT</p>
+    <a class="fight" href="/play/gate" target="_blank" rel="noopener"><span style="position:relative;z-index:1">GO</span></a>
   </div>
 </section>
 
@@ -2718,7 +2658,6 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       if (t) window.scrollTo(0, window.scrollY + t.getBoundingClientRect().top - top);
     }
     lang = l;
-    stopArena();
     /* Сообщить второму сценарию (шкала, движение): слой сменился. Раньше свода —
        сыгранное в другом слое он успеет поставить готовым, и свод его не запустит. */
     document.dispatchEvent(new CustomEvent('dk-lang', { detail: l }));
@@ -2926,151 +2865,6 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       secs.forEach(function (el) { cio.observe(el); });
     }
   }
-
-  /* --- Окно с ареной ------------------------------------------------------
-     Арена — отдельный жилец: своё окно по своему адресу, приложение внутрь
-     страницы не втягивается. Не грузится, пока не нажали кнопку: сцена
-     тяжёлая, автозагрузка подвесила бы вкладку.
-
-     Состояния ведут СИГНАЛЫ САМОЙ АРЕНЫ, а не таймер:
-       покой → загрузка (нажата кнопка) → бой ('ready') → завершение ('end'),
-       ошибка — если окно не ответило за GIVE_UP_MS.
-     Своего процента арена не отдаёт, поэтому загрузка показывается без числа.
-     ⚠️ Выдуманного числа на странице быть не должно (решение владельца 09.09).
-
-     ⚠️ Признак ?showcase=1 управляет ТОЛЬКО подачей арены — что видно и что
-     запускается. Он НИКОГДА не включает думающий мозг модели и ничего
-     платного: адресную строку подделает кто угодно. Полное правило — рядом
-     с самим признаком в src/scene/ArenaScene.vue. */
-  var ARENA = '/play/arena?showcase=1';
-  var GIVE_UP_MS = 30000;
-
-  /* Живое окно всегда одно: два языковых слоя держат по своей сцене, и две
-     живые арены разом — это две нагрузки на телефон. */
-  var live = null;
-
-  function parts(scope) {
-    var rest = scope.querySelector('[data-arena-rest]');
-    return {
-      rest: rest,
-      stage: rest ? rest.parentElement : null,
-      load: scope.querySelector('[data-arena-load]'),
-      note: scope.querySelector('[data-arena-note]'),
-      state: scope.querySelector('[data-arena-state]'),
-      btn: scope.querySelector('[data-fight]')
-    };
-  }
-
-  /* Слова состояний. «Покой» берётся из разметки, «загрузка» и «не подключено»
-     — те же, что были в выгрузке. Новых на странице два: бой и завершение. */
-  function word(scope, key) {
-    var ru = scope.getAttribute('data-layer') === 'ru';
-    if (key === 'idle') return scope.getAttribute('data-idle-word') || '';
-    if (key === 'loading') return ru ? 'ЗАГРУЗКА' : 'LOADING';
-    if (key === 'live') return ru ? 'БОЙ' : 'FIGHT';
-    if (key === 'done') return ru ? 'БОЙ ЗАВЕРШЁН' : 'FIGHT OVER';
-    return ru ? 'НЕ ОТВЕЧАЕТ' : 'NOT RESPONDING';
-  }
-
-  /* which: 'rest' | 'load' | 'note' | 'none' (идёт бой — окно закрывает сцену) */
-  function show(p, which) {
-    if (p.rest) p.rest.classList.toggle('off', which !== 'rest');
-    if (p.load) p.load.classList.toggle('off', which !== 'load');
-    if (p.note) p.note.classList.toggle('off', which !== 'note');
-  }
-
-  /* Признак боя на корне страницы. Его читает только слой пыли: пока идёт
-     настоящий бой, дрейф приостановлен (см. html.dk-fight в стилях). Ставится
-     по сигналу самой арены, снимается везде, где бой перестал идти: окно
-     снято, окно не ответило, бой доигран. */
-  function fight(on) {
-    document.documentElement.classList.toggle('dk-fight', !!on);
-  }
-
-  function drop() {
-    fight(false);
-    if (!live) return;
-    if (live.timer) clearTimeout(live.timer);
-    if (live.frame) live.frame.remove();
-    var scope = live.scope;
-    live = null;
-    return scope;
-  }
-
-  /* Снять окно и вернуть слой в покой. Зовётся при смене языка. */
-  function stopArena() {
-    var scope = drop();
-    if (!scope) return;
-    var p = parts(scope);
-    show(p, 'rest');
-    if (p.state) p.state.textContent = word(scope, 'idle');
-    if (p.btn) p.btn.disabled = false;
-  }
-
-  /* Настоящая ошибка: окно не поднялось или молчит дольше разумного.
-     Страница при этом не ломается — остальные разделы читаются как обычно. */
-  function fail(scope) {
-    drop();
-    var p = parts(scope);
-    show(p, 'note');
-    if (p.state) p.state.textContent = word(scope, 'err');
-    if (p.btn) p.btn.disabled = false;
-  }
-
-  function start(scope) {
-    stopArena();
-    var p = parts(scope);
-    if (!p.stage || !p.rest) return;
-    show(p, 'load');
-    if (p.state) p.state.textContent = word(scope, 'loading');
-    if (p.btn) p.btn.disabled = true;
-
-    var frame = document.createElement('iframe');
-    frame.className = 'dk-frame';
-    frame.title = scope.getAttribute('data-layer') === 'ru'
-      ? 'Живой бой на арене Hexlash' : 'Hexlash arena \u2014 live fight';
-    frame.setAttribute('tabindex', '-1');
-    frame.setAttribute('scrolling', 'no');
-    /* Уникальный хвост — чтобы повторный запуск действительно перезагружал
-       окно, а не показывал уже доигранный бой из кеша. */
-    frame.src = ARENA + '&r=' + Date.now();
-    frame.addEventListener('error', function () { fail(scope); });
-    p.stage.appendChild(frame);
-
-    live = { scope: scope, frame: frame, timer: setTimeout(function () { fail(scope); }, GIVE_UP_MS) };
-  }
-
-  /* Запомнить слово покоя из разметки, чтобы не заводить его второй раз. */
-  [].forEach.call(document.querySelectorAll('[data-layer]'), function (scope) {
-    var st = scope.querySelector('[data-arena-state]');
-    if (st) scope.setAttribute('data-idle-word', st.textContent);
-  });
-
-  /* Арена сообщает о себе сама: 'ready' — экран загрузки ушёл и бой пошёл,
-     'end' — бой доигран и застыл в конечном состоянии. */
-  window.addEventListener('message', function (e) {
-    if (e.origin !== location.origin) return;
-    var d = e.data;
-    if (!d || d.source !== 'hexlash-arena' || !live) return;
-    var p = parts(live.scope);
-    if (d.phase === 'ready') {
-      if (live.timer) { clearTimeout(live.timer); live.timer = null; }
-      show(p, 'none');
-      if (p.state) p.state.textContent = word(live.scope, 'live');
-      fight(true);
-    } else if (d.phase === 'end') {
-      if (p.state) p.state.textContent = word(live.scope, 'done');
-      if (p.btn) p.btn.disabled = false;
-      fight(false);
-    }
-  });
-
-  [].forEach.call(document.querySelectorAll('[data-fight]'), function (btn) {
-    btn.addEventListener('click', function () {
-      var scope = btn.closest('[data-layer]');
-      if (scope) start(scope);
-    });
-  });
 })();
 </script>
 <script>
