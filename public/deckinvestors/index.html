@@ -17,7 +17,7 @@
 
    ⚠️ ОФОРМЛЕНИЕ ЛЕЖИТ НА УЗЛАХ (style="..."), как и в выгрузке дизайнера. Здесь —
    только то, чего инлайн не умеет: липкая колонка на широком экране, наведение и
-   нажатие, состояние «появилось», полоса прогресса, ряды шапки и подвала.
+   нажатие, состояние «появилось», ряды шапки и подвала.
    !important — только в общем правиле «уменьшить движение» и в .off.
 
    ЗНАЧЕНИЯ ВПИСАНЫ ЧИСЛАМИ: страница живёт вне сборки, tokens.css сюда не
@@ -91,13 +91,6 @@ a:hover{color:#FF0069}
 .dk-wave [data-core-flow]{animation:none}
 .dk-wave [data-core-lit],.dk-wave [data-core-zone],.dk-wave [data-core-heart]{animation:none;opacity:0}
 .dk-wave .hc-facets{transition:none}
-
-/* --- Полоса прогресса: 3 px сверху, по сегменту на раздел --------------------
-   Пройденные — приглушённый ink, текущий — цвет ядра раздела, впереди — линия.
-   Между главами зазор 6 px. Только показ: не нажимается, касаний не ест. */
-.dk-prog{position:fixed;left:0;right:0;top:0;z-index:30;display:flex;gap:2px;height:3px;padding:0 2px;pointer-events:none}
-.dk-prog i{flex:1 1 0;min-width:0;background:rgba(255,255,255,.1);transition:background-color 150ms}
-.dk-prog i.ch{margin-left:6px}
 
 /* --- Шапка -------------------------------------------------------------- */
 .dk-head{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:12px clamp(24px,5vw,64px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px}
@@ -179,7 +172,7 @@ html.dk-anim .dk-now:not(.rv-ok){transition:none !important}
    контур 2 px в цвет ядра ЭТОГО раздела, цифры залиты только холодным светлым
    градиентом сверху вниз (от 16% до 2% светлого) — не цветом ядра, поэтому в
    покое номер не светится и не залит розовым.
-   Цвет контура — цвет ядра раздела: тот же цикл, что у фона и полосы прогресса.
+   Цвет контура — цвет ядра раздела: тот же цикл, что у фона.
    Сценарий читает его из таблицы .dk-wave[data-core] (блок ЦВЕТА) и кладёт в
    --sec-c на раздел; второго объявления здесь нет. Нет сценария — серый контур.
    Блик — отдельная копия цифр (::after, content из data-n): светлая заливка,
@@ -298,7 +291,7 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
      переключает их сценарий; без JavaScript английский читается целиком.
      ⚠️ Номера sNN/eNN и data-screen-label вписаны вручную и обязаны совпадать
      между языковыми слоями (смена языка держит место по id sNN ↔ eNN). Меняя
-     порядок — менять номера в обоих слоях, CH во втором скрипте и ссылки в шапке.
+     порядок — менять номера в обоих слоях, chapterOf в сценарии и ссылки в шапке.
 
      ФОН — «Вихрь» и ядро. Разметку между метками ВИХРЬ / ЯДРО / МЕРЦАНИЕ /
      ГРАНИ / ЦВЕТА пишет node scripts/sync-core-figure.mjs из общих файлов
@@ -728,7 +721,6 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <!-- ЯДРО:КОНЕЦ -->
   </div>
 </div>
-<div class="dk-prog" aria-hidden="true"></div>
 <header class="dk-head" id="top">
   <a class="dk-brand" href="#top" aria-label="HEXLASH"><img alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px"><span>HEXLASH</span></a>
   <div class="dk-right">
@@ -1899,7 +1891,7 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 </footer>
 </div>
 <script>
-/* Язык, полоса прогресса, цвет фона, появление блоков, заливка полосы «ТЫ → ИИ».
+/* Язык, цвет фона, появление блоков, заливка полосы «ТЫ → ИИ».
    Образец — см. блок «ВИД ДЕКИ» в стилях. Всё здесь — только показ: тексты не
    трогаются, без скрипта страница читается целиком (английский слой). */
 (function () {
@@ -1974,16 +1966,6 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
     sec.style.setProperty('--sec-c', colorOf(+sec.getAttribute('data-sec')));
   });
 
-  /* --- Полоса прогресса: сегмент на раздел, между главами зазор. -------------- */
-  var CH = [0, 10, 15, 19];
-  var N = 21;
-  var prog = doc.querySelector('.dk-prog');
-  var ticks = [];
-  for (var k = 0; k < N; k++) {
-    var t = doc.createElement('i');
-    if (k > 0 && CH.indexOf(k) > -1) t.className = 'ch';
-    prog.appendChild(t); ticks.push(t);
-  }
   var cur = -2, shiftT = 0;
   function chapterOf(i) { return i < 0 ? -1 : i >= 19 ? 3 : i >= 15 ? 2 : i >= 10 ? 1 : 0; }
 
@@ -2059,7 +2041,6 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
     if (c !== cur) {
       var recolor = coreOf(c) !== (cur === -2 ? null : coreOf(cur));
       cur = c;
-      for (i = 0; i < N; i++) ticks[i].style.background = i === c ? colorOf(i) : i < c ? 'rgba(246,244,246,.42)' : '';
       if (recolor) {
         if (!reduce) { wave.classList.add('is-shifting'); clearTimeout(shiftT); shiftT = setTimeout(function () { wave.classList.remove('is-shifting'); }, 460); }
         wave.setAttribute('data-core', coreOf(c));
