@@ -124,45 +124,73 @@ a:hover{color:#FF0069}
 .dk-layer{position:relative;z-index:1}
 
 /* --- Навигация по разделам -------------------------------------------------
-   Широкий экран с мышью (от 1024, основной указатель — точный): липкая колонка-
-   оглавление у левого края, левее колонки с большими номерами. Страница получает
-   левое поле --dk-pl под неё. Узкий экран и любой сенсорный (в том числе планшет
-   в ландшафте — пункты по 22 px пальцем не нажать): колонка скрыта, вместо неё
-   тонкая шкала-засечки (строит сценарий, .dk-scale) — как указатель в контактах:
-   ведёшь пальцем, рядом всплывает подпись, отпустил — переход. Без сценария на
-   таком экране остаются главы в шапке.
-   Тексты пунктов — надзаголовки разделов (номер + название), в своём языке. */
-:root{--dk-pl:20px;--dk-rg:28px}
+   ДЕСКТОП (от 1024, основной указатель — точный): оглавление живёт ВНУТРИ колонки
+   с большими номерами. Колонка одна, липкая (position:fixed), стоит ровно там,
+   где у раздела левая колонка (сценарий измеряет её и кладёт в --rail-l/--rail-w),
+   а сами номера над разделами здесь скрыты — aside остаётся невидимой распоркой,
+   чтобы текст не сдвинулся. В колонке весь список: главы I–IV и разделы 01…21
+   мелко; текущий раскрыт в большой номер (контур цвета ядра, стеклянная заливка,
+   блик, название рядом), соседние ±1–2 чуть крупнее дальних («линза»).
+   Рост — высота пункта + масштаб слоя .rb, список сдвигается тем же ходом.
+   Высоты пунктов задаёт сценарий (railApply): он же считает, как сдвинуть
+   список, чтобы раскрытый номер стоял у верха текста, а ничего не ушло за экран.
+   Классы: html.dk-rail ставит голова страницы (есть сценарий), .is-ready — после
+   первой раскладки, .is-away — колонка прячется там, где экран занят первым
+   экраном, финалом или подвалом (иначе она легла бы на их текст).
+   БЕЗ СЦЕНАРИЯ: колонка — обычный список ссылок под шапкой, номера над разделами
+   видны (как до правки). УЗКИЙ ЭКРАН И ЛЮБОЙ СЕНСОРНЫЙ (в том числе планшет в
+   ландшафте): колонки нет — большой номер над каждым разделом и шкала-засечки у
+   края (строит сценарий, .dk-scale): ведёшь пальцем — рядом подпись, отпустил —
+   переход. Тексты пунктов — надзаголовки разделов (номер + название). */
+:root{--dk-pl:20px;--dk-rg:28px;--rn:clamp(88px,11vw,152px)}
 .dk-page{padding-left:var(--dk-pl)}
 .dk-toc{display:none}
 .dk-scale{display:block}
-@media (min-width:1024px){:root{--dk-rg:48px}}
+@media (min-width:1024px){:root{--dk-rg:48px}.dk-aside{position:sticky;top:40px}}
 @media (min-width:1024px) and (pointer:fine){
-  :root{--dk-pl:208px}
+  :root{--dk-pl:0px}
   .dk-scale{display:none}
-  .dk-toc{display:block;position:fixed;z-index:20;left:24px;top:104px;bottom:24px;width:168px;overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;--sec-c:#F6F4F6}
-  .dk-toc::-webkit-scrollbar{display:none}
-  .dk-toc.off{display:none}
-  .dk-toc-ch+.dk-toc-ch{margin-top:14px}
   .dk-toc ol{list-style:none;margin:0;padding:0}
-  .dk-toc a{display:block;position:relative;padding:3px 0 3px 12px;font:500 11px/1.45 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#A9A5AF;text-decoration:none;transition:color 150ms}
-  .dk-toc a:hover{color:#F6F4F6}
-  .dk-toc li a{display:flex;gap:.6em}
-  .dk-toc a b{flex:0 0 auto;font-weight:500;font-variant-numeric:tabular-nums}
-  .dk-toc .dk-toc-h{padding-left:0;margin-bottom:3px;font-weight:700;letter-spacing:.14em;color:#F6F4F6}
-  .dk-toc a::before{content:"";position:absolute;left:0;top:50%;width:2px;height:0;margin-top:0;background:var(--sec-c);transition:height 150ms,margin-top 150ms}
-  .dk-toc .dk-toc-h::before{display:none}
-  .dk-toc a.is-past{color:#D2CFD6}
-  .dk-toc a.is-cur{color:#F6F4F6}
-  .dk-toc a.is-cur::before{height:14px;margin-top:-7px}
-  .dk-toc a.is-cur b{color:var(--sec-c)}
-  .dk-toc a:focus-visible{outline:2px solid #F6F4F6;outline-offset:2px}
+  .dk-toc a{text-decoration:none}
+  .dk-toc .rb{display:none}
+  /* Без сценария: список под шапкой в четыре колонки (по главам). */
+  html:not(.dk-rail) .dk-toc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 32px;position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:8px clamp(24px,5vw,64px) 24px}
+  html:not(.dk-rail) .dk-toc-in{display:contents}
+  html:not(.dk-rail) .dk-toc a{display:flex;gap:.6em;padding:3px 0;font:500 11px/1.45 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#A9A5AF;transition:color 150ms}
+  html:not(.dk-rail) .dk-toc a:hover{color:#F6F4F6}
+  html:not(.dk-rail) .dk-toc .rs{display:flex;gap:.6em}
+  html:not(.dk-rail) .dk-toc .dk-toc-h{font-weight:700;letter-spacing:.14em;color:#F6F4F6;margin-bottom:3px}
+  /* С колонкой: номера над разделами не показываем, распорка остаётся. */
+  html.dk-rail .dk-aside{visibility:hidden}
+  html.dk-rail .dk-toc{display:block;position:fixed;z-index:20;top:0;bottom:0;left:var(--rail-l,max(24px,calc((100vw - 1280px) / 2 + clamp(24px,5vw,64px))));width:var(--rail-w,240px);overflow:hidden;pointer-events:none;opacity:0;visibility:hidden}
+  html.dk-rail .dk-toc.is-ready{opacity:1;visibility:visible;transition:opacity 220ms ease-out,visibility 0s}
+  html.dk-rail .dk-toc.is-ready.is-away{opacity:0;visibility:hidden;transition:opacity 220ms ease-out,visibility 0s 220ms}
+  html.dk-rail .dk-toc.off{display:none}
+  html.dk-rail .dk-toc-in{position:absolute;left:0;top:0;width:100%;will-change:transform}
+  html.dk-rail .dk-toc.is-ready .dk-toc-in{transition:transform 520ms cubic-bezier(.2,.8,.2,1)}
+  html.dk-rail .dk-toc a{pointer-events:auto}
+  html.dk-rail .dk-toc .dk-toc-h{display:block;height:20px;font:700 11px/20px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#A9A5AF;white-space:nowrap;transition:color 220ms}
+  html.dk-rail .dk-toc-ch.is-cur-ch .dk-toc-h,html.dk-rail .dk-toc .dk-toc-h:hover{color:#F6F4F6}
+  html.dk-rail .dk-toc li a[data-sec]{display:block;position:relative;height:18px;color:#A9A5AF}
+  html.dk-rail .dk-toc.is-ready li a[data-sec]{transition:height 520ms cubic-bezier(.2,.8,.2,1),color 220ms}
+  html.dk-rail .dk-toc li a[data-sec].is-past{color:#D2CFD6}
+  html.dk-rail .dk-toc li a[data-sec][data-d="1"]{color:#F6F4F6}
+  html.dk-rail .dk-toc li a[data-sec]:hover{color:#F6F4F6}
+  /* Строка: номер и название мелко. */
+  html.dk-rail .dk-toc .rs{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;gap:.6em;white-space:nowrap;font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;opacity:1}
+  html.dk-rail .dk-toc.is-ready .rs{transition:font-size 520ms cubic-bezier(.2,.8,.2,1),opacity 140ms ease-out 80ms}
+  html.dk-rail .dk-toc a[data-d="2"] .rs{font-size:12px}
+  html.dk-rail .dk-toc a[data-d="1"] .rs{font-size:13px}
+  html.dk-rail .dk-toc a[data-d="0"] .rs{font-size:13px;opacity:0}
+  html.dk-rail .dk-toc .rs b{flex:0 0 auto;font-weight:500;font-variant-numeric:tabular-nums}
+  /* Раскрытый номер: слой .rb растёт из строки (масштаб от левого верхнего угла). */
+  html.dk-rail .dk-toc .rb{position:absolute;left:0;top:0;width:100%;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px;transform-origin:0 0;transform:scale(.12);opacity:0;pointer-events:none;transition:opacity 140ms ease-in,transform 220ms ease-in}
+  html.dk-rail .dk-toc a[data-d="0"] .rb{opacity:1;transform:none;transition:opacity 320ms ease-out 120ms,transform 520ms cubic-bezier(.2,.8,.2,1)}
+  html.dk-rail .dk-toc .rb .dk-num{display:block;margin:0;font:900 var(--rn)/.78 'Saira Condensed',sans-serif}
+  html.dk-rail .dk-toc .rn-name{margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6}
+  html.dk-anim.dk-rail .dk-toc a[data-d="0"] .rb .dk-num::after{animation:dkSweep 1000ms cubic-bezier(.4,.1,.3,1) 380ms both}
+  html.dk-rail .dk-toc a:focus-visible{outline:2px solid #F6F4F6;outline-offset:2px}
 }
-/* Боковая колонка рядом с номерами липкая, только когда колонка и смысл помещаются
-   в одну строку: с оглавлением — от 1200, без него — от 1024. */
-@media (min-width:1200px) and (pointer:fine){.dk-aside{position:sticky;top:40px}}
-@media (min-width:1024px) and (pointer:coarse){.dk-aside{position:sticky;top:40px}}
-@media (prefers-reduced-motion: reduce){.dk-scale-z i,.dk-scale-tip,.dk-toc a,.dk-toc a::before{transition:none !important}}
 /* Шкала на узком экране. Сама зона касания 44 px шириной у левого края страницы;
    текст начинается правее неё (--dk-pl 20 px + поле раздела 24 px), поэтому шкала
    текст не закрывает, а обычная прокрутка пальцем вне зоны не затрагивается. */
@@ -316,7 +344,7 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
      состояние мигнуло бы. Не включается при «уменьшить движение» и без
      IntersectionObserver-совместимого окружения; если основной сценарий не
      запустился (ошибка, блокировка) — через 4 с класс снимается и всё видно. -->
-<script>(function(){var d=document.documentElement;try{if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('dk-anim');}catch(e){}setTimeout(function(){if(!window.__dkOK)d.classList.remove('dk-anim');},4000);})();</script>
+<script>(function(){var d=document.documentElement;try{if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('dk-anim');}catch(e){}d.classList.add('dk-rail');setTimeout(function(){if(!window.__dkOK){d.classList.remove('dk-anim');d.classList.remove('dk-rail');}},4000);})();</script>
 
 <!-- =========================================================================
      HEXLASH · ПРЕЗЕНТАЦИЯ ДЛЯ ИНВЕСТОРОВ · /deckinvestors
@@ -787,76 +815,6 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <!-- ЯДРО:КОНЕЦ -->
   </div>
 </div>
-<nav data-layer="ru" class="dk-toc off" aria-label="Оглавление" lang="ru">
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#s01">I ИГРА</a>
-<ol>
-<li><a href="#s01" data-sec="0"><b>01</b> ПРОБЛЕМА</a></li>
-<li><a href="#s02" data-sec="1"><b>02</b> МОДЕЛЬ</a></li>
-<li><a href="#s03" data-sec="2"><b>03</b> ЖИВОЙ БОЙ</a></li>
-<li><a href="#s04" data-sec="3"><b>04</b> БОЕЦ</a></li>
-<li><a href="#s05" data-sec="4"><b>05</b> ЧТО ДЕЛАЕТ ИГРОК</a></li>
-<li><a href="#s06" data-sec="5"><b>06</b> ЛЕСТНИЦА</a></li>
-<li><a href="#s07" data-sec="6"><b>07</b> БАРЬЕР</a></li>
-<li><a href="#s08" data-sec="7"><b>08</b> МИРЫ</a></li>
-<li><a href="#s09" data-sec="8"><b>09</b> СТАТУС</a></li>
-<li><a href="#s10" data-sec="9"><b>10</b> ГИПОТЕЗЫ</a></li>
-</ol></div>
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#s11">II ЭКОНОМИКА</a>
-<ol>
-<li><a href="#s11" data-sec="10"><b>11</b> ЭКОНОМИКА ИГРОКА</a></li>
-<li><a href="#s12" data-sec="11"><b>12</b> ДОХОД</a></li>
-<li><a href="#s13" data-sec="12"><b>13</b> ЮНИТ-ЭКОНОМИКА</a></li>
-<li><a href="#s14" data-sec="13"><b>14</b> МАСШТАБ</a></li>
-<li><a href="#s15" data-sec="14"><b>15</b> ТОКЕН</a></li>
-</ol></div>
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#s16">III РЫНОК И ПЛАН</a>
-<ol>
-<li><a href="#s16" data-sec="15"><b>16</b> РЫНОК</a></li>
-<li><a href="#s17" data-sec="16"><b>17</b> АРЕНА АГЕНТОВ</a></li>
-<li><a href="#s18" data-sec="17"><b>18</b> РОАДМАП</a></li>
-<li><a href="#s19" data-sec="18"><b>19</b> РИСКИ</a></li>
-</ol></div>
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#s20">IV РАУНД</a>
-<ol>
-<li><a href="#s20" data-sec="19"><b>20</b> РАУНД</a></li>
-<li><a href="#s21" data-sec="20"><b>21</b> КОМАНДА</a></li>
-</ol></div>
-</nav>
-<nav data-layer="en" class="dk-toc" aria-label="Contents" lang="en">
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#e01">I GAME</a>
-<ol>
-<li><a href="#e01" data-sec="0"><b>01</b> PROBLEM</a></li>
-<li><a href="#e02" data-sec="1"><b>02</b> MODEL</a></li>
-<li><a href="#e03" data-sec="2"><b>03</b> LIVE FIGHT</a></li>
-<li><a href="#e04" data-sec="3"><b>04</b> FIGHTER</a></li>
-<li><a href="#e05" data-sec="4"><b>05</b> WHAT THE PLAYER DOES</a></li>
-<li><a href="#e06" data-sec="5"><b>06</b> LADDER</a></li>
-<li><a href="#e07" data-sec="6"><b>07</b> BARRIER</a></li>
-<li><a href="#e08" data-sec="7"><b>08</b> WORLDS</a></li>
-<li><a href="#e09" data-sec="8"><b>09</b> STATUS</a></li>
-<li><a href="#e10" data-sec="9"><b>10</b> HYPOTHESES</a></li>
-</ol></div>
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#e11">II ECONOMICS</a>
-<ol>
-<li><a href="#e11" data-sec="10"><b>11</b> PLAYER ECONOMY</a></li>
-<li><a href="#e12" data-sec="11"><b>12</b> REVENUE</a></li>
-<li><a href="#e13" data-sec="12"><b>13</b> UNIT ECONOMICS</a></li>
-<li><a href="#e14" data-sec="13"><b>14</b> SCALE</a></li>
-<li><a href="#e15" data-sec="14"><b>15</b> TOKEN</a></li>
-</ol></div>
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#e16">III MARKET &amp; PLAN</a>
-<ol>
-<li><a href="#e16" data-sec="15"><b>16</b> MARKET</a></li>
-<li><a href="#e17" data-sec="16"><b>17</b> AGENT ARENA</a></li>
-<li><a href="#e18" data-sec="17"><b>18</b> ROADMAP</a></li>
-<li><a href="#e19" data-sec="18"><b>19</b> RISKS</a></li>
-</ol></div>
-<div class="dk-toc-ch"><a class="dk-toc-h" href="#e20">IV ROUND</a>
-<ol>
-<li><a href="#e20" data-sec="19"><b>20</b> ROUND</a></li>
-<li><a href="#e21" data-sec="20"><b>21</b> TEAM</a></li>
-</ol></div>
-</nav>
 <header class="dk-head" id="top">
   <a class="dk-brand" href="#top" aria-label="HEXLASH"><img alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px"><span>HEXLASH</span></a>
   <div class="dk-right">
@@ -872,6 +830,78 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
     </div>
   </div>
 </header>
+<nav data-layer="ru" class="dk-toc off" aria-label="Оглавление" lang="ru"><div class="dk-toc-in">
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#s01">I ИГРА</a>
+<ol>
+<li><a href="#s01" data-sec="0"><span class="rs"><b>01</b><span>ПРОБЛЕМА</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="01">01</span><span class="rn-name">ПРОБЛЕМА</span></span></a></li>
+<li><a href="#s02" data-sec="1"><span class="rs"><b>02</b><span>МОДЕЛЬ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="02">02</span><span class="rn-name">МОДЕЛЬ</span></span></a></li>
+<li><a href="#s03" data-sec="2"><span class="rs"><b>03</b><span>ЖИВОЙ БОЙ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="03">03</span><span class="rn-name">ЖИВОЙ БОЙ</span></span></a></li>
+<li><a href="#s04" data-sec="3"><span class="rs"><b>04</b><span>БОЕЦ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="04">04</span><span class="rn-name">БОЕЦ</span></span></a></li>
+<li><a href="#s05" data-sec="4"><span class="rs"><b>05</b><span>ЧТО ДЕЛАЕТ ИГРОК</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="05">05</span><span class="rn-name">ЧТО ДЕЛАЕТ ИГРОК</span></span></a></li>
+<li><a href="#s06" data-sec="5"><span class="rs"><b>06</b><span>ЛЕСТНИЦА</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="06">06</span><span class="rn-name">ЛЕСТНИЦА</span></span></a></li>
+<li><a href="#s07" data-sec="6"><span class="rs"><b>07</b><span>БАРЬЕР</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="07">07</span><span class="rn-name">БАРЬЕР</span></span></a></li>
+<li><a href="#s08" data-sec="7"><span class="rs"><b>08</b><span>МИРЫ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="08">08</span><span class="rn-name">МИРЫ</span></span></a></li>
+<li><a href="#s09" data-sec="8"><span class="rs"><b>09</b><span>СТАТУС</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="09">09</span><span class="rn-name">СТАТУС</span></span></a></li>
+<li><a href="#s10" data-sec="9"><span class="rs"><b>10</b><span>ГИПОТЕЗЫ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="10">10</span><span class="rn-name">ГИПОТЕЗЫ</span></span></a></li>
+</ol></div>
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#s11">II ЭКОНОМИКА</a>
+<ol>
+<li><a href="#s11" data-sec="10"><span class="rs"><b>11</b><span>ЭКОНОМИКА ИГРОКА</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="11">11</span><span class="rn-name">ЭКОНОМИКА ИГРОКА</span></span></a></li>
+<li><a href="#s12" data-sec="11"><span class="rs"><b>12</b><span>ДОХОД</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="12">12</span><span class="rn-name">ДОХОД</span></span></a></li>
+<li><a href="#s13" data-sec="12"><span class="rs"><b>13</b><span>ЮНИТ-ЭКОНОМИКА</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="13">13</span><span class="rn-name">ЮНИТ-ЭКОНОМИКА</span></span></a></li>
+<li><a href="#s14" data-sec="13"><span class="rs"><b>14</b><span>МАСШТАБ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="14">14</span><span class="rn-name">МАСШТАБ</span></span></a></li>
+<li><a href="#s15" data-sec="14"><span class="rs"><b>15</b><span>ТОКЕН</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="15">15</span><span class="rn-name">ТОКЕН</span></span></a></li>
+</ol></div>
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#s16">III РЫНОК И ПЛАН</a>
+<ol>
+<li><a href="#s16" data-sec="15"><span class="rs"><b>16</b><span>РЫНОК</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="16">16</span><span class="rn-name">РЫНОК</span></span></a></li>
+<li><a href="#s17" data-sec="16"><span class="rs"><b>17</b><span>АРЕНА АГЕНТОВ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="17">17</span><span class="rn-name">АРЕНА АГЕНТОВ</span></span></a></li>
+<li><a href="#s18" data-sec="17"><span class="rs"><b>18</b><span>РОАДМАП</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="18">18</span><span class="rn-name">РОАДМАП</span></span></a></li>
+<li><a href="#s19" data-sec="18"><span class="rs"><b>19</b><span>РИСКИ</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="19">19</span><span class="rn-name">РИСКИ</span></span></a></li>
+</ol></div>
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#s20">IV РАУНД</a>
+<ol>
+<li><a href="#s20" data-sec="19"><span class="rs"><b>20</b><span>РАУНД</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="20">20</span><span class="rn-name">РАУНД</span></span></a></li>
+<li><a href="#s21" data-sec="20"><span class="rs"><b>21</b><span>КОМАНДА</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="21">21</span><span class="rn-name">КОМАНДА</span></span></a></li>
+</ol></div>
+</div>
+</nav>
+<nav data-layer="en" class="dk-toc" aria-label="Contents" lang="en"><div class="dk-toc-in">
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#e01">I GAME</a>
+<ol>
+<li><a href="#e01" data-sec="0"><span class="rs"><b>01</b><span>PROBLEM</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="01">01</span><span class="rn-name">PROBLEM</span></span></a></li>
+<li><a href="#e02" data-sec="1"><span class="rs"><b>02</b><span>MODEL</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="02">02</span><span class="rn-name">MODEL</span></span></a></li>
+<li><a href="#e03" data-sec="2"><span class="rs"><b>03</b><span>LIVE FIGHT</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="03">03</span><span class="rn-name">LIVE FIGHT</span></span></a></li>
+<li><a href="#e04" data-sec="3"><span class="rs"><b>04</b><span>FIGHTER</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="04">04</span><span class="rn-name">FIGHTER</span></span></a></li>
+<li><a href="#e05" data-sec="4"><span class="rs"><b>05</b><span>WHAT THE PLAYER DOES</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="05">05</span><span class="rn-name">WHAT THE PLAYER DOES</span></span></a></li>
+<li><a href="#e06" data-sec="5"><span class="rs"><b>06</b><span>LADDER</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="06">06</span><span class="rn-name">LADDER</span></span></a></li>
+<li><a href="#e07" data-sec="6"><span class="rs"><b>07</b><span>BARRIER</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="07">07</span><span class="rn-name">BARRIER</span></span></a></li>
+<li><a href="#e08" data-sec="7"><span class="rs"><b>08</b><span>WORLDS</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="08">08</span><span class="rn-name">WORLDS</span></span></a></li>
+<li><a href="#e09" data-sec="8"><span class="rs"><b>09</b><span>STATUS</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="09">09</span><span class="rn-name">STATUS</span></span></a></li>
+<li><a href="#e10" data-sec="9"><span class="rs"><b>10</b><span>HYPOTHESES</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="10">10</span><span class="rn-name">HYPOTHESES</span></span></a></li>
+</ol></div>
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#e11">II ECONOMICS</a>
+<ol>
+<li><a href="#e11" data-sec="10"><span class="rs"><b>11</b><span>PLAYER ECONOMY</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="11">11</span><span class="rn-name">PLAYER ECONOMY</span></span></a></li>
+<li><a href="#e12" data-sec="11"><span class="rs"><b>12</b><span>REVENUE</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="12">12</span><span class="rn-name">REVENUE</span></span></a></li>
+<li><a href="#e13" data-sec="12"><span class="rs"><b>13</b><span>UNIT ECONOMICS</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="13">13</span><span class="rn-name">UNIT ECONOMICS</span></span></a></li>
+<li><a href="#e14" data-sec="13"><span class="rs"><b>14</b><span>SCALE</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="14">14</span><span class="rn-name">SCALE</span></span></a></li>
+<li><a href="#e15" data-sec="14"><span class="rs"><b>15</b><span>TOKEN</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="15">15</span><span class="rn-name">TOKEN</span></span></a></li>
+</ol></div>
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#e16">III MARKET &amp; PLAN</a>
+<ol>
+<li><a href="#e16" data-sec="15"><span class="rs"><b>16</b><span>MARKET</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="16">16</span><span class="rn-name">MARKET</span></span></a></li>
+<li><a href="#e17" data-sec="16"><span class="rs"><b>17</b><span>AGENT ARENA</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="17">17</span><span class="rn-name">AGENT ARENA</span></span></a></li>
+<li><a href="#e18" data-sec="17"><span class="rs"><b>18</b><span>ROADMAP</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="18">18</span><span class="rn-name">ROADMAP</span></span></a></li>
+<li><a href="#e19" data-sec="18"><span class="rs"><b>19</b><span>RISKS</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="19">19</span><span class="rn-name">RISKS</span></span></a></li>
+</ol></div>
+<div class="dk-toc-ch"><a class="dk-toc-h" href="#e20">IV ROUND</a>
+<ol>
+<li><a href="#e20" data-sec="19"><span class="rs"><b>20</b><span>ROUND</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="20">20</span><span class="rn-name">ROUND</span></span></a></li>
+<li><a href="#e21" data-sec="20"><span class="rs"><b>21</b><span>TEAM</span></span><span class="rb" aria-hidden="true"><span class="dk-num" data-n="21">21</span><span class="rn-name">TEAM</span></span></a></li>
+</ol></div>
+</div>
+</nav>
 <main>
 <section data-layer="en" lang="en" data-screen-label="Первый экран" style="position:relative;z-index:1;max-width:1280px;margin:0 auto;min-height:calc(100svh - 88px);padding:48px clamp(24px,5vw,64px) clamp(56px,9vw,112px);display:flex;flex-direction:column;justify-content:flex-end;gap:clamp(28px,4vw,44px)">
 <h1 style="margin:0;max-width:13ch;font:900 clamp(56px,10vw,156px)/.88 'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">You raise an AI until it starts raising others.</h1>
@@ -2143,8 +2173,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
     if (sSel > -1) sTicks[sSel].classList.remove('sel');
     sSel = k; sTicks[k].classList.add('sel');
     var link = doc.querySelector('.dk-toc:not(.off) a[data-sec="' + k + '"]');
-    var num = link ? link.querySelector('b').textContent : (k < 9 ? '0' : '') + (k + 1);
-    var name = link ? link.lastChild.nodeValue.trim() : '';
+    var nb = link && link.querySelector('.rs b'), nn = link && link.querySelector('.rs span');
+    var num = nb ? nb.textContent : (k < 9 ? '0' : '') + (k + 1);
+    var name = nn ? nn.textContent.trim() : '';
     tip.textContent = '';
     var b = doc.createElement('b'); b.textContent = num; tip.appendChild(b);
     tip.appendChild(doc.createTextNode('· ' + name));
@@ -2165,6 +2196,106 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
   });
   scale.addEventListener('pointercancel', function () { sDrag = false; scale.classList.remove('drag'); });
   scale.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  /* --- Колонка-оглавление (десктоп): раскладка и сдвиг ----------------------
+     Высоты пунктов задаёт сценарий: раскрытый — под большой номер, ±1 и ±2 чуть
+     крупнее, остальные мелко. Список сдвигается так, чтобы раскрытый номер стоял
+     у верха текста раздела (RAIL.anchor), но весь список оставался на экране:
+     влезает целиком — двигается только в зазоре, не влезает — скользит.
+     Высоты и сдвиг идут одним ходом (520 мс), поэтому рост читается непрерывно. */
+  var railMQ = window.matchMedia ? window.matchMedia('(min-width:1024px) and (pointer:fine)') : { matches: false };
+  var RAIL = { head: 20, gap: 10, h1: 26, h2: 22, h3: 18, anchor: 56, top: 24, bot: 28 };
+  var CH_START = [0, 10, 15, 19];
+  var railSig = '', railReady = false;
+  tocLinks.forEach(function (a) {
+    var n = a.getAttribute('data-sec');
+    if (n !== null) a.style.setProperty('--sec-c', colorOf(+n));
+  });
+  tocNavs.forEach(function (nav) { [].forEach.call(nav.querySelectorAll('.dk-toc-ch'), function (ch, ci) { if (ci > 0) ch.style.marginTop = RAIL.gap + 'px'; }); });
+  function railMeasure() {
+    var L = activeLayer(), as = L && L.querySelector('aside.dk-aside');
+    if (!as) return;
+    var r = as.getBoundingClientRect();
+    var w = Math.round(Math.min(r.width, 280));
+    railL = Math.round(r.left); railR = railL + w;
+    root.style.setProperty('--rail-l', railL + 'px');
+    root.style.setProperty('--rail-w', w + 'px');
+  }
+  function railApply(c, force) {
+    if (!railMQ.matches) return;
+    var hd = doc.querySelector('.dk-head');
+    var hb = hd ? Math.max(0, Math.round(hd.getBoundingClientRect().bottom)) : 0;
+    var top = Math.max(RAIL.top, hb ? hb + 12 : 0), bot = vh - RAIL.bot;
+    /* Высота раскрытого пункта — по самому слою .rb (название может встать рядом
+       с номером или под него); transform на offsetHeight не влияет. */
+    var h0 = 0;
+    if (c >= 0) {
+      var cl = doc.querySelector('.dk-toc:not(.off) a[data-sec="' + c + '"] .rb');
+      h0 = cl ? cl.offsetHeight + 6 : 0;
+    }
+    var sig = [c, top, vh, h0, window.innerWidth].join('|');
+    if (!force && sig === railSig) return;
+    railSig = sig;
+    function hOf(n) {
+      if (c < 0) return RAIL.h3;
+      var d = Math.abs(n - c);
+      return d === 0 ? h0 : d === 1 ? RAIL.h1 : d === 2 ? RAIL.h2 : RAIL.h3;
+    }
+    var y = 0, offs = [], ci, n;
+    for (ci = 0; ci < 4; ci++) {
+      if (ci > 0) y += RAIL.gap;
+      y += RAIL.head;
+      var end = ci < 3 ? CH_START[ci + 1] : 21;
+      for (n = CH_START[ci]; n < end; n++) { offs[n] = y; y += hOf(n); }
+    }
+    var lo = Math.min(top, bot - y), hi = Math.max(top, bot - y);
+    var want = c < 0 ? top : RAIL.anchor - offs[c];
+    var Lp = Math.round(Math.min(hi, Math.max(lo, want)));
+    var curCh = c < 0 ? -1 : chapterOf(c);
+    tocNavs.forEach(function (nav) {
+      var inner = nav.querySelector('.dk-toc-in');
+      if (inner) inner.style.transform = 'translateY(' + Lp + 'px)';
+      [].forEach.call(nav.querySelectorAll('.dk-toc-ch'), function (ch, k) { ch.classList.toggle('is-cur-ch', k === curCh); });
+      [].forEach.call(nav.querySelectorAll('a[data-sec]'), function (a) {
+        var m = +a.getAttribute('data-sec');
+        a.style.height = hOf(m) + 'px';
+        a.setAttribute('data-d', c < 0 ? 3 : Math.min(3, Math.abs(m - c)));
+      });
+    });
+    if (!railReady) {
+      railReady = true;
+      requestAnimationFrame(function () { requestAnimationFrame(function () { tocNavs.forEach(function (nav) { nav.classList.add('is-ready'); }); }); });
+    }
+  }
+  /* Колонка прячется, пока на экране то, что лежит и под ней: первый экран,
+     открывающие экраны глав («II ECONOMICS»), фразы-паузы, финал, подвал — но
+     только если их текст доходит до колонки. */
+  var awayEls = [], awayTexts = [], railL = 0, railR = 0;
+  function hasText(e) {
+    for (var n = e.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.nodeValue.trim()) return true;
+    return false;
+  }
+  function railCollect() {
+    awayEls = [].slice.call(doc.querySelectorAll('main > section[data-screen-label="Первый экран"]:not(.off), .dk-layer:not(.off) > div[data-rv], .dk-layer:not(.off) .dk-pause, .dk-foot'));
+    awayTexts = awayEls.map(function (el) {
+      var t = [].filter.call(el.querySelectorAll('*'), hasText);
+      if (hasText(el)) t.push(el);
+      return t;
+    });
+  }
+  function railAway() {
+    if (!railMQ.matches) return;
+    var away = false;
+    for (var i = 0; i < awayEls.length && !away; i++) {
+      var r = awayEls[i].getBoundingClientRect();
+      if (r.bottom < 0 || r.top > vh) continue;
+      var ts = awayTexts[i];
+      for (var j = 0; j < ts.length; j++) {
+        var q = ts[j].getBoundingClientRect();
+        if (q.width > 1 && q.bottom > 0 && q.top < vh && q.right > railL && q.left < railR) { away = true; break; }
+      }
+    }
+    tocNavs.forEach(function (nav) { nav.classList.toggle('is-away', away); });
+  }
   function markNav(c) {
     tocLinks.forEach(function (a) {
       var n = a.getAttribute('data-sec');
@@ -2174,16 +2305,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
       a.classList.toggle('is-past', n < c);
       if (n === c) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
     });
-    var col = c < 0 ? '#F6F4F6' : colorOf(c);
-    tocNavs.forEach(function (n) { n.style.setProperty('--sec-c', col); });
-    scale.style.setProperty('--sec-c', col);
+    scale.style.setProperty('--sec-c', c < 0 ? '#F6F4F6' : colorOf(c));
     sTicks.forEach(function (t, k) { t.classList.toggle('is-cur', k === c); t.classList.toggle('is-past', k < c); });
-    /* Короткое окно: текущий пункт не уезжает из видимой части колонки. */
-    var nav = doc.querySelector('.dk-toc:not(.off)'), cl = nav && nav.querySelector('a.is-cur');
-    if (cl && nav.offsetParent) {
-      var top = cl.offsetTop, bot = top + cl.offsetHeight;
-      if (top < nav.scrollTop || bot > nav.scrollTop + nav.clientHeight) nav.scrollTop = top - nav.clientHeight / 2;
-    }
+    railApply(c, false);
   }
 
   var cur = -2, shiftT = 0;
@@ -2195,6 +2319,7 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
     var L = activeLayer();
     secEls = [].slice.call(L.querySelectorAll('section[data-sec]'));
     bars = [].slice.call(L.querySelectorAll('[data-bar]'));
+    railCollect(); railMeasure(); railApply(cur, true);
     pending = []; pausesP = [];
     if (!anim) return;
     /* Части раздела: дети блоков [data-rv]. Высокий блок из нескольких частей
@@ -2272,6 +2397,8 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
       var cc = chapterOf(c);
       [].forEach.call(doc.querySelectorAll('.dk-nav a'), function (a) { a.classList.toggle('is-cur', +a.getAttribute('data-ch') === cc); });
     }
+    railApply(c, false);
+    railAway();
     if (!reduce) bars.forEach(function (b) {
       var r = b.getBoundingClientRect();
       var p = clamp((vh * 0.85 - r.top) / (vh * 0.45));
@@ -2283,12 +2410,12 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
   function frame() { queued = false; check(false); tick(); }
   function schedule() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
   window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', function () { vh = window.innerHeight; schedule(); });
+  window.addEventListener('resize', function () { vh = window.innerHeight; railMeasure(); railApply(cur, true); schedule(); });
 
   setLang(read(), false);
   /* Подгрузка шрифтов и картинок сдвигает раскладку — перепроверить. */
-  [400, 1200, 3000].forEach(function (ms) { setTimeout(schedule, ms); });
-  if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(schedule);
+  [400, 1200, 3000].forEach(function (ms) { setTimeout(function () { railMeasure(); schedule(); }, ms); });
+  if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { railMeasure(); schedule(); });
 })();
 </script>
 <script>
