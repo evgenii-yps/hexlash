@@ -36,6 +36,7 @@
 
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import { segmentHitsCovers, pushPointOutOfCovers } from '@/data/openFieldCovers.js';
+import { createRng } from './boutRandom.js';
 
 /**
  * @param {object} o
@@ -43,7 +44,9 @@ import { segmentHitsCovers, pushPointOutOfCovers } from '@/data/openFieldCovers.
  * @param {{x:number,z:number}} o.bounds полуразмеры поля
  * @param {() => number} o.now время в секундах (сцена — своё, мгновенный бой — своё)
  */
-export function createCoverNav({ covers, bounds, now }) {
+export function createCoverNav({ covers, bounds, now, rng = null }) {
+  // Свой источник случайности боя (см. scene/boutRandom.js): обход преград не зависит от картинки.
+  const rand = rng || createRng();
   const C = COMBAT_BALANCE.openField.cover;
   const cell = C.cellSize;
   const pad = C.bodyRadius;
@@ -252,7 +255,7 @@ export function createCoverNav({ covers, bounds, now }) {
       // Точка подмены заводится ОДНА на бойца и переписывается на месте: её
       // спрашивают по два десятка раз за кадр, и новый объект на каждый запрос —
       // это мусор в самом горячем месте.
-      s = { nextAt: 0, seed: Math.random(), way: null, out: { x: 0, y: 0, z: 0 }, active: false };
+      s = { nextAt: 0, seed: rand(), way: null, out: { x: 0, y: 0, z: 0 }, active: false };
       state.set(unit, s);
     }
     return s;

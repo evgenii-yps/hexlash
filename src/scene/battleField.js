@@ -26,6 +26,7 @@
 // Экспортирует: createBattleField.
 
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
+import { createRng } from './boutRandom.js';
 
 /** Ядра, у каждого своё правило выбора цели. Ключи — те же, что в upgradeData. */
 const ONSLAUGHT = 'natisk';
@@ -56,7 +57,9 @@ const AMBUSH = 'zasada';
  *   время своих часов, мгновенный бой — своё синтетическое; ровно так же устроены
  *   часы накала (boutCore.createBoutClocks).
  */
-export function createBattleField({ attentionRadius = null, leader = null } = {}) {
+export function createBattleField({ attentionRadius = null, leader = null, rng = null } = {}) {
+  // Свой источник случайности боя (см. scene/boutRandom.js): выбор цели и жребий короны не зависят от картинки.
+  const rand = rng || createRng();
   // Радиус живёт числом, а не признаком «режим такой-то»: поле боя про режимы не
   // знает и знать не должно. Ноль и отрицательное читаются как «радиуса нет» —
   // иначе опечатка в числе молча оставила бы бойцов без целей вовсе.
@@ -112,7 +115,7 @@ export function createBattleField({ attentionRadius = null, leader = null } = {}
         return foes.reduce((a, b) => (dist(u, b) < dist(u, a) ? b : a));
       default:
         // RAIDER и всё незнакомое — наугад.
-        return foes[Math.floor(Math.random() * foes.length)];
+        return foes[Math.floor(rand() * foes.length)];
     }
   };
 
@@ -159,7 +162,7 @@ export function createBattleField({ attentionRadius = null, leader = null } = {}
   const lots = new Map();
   const lotOf = (sideId) => {
     let v = lots.get(sideId);
-    if (v === undefined) { v = Math.random(); lots.set(sideId, v); }
+    if (v === undefined) { v = rand(); lots.set(sideId, v); }
     return v;
   };
 
