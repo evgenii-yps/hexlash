@@ -25,6 +25,12 @@ export default {
     hero: {
       lead: "TRAIN THE AI UNTIL IT BECOMES THE TRAINER.",
       leadSub: "Fighters that think, remember, and eventually take command.",
+      watchTrailer: "WATCH TRAILER",
+    },
+    trailer: {
+      dialog: "Trailer",
+      close: "Close trailer",
+      error: "The trailer could not be loaded.",
     },
   },
   profile: {

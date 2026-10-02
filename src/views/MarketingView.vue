@@ -28,7 +28,7 @@
       <main class="page" ref="pageRef">
         <!-- Первый экран НЕ улетает (решение владельца 26.09.2026): он стоит
              обычным первым экраном, полёт начинается после него. -->
-        <LandingHero @play="onPlay" />
+        <LandingHero :bg-paused="trailerOpen" @play="onPlay" @watch="trailerOpen = true" />
 
         <!-- ПОЛЁТ. Высокий блок даёт прокрутку, внутри него прилипшее окно во
              весь экран, а в окне — мир: кольца, ядро и текстовые блоки в одних
@@ -50,6 +50,11 @@
         <LandingStayUpdated />
         <LandingFooter />
       </main>
+
+      <!-- Полный трейлер. Стоит ПОСЛЕ .page, а не внутри: у .page свой слой
+           (z-index), и окно внутри него оказалось бы под шапкой. Создаётся
+           только по нажатию — до этого видео не запрашивается. -->
+      <LandingTrailerModal v-if="trailerOpen" @close="trailerOpen = false" />
     </div>
   </div>
 </template>
@@ -69,6 +74,7 @@ import LandingToken from '@/components/landing/LandingToken.vue';
 import LandingRoadmap from '@/components/landing/LandingRoadmap.vue';
 import LandingStayUpdated from '@/components/landing/LandingStayUpdated.vue';
 import LandingFooter from '@/components/landing/LandingFooter.vue';
+import LandingTrailerModal from '@/components/landing/LandingTrailerModal.vue';
 import '@/components/landing/landing.css';
 
 const router = useRouter();
@@ -98,6 +104,9 @@ const activeIndex = ref(0);
 const activeCore = computed(() => coreAt(activeIndex.value));
 
 const isIn = ref(false);
+
+/* Окно полного трейлера. Пока оно открыто, петля первого экрана стоит на паузе. */
+const trailerOpen = ref(false);
 
 let revealObserver = null;
 let revealSafety = null;

@@ -235,7 +235,9 @@
      коэффициент 23vw → 21vw — на 768 и 390 даёт −9% (было 76.9%, стало ~70%).
    Нижняя граница 76 НЕ тронута: она держит перенос на 320 точках, и её пересчёт
    вернул бы обрезание слова. Ниже 362 точек ширины работает именно она. */
-.lp .headline { font-weight: 800; line-height: .86; letter-spacing: .005em; font-size: clamp(76px, 21vw, 287px); text-transform: uppercase; }
+.lp .headline { font-weight: 800; line-height: .86; letter-spacing: .005em; font-size: var(--hl-fs); text-transform: uppercase;
+  /* Удар слова по времени петли (см. HERO · ФОН-ПЕТЛЯ ниже). В покое — единица. */
+  transform: scale(var(--word-s, 1)); }
 .lp .headline .line { display: block; position: relative; white-space: nowrap; }
 /* Сами буквы. Ореола на них нет — он живёт отдельным слоем ниже.
    ⚠️ position + z-index обязательны: слой свечения позиционирован, а значит
@@ -327,6 +329,127 @@
 .lp .scrollcue { margin-top: 54px; width: 26px; height: 42px; border: 1.5px solid var(--line-strong); border-radius: var(--r-round); display: flex; justify-content: center; padding-top: 8px; }
 .lp .scrollcue span { width: 3px; height: 8px; border-radius: var(--r-round); background: var(--pink); box-shadow: 0 0 8px var(--pink); animation: lpk-scrolldot 1.8s ease-in-out infinite; }
 @keyframes lpk-scrolldot { 0% { opacity: 0; transform: translateY(-4px); } 30% { opacity: 1; } 80% { opacity: 0; transform: translateY(12px); } 100% { opacity: 0; } }
+
+/* ============ HERO · ФОН-ПЕТЛЯ, ЗНАК, КНОПКА ТРЕЙЛЕРА ============
+   Петля лежит ПОД текстом первого экрана. Файлы и время удара — в
+   src/data/heroLoop.js; здесь только то, что рисует.
+
+   ⚠️ Слой: .hero-bg стоит на z-index -1 внутри .page. У .page свой слой, поэтому
+   петля выше общего фона-вихря (он снаружи и не тронут), но ниже текста и ниже
+   шапки. Фиксированного затемнения полёта (.lp-journey-dim) петля не заменяет:
+   оно по-прежнему лежит под страницей. */
+.lp .hero {
+  /* Кегль слова — одна формула на заголовок и на знак над ним (раньше она жила
+     прямо в .headline). Значение прежнее, см. комментарий выше. */
+  --hl-fs: clamp(76px, 21vw, 287px);
+  /* Знак над словом: 240 точек на потолке кегля, 115 на самом узком. Линейно от
+     кегля — знак и слово остаются одной связкой на любой ширине. Но не выше 28 %
+     высоты окна: на низком экране над словом мало места до шапки, и в паузе
+     удара знак иначе наезжал бы на меню. */
+  --hero-mark: min(calc(70px + var(--hl-fs) * .59), 28vh);
+  /* ⚠️ СИЛА ЗАТЕМНЕНИЯ ПЕТЛИ — одно число. Решение владельца: не ниже .45
+     (текст и свечение слова читаются поверх движущейся картинки). */
+  --hero-dim: .48;
+}
+.lp .hero-bg {
+  position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--nav-h));
+  z-index: -1; overflow: hidden; pointer-events: none; background: var(--void);
+  /* Низ растворяется в общий фон: когда первый экран уезжает вверх, края
+     картинки не видно. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 78%, transparent 100%);
+}
+/* Заставка и видео — один и тот же кадр в одной и той же раскладке. Компьютер
+   держит низ кадра (действие стоит в нижней части), телефон — верх: бойцы там
+   стоят в полосе между шапкой и заголовком и не зависят от высоты экрана. */
+.lp .hero-bg__media {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  object-fit: cover; object-position: 50% 100%;
+}
+.lp .hero-bg__video { opacity: 0; }
+.lp .hero-bg__video.is-on { opacity: 1; }
+.lp .hero-bg__dim {
+  position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--void) calc(var(--hero-dim) * 100%), transparent);
+}
+@media (max-width: 680px) and (orientation: portrait) {
+  .lp .hero-bg__media { object-position: 50% 0; }
+}
+
+/* Знак над словом. Невидим, пока петля не дошла до удара; переменные пишет
+   LandingHero по времени кадра. */
+.lp .hero-head { position: relative; }
+.lp .hero-mark {
+  position: absolute; left: 50%; pointer-events: none;
+  width: var(--hero-mark); height: var(--hero-mark);
+  margin-left: calc(var(--hero-mark) / -2);
+  /* Поле в самом файле знака: видимая часть ниже центра на 0.21 бокса, поэтому
+     верх бокса стоит на 0.79 бокса + зазор над заголовком. */
+  top: calc(var(--hero-mark) * -0.79 - 14px);
+  opacity: var(--mark-a, 0); transform: scale(var(--mark-s, 1));
+}
+
+/* Кнопка WATCH TRAILER: слот нулевой высоты под «мышкой» (на телефоне — под
+   кнопками), сама кнопка висит в нём и ничего не сдвигает. Семья JOIN DISCORD:
+   рамка, шрифт, разрядка те же; меньше размером, но зона касания не ниже 44. */
+.lp .hero-watch-slot { position: relative; width: 100%; height: 0; }
+.lp .btn-watch {
+  position: absolute; top: 26px; left: 0; right: 0; margin: 0 auto; width: max-content;
+  min-height: var(--h-btn-sm); padding: 0 22px; gap: 9px;
+  font-size: var(--t-sm); cursor: pointer;
+}
+.lp .btn-watch svg { width: 10px; height: 10px; fill: currentColor; }
+.lp .btn-watch:active { transform: translateY(1px); }
+@media (max-width: 680px) { .lp .btn-watch { top: 20px; } }
+
+/* Окно полного трейлера. Закрывает всё, включая шапку (стоит после .page, слой
+   окон). Прокрутку страницы под ним держит класс на <html>. */
+html.lp-lock, html.lp-lock body { overflow: hidden; }
+.lp .trailer {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: color-mix(in srgb, var(--void) 96%, transparent);
+  overscroll-behavior: contain; touch-action: none;
+  animation: lpk-trailer-in var(--d-hover) var(--e-settle) both;
+}
+@keyframes lpk-trailer-in { from { opacity: 0; } to { opacity: 1; } }
+.lp .trailer__frame {
+  position: relative; aspect-ratio: 16 / 9;
+  width: min(100%, calc((100vh - 96px) * 16 / 9));
+  width: min(100%, calc((100dvh - 96px) * 16 / 9));
+  background: var(--void);
+}
+.lp .trailer__video { display: block; width: 100%; height: 100%; background: var(--void); touch-action: manipulation; }
+.lp .trailer__wait { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.lp .trailer__spin { width: 34px; height: 34px; border: 2px solid var(--line-strong); border-top-color: var(--ink-soft);
+  border-radius: var(--r-round); animation: lpk-spin var(--d-spin) linear infinite; }
+@keyframes lpk-spin { to { transform: rotate(360deg); } }
+.lp .trailer__fail { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px;
+  font-family: var(--font-mono); font-size: var(--t-sm); letter-spacing: var(--ls-meta); color: var(--ink-dim); }
+.lp .trailer__close {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right));
+  width: var(--h-btn-sm); height: var(--h-btn-sm); display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-strong); background: var(--fill-1); color: var(--ink-soft); cursor: pointer;
+  touch-action: manipulation; transition: color var(--d-hover), border-color var(--d-hover), background var(--d-hover);
+}
+.lp .trailer__close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.lp .trailer__close:hover { color: var(--ink); border-color: rgba(var(--pink-rgb), .4); background: rgba(var(--pink-rgb), .06); }
+.lp .trailer__close:active { opacity: .75; }
+.lp .trailer__close:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+/* Телефон в портрете: крестик внизу по центру — под большой палец. Нажатие на
+   тёмный фон выше и ниже видео закрывает окно так же. */
+@media (max-width: 680px) and (orientation: portrait) {
+  .lp .trailer__close { top: auto; right: 50%; bottom: max(24px, env(safe-area-inset-bottom));
+    width: 52px; height: 52px; transform: translateX(50%); }
+}
+/* Своё правило «уменьшить движение»: без петли и без ударов. Заставка остаётся,
+   знак стоит в покое, слово не бьётся. Спиннер окна крутится и тут — это
+   индикатор ожидания, а не украшение. */
+@media (prefers-reduced-motion: reduce) {
+  .lp .hero-mark { opacity: 1 !important; transform: none !important; }
+  .lp .headline { transform: none !important; }
+  .lp .trailer__spin { animation-duration: var(--d-spin) !important; animation-iteration-count: infinite !important; }
+}
 
 /* ============ HERO ENTRANCE ============ */
 .lp .reveal { opacity: 0; transform: translateY(26px); filter: blur(6px); }
