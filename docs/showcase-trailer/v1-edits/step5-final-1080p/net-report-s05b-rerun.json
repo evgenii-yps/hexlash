@@ -1,0 +1,33 @@
+{
+ "total": {
+  "blocked": 30,
+  "analytics": 28,
+  "ws": 0,
+  "sent": 0,
+  "hosts": {
+   "www.googletagmanager.com": 2,
+   "sr-client-cfg.amplitude.com": 18,
+   "api2.amplitude.com": 10
+  }
+ },
+ "perPlan": {
+  "s05b-forge": {
+   "blockedTotal": 15,
+   "blockedByHost": {
+    "www.googletagmanager.com": 1,
+    "sr-client-cfg.amplitude.com": 9,
+    "api2.amplitude.com": 5
+   },
+   "analyticsBlocked": 14,
+   "analyticsHosts": [
+    "sr-client-cfg.amplitude.com",
+    "api2.amplitude.com"
+   ],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 5,
+   "sentOutside": 0,
+   "sentList": []
+  }
+ }
+}

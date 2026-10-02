@@ -72,6 +72,7 @@ export const plans = [
         { f: 108, pos: [3.3, 3.5, 5.7], look: [-0.3, 1.5, 0.7], roll: 1.0, fov: 38 },
       ],
     },
+    fadeIn: 60, fadeColor: '0x08080A', fadeCurve: 'smoothstep',   // вступление: проявление первой сцены из #08080A за 1,0 с мягкой S-кривой (сцена уже движется)
     still: 100,
   },
   {
@@ -226,7 +227,7 @@ export const plans = [
   { id: 't3-title', title: 'T3 · титр', kind: 'title', len: 88, text: 'BUILD YOUR SQUAD', delay: 4, hold: 60, snap: 4, from: 0.92, fadeIn: 0, fadeOut: 0, still: 30, world: { roster: [] },
     marks: [{ f: 4, kind: 'title', name: 'титр T3: BUILD YOUR SQUAD (щелчок масштаба)' }, { f: 64, kind: 'title', name: 'титр T3: срез в чёрный (тишина перед возвратом темы)' }] },
   {
-    id: 's10-logo', title: '14–15 · BAM → логотип', kind: 'logo', len: 300, delay: 6, up: 6, down: 3, mark: 132, still: 200,
+    id: 's10-logo', title: '14–15 · BAM → логотип', kind: 'logo', len: 300, delay: 6, up: 6, down: 3, mark: 198, still: 200,   // mark: 198 = 132 × 1,5 (связка ≈54 % ширины кадра вместо ≈36 %)
     fadeIn: 0,
     world: { roster: [] },
     marks: [
@@ -242,6 +243,7 @@ export const plans = [
 // а чёрный между ними — титр (окна 78 / 80 / 88 кадров; соседние сцены подрезаны в шкале через trim, чтобы события не уехали).
 // Итого 3276 кадров = 54,6 с.
 export const timeline = [
+  { label: 'вступление: полный чёрный #08080A', gap: 72 },   // 1,2 с чёрного, потом первая сцена проявляется из него (fadeIn s01)
   { plan: 's01-home' },
   { plan: 's02-gate' },
   { plan: 's03-duel' },
@@ -291,7 +293,7 @@ export const music = {
   },
   cut: { plan: 's09-finale', f: 512 },
   boost: { db: 8, sec: 2.5 },   // подъём уровня входа на BAM (дБ на ударе → 0 за sec): вход в треке тише громкой части
-  fadeIn: 1.0,      // с: плавный вход (отсчёт от начала музыки)
+  fadeIn: 2.2, fadeCurve: 'qsin',   // с: от нуля громкости с первого кадра ролика до полной к концу проявления (1,2 с чёрного + 1,0 с); мягкая кривая
   fadeOut: 3.0,     // с: затухание под удержанием логотипа, заканчивается за 0,1 с до конца
   lufs: -14, tp: -1.5, bitrate: '192k',
 };

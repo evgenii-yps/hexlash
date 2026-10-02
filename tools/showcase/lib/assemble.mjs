@@ -12,6 +12,8 @@ import { gradeFilter } from './grade.mjs';
 
 // Цвет в файле: кадры RGB → YUV по BT.709 (HD), диапазон ТВ, и ЯВНЫЕ метки. Без них плеер сам решает, какую матрицу взять, и розовый уходит в оттенке
 // (замер на кнопке FIGHT: без меток G +20 у обычного плеера). Метки пишутся и в x264, и в контейнер.
+// «Полный чёрный» ролика — фон бренда #08080A (вступление, титры, логотип)
+export const BG = '0x08080A';
 export const COLOR_TAGS = ['-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv'];
 const TO_YUV = 'scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv420p';
 
@@ -52,7 +54,7 @@ export function encodeTimeline({ root, every, out, crf = 16, preset = 'medium', 
   parts.forEach((p, i) => {
     const input = p.plan
       ? ['-framerate', String(inFps), '-start_number', String(p.head / every), '-i', path.join(root, p.plan.id, 'frames', '%05d.png')]
-      : ['-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=${W}x${H}:r=${outFps}`];
+      : ['-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=${BG}:s=${W}x${H}:r=${outFps},format=rgb24`];   // чёрный бренда #08080A, сразу в RGB (без округления через YUV)
     if (p.plan && p.head % every) throw new Error(`trim.head плана ${p.id} должен быть кратен every=${every}`);
     const len = p.len / FPS;
     let f = `scale=${W}:${H},setsar=1,fps=${inFps}`;
@@ -62,7 +64,13 @@ export function encodeTimeline({ root, every, out, crf = 16, preset = 'medium', 
       if (blend30) f += `,tmix=frames=2:weights='1 1',select='mod(n,2)',setpts=N/(${outFps}*TB)`;
       // затемнения на стыках: по умолчанию FADE кадров; у планов переходов T1–T3 свои (fadeIn / fadeOut)
       const fin = (p.plan.fadeIn ?? FADE) / FPS, fout = (p.plan.fadeOut ?? FADE) / FPS;
-      if (fin > 0) f += `,fade=t=in:st=0:d=${fin}`;
+      // вход: обычное затемнение из чёрного; у плана с fadeCurve:'smoothstep' (вступление ролика) — проявление из цвета fadeColor (#08080A)
+      // по S-кривой 3u²−2u³ (нулевой наклон в начале и конце: без рывка), в RGB, покадрово по времени кадра
+      if (fin > 0 && p.plan.fadeCurve === 'smoothstep') {
+        const c = parseInt(String(p.plan.fadeColor || '0x000000').replace(/^0x|#/, ''), 16), rgb = [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+        const k = `st(0,clip(T/${fin},0,1));st(0,ld(0)*ld(0)*(3-2*ld(0)))`;
+        f += `,format=gbrp,geq=r='${k};${rgb[0]}+(r(X,Y)-${rgb[0]})*ld(0)':g='${k};${rgb[1]}+(g(X,Y)-${rgb[1]})*ld(0)':b='${k};${rgb[2]}+(b(X,Y)-${rgb[2]})*ld(0)',format=rgb24`;
+      } else if (fin > 0) f += `,fade=t=in:st=0:d=${fin}`;
       if (fout > 0) f += `,fade=t=out:st=${Math.max(0, len - fout)}:d=${fout}`;
     }
     const file = path.join(tmp, `part${String(i).padStart(2, '0')}.nut`);

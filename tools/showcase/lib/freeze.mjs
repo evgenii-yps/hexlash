@@ -9,7 +9,7 @@ import { FPS } from '../plan/trailer.plan.mjs';
 /** Белый список: окна (в секундах ролика), где неподвижность допустима. */
 export function freezeWhitelist() {
   const { parts } = layout();
-  return parts.filter((p) => p.plan && (p.plan.kind === 'title' || p.plan.kind === 'logo')).map((p) => ({ id: p.id, from: p.start / FPS, to: (p.start + p.len) / FPS }));
+  return parts.filter((p) => !p.plan || p.plan.kind === 'title' || p.plan.kind === 'logo').map((p) => ({ id: p.id, from: p.start / FPS, to: (p.start + p.len) / FPS }));
 }
 
 export function detectFreezes(file, { noise = 0.0005, dur = 0.3 } = {}) {

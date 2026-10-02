@@ -149,7 +149,7 @@ function continuousGraph({ m0, dur, music, boost }) {
     const a = boost.at - 0.03;
     bo = `volume=volume='pow(10,(${boost.db}*clip((t-${n4(a)})/0.03,0,1)*max(0,1-(t-${n4(boost.at)})/${boost.sec}))/20)':eval=frame,alimiter=limit=0.9:attack=2:release=80:level=disabled,`;
   }
-  return `[0:a]aresample=${SR},atrim=start=${n4(m0)}:end=${n4(m0 + dur)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=${n4(f)},${bo}afade=t=out:st=${n4(dur - fo - 0.1)}:d=${n4(fo)},apad=whole_dur=${n4(dur)},atrim=0:${n4(dur)},asetpts=PTS-STARTPTS[m]`;
+  return `[0:a]aresample=${SR},atrim=start=${n4(m0)}:end=${n4(m0 + dur)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=${n4(f)}${music.fadeCurve ? ':curve=' + music.fadeCurve : ''},${bo}afade=t=out:st=${n4(dur - fo - 0.1)}:d=${n4(fo)},apad=whole_dur=${n4(dur)},atrim=0:${n4(dur)},asetpts=PTS-STARTPTS[m]`;
 }
 
 /** Громкость двухпроходная — как в buildMix, но граф сплошного куска. */

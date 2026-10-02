@@ -1,0 +1,22 @@
+{
+ "total": {
+  "blocked": 0,
+  "analytics": 0,
+  "ws": 0,
+  "sent": 0,
+  "hosts": {}
+ },
+ "perPlan": {
+  "s10-logo": {
+   "blockedTotal": 0,
+   "blockedByHost": {},
+   "analyticsBlocked": 0,
+   "analyticsHosts": [],
+   "websocketsBlocked": 0,
+   "websocketHosts": [],
+   "fontsMocked": 2,
+   "sentOutside": 0,
+   "sentList": []
+  }
+ }
+}

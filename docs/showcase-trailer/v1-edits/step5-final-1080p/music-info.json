@@ -1,0 +1,72 @@
+{
+ "variant": "B",
+ "times": {
+  "d": 1.6653333333333293,
+  "dB": -23.509999999999998,
+  "tTheme": 42.13333333333333,
+  "tBam": 50.9,
+  "tCut": 50.666666666666664,
+  "dur": 55.8,
+  "aEnd": 49.001333333333335,
+  "bStart": 74.17666666666666,
+  "bLen": 5.133333333333333
+ },
+ "loudness": {
+  "measuredBeforeNorm": {
+   "input_i": "-10.59",
+   "input_tp": "-0.92",
+   "input_lra": "11.30",
+   "input_thresh": "-21.07",
+   "output_i": "-15.01",
+   "output_tp": "-1.80",
+   "output_lra": "7.90",
+   "output_thresh": "-25.38",
+   "normalization_type": "dynamic",
+   "target_offset": "1.01"
+  },
+  "check": {
+   "integratedLUFS": -14,
+   "loudnessRange": 8,
+   "truePeakDBTP": -1.5,
+   "samplePeakDB": -1.500263
+  },
+  "target": {
+   "I": -14,
+   "TP": -1.5
+  }
+ },
+ "continuous": true,
+ "trackStartSec": 23.51,
+ "trackEndSec": 79.31,
+ "bamVideoSec": 50.9,
+ "bamTrackSec": 74.41,
+ "pieces": [
+  {
+   "name": "сплошной кусок",
+   "track": [
+    23.51,
+    79.31
+   ],
+   "video": [
+    0,
+    55.8
+   ]
+  }
+ ],
+ "anchors": {
+  "theme": {
+   "track": 40.468,
+   "at": {
+    "plan": "s09-finale",
+    "f": 0
+   }
+  },
+  "bam": {
+   "track": 74.41,
+   "at": {
+    "plan": "s10-logo",
+    "f": 6
+   }
+  }
+ }
+}
