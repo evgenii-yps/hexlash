@@ -229,7 +229,7 @@ a:hover{color:#F6F4F6}
 [data-arena].dk-corners::after{inset:0}
 @media (max-width:400px){.dk-corners::after{--l:12px}}
 
-/* --- Д. Окно с записью из игры (раздел 03, зал FORGE) ----------------------
+/* --- Д. Окно с записью из игры (раздел 06, зал FORGE) ----------------------
    Заставка — картинка, видео лежит поверх и невидимо, пока не пошло: нет
    JavaScript, режим энергосбережения iOS или видео не загрузилось — остаётся
    заставка (она же первый кадр петли). Подгрузка и пауза — в третьем скрипте.
@@ -315,7 +315,7 @@ a:hover{color:#F6F4F6}
    если читаешь.
 
    Плотность по ширине экрана: широкий — двенадцать точек, телефон — шесть
-   (блок «Узкий экран» ниже). На телефоне слабее железо, и в разделе 04
+   (блок «Узкий экран» ниже). На телефоне слабее железо, и в разделе 03
    работает живая арена. */
 .dk-dust::before,.dk-dust::after{
   content:"";position:fixed;left:0;top:0;width:2px;height:2px;border-radius:50%;
@@ -352,7 +352,7 @@ a:hover{color:#F6F4F6}
   50%{transform:translate3d(-44px,34px,0)}
   100%{transform:translate3d(0,0,0)}
 }
-/* Пока в окне раздела 04 идёт настоящий бой, пыль замирает: раздел 04 —
+/* Пока в окне раздела 03 идёт настоящий бой, пыль замирает: раздел 03 —
    единственное живое доказательство на всей странице, и кадры арены важнее
    частиц. Признак .dk-fight вешает на корень тот же сценарий, что уже слушает
    сигналы окна ('ready' — бой пошёл, 'end' — бой доигран). Новых сигналов не
@@ -528,7 +528,7 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
    Решётка крупнее: на 360 точках мелкая сетка превращается в грязь.
    Пыль не снимается, а редеет: шесть точек вместо двенадцати (решение
    владельца 10.09.2026, отменяет прежнее «только широкий экран»). Причина
-   потолка — слабее железо и живая арена в разделе 04. */
+   потолка — слабее железо и живая арена в разделе 03. */
 @media (max-width:680px){
   /* «Вихрь» на телефоне чуть ярче: в кадр попадают только внутренние кольца,
      и на 360 точках они гаснут раньше, чем на широком экране. */
@@ -668,7 +668,7 @@ html.dk-anim [data-dk-in].dk-in h2 .dk-hm{
   transition:opacity 260ms cubic-bezier(.2,.8,.2,1) 60ms,transform 500ms cubic-bezier(.2,.8,.2,1) 60ms;
 }
 html.dk-anim [data-dk-in].dk-nt h2 .dk-hm,html.dk-anim [data-dk-in].dk-nt>*{transition:none}
-/* Блок раздела 04: шапка сложена в обёртку. Заголовок в ней идёт под маской, а
+/* Блок раздела 03: шапка сложена в обёртку. Заголовок в ней идёт под маской, а
    остальное — обычным подъёмом, как раньше. */
 html.dk-anim [data-dk-in]>.dk-pass>:where(:not(h2)){opacity:0;transform:translateY(16px)}
 html.dk-anim [data-dk-in].dk-in>.dk-pass>:where(:not(h2)){
@@ -792,6 +792,28 @@ html.dk-anim [data-fx="stamp"].fx-on:not(.fx-skip){animation:dkStamp 380ms cubic
 html.dk-anim .dk-road .dk-stg{opacity:.4;transition:opacity 300ms cubic-bezier(.2,.8,.2,1)}
 html.dk-anim .dk-road .dk-stg.is-lit{opacity:1}
 html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
+/* --- Л. Версия 3: структура 21 раздел + экран-финал (02.10.2026) ------------
+   Новые разделы 04 «Боец», 05 «Что делает игрок», 17 «Арена агентов» собраны из
+   тех же деталей, что и остальные (карточки .dk-card, надзаголовок, плашки
+   статуса) и своих правил почти не заводят: всё, что нужно, лежит в инлайне,
+   как и у старых разделов. Здесь только экран-финал.
+
+   ⚠️ ФИНАЛ — <div>, А НЕ <section>, и класс у него НЕ .dk-pause. Секцией он
+   попал бы в шкалу разделов и сдвинул цикл цветов ядер; классом паузы — в
+   список пауз, чью серию ударов ведёт другой наблюдатель (а у финала нет слов
+   для серии). Поэтому он идёт обычным появлением блока (data-dk-in), а смена
+   языка синхронизирует его вместе с разделами (blocksOf во втором сценарии).
+   Оформлен как пауза: тот же экран во всю высоту, та же центровка. */
+.dk-finale{min-height:min(100svh,844px);max-width:1180px;margin:0 auto;padding:48px 16px;display:flex;align-items:center;justify-content:center;overflow-x:clip}
+.dk-finale>[data-dk-in]{width:100%;text-align:center}
+/* Шрифт — стеком в классе, а не инлайном: правило RU-слоя ловит только инлайн
+   со словом Saira, а здесь кириллице нужен запасной JetBrains Mono. */
+.dk-finale-ep{margin:0 0 22px;font:900 clamp(13px,1.8vw,18px)/1 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.32em;text-transform:uppercase;color:#F6F4F6}
+.dk-finale-ep::after{content:'';display:block;width:28px;height:1px;margin:16px auto 0;background:#FF0069}
+.dk-finale-h{font:900 clamp(34px,8vw,92px)/0.96 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0 auto;max-width:18ch;text-wrap:balance}
+.dk-finale-q{font:900 clamp(22px,4.4vw,48px)/1.12 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:56px auto 0;max-width:30em;text-wrap:balance}
+[data-layer="ru"] .dk-finale-h{font-size:clamp(24px,5.2vw,56px);max-width:16em}
+[data-layer="ru"] .dk-finale-q{font-size:clamp(15px,2.5vw,28px);line-height:1.3;text-transform:none;font-weight:700;max-width:34em}
 </style>
 
 <!-- =========================================================================
@@ -852,17 +874,28 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
      ⚠️ Заглушки в квадратных скобках — [N], [XX%], [ЖДЁТ ФИНМОДЕЛИ] и т.п. —
      честные: цифр, которых нет в ТЗ, на странице нет. Подставлять только по
      слову владельца. В окне арены языковая модель ВЫКЛЮЧЕНА (режим показа,
-     ?showcase=1 → brainMode = spinal) — подпись под окном в разделе 04 это
+     ?showcase=1 → brainMode = spinal) — подпись под окном в разделе 03 это
      говорит прямо. Включат модель в окне — подпись надо поправить.
 
      ДВИЖЕНИЕ И СТРУКТУРА 02.10.2026 (ТЗ TZ_deckinvestors_motion_v1). Добавлены: четыре
      главы (название главы стоит в надзаголовке каждого раздела, навигация шапки — по
-     главам), шкала прогресса, набегающие цифры, таблица раздела 02, лестница раздела 03,
-     схема одного боя в разделе 05, отметки и штампы в 07–08, линия роадмапа в 15, ответ
+     главам), шкала прогресса, набегающие цифры, таблица раздела 02, лестница раздела 06,
+     схема одного боя в разделе 07, отметки и штампы в 09–10, линия роадмапа в 18, ответ
      карточек на наведение и касание, заголовки из-под маски. Новые тексты — только
      названия глав и подпись схемы; остальные тексты разделов не менялись. Механизмы —
      те же, что у прежнего появления блоков (html.dk-anim, .dk-in), см. блок «ГЛАВЫ,
      ШКАЛА ПРОГРЕССА…» в стилях и второй <script> в конце файла.
+
+     СТРУКТУРА v3 (02.10.2026, ТЗ TZ_deckinvestors_v3_structure): 21 раздел вместо 18.
+     Порядок: I ИГРА 01–10 · II ЭКОНОМИКА 11–15 · III РЫНОК И ПЛАН 16–19 · IV РАУНД 20–21.
+     Новые разделы: 04 «Боец», 05 «Что делает игрок», 17 «Арена агентов»; бывший 04
+     «Живой бой» стал 03, бывшая «Лестница» — 06 (дополнена блоками «Восхождение» и
+     «Ведёт легенда»). Между 19 и 20 — экран-финал без номера (.dk-finale, <div>), эпиграф NEVER GIVE UP над его заголовком.
+     Пауза-фраза переехала вместе с разделом, перед которым стояла: перед 03, 09, 11, 18. Паузы перед финалом нет: NEVER GIVE UP — эпиграф над заголовком финала (.dk-finale-ep).
+     ⚠️ Номера sNN/eNN, data-screen-label и надзаголовок у каждого раздела вписаны
+     вручную и обязаны совпадать между языковыми слоями (смена языка держит место по
+     id sNN ↔ eNN). Меняя порядок — менять номера в обоих слоях, CH_FIRST/chapterOf во
+     втором скрипте и ссылки в шапке.
 
      ЗАКРЫТА ОТ ПОИСКА мета-запретом (он уже в выгрузке) плюс заголовком
      X-Robots-Tag в vercel.json. В robots.txt путь НЕ упоминается намеренно:
@@ -1286,15 +1319,15 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
   <nav data-layer="ru" class="off" aria-label="Разделы" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 16px">
     <a href="#s01" class="navlink" data-ch="0">ИГРА</a>
-    <a href="#s09" class="navlink" data-ch="1">ЭКОНОМИКА</a>
-    <a href="#s14" class="navlink" data-ch="2">РЫНОК И ПЛАН</a>
-    <a href="#s17" class="navlink" data-ch="3">РАУНД</a>
+    <a href="#s11" class="navlink" data-ch="1">ЭКОНОМИКА</a>
+    <a href="#s16" class="navlink" data-ch="2">РЫНОК И ПЛАН</a>
+    <a href="#s20" class="navlink" data-ch="3">РАУНД</a>
   </nav>
   <nav data-layer="en" aria-label="Sections" lang="en" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 16px">
     <a href="#e01" class="navlink" data-ch="0">GAME</a>
-    <a href="#e09" class="navlink" data-ch="1">ECONOMICS</a>
-    <a href="#e14" class="navlink" data-ch="2">MARKET &amp; PLAN</a>
-    <a href="#e17" class="navlink" data-ch="3">ROUND</a>
+    <a href="#e11" class="navlink" data-ch="1">ECONOMICS</a>
+    <a href="#e16" class="navlink" data-ch="2">MARKET &amp; PLAN</a>
+    <a href="#e20" class="navlink" data-ch="3">ROUND</a>
   </nav>
 </header>
 
@@ -1383,42 +1416,13 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Купить силу можно только вместе с самим бойцом — у игрока, который его вырастил.</p>
 </section>
 
-<section data-dk-in id="s03" data-screen-label="03 ЛЕСТНИЦА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">03</span><span>ЛЕСТНИЦА</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Лестница делегирования</span></h2>
-  <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Игрок постепенно отдаёт управление ИИ, которого вырастил сам.</p>
-  <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
-    <div data-anim="step" data-anim-i="0" data-glow="pink-select" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-right:clamp(0px,4vw,48px)">
-      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">СТУПЕНЬ 1</p>
-      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">Решает игрок</h3>
-      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Ты растишь бойцов и собираешь состав. В бою боец дерётся сам — ты подсказываешь кличами и поддерживаешь баффами.</p>
-    </div>
-    <div data-anim="step" data-anim-i="1" data-glow="amber-hero" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-left:clamp(0px,4vw,48px)">
-      <p class="dk-st2" style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">СТУПЕНЬ 2</p>
-      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">Решает легенда</h3>
-      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Лучший боец проходит восхождение и становится легендой. Сам он больше не дерётся: тренирует ростер, пока тебя нет, и ведёт отряд в бою вместо тебя. Вернуть управление можно в любой момент.</p>
-    </div>
-  </div>
-  <div style="margin-top:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">УПРАВЛЕНИЕ</span>
-    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ТЫ</span>
-    <span class="dk-bar" style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="--k:0;flex:1;height:2px;background:#F6F4F6"></i><i style="--k:1;flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="--k:2;flex:1;height:2px;background:#FFB21D"></i></span>
-    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">ИИ</span>
-  </div>
-  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">Главная награда — не предмет, а свобода: игра продолжается и без тебя.</p>
-  <figure data-frame="1" style="margin:32px 0 0">
-    <div class="dk-corners dk-clip" data-clip="hall" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="Зал FORGE: легенда парит над залом, бойцы внизу" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
-    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">запись из игры · зал FORGE</figcaption>
-  </figure>
-</section>
-
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">EVERYONE</span> <span class="dk-w" style="--i:1">HAS</span> <span class="dk-w" style="--i:2">A</span> <span class="dk-w" style="--i:3">PLAN</span> <span class="dk-w" style="--i:4">UNTIL</span> <span class="dk-w" style="--i:5">THEY</span> <span class="dk-w" style="--i:6">GET</span> <span class="dk-w" style="--i:7" data-w="PUNCHED">PUNCHED</span></p></div></div>
 
-<section data-dk-in id="s04" data-screen-label="04 ЖИВОЙ БОЙ" style="padding:48px 0;max-width:100%;margin:0 auto">
+<section data-dk-in id="s03" data-screen-label="03 ЖИВОЙ БОЙ" style="padding:48px 0;max-width:100%;margin:0 auto">
   <div class="dk-pass" style="padding:0 16px;max-width:1180px;margin:0 auto">
-    <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">04</span><span>ЖИВОЙ БОЙ</span></div>
-    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Боец дерётся сам</span></h2>
-    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ни кнопки удара, ни блока. Это настоящий бой из игры — не ролик и не симуляция.</p>
+    <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">03</span><span>ЖИВОЙ БОЙ</span></div>
+    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Игрок никогда не бьёт сам</span></h2>
+    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ни кнопки удара, ни блока, ни комбо. Боец дерётся сам — своей головой, характером и привычками. Ниже — настоящий бой из игры, не ролик и не симуляция.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">АРЕНА · ЖИВОЙ БОЙ · <span data-arena-state="1">ПОКОЙ</span></p>
       <p style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:0">Один на один. Около минуты.</p>
@@ -1446,8 +1450,63 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<section data-dk-in id="s05" data-screen-label="05 БАРЬЕР" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">05</span><span>БАРЬЕР</span></div>
+<section data-dk-in id="s04" data-screen-label="04 БОЕЦ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">04</span><span>БОЕЦ</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">РАБОТАЕТ</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Ядро задаёт манеру, а не цифры</span></h2>
+<p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">В основе каждого бойца — ядро. Ядер четыре.</p>
+  <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:32px;align-items:stretch">
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #FF3344;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#FF3344;margin:0">ONSLAUGHT</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Прёт напролом и не умеет ждать.</p></div>
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #FFA526;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#FFA526;margin:0">RAIDER</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Бьёт коротко и сразу уходит.</p></div>
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #2ED6B0;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#2ED6B0;margin:0">BULWARK</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Стоит намертво, и об него ломаются.</p></div>
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #9461FF;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#9461FF;margin:0">AMBUSH</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Живёт ради одного точного момента.</p></div>
+    </div>
+  <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:32px 0 0;text-wrap:pretty;max-width:70ch">Из ядра растут три грани — ТЕЛО, РАЗУМ и ВОЛЯ, — в каждой по пять кристаллов. У каждого ядра свои пятнадцать. Зажечь можно любые семь.</p>
+  <figure class="dk-card" style="margin:24px 0 0;padding:24px;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><svg viewBox="0 20 600 520" role="img" aria-label="Ядро «Печать»: три грани по пять кристаллов, зажжено семь из пятнадцати" style="display:block;width:100%;max-width:440px;margin:0 auto"><polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/><line x1="300" y1="300" x2="300.0" y2="75.0" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="494.9" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="105.1" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><polygon points="300.0,213.0 307.8,217.5 307.8,226.5 300.0,231.0 292.2,226.5 292.2,217.5" fill="#FF0069"/><polygon points="300.0,181.5 309.1,186.8 309.1,197.2 300.0,202.5 290.9,197.2 290.9,186.8" fill="#FF0069"/><polygon points="300.0,148.0 310.4,154.0 310.4,166.0 300.0,172.0 289.6,166.0 289.6,154.0" fill="#FF0069"/><polygon points="300.0,112.5 311.7,119.2 311.7,132.8 300.0,139.5 288.3,132.8 288.3,119.2" fill="#FF0069"/><polygon points="300.0,75.0 313.0,82.5 313.0,97.5 300.0,105.0 287.0,97.5 287.0,82.5" fill="#FF0069"/><polygon points="367.5,330.0 375.3,334.5 375.3,343.5 367.5,348.0 359.8,343.5 359.8,334.5" fill="#FF0069"/><polygon points="393.5,343.5 402.6,348.8 402.6,359.2 393.5,364.5 384.4,359.2 384.4,348.8" fill="#FF0069"/><polygon points="421.2,358.0 431.6,364.0 431.6,376.0 421.2,382.0 410.9,376.0 410.9,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="450.7,373.5 462.4,380.2 462.4,393.7 450.7,400.5 439.0,393.7 439.0,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="481.9,390.0 494.9,397.5 494.9,412.5 481.9,420.0 468.9,412.5 468.9,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="232.5,330.0 240.2,334.5 240.2,343.5 232.5,348.0 224.7,343.5 224.7,334.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="206.5,343.5 215.6,348.8 215.6,359.2 206.5,364.5 197.4,359.2 197.4,348.8" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="178.8,358.0 189.1,364.0 189.1,376.0 178.8,382.0 168.4,376.0 168.4,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="149.3,373.5 161.0,380.2 161.0,393.7 149.3,400.5 137.6,393.7 137.6,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="118.1,390.0 131.1,397.5 131.1,412.5 118.1,420.0 105.1,412.5 105.1,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="300.0,260.0 334.6,280.0 334.6,320.0 300.0,340.0 265.4,320.0 265.4,280.0" fill="#0b0910" stroke="rgba(255,255,255,0.3)" stroke-width="3"/><text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ТЕЛО</text><text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">РАЗУМ</text><text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ВОЛЯ</text></svg><p style="font:900 clamp(40px,10vw,64px)/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:16px 0 0;text-align:center">7 / 15</p><figcaption style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0;margin-top:12px;text-align:center">ЗАЖЖЕНО · ПРИМЕР СБОРКИ</figcaption></figure>
+  <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;text-wrap:pretty;max-width:70ch">Кристалл меняет не только силу, но и характер: то, как боец выбирает намерение, а значит — как он дерётся.</p>
+</section>
+
+<section data-dk-in id="s05" data-screen-label="05 ЧТО ДЕЛАЕТ ИГРОК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">05</span><span>ЧТО ДЕЛАЕТ ИГРОК</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">РАБОТАЕТ</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Подсказывать, а не управлять</span></h2>
+<p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Игрок не управляет ударами. У него два рычага. Сначала он выбирает бойца — своего или союзного, — затем рычаг, и тот срабатывает сразу.</p>
+  <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch"><div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0;color:#A9A5AF">РЫЧАГ 1 · КЛИЧИ</p><div style="margin-top:16px"><div style="display:flex;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:10px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;flex:0 0 96px">ВПЕРЁД</span><span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#A9A5AF">напористее</span></div><div style="display:flex;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:10px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;flex:0 0 96px">ОТХОД</span><span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#A9A5AF">осторожнее</span></div><div style="display:flex;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:10px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;flex:0 0 96px">ДЕРЖАТЬ</span><span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#A9A5AF">стойче</span></div></div><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Короткая подсказка из-за канатов: на несколько секунд сдвигает манеру. Решение всё равно принимает боец. Запас кличей на бой ограничен и общий на всю сторону игрока.</p></div><div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0;color:#A9A5AF">РЫЧАГ 2 · БАФФЫ</p><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;text-wrap:pretty">Предметы, которыми игрок поддерживает бойца в бою. Кости — единственный рычаг со случайным исходом.</p></div></div>
+  <div style="margin-top:32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap" aria-hidden="true"><span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6;display:inline-flex;align-items:center;gap:8px"><i style="width:8px;height:8px;background:#F6F4F6;flex:0 0 auto"></i>ПРИМЕНИЛ</span><span style="flex:1 1 180px;min-height:24px;padding:6px 8px;border:1px solid rgba(255,255,255,0.16);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.09) 0 1px,transparent 1px 8px);display:grid;place-items:center;text-align:center;font:500 10px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">БЛОК · НЕСКОЛЬКО СЕКУНД</span><span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6;display:inline-flex;align-items:center;gap:8px">СНОВА ДОСТУПЕН<i style="width:8px;height:8px;background:#FF0069;flex:0 0 auto"></i></span></div>
+  <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;text-wrap:pretty;max-width:78ch">После использования любой клич или бафф на несколько секунд блокируется. Поэтому вопрос не только «что у меня осталось», но и «сейчас или чуть позже».</p>
+</section>
+
+<section data-dk-in id="s06" data-screen-label="06 ЛЕСТНИЦА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">06</span><span>ЛЕСТНИЦА</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Лестница делегирования</span></h2>
+  <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Игрок постепенно отдаёт управление ИИ, которого вырастил сам.</p>
+  <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
+    <div data-anim="step" data-anim-i="0" data-glow="pink-select" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-right:clamp(0px,4vw,48px)">
+      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">СТУПЕНЬ 1</p>
+      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">Решает игрок</h3>
+      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Ты растишь бойцов и собираешь состав. В бою боец дерётся сам — ты подсказываешь кличами и поддерживаешь баффами.</p>
+    </div>
+    <div data-anim="step" data-anim-i="1" data-glow="amber-hero" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-left:clamp(0px,4vw,48px)">
+      <p class="dk-st2" style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">СТУПЕНЬ 2</p>
+      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">Решает легенда</h3>
+      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Лучший боец проходит восхождение и становится легендой. Сам он больше не дерётся: тренирует ростер, пока тебя нет, и ведёт отряд в бою вместо тебя. Вернуть управление можно в любой момент.</p>
+    </div>
+  </div>
+  <div style="margin-top:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">УПРАВЛЕНИЕ</span>
+    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ТЫ</span>
+    <span class="dk-bar" style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="--k:0;flex:1;height:2px;background:#F6F4F6"></i><i style="--k:1;flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="--k:2;flex:1;height:2px;background:#FFB21D"></i></span>
+    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">ИИ</span>
+  </div>
+<div style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16)"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;margin:0">Восхождение</h3><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">РАБОТАЕТ</p></div><div style="margin-top:24px;display:grid;grid-template-columns:minmax(96px,140px) 1fr minmax(96px,140px);gap:12px;align-items:start" aria-hidden="true"><div><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="#0b0910" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="rgba(255,255,255,0.3)"/></svg><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#A9A5AF">ЯДРО</p></div><div style="padding-top:8px"><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#F6F4F6;margin-top:0">ВОСХОЖДЕНИЕ</p><svg width="100%" height="16" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true" style="display:block;max-width:140px;margin:8px auto"><line x1="0" y1="8" x2="110" y2="8" stroke="#A9A5AF" stroke-width="2"/><polygon points="102,2 118,8 102,14" fill="#A9A5AF"/></svg><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#5D5D66;margin-top:0">БЕЗ КОПИИ · БЕЗ ВОЗВРАТА</p></div><div><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="#FFB21D" stroke-width="3" fill="rgba(255,178,29,0.12)" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="#FFB21D"/></svg><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#FFB21D">ЛЕГЕНДА · ЗОЛОТОЕ ЯДРО</p></div></div><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;text-wrap:pretty;max-width:78ch">Восхождение — обмен, а не улучшение. Лучший боец навсегда уходит из ростера. Взамен над залом появляется легенда: сама она больше не дерётся — тренирует ростер и ведёт отряд в бою.</p><p style="font:700 clamp(20px,3.4vw,30px)/1.25 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-left:16px;border-left:2px solid #FF0069;max-width:40ch;text-wrap:pretty">Самый тяжёлый выбор в игре: отдать лучшего бойца, чтобы получить того, кто больше не дерётся.</p></div>
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16)"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;margin:0">Ведёт легенда</h3><div role="img" aria-label="Переключатель: ведёт легенда" style="margin-top:24px;display:inline-flex;font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase"><span style="padding:12px 16px;border:1px solid rgba(255,255,255,0.09);color:#5D5D66">ВЕДУ Я</span><span style="padding:12px 16px;border:1px solid rgba(255,178,29,0.45);border-left:none;background:rgba(255,178,29,0.08);color:#FFB21D">ВЕДЁТ ЛЕГЕНДА</span></div><div style="margin-top:24px;border-bottom:1px solid rgba(255,255,255,0.09)"><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#F6F4F6">ОТРЯД</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">ВЕДЁТ</span><span style="justify-self:end"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">РАБОТАЕТ</p></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#F6F4F6">РЕЙД</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">ВЕДЁТ</span><span style="justify-self:end"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0;white-space:nowrap">В РАЗРАБОТКЕ</p></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#F6F4F6">ОХОТА</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">ВЕДЁТ</span><span style="justify-self:end"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0;white-space:nowrap">В РАЗРАБОТКЕ</p></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#5D5D66">ДУЭЛЬ</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66">ВЕСТИ НЕКОГО</span><span></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#5D5D66">ЦЕПЬ</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66">ВЕСТИ НЕКОГО</span><span></span></div></div><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;text-wrap:pretty;max-width:78ch">После первого восхождения появляется переключатель. Легенда делает то же, что делал игрок: следит за полем, выбирает бойца, применяет кличи и баффы — и говорит вслух. Перехватить управление можно в любой момент.</p></div>
+  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">Главная награда — не предмет, а свобода: игра продолжается и без тебя.</p>
+  <figure data-frame="1" style="margin:32px 0 0">
+    <div class="dk-corners dk-clip" data-clip="hall" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="Зал FORGE: легенда парит над залом, бойцы внизу" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">запись из игры · зал FORGE</figcaption>
+  </figure>
+</section>
+
+<section data-dk-in id="s07" data-screen-label="07 БАРЬЕР" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">07</span><span>БАРЬЕР</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Трудно не придумать, а удержать цену</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Каждый бой стоит денег. Мы говорим об этом первыми.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
@@ -1457,32 +1516,32 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Примерно раз в секунду боец выбирает намерение по ядру, кристаллам, своему состоянию и обстановке. Это не сценарий и не дерево условий.</p>
     </div>
     <div data-anim="glow" data-glow="chrome" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:0">СЛОЙ 2 · НА ПЕРЕЛОМАХ</p>
+      <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:0">СЛОЙ 2 · ПО СОБЫТИЯМ</p>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Языковая модель</h3>
-      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Подключается только в переломные моменты и отвечает решением и фразой. Сейчас — у бойца в дуэли и у легенды.</p>
+      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Подключается по событиям боя — старт, просадка здоровья или выносливости, смена манеры соперника — не чаще раза в 3 секунды и не больше 12 раз за бой на бойца. Сейчас — у бойца в дуэли и у легенды.</p>
     </div>
   </div>
   <figure class="dk-fl" data-fx="fl" style="margin:32px 0 0">
     <div class="dk-fl-ax"><span>0 С</span><span>≈ 60 С</span></div>
-    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i class="m" style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i class="m" style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i class="m" style="--k:51"></i><i style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
-    <p class="dk-fl-lg"><span class="s1">БЫСТРЫЙ СЛОЙ · ≈ 1 РЕШЕНИЕ В СЕКУНДУ</span><span class="s2">ЯЗЫКОВАЯ МОДЕЛЬ · ТОЛЬКО ПЕРЕЛОМЫ</span></p>
-    <figcaption class="dk-fl-cap">СХЕМА ОДНОГО БОЯ · ЧИСЛО И МЕСТО ПЕРЕЛОМОВ — ИЛЛЮСТРАЦИЯ</figcaption>
+    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i class="m" style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i class="m" style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i class="m" style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i class="m" style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i class="m" style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i class="m" style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i class="m" style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i style="--k:51"></i><i class="m" style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
+    <p class="dk-fl-lg"><span class="s1">БЫСТРЫЙ СЛОЙ · ≈ 1 РЕШЕНИЕ В СЕКУНДУ</span><span class="s2">ЯЗЫКОВАЯ МОДЕЛЬ · ПО СОБЫТИЯМ БОЯ</span></p>
+    <figcaption class="dk-fl-cap">ДУЭЛЬ, ОДИН БОЕЦ · ≈ 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР 02.10.2026) · РАССТАНОВКА — ИЛЛЮСТРАЦИЯ</figcaption>
   </figure>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,008</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ОДНА ДУЭЛЬ</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$7</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$8</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ТЫСЯЧА ДУЭЛЕЙ</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">+≈$0,003</p>
-      <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ЛЕГЕНДА В БОЮ, КОТОРЫЙ ВЕДЁТ</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$0,001</p>
+      <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ЛЕГЕНДА В ОТРЯДНОМ БОЮ</p>
     </div>
   </div>
-  <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Все цифры — наша оценка, методика расчёта готовится. Отрядные режимы ещё не посчитаны: модель бойцов там пока не включена.</p>
+  <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Замер 02.10.2026: 21 дуэль и 20 отрядных боёв с легендой, модель Claude Haiku 4.5. Токены расчётные, верхняя граница — $0,016 за дуэль. Серверы, хранение и сеть не входят.</p>
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Любой сбой модели — тихий откат на быстрый слой. Бой не останавливается.</p>
   <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:32px 0 0">ЯДРА</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:12px">
@@ -1493,8 +1552,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<section data-dk-in id="s06" data-screen-label="06 МИРЫ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">06</span><span>МИРЫ</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
+<section data-dk-in id="s08" data-screen-label="08 МИРЫ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">08</span><span>МИРЫ</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Бойцы из разных миров</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">У каждого бойца есть происхождение — мир, из которого он пришёл.</p>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px">
@@ -1524,8 +1583,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">FALL</span> <span class="dk-w" style="--i:1">SEVEN</span> <span class="dk-w" style="--i:2">TIMES.</span> <span class="dk-w" style="--i:3">STAND</span> <span class="dk-w" style="--i:4">UP</span> <span class="dk-w" style="--i:5" data-w="EIGHT.">EIGHT.</span></p></div></div>
 
-<section data-dk-in id="s07" data-screen-label="07 СТАТУС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">07</span><span>СТАТУС</span></div>
+<section data-dk-in id="s09" data-screen-label="09 СТАТУС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">09</span><span>СТАТУС</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Где мы сейчас</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Без внешнего капитала. Статус на 02.10.2026.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -1568,8 +1627,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </figure>
 </section>
 
-<section data-dk-in id="s08" data-screen-label="08 ГИПОТЕЗЫ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">08</span><span>ГИПОТЕЗЫ</span></div>
+<section data-dk-in id="s10" data-screen-label="10 ГИПОТЕЗЫ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I ИГРА ·</span><span class="dk-eyebrow-n">10</span><span>ГИПОТЕЗЫ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Что нам предстоит доказать</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Точные пороги успеха задаём до начала каждой проверки.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
@@ -1634,8 +1693,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">TRAIN</span> <span class="dk-w" style="--i:1">HARD.</span> <span class="dk-w" style="--i:2">FIGHT</span> <span class="dk-w" style="--i:3" data-w="EASY.">EASY.</span></p></div></div>
 
-<section data-dk-in id="s09" data-screen-label="09 ЭКОНОМИКА ИГРОКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">09</span><span>ЭКОНОМИКА ИГРОКА</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
+<section data-dk-in id="s11" data-screen-label="11 ЭКОНОМИКА ИГРОКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">11</span><span>ЭКОНОМИКА ИГРОКА</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">В РАЗРАБОТКЕ</p></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Что продаётся, а что нет</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -1666,8 +1725,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Пока не определены: комиссия и правила торговли бойцами, судьба NFT бойца после восхождения.</p>
 </section>
 
-<section data-dk-in id="s10" data-screen-label="10 ДОХОД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">10</span><span>ДОХОД</span></div>
+<section data-dk-in id="s12" data-screen-label="12 ДОХОД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">12</span><span>ДОХОД</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">На чём зарабатывает студия</span></h2>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
     <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
@@ -1689,13 +1748,13 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Ни один источник не продаёт силу.</p>
 </section>
 
-<section data-dk-in id="s11" data-screen-label="11 ЮНИТ-ЭКОНОМИКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">11</span><span>ЮНИТ-ЭКОНОМИКА</span></div>
+<section data-dk-in id="s13" data-screen-label="13 ЮНИТ-ЭКОНОМИКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">13</span><span>ЮНИТ-ЭКОНОМИКА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Сколько стоит один игрок</span></h2>
-  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:32px 0 0;max-width:34ch;text-wrap:balance">Расход на игрока в день = лимит думающих боёв × ≈$0,007</p>
+  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:32px 0 0;max-width:34ch;text-wrap:balance">Расход на игрока в день = лимит думающих боёв × ≈$0,008</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0,008</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ДУЭЛЬ</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -1714,8 +1773,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Бесплатный игрок стоит нам не больше лимита — ровно столько же, сколько платящий: сила у всех одна. Полная модель с допущениями — в приложении <span class="dk-ph">[ФИНМОДЕЛЬ]</span>.</p>
 </section>
 
-<section data-dk-in id="s12" data-screen-label="12 МАСШТАБ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">12</span><span>МАСШТАБ</span></div>
+<section data-dk-in id="s14" data-screen-label="14 МАСШТАБ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">14</span><span>МАСШТАБ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Сценарии масштаба</span></h2>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -1749,8 +1808,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:56ch;text-wrap:pretty">Мы не показываем цифры, пока не можем показать допущения под ними.</p>
 </section>
 
-<section data-dk-in id="s13" data-screen-label="13 ТОКЕН" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">13</span><span>ТОКЕН</span></div>
+<section data-dk-in id="s15" data-screen-label="15 ТОКЕН" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ЭКОНОМИКА ·</span><span class="dk-eyebrow-n">15</span><span>ТОКЕН</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">$HXL — токен внешнего вида</span></h2>
   <div style="margin-top:32px;display:grid;gap:0">
     <div style="border-top:1px solid rgba(255,255,255,0.09);padding:24px 0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr))">
@@ -1769,8 +1828,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:400 12px/1.8 'JetBrains Mono',monospace;letter-spacing:.04em;color:#A9A5AF;margin:24px 0 0;max-width:82ch;text-wrap:pretty">Параметры: эмиссия 1 000 000 000 · цена раунда $0,0025 · сеть Base · распределение <span class="dk-ph">[ЖДЁТ ФИНМОДЕЛИ]</span> · вестинг инвесторов <span class="dk-ph">[ЖДЁТ ФИНМОДЕЛИ]</span></p>
 </section>
 
-<section data-dk-in id="s14" data-screen-label="14 РЫНОК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">14</span><span>РЫНОК</span></div>
+<section data-dk-in id="s16" data-screen-label="16 РЫНОК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">16</span><span>РЫНОК</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Кто ещё растит ИИ-бойцов</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -1782,14 +1841,24 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Боец не копирует игрока — у него свой характер из ядра и кристаллов. И он вырастает в легенду, которая ведёт других вместо тебя.</p>
     </div>
   </div>
-  <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Соревнования ИИ-агентов уже есть в исследованиях и бенчмарках — как таблица результатов. Мы делаем из них зрелище.</p>
   <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:16px 0 0">ПО ОТКРЫТЫМ ИСТОЧНИКАМ</p>
+</section>
+
+<section data-dk-in id="s17" data-screen-label="17 АРЕНА АГЕНТОВ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">17</span><span>АРЕНА АГЕНТОВ</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">ВТОРОЙ ВЗГЛЯД НА ТОТ ЖЕ ПРОДУКТ</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Тот же продукт — арена агентов</span></h2>
+<p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Всё, что выше, можно назвать техническими словами: арена, на которой соревнуются автономные ИИ-агенты, а люди их растят. Соревнования агентов уже есть — в исследованиях и бенчмарках, — но выглядят как таблица результатов. Мы делаем из них зрелище.</p>
+  <p style="font:700 clamp(20px,3.4vw,30px)/1.25 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-left:16px;border-left:2px solid #FF0069;max-width:40ch;text-wrap:pretty">Автономность становится массовой не тогда, когда она полезна, а когда за неё начинают болеть.</p>
+  <div style="margin-top:32px;border-bottom:1px solid rgba(255,255,255,0.09);max-width:760px"><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;padding:0 0 8px"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">ИГРА</span><span></span><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">АГЕНТЫ</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Ростер</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Школа агентов</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Ядро и кристаллы</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Настройка агента</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Восхождение</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Передача управления агенту</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Боец-NFT</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Переносимый паспорт агента</span></div></div>
+  <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:24px 0 0;max-width:44ch;text-wrap:pretty">Ни строки кода и ни одной механики менять не нужно.</p>
+  <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:stretch"><div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;margin:0">БЛИЖЕ</p><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Лиги школ агентов</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Соревнуются не скоростью пальцев, а тем, кто лучше вырастил своих агентов: сезонные рейтинги, турниры.</p></div><div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:0">ДАЛЬШЕ</p><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Агенты как зрелище</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Бой, в котором никто не жмёт кнопки, можно смотреть как спорт и болеть за конкретного бойца.</p></div><div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">ГОРИЗОНТ</p><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Открытая арена</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Агент, выращенный вне Hexlash, выходит на нашу арену. Это отдельная работа.</p></div></div>
+  <p style="font:500 10px/1.5 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:24px 0 0">Это направления, а не обещания: сроков мы не называем.</p>
 </section>
 
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">DON'T</span> <span class="dk-w" style="--i:1">COUNT</span> <span class="dk-w" style="--i:2">THE</span> <span class="dk-w" style="--i:3">DAYS.</span> <span class="dk-w" style="--i:4">MAKE</span> <span class="dk-w" style="--i:5">THE</span> <span class="dk-w" style="--i:6">DAYS</span> <span class="dk-w" style="--i:7" data-w="COUNT.">COUNT.</span></p></div></div>
 
-<section data-dk-in id="s15" data-screen-label="15 РОАДМАП" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">15</span><span>РОАДМАП</span></div>
+<section data-dk-in id="s18" data-screen-label="18 РОАДМАП" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">18</span><span>РОАДМАП</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Порядок работ</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Сроки — <span class="dk-ph">[СРОК]</span>. Это направления, а не обязательства.</p>
   <div class="dk-road" style="margin-top:32px;display:grid;gap:0">
@@ -1815,8 +1884,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:24px 0 0;max-width:52ch;text-wrap:pretty">Милстоун раунда: <span class="dk-ph">[ЦЕЛЬ РАУНДА]</span></p>
 </section>
 
-<section data-dk-in id="s16" data-screen-label="16 РИСКИ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">16</span><span>РИСКИ</span></div>
+<section data-dk-in id="s19" data-screen-label="19 РИСКИ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III РЫНОК И ПЛАН ·</span><span class="dk-eyebrow-n">19</span><span>РИСКИ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Что может пойти не так</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
@@ -1847,10 +1916,16 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">NEVER</span> <span class="dk-w" style="--i:1">GIVE</span> <span class="dk-w" style="--i:2" data-w="UP">UP</span></p></div></div>
+<div class="dk-finale"><div data-dk-in>
+  <p class="dk-finale-ep" lang="en">NEVER GIVE UP</p>
+  <h2 class="dk-finale-h"><span class="dk-hm">Мы строим настоящий продукт</span></h2>
+  <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px auto 0;max-width:62ch;text-wrap:pretty">hexlash.com сегодня — не игра, а работающий прототип: визуальный язык, настоящий бой и направление. Всё, что на странице работает, работает по-настоящему — мы не имитируем ни одной цифры и ни одного боя. Всего задуманного там пока нет, и мы не делаем вид, что есть.</p>
+  <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;margin:24px auto 0;max-width:62ch;text-wrap:pretty">Мы ищем не просто деньги, а тех, кто поможет превратить прототип в продукт.</p>
+  <p class="dk-finale-q">Сначала подсказываешь бойцу каждое движение. Потом отпускаешь одно, потом другое. А однажды закрываешь вкладку посреди боя — потому что он справится без тебя.</p>
+</div></div>
 
-<section data-dk-in id="s17" data-screen-label="17 РАУНД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV РАУНД ·</span><span class="dk-eyebrow-n">17</span><span>РАУНД</span></div>
+<section data-dk-in id="s20" data-screen-label="20 РАУНД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV РАУНД ·</span><span class="dk-eyebrow-n">20</span><span>РАУНД</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">PRIVATE ROUND</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ангелы, фонды и комьюнити.</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -1880,8 +1955,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:70ch;text-wrap:pretty">Юрлицо и правовое заключение по токену — до закрытия раунда.</p>
 </section>
 
-<section data-dk-in id="s18" data-screen-label="18 КОМАНДА" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV РАУНД ·</span><span class="dk-eyebrow-n">18</span><span>КОМАНДА</span></div>
+<section data-dk-in id="s21" data-screen-label="21 КОМАНДА" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV РАУНД ·</span><span class="dk-eyebrow-n">21</span><span>КОМАНДА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Команда</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div>
@@ -1987,42 +2062,13 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Power can be bought only together with the fighter itself — from the player who raised it.</p>
 </section>
 
-<section data-dk-in id="e03" data-screen-label="03 LADDER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">03</span><span>LADDER</span></div>
-  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The delegation ladder</span></h2>
-  <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The player gradually hands control to an AI they raised themselves.</p>
-  <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
-    <div data-anim="step" data-anim-i="0" data-glow="pink-select" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-right:clamp(0px,4vw,48px)">
-      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">STEP 1</p>
-      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">The player decides</h3>
-      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">You raise fighters and build a lineup. In the fight the fighter acts on its own — you give calls and back it with buffs.</p>
-    </div>
-    <div data-anim="step" data-anim-i="1" data-glow="amber-hero" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-left:clamp(0px,4vw,48px)">
-      <p class="dk-st2" style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">STEP 2</p>
-      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">The legend decides</h3>
-      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Your best fighter goes through Ascension and becomes a legend. It no longer fights itself: it trains the roster while you're away and leads the squad in your place. You can take control back at any moment.</p>
-    </div>
-  </div>
-  <div style="margin-top:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">CONTROL</span>
-    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">YOU</span>
-    <span class="dk-bar" style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="--k:0;flex:1;height:2px;background:#F6F4F6"></i><i style="--k:1;flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="--k:2;flex:1;height:2px;background:#FFB21D"></i></span>
-    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">AI</span>
-  </div>
-  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">The top reward isn't an item. It's freedom: the game goes on without you.</p>
-  <figure data-frame="1" style="margin:32px 0 0">
-    <div class="dk-corners dk-clip" data-clip="hall" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="The FORGE hall: the legend floats above the hall, fighters below" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
-    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">in-game footage · FORGE hall</figcaption>
-  </figure>
-</section>
-
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">EVERYONE</span> <span class="dk-w" style="--i:1">HAS</span> <span class="dk-w" style="--i:2">A</span> <span class="dk-w" style="--i:3">PLAN</span> <span class="dk-w" style="--i:4">UNTIL</span> <span class="dk-w" style="--i:5">THEY</span> <span class="dk-w" style="--i:6">GET</span> <span class="dk-w" style="--i:7" data-w="PUNCHED">PUNCHED</span></p></div></div>
 
-<section data-dk-in id="e04" data-screen-label="04 LIVE FIGHT" style="padding:48px 0;max-width:100%;margin:0 auto">
+<section data-dk-in id="e03" data-screen-label="03 LIVE FIGHT" style="padding:48px 0;max-width:100%;margin:0 auto">
   <div class="dk-pass" style="padding:0 16px;max-width:1180px;margin:0 auto">
-    <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">04</span><span>LIVE FIGHT</span></div>
-    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The fighter fights on its own</span></h2>
-    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No punch button, no block. This is a real fight from the game — not a video, not a simulation.</p>
+    <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">03</span><span>LIVE FIGHT</span></div>
+    <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The player never throws a punch</span></h2>
+    <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No attack button, no block, no combos. The fighter fights on his own — with his own head, character and habits. Below is a real fight from the game, not a video and not a simulation.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ARENA · LIVE FIGHT · <span data-arena-state="1">IDLE</span></p>
       <p style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:0">One on one. About a minute.</p>
@@ -2050,8 +2096,63 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<section data-dk-in id="e05" data-screen-label="05 BARRIER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">05</span><span>BARRIER</span></div>
+<section data-dk-in id="e04" data-screen-label="04 FIGHTER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">04</span><span>FIGHTER</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">WORKING</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The core sets the style, not the numbers</span></h2>
+<p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Every fighter is built on a core. There are four.</p>
+  <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:32px;align-items:stretch">
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #FF3344;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#FF3344;margin:0">ONSLAUGHT</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Charges straight in and can't wait.</p></div>
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #FFA526;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#FFA526;margin:0">RAIDER</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Hits short and gets out.</p></div>
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #2ED6B0;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#2ED6B0;margin:0">BULWARK</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Holds his ground; others break on him.</p></div>
+    <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);border-top:2px solid #9461FF;padding:24px"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#9461FF;margin:0">AMBUSH</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Lives for one precise moment.</p></div>
+    </div>
+  <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:32px 0 0;text-wrap:pretty;max-width:70ch">Three facets grow from the core — BODY, MIND and WILL — five crystals in each. Every core has its own fifteen. Any seven can be lit.</p>
+  <figure class="dk-card" style="margin:24px 0 0;padding:24px;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><svg viewBox="0 20 600 520" role="img" aria-label="The “Seal” core: three facets with five crystals each, seven of fifteen lit" style="display:block;width:100%;max-width:440px;margin:0 auto"><polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/><line x1="300" y1="300" x2="300.0" y2="75.0" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="494.9" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="105.1" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><polygon points="300.0,213.0 307.8,217.5 307.8,226.5 300.0,231.0 292.2,226.5 292.2,217.5" fill="#FF0069"/><polygon points="300.0,181.5 309.1,186.8 309.1,197.2 300.0,202.5 290.9,197.2 290.9,186.8" fill="#FF0069"/><polygon points="300.0,148.0 310.4,154.0 310.4,166.0 300.0,172.0 289.6,166.0 289.6,154.0" fill="#FF0069"/><polygon points="300.0,112.5 311.7,119.2 311.7,132.8 300.0,139.5 288.3,132.8 288.3,119.2" fill="#FF0069"/><polygon points="300.0,75.0 313.0,82.5 313.0,97.5 300.0,105.0 287.0,97.5 287.0,82.5" fill="#FF0069"/><polygon points="367.5,330.0 375.3,334.5 375.3,343.5 367.5,348.0 359.8,343.5 359.8,334.5" fill="#FF0069"/><polygon points="393.5,343.5 402.6,348.8 402.6,359.2 393.5,364.5 384.4,359.2 384.4,348.8" fill="#FF0069"/><polygon points="421.2,358.0 431.6,364.0 431.6,376.0 421.2,382.0 410.9,376.0 410.9,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="450.7,373.5 462.4,380.2 462.4,393.7 450.7,400.5 439.0,393.7 439.0,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="481.9,390.0 494.9,397.5 494.9,412.5 481.9,420.0 468.9,412.5 468.9,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="232.5,330.0 240.2,334.5 240.2,343.5 232.5,348.0 224.7,343.5 224.7,334.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="206.5,343.5 215.6,348.8 215.6,359.2 206.5,364.5 197.4,359.2 197.4,348.8" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="178.8,358.0 189.1,364.0 189.1,376.0 178.8,382.0 168.4,376.0 168.4,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="149.3,373.5 161.0,380.2 161.0,393.7 149.3,400.5 137.6,393.7 137.6,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="118.1,390.0 131.1,397.5 131.1,412.5 118.1,420.0 105.1,412.5 105.1,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="300.0,260.0 334.6,280.0 334.6,320.0 300.0,340.0 265.4,320.0 265.4,280.0" fill="#0b0910" stroke="rgba(255,255,255,0.3)" stroke-width="3"/><text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">BODY</text><text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">MIND</text><text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">WILL</text></svg><p style="font:900 clamp(40px,10vw,64px)/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:16px 0 0;text-align:center">7 / 15</p><figcaption style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0;margin-top:12px;text-align:center">LIT · SAMPLE BUILD</figcaption></figure>
+  <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;text-wrap:pretty;max-width:70ch">A crystal changes not just strength but character: how the fighter picks his intent — and so how he fights.</p>
+</section>
+
+<section data-dk-in id="e05" data-screen-label="05 WHAT THE PLAYER DOES" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">05</span><span>WHAT THE PLAYER DOES</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">WORKING</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Coach, don't control</span></h2>
+<p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The player doesn't control strikes. He has two levers. First he picks a fighter — his own or an ally — then a lever, and it fires at once.</p>
+  <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch"><div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0;color:#A9A5AF">LEVER 1 · CALLS</p><div style="margin-top:16px"><div style="display:flex;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:10px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;flex:0 0 96px">PUSH</span><span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#A9A5AF">more aggressive</span></div><div style="display:flex;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:10px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;flex:0 0 96px">FALL BACK</span><span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#A9A5AF">more careful</span></div><div style="display:flex;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:10px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;flex:0 0 96px">HOLD</span><span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#A9A5AF">steadier</span></div></div><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">A short call from behind the ropes: shifts the fighter's style for a few seconds. The fighter still makes the decision. Calls per fight are limited and shared across the player's side.</p></div><div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0;color:#A9A5AF">LEVER 2 · BUFFS</p><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;text-wrap:pretty">Items that support the fighter mid-fight. The dice are the only lever with a random outcome.</p></div></div>
+  <div style="margin-top:32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap" aria-hidden="true"><span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6;display:inline-flex;align-items:center;gap:8px"><i style="width:8px;height:8px;background:#F6F4F6;flex:0 0 auto"></i>USED</span><span style="flex:1 1 180px;min-height:24px;padding:6px 8px;border:1px solid rgba(255,255,255,0.16);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.09) 0 1px,transparent 1px 8px);display:grid;place-items:center;text-align:center;font:500 10px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">LOCKED · A FEW SECONDS</span><span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6;display:inline-flex;align-items:center;gap:8px">READY AGAIN<i style="width:8px;height:8px;background:#FF0069;flex:0 0 auto"></i></span></div>
+  <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;text-wrap:pretty;max-width:78ch">After use, any call or buff is locked for a few seconds. So the question is not only “what’s left” but “now or a bit later”.</p>
+</section>
+
+<section data-dk-in id="e06" data-screen-label="06 LADDER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">06</span><span>LADDER</span></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The delegation ladder</span></h2>
+  <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The player gradually hands control to an AI they raised themselves.</p>
+  <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
+    <div data-anim="step" data-anim-i="0" data-glow="pink-select" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-right:clamp(0px,4vw,48px)">
+      <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">STEP 1</p>
+      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">The player decides</h3>
+      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">You raise fighters and build a lineup. In the fight the fighter acts on its own — you give calls and back it with buffs.</p>
+    </div>
+    <div data-anim="step" data-anim-i="1" data-glow="amber-hero" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px;margin-left:clamp(0px,4vw,48px)">
+      <p class="dk-st2" style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FFB21D;margin:0">STEP 2</p>
+      <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:8px 0 0">The legend decides</h3>
+      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;max-width:64ch;text-wrap:pretty">Your best fighter goes through Ascension and becomes a legend. It no longer fights itself: it trains the roster while you're away and leads the squad in your place. You can take control back at any moment.</p>
+    </div>
+  </div>
+  <div style="margin-top:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">CONTROL</span>
+    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">YOU</span>
+    <span class="dk-bar" style="flex:1 1 120px;display:flex;gap:4px;min-width:120px"><i style="--k:0;flex:1;height:2px;background:#F6F4F6"></i><i style="--k:1;flex:1;height:2px;background:rgba(255,178,29,0.45)"></i><i style="--k:2;flex:1;height:2px;background:#FFB21D"></i></span>
+    <span style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">AI</span>
+  </div>
+<div style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16)"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;margin:0">Ascension</h3><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">WORKING</p></div><div style="margin-top:24px;display:grid;grid-template-columns:minmax(96px,140px) 1fr minmax(96px,140px);gap:12px;align-items:start" aria-hidden="true"><div><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="#0b0910" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="rgba(255,255,255,0.3)"/></svg><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#A9A5AF">CORE</p></div><div style="padding-top:8px"><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#F6F4F6;margin-top:0">ASCENSION</p><svg width="100%" height="16" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true" style="display:block;max-width:140px;margin:8px auto"><line x1="0" y1="8" x2="110" y2="8" stroke="#A9A5AF" stroke-width="2"/><polygon points="102,2 118,8 102,14" fill="#A9A5AF"/></svg><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#5D5D66;margin-top:0">NO COPY · NO RETURN</p></div><div><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="#FFB21D" stroke-width="3" fill="rgba(255,178,29,0.12)" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="#FFB21D"/></svg><p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:12px 0 0;color:#FFB21D">LEGEND · GOLDEN CORE</p></div></div><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;text-wrap:pretty;max-width:78ch">Ascension is an exchange, not an upgrade. Your best fighter leaves the roster for good. In return a legend appears above the hall: it no longer fights itself — it trains the roster and leads the squad in battle.</p><p style="font:700 clamp(20px,3.4vw,30px)/1.25 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-left:16px;border-left:2px solid #FF0069;max-width:40ch;text-wrap:pretty">The hardest choice in the game: give up your best fighter to get one who no longer fights.</p></div>
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16)"><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;margin:0">The legend leads</h3><div role="img" aria-label="Switch: the legend leads" style="margin-top:24px;display:inline-flex;font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase"><span style="padding:12px 16px;border:1px solid rgba(255,255,255,0.09);color:#5D5D66">I LEAD</span><span style="padding:12px 16px;border:1px solid rgba(255,178,29,0.45);border-left:none;background:rgba(255,178,29,0.08);color:#FFB21D">LEGEND LEADS</span></div><div style="margin-top:24px;border-bottom:1px solid rgba(255,255,255,0.09)"><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#F6F4F6">SQUAD</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">LEADS</span><span style="justify-self:end"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;border:1px solid rgba(255,255,255,0.16);padding:8px;margin:0;white-space:nowrap">WORKING</p></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#F6F4F6">RAID</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">LEADS</span><span style="justify-self:end"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0;white-space:nowrap">IN DEVELOPMENT</p></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#F6F4F6">HUNT</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">LEADS</span><span style="justify-self:end"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;border:1px solid rgba(255,255,255,0.09);padding:8px;margin:0;white-space:nowrap">IN DEVELOPMENT</p></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#5D5D66">DUEL</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66">NO ONE TO LEAD</span><span></span></div><div style="display:grid;grid-template-columns:minmax(56px,1fr) minmax(80px,1.3fr) 138px;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;color:#5D5D66">CHAIN</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66">NO ONE TO LEAD</span><span></span></div></div><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;text-wrap:pretty;max-width:78ch">After the first ascension a switch appears. The legend does what the player did: watches the field, picks a fighter, uses calls and buffs — and speaks out loud. You can take control back at any moment.</p></div>
+  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">The top reward isn't an item. It's freedom: the game goes on without you.</p>
+  <figure data-frame="1" style="margin:32px 0 0">
+    <div class="dk-corners dk-clip" data-clip="hall" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09)"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="The FORGE hall: the legend floats above the hall, fighters below" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+    <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">in-game footage · FORGE hall</figcaption>
+  </figure>
+</section>
+
+<section data-dk-in id="e07" data-screen-label="07 BARRIER" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">07</span><span>BARRIER</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The hard part isn't the idea — it's holding the price</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Every fight costs money. We say so first.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
@@ -2061,32 +2162,32 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">About once a second the fighter picks an intention from its core, crystals, condition and the situation. Not a script, not a decision tree.</p>
     </div>
     <div data-anim="glow" data-glow="chrome" style="background:#16161B;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:0">LAYER 2 · AT TURNING POINTS</p>
+      <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:0">LAYER 2 · ON FIGHT EVENTS</p>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Language model</h3>
-      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Joins only at turning points and answers with a decision and a line. Today — for the fighter in a duel and for the legend.</p>
+      <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Called on fight events — the start, a drop in health or stamina, a change in the opponent's style — no more than once every 3 seconds and no more than 12 times per fighter per fight. Today: for the duel fighter and the legend.</p>
     </div>
   </div>
   <figure class="dk-fl" data-fx="fl" style="margin:32px 0 0">
     <div class="dk-fl-ax"><span>0 S</span><span>≈ 60 S</span></div>
-    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i class="m" style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i class="m" style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i class="m" style="--k:51"></i><i style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
-    <p class="dk-fl-lg"><span class="s1">FAST LAYER · ≈ 1 DECISION PER SECOND</span><span class="s2">LANGUAGE MODEL · TURNING POINTS ONLY</span></p>
-    <figcaption class="dk-fl-cap">ONE FIGHT, SCHEMATIC · NUMBER AND PLACE OF TURNING POINTS ARE ILLUSTRATIVE</figcaption>
+    <div class="dk-fl-tr" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i class="m" style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i class="m" style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i class="m" style="--k:15"></i><i style="--k:16"></i><i style="--k:17"></i><i style="--k:18"></i><i class="m" style="--k:19"></i><i style="--k:20"></i><i style="--k:21"></i><i style="--k:22"></i><i style="--k:23"></i><i style="--k:24"></i><i style="--k:25"></i><i style="--k:26"></i><i class="m" style="--k:27"></i><i style="--k:28"></i><i style="--k:29"></i><i style="--k:30"></i><i style="--k:31"></i><i style="--k:32"></i><i style="--k:33"></i><i class="m" style="--k:34"></i><i style="--k:35"></i><i style="--k:36"></i><i style="--k:37"></i><i style="--k:38"></i><i style="--k:39"></i><i style="--k:40"></i><i style="--k:41"></i><i style="--k:42"></i><i class="m" style="--k:43"></i><i style="--k:44"></i><i style="--k:45"></i><i style="--k:46"></i><i style="--k:47"></i><i style="--k:48"></i><i style="--k:49"></i><i style="--k:50"></i><i style="--k:51"></i><i class="m" style="--k:52"></i><i style="--k:53"></i><i style="--k:54"></i><i style="--k:55"></i><i style="--k:56"></i><i style="--k:57"></i><i style="--k:58"></i><i style="--k:59"></i></div>
+    <p class="dk-fl-lg"><span class="s1">FAST LAYER · ≈ 1 DECISION PER SECOND</span><span class="s2">LANGUAGE MODEL · ON FIGHT EVENTS</span></p>
+    <figcaption class="dk-fl-cap">DUEL, ONE FIGHTER · ≈ 8 CALLS PER FIGHT (MEASURED 02.10.2026) · PLACEMENT IS ILLUSTRATIVE</figcaption>
   </figure>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.008</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ONE DUEL</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$7</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$8</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">A THOUSAND DUELS</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">+≈$0.003</p>
-      <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">LEGEND IN A FIGHT IT LEADS</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">≈$0.001</p>
+      <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">LEGEND IN A SQUAD FIGHT</p>
     </div>
   </div>
-  <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">All figures are our estimate; the calculation method is being prepared. Squad modes aren't counted yet: the fighters' model isn't on there.</p>
+  <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Measured 02.10.2026: 21 duels and 20 squad fights with a legend, Claude Haiku 4.5. Token counts are computed; upper bound $0.016 per duel. Servers, storage and network not included.</p>
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Any model failure falls back silently to the fast layer. The fight never stops.</p>
   <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:32px 0 0">CORES</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:12px">
@@ -2097,8 +2198,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<section data-dk-in id="e06" data-screen-label="06 WORLDS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">06</span><span>WORLDS</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
+<section data-dk-in id="e08" data-screen-label="08 WORLDS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">08</span><span>WORLDS</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Fighters from different worlds</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Every fighter has an origin — the world it came from.</p>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px">
@@ -2128,8 +2229,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">FALL</span> <span class="dk-w" style="--i:1">SEVEN</span> <span class="dk-w" style="--i:2">TIMES.</span> <span class="dk-w" style="--i:3">STAND</span> <span class="dk-w" style="--i:4">UP</span> <span class="dk-w" style="--i:5" data-w="EIGHT.">EIGHT.</span></p></div></div>
 
-<section data-dk-in id="e07" data-screen-label="07 STATUS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">07</span><span>STATUS</span></div>
+<section data-dk-in id="e09" data-screen-label="09 STATUS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">09</span><span>STATUS</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Where we are</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">No outside capital. Status as of 02.10.2026.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -2137,7 +2238,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">WORKING</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
         <li class="dk-mk" style="--k:0;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Roster and training hall</li>
-        <li class="dk-mk" style="--k:1;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Four cores, three branches, fifteen crystals</li>
+        <li class="dk-mk" style="--k:1;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Four cores, three facets, fifteen crystals</li>
         <li class="dk-mk" style="--k:2;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Two arena modes: DUEL and SQUAD</li>
         <li class="dk-mk" style="--k:3;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Language model for the fighter in a duel</li>
         <li class="dk-mk" style="--k:4;font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Calls and buffs with cooldown</li>
@@ -2172,8 +2273,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </figure>
 </section>
 
-<section data-dk-in id="e08" data-screen-label="08 HYPOTHESES" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">08</span><span>HYPOTHESES</span></div>
+<section data-dk-in id="e10" data-screen-label="10 HYPOTHESES" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">I GAME ·</span><span class="dk-eyebrow-n">10</span><span>HYPOTHESES</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What we still have to prove</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Exact success thresholds are set before each test begins.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
@@ -2238,8 +2339,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">TRAIN</span> <span class="dk-w" style="--i:1">HARD.</span> <span class="dk-w" style="--i:2">FIGHT</span> <span class="dk-w" style="--i:3" data-w="EASY.">EASY.</span></p></div></div>
 
-<section data-dk-in id="e09" data-screen-label="09 PLAYER ECONOMY" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">09</span><span>PLAYER ECONOMY</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
+<section data-dk-in id="e11" data-screen-label="11 PLAYER ECONOMY" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">11</span><span>PLAYER ECONOMY</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">IN DEVELOPMENT</p></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What's for sale and what isn't</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -2270,8 +2371,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Not yet defined: fighter trading fee and rules, what happens to a fighter's NFT after Ascension.</p>
 </section>
 
-<section data-dk-in id="e10" data-screen-label="10 REVENUE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">10</span><span>REVENUE</span></div>
+<section data-dk-in id="e12" data-screen-label="12 REVENUE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">12</span><span>REVENUE</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">How the studio earns</span></h2>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px">
     <div class="dk-hov dk-hov--cell" style="background:#08080A;padding:24px">
@@ -2293,13 +2394,13 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">No revenue source sells power.</p>
 </section>
 
-<section data-dk-in id="e11" data-screen-label="11 UNIT ECONOMICS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">11</span><span>UNIT ECONOMICS</span></div>
+<section data-dk-in id="e13" data-screen-label="13 UNIT ECONOMICS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">13</span><span>UNIT ECONOMICS</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What one player costs</span></h2>
-  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:32px 0 0;max-width:34ch;text-wrap:balance">Cost per player per day = thinking-fight limit × ≈$0.007</p>
+  <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:32px 0 0;max-width:34ch;text-wrap:balance">Cost per player per day = thinking-fight limit × ≈$0.008</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(200px,22%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
-      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.007</p>
+      <p data-fx="count" style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">≈$0.008</p>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">DUEL</p>
     </div>
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -2318,8 +2419,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">A free player costs us no more than the limit — exactly as much as a paying one: power is the same for all. The full model with assumptions is in the appendix <span class="dk-ph">[FINANCIAL MODEL]</span>.</p>
 </section>
 
-<section data-dk-in id="e12" data-screen-label="12 SCALE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">12</span><span>SCALE</span></div>
+<section data-dk-in id="e14" data-screen-label="14 SCALE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">14</span><span>SCALE</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Scale scenarios</span></h2>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -2353,8 +2454,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:56ch;text-wrap:pretty">We don't show figures until we can show the assumptions behind them.</p>
 </section>
 
-<section data-dk-in id="e13" data-screen-label="13 TOKEN" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">13</span><span>TOKEN</span></div>
+<section data-dk-in id="e15" data-screen-label="15 TOKEN" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">II ECONOMICS ·</span><span class="dk-eyebrow-n">15</span><span>TOKEN</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">$HXL — a token for appearance</span></h2>
   <div style="margin-top:32px;display:grid;gap:0">
     <div style="border-top:1px solid rgba(255,255,255,0.09);padding:24px 0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr))">
@@ -2373,8 +2474,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:400 12px/1.8 'JetBrains Mono',monospace;letter-spacing:.04em;color:#A9A5AF;margin:24px 0 0;max-width:82ch;text-wrap:pretty">Parameters: supply 1,000,000,000 · round price $0.0025 · network Base · allocation <span class="dk-ph">[PENDING MODEL]</span> · investor vesting <span class="dk-ph">[PENDING MODEL]</span></p>
 </section>
 
-<section data-dk-in id="e14" data-screen-label="14 MARKET" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">14</span><span>MARKET</span></div>
+<section data-dk-in id="e16" data-screen-label="16 MARKET" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">16</span><span>MARKET</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Who else raises AI fighters</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:stretch">
     <div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
@@ -2386,14 +2487,24 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The fighter doesn't copy the player — it has its own character from its core and crystals. And it grows into a legend that leads others in your place.</p>
     </div>
   </div>
-  <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">AI-agent competitions already exist in research and benchmarks — as a results table. We turn them into a spectacle.</p>
   <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:16px 0 0">FROM PUBLIC SOURCES</p>
+</section>
+
+<section data-dk-in id="e17" data-screen-label="17 AGENT ARENA" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">17</span><span>AGENT ARENA</span></div><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">A SECOND LOOK AT THE SAME PRODUCT</p></div>
+  <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">The same product — an agent arena</span></h2>
+<p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Everything above can be put in technical words: an arena where autonomous AI agents compete and people raise them. Agent competitions already exist — in research and benchmarks — but they look like a results table. We turn them into a spectacle.</p>
+  <p style="font:700 clamp(20px,3.4vw,30px)/1.25 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-left:16px;border-left:2px solid #FF0069;max-width:40ch;text-wrap:pretty">Autonomy goes mainstream not when it's useful, but when people start rooting for it.</p>
+  <div style="margin-top:32px;border-bottom:1px solid rgba(255,255,255,0.09);max-width:760px"><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;padding:0 0 8px"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">GAME</span><span></span><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">AGENTS</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Roster</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Agent school</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Core and crystals</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Agent setup</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Ascension</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Handing control to the agent</span></div><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:baseline;border-top:1px solid rgba(255,255,255,0.09);padding:12px 0"><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#F6F4F6">Fighter NFT</span><span style="font:500 13px/1.4 'JetBrains Mono',monospace;color:#5D5D66" aria-hidden="true">→</span><span style="font:400 13px/1.4 'JetBrains Mono',monospace;color:#A9A5AF">Portable agent passport</span></div></div>
+  <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:24px 0 0;max-width:44ch;text-wrap:pretty">Not a line of code or a single mechanic needs to change.</p>
+  <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:stretch"><div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#F6F4F6;margin:0">NEAR</p><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Agent-school leagues</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Players compete not on finger speed but on who raised their agents better: seasonal ratings, tournaments.</p></div><div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:0">NEXT</p><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Agents as spectacle</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">A fight where no one presses buttons can be watched like a sport, rooting for a specific fighter.</p></div><div class="dk-card dk-hov" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">HORIZON</p><h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Open arena</h3><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">An agent raised outside Hexlash enters our arena. That takes separate work.</p></div></div>
+  <p style="font:500 10px/1.5 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:24px 0 0">These are directions, not promises: we name no dates.</p>
 </section>
 
 <div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">DON'T</span> <span class="dk-w" style="--i:1">COUNT</span> <span class="dk-w" style="--i:2">THE</span> <span class="dk-w" style="--i:3">DAYS.</span> <span class="dk-w" style="--i:4">MAKE</span> <span class="dk-w" style="--i:5">THE</span> <span class="dk-w" style="--i:6">DAYS</span> <span class="dk-w" style="--i:7" data-w="COUNT.">COUNT.</span></p></div></div>
 
-<section data-dk-in id="e15" data-screen-label="15 ROADMAP" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">15</span><span>ROADMAP</span></div>
+<section data-dk-in id="e18" data-screen-label="18 ROADMAP" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">18</span><span>ROADMAP</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Order of work</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Timing — <span class="dk-ph">[TBD]</span>. These are directions, not commitments.</p>
   <div class="dk-road" style="margin-top:32px;display:grid;gap:0">
@@ -2419,8 +2530,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:24px 0 0;max-width:52ch;text-wrap:pretty">Round milestone: <span class="dk-ph">[ROUND GOAL]</span></p>
 </section>
 
-<section data-dk-in id="e16" data-screen-label="16 RISKS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">16</span><span>RISKS</span></div>
+<section data-dk-in id="e19" data-screen-label="19 RISKS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">III MARKET &amp; PLAN ·</span><span class="dk-eyebrow-n">19</span><span>RISKS</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">What can go wrong</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div class="dk-hov" style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
@@ -2451,10 +2562,16 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   </div>
 </section>
 
-<div class="dk-pause"><div data-dk-in><i class="dk-pause-mid" aria-hidden="true"></i><p class="dk-pause-q" lang="en"><span class="dk-w" style="--i:0">NEVER</span> <span class="dk-w" style="--i:1">GIVE</span> <span class="dk-w" style="--i:2" data-w="UP">UP</span></p></div></div>
+<div class="dk-finale"><div data-dk-in>
+  <p class="dk-finale-ep" lang="en">NEVER GIVE UP</p>
+  <h2 class="dk-finale-h"><span class="dk-hm">We're building a real product</span></h2>
+  <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px auto 0;max-width:62ch;text-wrap:pretty">hexlash.com today is not a game but a working prototype: a visual language, a real fight and a direction. Everything that works on this page works for real — we don't fake a single number or a single fight. Not everything we've planned is there yet, and we don't pretend it is.</p>
+  <p style="font:400 14px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;margin:24px auto 0;max-width:62ch;text-wrap:pretty">We're not looking just for money, but for people who will help turn the prototype into a product.</p>
+  <p class="dk-finale-q">At first you prompt your fighter on every move. Then you let go of one thing, then another. And one day you close the tab mid-fight — because he'll handle it without you.</p>
+</div></div>
 
-<section data-dk-in id="e17" data-screen-label="17 ROUND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV ROUND ·</span><span class="dk-eyebrow-n">17</span><span>ROUND</span></div>
+<section data-dk-in id="e20" data-screen-label="20 ROUND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV ROUND ·</span><span class="dk-eyebrow-n">20</span><span>ROUND</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">PRIVATE ROUND</span></h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Angels, funds and community.</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -2484,8 +2601,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:70ch;text-wrap:pretty">Legal entity and a legal opinion on the token — before the round closes.</p>
 </section>
 
-<section data-dk-in id="e18" data-screen-label="18 TEAM" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
-  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV ROUND ·</span><span class="dk-eyebrow-n">18</span><span>TEAM</span></div>
+<section data-dk-in id="e21" data-screen-label="21 TEAM" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-c">IV ROUND ·</span><span class="dk-eyebrow-n">21</span><span>TEAM</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty"><span class="dk-hm">Team</span></h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
       <div>
@@ -2616,12 +2733,12 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   setLang(lang, false);
 
   function glow(k) {
-    /* pink-select — карточка ступени 1 (раздел 03). Розовое кольцо выбора снято по
+    /* pink-select — карточка ступени 1 (раздел 06). Розовое кольцо выбора снято по
        решению владельца 02.10.2026: рамка как у остальных карточек, без свечения и
        без розового. Атрибут data-glow остаётся в разметке, отдаёт «ничего». */
     if (k === 'pink-select') return 'none';
     if (k === 'amber-soft') return '0 0 14px rgba(255,178,29,0.28)';
-    /* amber-hero — карточка ступени 2 (раздел 03). Постоянное золотое свечение
+    /* amber-hero — карточка ступени 2 (раздел 06). Постоянное золотое свечение
        снято по решению владельца 02.10.2026: единственное свечение раздела —
        одноразовая вспышка номера ступени (.dk-st2). Золотой ободок остаётся (rim). */
     if (k === 'amber-hero') return 'none';
@@ -2965,7 +3082,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
      1. шкала прогресса (вертикальная на компьютере, полоса на телефоне) и
         подсветка текущей главы в шапке — по тому разделу, что пересекает середину
         экрана; на паузе остаётся предыдущий раздел;
-     2. привязанное к прокрутке: лестница (раздел 03) и линия роадмапа (раздел 15) —
+     2. привязанное к прокрутке: лестница (раздел 06) и линия роадмапа (раздел 18) —
         одна переменная --p, не чаще раза за кадр, только пока блок рядом с экраном;
      3. «один раз при появлении»: таблица, схема боя, отметки, штампы, цифры;
      4. смена языка: сыгранное в одном слое не играется заново в другом.
@@ -2983,8 +3100,8 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   var main = document.querySelector('main');
   if (!main) return;
 
-  var CH_FIRST = [1, 9, 14, 17];            // первый раздел каждой главы
-  function chapterOf(n) { return n >= 17 ? 3 : n >= 14 ? 2 : n >= 9 ? 1 : 0; }
+  var CH_FIRST = [1, 11, 16, 20];           // первый раздел каждой главы
+  function chapterOf(n) { return n >= 20 ? 3 : n >= 16 ? 2 : n >= 11 ? 1 : 0; }
   var CYCLE = window.DK_CORE_CYCLE || ['pink'];
 
   /* --- цвета ядер из общей таблицы ------------------------------------- */
@@ -3286,7 +3403,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   function seenSync() {
     if (!anim) return;
     var layers = [].slice.call(main.querySelectorAll(':scope > [data-layer]'));
-    function blocksOf(l) { return [].slice.call(l.querySelectorAll('section[data-dk-in]')); }
+    function blocksOf(l) { return [].slice.call(l.querySelectorAll('section[data-dk-in], .dk-finale > [data-dk-in]')); }
     function pausesOf(l) { return [].slice.call(l.querySelectorAll('.dk-pause > [data-dk-in]')); }
     layers.forEach(function (a) {
       layers.forEach(function (b) {
@@ -3318,7 +3435,7 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
 })();
 </script>
 <script>
-/* Запись из игры в разделе 03 (зал FORGE). Не качается, пока до раздела больше
+/* Запись из игры в разделе 06 (зал FORGE). Не качается, пока до раздела больше
    экрана; играет, когда окно видно хотя бы на четверть; вне экрана — пауза.
    «Уменьшить движение», нет IntersectionObserver или ошибка видео — остаётся
    заставка. Режим энергосбережения iOS запрещает автозапуск — пробуем снова на
