@@ -1,676 +1,53 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html>
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="You don't fight. You raise an AI fighter that thinks for itself — then hand it the controls.">
 <title>HEXLASH · Investor deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Saira+Condensed:wght@700;800;900&amp;display=swap" rel="stylesheet">
+<script src="deck-art.js"></script>
 <style>
-/* ===========================================================================
-   ВИД ДЕКИ — перенос редизайна Claude Design (02.10.2026, ТЗ TZ_deck_redesign_port_v1)
-   ===========================================================================
-
-   ОБРАЗЕЦ — РЕФЕРЕНС, А НЕ ЧЕРТЁЖ. Взяты ритм, воздух, крупная типографика,
-   редакторская раскладка «левая колонка с номером + правая со смыслом» и
-   спокойное движение. Что в образце было неточным (шрифты кириллицы, связка
-   знак+слово, кнопки, телефон) — сделано по системе, список в отчёте.
-
-   ⚠️ ТЕКСТЫ ЭТОЙ СТРАНИЦЫ — ИСТОЧНИК ПРАВДЫ. Образец делался по слепку живой
-   страницы; при любом расхождении слов верна живая страница.
-
-   ⚠️ ОФОРМЛЕНИЕ ЛЕЖИТ НА УЗЛАХ (style="..."), как и в выгрузке дизайнера. Здесь —
-   только то, чего инлайн не умеет: липкая колонка на широком экране, наведение и
-   нажатие, состояние «появилось», полоса прогресса, ряды шапки и подвала.
-   !important — только в общем правиле «уменьшить движение» и в .off.
-
-   ЗНАЧЕНИЯ ВПИСАНЫ ЧИСЛАМИ: страница живёт вне сборки, tokens.css сюда не
-   приезжает. Источник правды прежний — src/styles/tokens.css (--pink #FF0069,
-   --ink #F6F4F6, --ink-dim #A9A5AF, --ink-off #5D5D66, --void #08080A,
-   --carbon #0D0A0D, --panel #16161B, --line rgba(255,255,255,.09),
-   --line-strong rgba(255,255,255,.16), --ok #7FD99B, --e-settle .2,.8,.2,1).
-
-   ДВИЖЕНИЕ — ЧЕТЫРЕ ВИДА И НИЧЕГО БОЛЬШЕ (решение владельца):
-     1. смена цвета фона при смене раздела (420 мс) — .dk-wave.is-shifting;
-     2. однократное мягкое появление блоков (800 мс, шаг ≤ 70 мс) — [data-rv];
-     3. паузы-фразы собираются по слову (110 мс на слово) — [data-pause];
-     4. полоса «ТЫ → ИИ» заливается вместе с прокруткой — [data-bar].
-   Пыли, ореола заголовка, штампов, набегающих цифр, штрихов схемы боя, шторки
-   заголовков, построчных таблиц и вертикальной шкалы на странице нет.
-   «Уменьшить движение» — всё стоит (и общее правило ниже, и сценарий). */
-
 html,body{margin:0;padding:0;background:#08080A;color:#F6F4F6;-webkit-text-size-adjust:100%}
 *{box-sizing:border-box}
 ::selection{background:#FF0069;color:#F6F4F6}
 a{color:#F6F4F6;text-underline-offset:3px}
 a:hover{color:#FF0069}
 :focus-visible{outline:2px solid #F6F4F6;outline-offset:3px}
-.off{display:none !important}
 @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
-
-/* --- Фон ---------------------------------------------------------------
-   «Вихрь» и ядро рисует node scripts/sync-core-figure.mjs (метки ВИХРЬ / ЯДРО /
-   МЕРЦАНИЕ / ГРАНИ / ЦВЕТА) из общих файлов приложения. Здесь — только размер,
-   место, яркость и поведение на деке.
-
-   ⚠️ НИЧЕГО НЕ ДВИЖЕТСЯ, КРОМЕ ЦВЕТА: мерцание контура и цикл граней на деке
-   выключены (решение 02.10.2026). Стоит покойный кадр: контур горит ровно, а
-   заполнение граней (lit / zone / heart) погашено — залитая «звезда» на полной
-   яркости читалась поверх текста. Правила ниже сильнее общих по специфичности
-   (.dk-wave ...), поэтому общие файлы и лендинг не тронуты.
-   ⚠️ Закреплён относительно окна, pointer-events:none — палец, ведущий по фону,
-   листает страницу. Высота 100lvh: адресная строка телефона не дёргает слой. */
-.dk-page{position:relative;isolation:isolate}
-.dk-wave{
-  position:fixed;top:0;left:0;right:0;z-index:-1;pointer-events:none;
-  height:100vh;height:100lvh;overflow:hidden;
-  /* --core-r — половина стороны квадрата ядра; --core-cy — середина «Вихря» по
-     высоте; --dk-strength — яркость слоя (0,4 по решению владельца).
-     ⚠️ Числа лендинга живут в src/components/core/CoreVortex.vue — меняются парой. */
-  --core-r:clamp(91.5px,calc(12.2364vw + 43.8px),220px);
-  --core-cy:33.33%;
-  --dk-strength:.4;
-  --dk-r:255;--dk-g:0;--dk-b:105;
-  color:rgb(var(--dk-r) var(--dk-g) var(--dk-b));
-}
-.dk-wave__ink,.dk-core-slot{opacity:var(--dk-strength)}
-/* Цвет раздела меняется плавно; переход объявлен только на время смены
-   (класс вешает сценарий), иначе браузер пересчитывает фигуру на каждой прокрутке. */
-.dk-wave.is-shifting{transition:color 420ms cubic-bezier(.2,.8,.2,1)}
-.dk-rings{position:absolute;left:50%;top:var(--core-cy);width:calc(var(--core-r) * 20);height:calc(var(--core-r) * 20);transform:translate(-50%,-50%);display:block;overflow:visible}
-.dk-wave__vignette{position:absolute;inset:0;background:radial-gradient(120% 100% at 50% 40%,rgba(8,8,10,0) 36%,rgba(8,8,10,.92) 100%)}
-.dk-wave__shield{position:absolute;inset:0;background:radial-gradient(58% 72% at 50% 55%,rgba(8,8,10,.6) 0%,rgba(8,8,10,.36) 58%,rgba(8,8,10,0) 100%)}
-.dk-core-slot{position:absolute;left:50%;top:var(--core-cy);transform:translate(-50%,-50%);width:calc(var(--core-r) * 2);height:calc(var(--core-r) * 2)}
-.dk-core{display:block;width:100%;height:100%;overflow:visible}
-.dk-wave [data-core-flick]{animation:none;opacity:1}
-.dk-wave [data-core-flow]{animation:none}
-.dk-wave [data-core-lit],.dk-wave [data-core-zone],.dk-wave [data-core-heart]{animation:none;opacity:0}
-.dk-wave .hc-facets{transition:none}
-
-/* --- Полоса прогресса: 3 px сверху, по сегменту на раздел --------------------
-   Пройденные — приглушённый ink, текущий — цвет ядра раздела, впереди — линия.
-   Между главами зазор 6 px. Только показ: не нажимается, касаний не ест. */
-.dk-prog{position:fixed;left:0;right:0;top:0;z-index:30;display:flex;gap:2px;height:3px;padding:0 2px;pointer-events:none}
-.dk-prog i{flex:1 1 0;min-width:0;background:rgba(255,255,255,.1);transition:background-color 150ms}
-.dk-prog i.ch{margin-left:6px}
-
-/* --- Шапка -------------------------------------------------------------- */
-.dk-head{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:12px clamp(24px,5vw,64px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px}
-/* Связка знак + слово ведётся от --mark (правило бренда: знак 44 · слово 24 ·
-   зазор 14, пересчёт от бокса). В образце стояли 48 / 24 / 14 — слово было мельче
-   нормы. Бокс 48 — порог полной отрисовки знака, ниже опускать нельзя. */
-.dk-brand{--mark:48px;display:flex;align-items:center;gap:calc(var(--mark) * 14 / 44);text-decoration:none;color:#F6F4F6;padding:8px 0}
-.dk-brand:hover{color:#F6F4F6}
-.dk-brand img{display:block;width:var(--mark);height:var(--mark);flex:0 0 var(--mark)}
-.dk-brand span{font:900 calc(var(--mark) * 24 / 44)/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase}
-.dk-right{display:flex;align-items:center;gap:clamp(16px,3vw,40px)}
-.dk-nav{display:flex;gap:32px}
-.dk-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;text-decoration:none;transition:color 150ms}
-.dk-nav a:hover,.dk-nav a.is-cur{color:#F6F4F6}
-.dk-lang{display:flex}
-.dk-lang a{display:inline-flex;align-items:center;justify-content:center;height:44px;min-width:48px;padding:0 12px;border:1px solid rgba(255,255,255,.09);color:#A9A5AF;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-decoration:none;transition:color 150ms,border-color 150ms}
-.dk-lang a+a{margin-left:-1px}
-.dk-lang a:hover{color:#F6F4F6;border-color:rgba(255,255,255,.16)}
-.dk-lang a.on{color:#F6F4F6;border-color:rgba(255,255,255,.32)}
-/* Телефон и планшет: главы не пропадают, как в образце, а уходят второй строкой —
-   иначе до раздела 14 из 21 приходилось бы листать пальцем. */
-@media (max-width:1023px){
-  .dk-nav{order:3;flex:1 1 100%;gap:4px 20px;flex-wrap:wrap}
-  .dk-nav a{min-height:44px}
-}
-
-/* --- Раскладка раздела ----------------------------------------------------
-   Слева — номер и название, справа — смысл. На широком экране левая колонка
-   липкая и остаётся рядом с читаемым. Ниже 1024 — обычная колонка сверху. */
-.dk-aside{position:relative}
-@media (min-width:1024px){.dk-aside{position:sticky;top:40px}}
-.dk-layer{position:relative;z-index:1}
-
-/* --- Карточки: отклик на наведение и нажатие -----------------------------
-   Холодный хром, не розовый (правило системы). Нажатие — вдавливание: у
-   телефона наведения нет, ответ на палец обязателен. */
-.dk-lift{cursor:default}
-.dk-lift:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)}
-.dk-lift:active{transform:translateY(1px);box-shadow:0 0 0 1px rgba(216,227,234,.45)}
-
-/* --- Кнопка GO (раздел 03) ------------------------------------------------
-   В покое матовая: нейтральная рамка, без заливки и свечения. Розовый — только
-   при наведении и нажатии (правило деки, действует с 02.10.2026). Это <a>, не
-   <button>: работает без JavaScript. */
-.dk-go:hover{border-color:#FF0069;box-shadow:0 0 18px rgba(255,0,105,.35);transform:translateY(-1px);color:#F6F4F6}
-.dk-go:active{border-color:#FF0069;box-shadow:0 0 10px rgba(255,0,105,.45);transform:translateY(1px)}
-
-/* --- Запись из игры (раздел 06, зал FORGE) --------------------------------
-   Заставка — картинка, видео лежит поверх и невидимо, пока не пошло: нет
-   JavaScript, режим энергосбережения iOS или видео не загрузилось — остаётся
-   заставка (она же первый кадр петли). Подгрузка и пауза — в последнем скрипте. */
-.dk-clip{position:relative;aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,.09)}
-.dk-clip .dk-clip-poster,.dk-clip .dk-clip-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.dk-clip .dk-clip-video{opacity:0;transition:opacity .4s}
-.dk-clip.is-playing .dk-clip-video{opacity:1}
-
-/* --- Движение: появление блоков и паузы ----------------------------------
-   ⚠️ Скрыто ТОЛЬКО под html.dk-anim — класс ставит сценарий в <head> до первой
-   отрисовки и не ставит при «уменьшить движение» и без IntersectionObserver.
-   Без JavaScript страница читается целиком. Конечный вид — обычные правила. */
-html.dk-anim [data-rv]>*{opacity:0;transform:translateY(18px);transition:opacity 800ms cubic-bezier(.2,.8,.2,1) var(--d,0ms),transform 800ms cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
-html.dk-anim [data-rv].is-in>*{opacity:1;transform:none}
-html.dk-anim [data-rv]>*:nth-child(2){--d:70ms}
-html.dk-anim [data-rv]>*:nth-child(3){--d:140ms}
-html.dk-anim [data-rv]>*:nth-child(4){--d:210ms}
-html.dk-anim [data-rv]>*:nth-child(n+5){--d:280ms}
-html.dk-anim [data-pause] [data-w]{opacity:0;transform:translateY(10px);transition:opacity 560ms cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * 110ms),transform 560ms cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * 110ms)}
-html.dk-anim [data-pause].is-in [data-w]{opacity:1;transform:none}
-/* Смена языка: слой, который встал на место уже виденного, ставится готовым. */
-html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
-
-/* --- Заглушки [В КВАДРАТНЫХ СКОБКАХ] ------------------------------------- */
-.dk-ph{display:inline-block;padding:0 6px;border:1px dashed rgba(255,255,255,.22);color:#A9A5AF;font-weight:500;white-space:nowrap}
-
-/* --- Подвал --------------------------------------------------------------- */
-.dk-foot{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:clamp(52px,7vh,84px) clamp(24px,5vw,64px) 40px;border-top:1px solid rgba(255,255,255,.09);background:#08080A}
-.dk-foot-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.dk-foot .dk-brand{padding:0}
-.dk-foot-tag{font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.34em;text-transform:uppercase;color:#FF0069}
-.dk-foot-social{display:flex;gap:24px;justify-content:center;margin:clamp(34px,5vh,50px) 0}
-/* Иконки — ЧЕСТНАЯ ЗАГЛУШКА: настоящих адресов X и Discord нет. Не ссылки, не
-   кликаются, матовые, отклика на касание нет. Включить — заменить span на
-   <a href target="_blank" rel="noopener">, снять « — soon» из aria-label. */
-.dk-social{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;color:#A9A5AF;cursor:default}
-.dk-foot-bottom{display:flex;align-items:center;justify-content:center;gap:12px 24px;flex-wrap:wrap;padding-top:26px;border-top:1px solid rgba(255,255,255,.05);font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.12em;color:#A9A5AF}
-.dk-foot-bottom p{margin:0}
-@media (max-width:680px){.dk-foot-top{flex-direction:column;align-items:center;text-align:center}.dk-foot-tag{letter-spacing:.24em}}
-@media (max-width:1023px){.dk-right{display:contents}.dk-lang{margin-left:auto}}
-@media (max-width:480px){.dk-nav{gap:0 14px}.dk-nav a{font-size:11px;letter-spacing:.1em;min-width:44px}}
 </style>
-<!-- Появление блоков включается ЗДЕСЬ, до первой отрисовки: иначе скрытое
-     состояние мигнуло бы. Не включается при «уменьшить движение» и без
-     IntersectionObserver-совместимого окружения; если основной сценарий не
-     запустился (ошибка, блокировка) — через 4 с класс снимается и всё видно. -->
-<script>(function(){var d=document.documentElement;try{if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('dk-anim');}catch(e){}setTimeout(function(){if(!window.__dkOK)d.classList.remove('dk-anim');},4000);})();</script>
-
-<!-- =========================================================================
-     HEXLASH · ПРЕЗЕНТАЦИЯ ДЛЯ ИНВЕСТОРОВ · /deckinvestors
-     =========================================================================
-
-     ЧТО ЭТО. Отдельная самостоятельная страница, НЕ экран приложения:
-     приложение Vue тут не запускается, роутер игры про адрес не знает, бандл
-     не грузится. Решение 03.09.2026 — вживление презентации внутрь сложной
-     сборки означало бы взаимный риск.
-
-     ГДЕ ЛЕЖИТ. public/deckinvestors/index.html. Каталог public/ Vite копирует
-     в сборку как есть, без обработки: файл не проходит ни через бандлер, ни
-     через обфускатор.
-
-     ⚠️ АДРЕС ДЕРЖИТСЯ ДВУМЯ ВЕЩАМИ, И ОБЕ ЛЕГКО СНЕСТИ НЕЧАЯННО:
-       1. этим файлом (папка со своим index.html — форму одинаково понимают
-          и Vercel, и nginx из nginx.prod.conf);
-       2. исключением в vercel.json: там перехват ВСЕХ адресов
-          /(.*) -> /index.html для одностраничного приложения, и без
-          исключения он съел бы страницу. Комментариев в vercel.json быть не
-          может (строгий JSON), поэтому объяснение живёт здесь.
-
-     ОТКУДА ВЗЯЛАСЬ. Выгрузки Claude Design приходят самораспаковывающимися
-     файлами: React и Babel с unpkg собирают страницу в браузере при каждом
-     открытии. Здесь выгрузка РАСПАКОВАНА ЗАРАНЕЕ и уложена готовой статической
-     разметкой — без React, без Babel, без внешних запросов, кроме шрифтов Google.
-     Это закрывает светлую вспышку до сборки, пустую страницу без JavaScript и
-     шестиугольники без viewBox (их чинил только рантайм).
-     Редизайн 02.10.2026 (ТЗ TZ_deck_redesign_port_v1): образец лежит в
-     docs/deck-redesign/ как РЕФЕРЕНС. Перенесён вид; тексты, фон, видео, знак,
-     переключатель языка остались прежними. ⚠️ СЛЕДУЮЩУЮ ВЫГРУЗКУ НЕ КЛАСТЬ СЮДА
-     КАК ЕСТЬ — распаковать так же и сверить тексты с этой страницей: источник
-     правды по словам — она, а не выгрузка.
-
-     СОСТАВ. Первый экран · четыре главы (I ИГРА 01–10 · II ЭКОНОМИКА 11–15 ·
-     III РЫНОК И ПЛАН 16–19 · IV РАУНД 20–21) · 21 раздел · пять пауз-фраз ·
-     экран-финал · подвал. Оба языка лежат в разметке (data-layer, класс .off),
-     переключает их сценарий; без JavaScript английский читается целиком.
-     ⚠️ Номера sNN/eNN и data-screen-label вписаны вручную и обязаны совпадать
-     между языковыми слоями (смена языка держит место по id sNN ↔ eNN). Меняя
-     порядок — менять номера в обоих слоях, CH во втором скрипте и ссылки в шапке.
-
-     ФОН — «Вихрь» и ядро. Разметку между метками ВИХРЬ / ЯДРО / МЕРЦАНИЕ /
-     ГРАНИ / ЦВЕТА пишет node scripts/sync-core-figure.mjs из общих файлов
-     приложения. Руками между метками не править. Размер и яркость — в стилях
-     (--dk-strength .4), мерцание и цикл граней на деке выключены.
-
-     ЗНАЧЕНИЯ ВПИСАНЫ ЧИСЛАМИ — как на экране загрузки (#hx-load в index.html)
-     и по той же причине: страница живёт вне сборки, tokens.css сюда не
-     приезжает. Источник правды прежний — src/styles/tokens.css.
-
-     ЗНАК — те же файлы public/brand/*, что у остальных поверхностей, а не
-     отдельная копия картинки. Разметка написана руками: hexlashMark.js это
-     Vue-модуль и сюда не грузится. Бокс 48 точек — порог ПОЛНОЙ отрисовки.
-     ⚠️ Опустить бокс ниже 48 — показать другой рисунок знака.
-
-     ⚠️ Заглушки в квадратных скобках — [N], [XX%], [КОНТАКТ] и т.п. — честные:
-     цифр, которых нет в решениях владельца, на странице нет. Подставлять только
-     по слову владельца. Окна с живой ареной на странице нет: в разделе 03 стоит
-     кнопка-ссылка в игру. В разделе 06 — беззвучная запись зала FORGE.
-
-     ЗАКРЫТА ОТ ПОИСКА мета-запретом плюс заголовком X-Robots-Tag в vercel.json.
-     В robots.txt путь НЕ упоминается намеренно: строки запрета там публичны и
-     работают как указатель. Ссылок на страницу нет ниоткуда.
-     ========================================================================= -->
-
-<meta name="description" content="You don't fight. You raise an AI fighter that thinks for itself — then hand it the controls.">
-
-<!-- Превью ссылки. Запрет индексации ему не мешает: первое закрывает от
-     поиска, второе работает при отправке адреса руками. Заголовок и описание
-     задал владелец 30.09.2026. -->
-<meta property="og:title" content="HEXLASH · Investor deck">
-<meta property="og:description" content="You don't fight. You raise an AI fighter that thinks for itself — then hand it the controls.">
-<meta property="og:image" content="https://hexlash.com/og-image.png">
-<meta property="og:url" content="https://hexlash.com/deckinvestors">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="HEXLASH · Investor deck">
-<meta name="twitter:description" content="You don't fight. You raise an AI fighter that thinks for itself — then hand it the controls.">
-<meta name="twitter:image" content="https://hexlash.com/og-image.png">
-
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
-
-<link rel="preload" as="image" href="/brand/mark-full-256.png"
-      imagesrcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
-      imagesizes="48px">
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<!-- Шрифты проекта, тем же неблокирующим способом, что в index.html. Выгрузка
-     несла их зашитыми внутрь (15 файлов woff2, 247 КБ в base64) — вынуты, чтобы
-     страница и приложение брали начертания из одного места. Строка та же, что в
-     index.html; кириллицу Google отдаёт своим подмножеством по этой же ссылке. -->
-<link rel="preload" as="style"
-      href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
-      onload="this.onload=null;this.rel='stylesheet'">
-<noscript>
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
-</noscript>
-
-<!-- Мерцание контура ядра. Переносит node scripts/sync-core-figure.mjs из
-     src/styles/core-flicker.css — того же файла, что мерцает на лендинге.
-     Руками между метками не править — перепишут при следующем прогоне. -->
-<!-- МЕРЦАНИЕ:НАЧАЛО -->
-  <style>
-  /* Мерцание контура. НЕ ПРАВИТЬ РУКАМИ: перенесено
-     node scripts/sync-core-figure.mjs из src/styles/core-flicker.css —
-     того же файла, что мерцает на лендинге. */
-  /* HEXLASH — МЕРЦАНИЕ КОНТУРА ЯДРА (22.09.2026).
-
-   ⚠️ ЕДИНСТВЕННОЕ МЕСТО, ГДЕ ЖИВУТ СТОП-КАДРЫ. Отсюда их берут обе
-   поверхности: приложение подключает файл сборкой (см. HexCore.vue), деку
-   заполняет scripts/sync-core-figure.mjs, вставляя текст этого файла в
-   статическую страницу. Второй копии быть не должно.
-
-   Мерцает только группа каждой из шести сторон контура — широкая и чёткая
-   линии вместе. Анимируется одна прозрачность: ни формы, ни размытия, ни
-   перерисовки фигуры. Длительность и задержка у каждой стороны свои, они
-   приходят разметкой (--core-flick-dur / --core-flick-del).
-
-   Значения стоп-кадров перенесены из эталона:
-   docs/design-handoff/core_seal/references/design-source/Core.dc.html */
-
-@keyframes hxCoreFlick {
-  0%, 38% { opacity: 1; }
-  40%     { opacity: .22; }
-  42%     { opacity: 1; }
-  60%     { opacity: 1; }
-  61%     { opacity: .12; }
-  63%     { opacity: .8; }
-  64%     { opacity: .28; }
-  66%     { opacity: 1; }
-  100%    { opacity: 1; }
-}
-
-[data-core-flick] {
-  animation: hxCoreFlick var(--core-flick-dur) linear var(--core-flick-del) infinite;
-}
-
-/* «Уменьшить движение» в настройках устройства — стороны стоят ровно. */
-@media (prefers-reduced-motion: reduce) {
-  [data-core-flick] {
-    animation: none !important;
-    opacity: 1 !important;
-  }
-}
-  </style>
-<!-- МЕРЦАНИЕ:КОНЕЦ -->
-
-<!-- Медленное заполнение граней. Переносит node scripts/sync-core-figure.mjs
-     из src/styles/core-facets.css — того же файла, что ведёт цикл на
-     лендинге. Руками между метками не править. -->
-<!-- ГРАНИ:НАЧАЛО -->
-  <style>
-  /* Медленное заполнение граней. НЕ ПРАВИТЬ РУКАМИ: перенесено
-     node scripts/sync-core-figure.mjs из src/styles/core-facets.css —
-     того же файла, что ведёт цикл на лендинге. */
-  /* HEXLASH — МЕДЛЕННОЕ ЗАПОЛНЕНИЕ ГРАНЕЙ ЯДРА (22.09.2026, правка v1.2).
-
-   ⚠️ ЕДИНСТВЕННОЕ МЕСТО, ГДЕ ЖИВЁТ РАСПИСАНИЕ ЦИКЛА. Отсюда его берут обе
-   поверхности: приложение подключает файл сборкой (src/main.js), деку
-   заполняет scripts/sync-core-figure.mjs, вставляя текст этого файла в
-   статическую страницу. Второй копии быть не должно.
-
-   ЧТО ПРОИСХОДИТ. Ветка — один цельный клин БЕЗ ВИДИМЫХ ДЕЛЕНИЙ. Свет
-   вытекает из сердца и ползёт к концу ветки, но не ровно: дошёл до границы
-   очередной пятой части — коротко встал — пошёл дальше. Глаз считает шаги по
-   остановкам, как у полосы загрузки, которая движется рывками по 20%.
-   Все три ветки идут одновременно и доходят до вершины за шесть секунд;
-   по мере заполнения проявляются три зоны сплава и разгорается сердце.
-   Всё держится, гаснет вместе, пауза, цикл сначала.
-
-   ⚠️ РАЗРЕЗОВ МЕЖДУ ГРАНЯМИ БЫТЬ НЕ ДОЛЖНО. Они были в первой версии и сняты
-   22.09.2026: владелец их не просил. Шаги показывает движение, а не линии.
-
-   ⚠️ ДЛИТЕЛЬНОСТЬ ЦИКЛА — ОДНО ЧИСЛО, --core-cycle ниже. Все доли внутри
-   заданы процентами от него, так что цикл растягивается и сжимается целиком.
-   Шаг = 12% цикла: 9% свет идёт (0.9 с), 3% стоит (0.3 с). Пять шагов —
-   60% цикла, то есть 6 секунд.
-
-   ⚠️ ЧЕМ АНИМИРУЕМ. Только прозрачность и растяжение круга-заполнителя
-   внутри обрезки. Фильтров размытия нет, вся фигура каждый кадр не
-   перерисовывается — иначе телефон не держит 16.7 мс на кадр.
-
-   Координат здесь нет ни одной: середина фигуры и радиусы остановок приходят
-   переменными из разметки (--core-c, --f0…--f5). */
-
-/* ⚠️ ОДНА НАСТРОЙКА НА ВЕСЬ ЦИКЛ. Владелец просил «раз в 10 секунд».
-   Объявлена на самой фигуре, а не на :root, чтобы не заводить глобальную
-   переменную ради одной анимации. Два селектора — потому что поверхности
-   две: .hc это ядро в приложении, .dk-core — оно же на деке. */
-.hc,
-.dk-core {
-  --core-cycle: 10s;
-}
-
-/* ── Шаги света ───────────────────────────────────────────────────────────
-   Круг-обрезка стоит в середине ядра и растёт наружу: видно ровно то, что в
-   него попало. Свет «втекает» в ветку от края, ближнего к сердцу, а фронт
-   получается лёгкой дугой — она и есть видимая граница движения, отдельная
-   линия не нужна.
-
-   --f0 — старт у края сердца, --f1…--f5 — концы пяти частей. Ветке, которая
-   зажигает меньше пяти, лишние остановки приходят равными последней: шаг
-   проходит, но радиус не меняется, и на экране ничего не происходит. */
-
-/* Основной ход: все три ветки идут одновременно, каждая пять шагов. */
-@keyframes hxFacetStep1 {
-  0%         { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
-  9%,  12%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
-  21%, 24%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
-  33%, 36%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
-  45%, 48%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
-  57%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
-}
-/* Только для запасного режима «3 + 2»: вторая ветка ждёт первую. */
-@keyframes hxFacetStep2 {
-  0%,  36%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f0)); }
-  45%, 48%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f1)); }
-  57%, 60%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f2)); }
-  69%, 72%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f3)); }
-  81%, 84%   { transform: translate(var(--core-c), var(--core-c)) scale(var(--f4)); }
-  93%, 100%  { transform: translate(var(--core-c), var(--core-c)) scale(var(--f5)); }
-}
-
-/* ── Общая жизнь горящего слоя: держится, гаснет вместе, пауза ──────────── */
-@keyframes hxFacetLit {
-  0%,  80%   { opacity: 1; }
-  95%, 100%  { opacity: 0; }
-}
-
-/* ── Зоны сплава: проявляются по мере заполнения ───────────────────────── */
-@keyframes hxFacetZone {
-  0%         { opacity: 0; }
-  60%, 80%   { opacity: var(--zone-max); }
-  95%, 100%  { opacity: 0; }
-}
-/* Запасной режим «3 + 2»: зона одна и появляется, когда пошла вторая ветка. */
-@keyframes hxFacetZone2 {
-  0%,  36%   { opacity: 0; }
-  44%, 80%   { opacity: var(--zone-max); }
-  95%, 100%  { opacity: 0; }
-}
-
-/* ── Сердце разгорается вместе с ветками, в конце — на полной яркости ──── */
-@keyframes hxFacetHeart {
-  0%         { opacity: 0; }
-  60%, 80%   { opacity: var(--lift-max); }
-  95%, 100%  { opacity: 0; }
-}
-/* Запасной режим «3 + 2»: две ступени, по числу задействованных веток. */
-@keyframes hxFacetHeartPair {
-  0%         { opacity: 0; }
-  8%,  36%   { opacity: var(--lift1); }
-  44%, 80%   { opacity: var(--lift2); }
-  95%, 100%  { opacity: 0; }
-}
-
-/* ── Что к чему привязано ─────────────────────────────────────────────── */
-[data-core-flow="1"] { animation: hxFacetStep1 var(--core-cycle) linear infinite; }
-[data-core-flow="2"] { animation: hxFacetStep2 var(--core-cycle) linear infinite; }
-
-[data-core-lit]         { animation: hxFacetLit var(--core-cycle) linear infinite; }
-[data-core-zone="all"]  { animation: hxFacetZone var(--core-cycle) linear infinite; }
-[data-core-zone="2"]    { animation: hxFacetZone2 var(--core-cycle) linear infinite; }
-[data-core-heart="all"] { animation: hxFacetHeart var(--core-cycle) linear infinite; }
-[data-core-heart="pair"]{ animation: hxFacetHeartPair var(--core-cycle) linear infinite; }
-
-/* ⚠️ ЗАПАСНОЙ РЕЖИМ «3 + 2» — по умолчанию выключен. Включается свойством
-   fill-five у HexCore; на служебной странице /dev/core для него переключатель.
-   Это прежнее правило «горит не больше пяти граней, как в игре»: три на
-   первой ветке, две на второй, третья не участвует. Отдельных кадров ему не
-   нужно — он пользуется теми же, что и основной ход, просто ветки получают
-   разные дорожки (1 и 2) и остановки, повторяющие последнюю.
-
-   ⚠️ 22.09.2026 отсюда УБРАН прежний запасной «все 15 по очереди с шагом
-   0.46 с»: он заменён основным ходом, где все три ветки идут одновременно. */
-
-/* ── Смена раздела посреди цикла ───────────────────────────────────────── */
-/* Горящие грани гаснут вместе со сменой цвета, а не исчезают рывком. Снятие
-   метки перезапускает цикл с нуля — в новом цвете.
-   ⚠️ Метка стоит на корне фигуры: круги-обрезки лежат в <defs>, и селектор
-   от горящего слоя до них не достаёт. */
-.hc-facets {
-  transition: opacity 420ms cubic-bezier(.2, .8, .2, 1);
-}
-[data-core-swap] .hc-facets {
-  opacity: 0;
-}
-[data-core-swap] [data-core-flow],
-[data-core-swap] [data-core-lit],
-[data-core-swap] [data-core-zone],
-[data-core-swap] [data-core-heart] {
-  animation: none;
-}
-
-/* ── «Уменьшить движение» в настройках устройства ──────────────────────── */
-/* Движения нет, стоит конечное состояние: ветки горят до своей последней
-   остановки, зона сплава видна, сердце поднято. Игрок видит результат. */
-@media (prefers-reduced-motion: reduce) {
-  .hc-facets {
-    transition: none !important;
-  }
-  [data-core-flow] {
-    animation: none !important;
-    transform: translate(var(--core-c), var(--core-c)) scale(var(--f-final)) !important;
-  }
-  [data-core-lit] {
-    animation: none !important;
-    opacity: 1 !important;
-  }
-  [data-core-zone] {
-    animation: none !important;
-    opacity: var(--zone-max) !important;
-  }
-  [data-core-heart] {
-    animation: none !important;
-    opacity: var(--lift-final) !important;
-  }
-}
-  </style>
-<!-- ГРАНИ:КОНЕЦ -->
-
-<!-- Круг цветов витрины. Пишет node scripts/sync-core-figure.mjs: порядок из
-     src/data/coreCycle.js, значения из src/styles/tokens.css. Руками между
-     метками не править — перепишут при следующем прогоне. -->
-<!-- ЦВЕТА:НАЧАЛО -->
-  <style>
-  /* Круг цветов витрины. НЕ ПРАВИТЬ РУКАМИ: написано
-     node scripts/sync-core-figure.mjs — порядок из src/data/coreCycle.js,
-     значения из src/styles/tokens.css. Второго объявления цвета в проекте
-     быть не должно, поэтому сюда они ПЕРЕНОСЯТСЯ, а не вписываются. */
-  .dk-wave[data-core="pink"]{--dk-r:255;--dk-g:0;--dk-b:105}
-  .dk-wave[data-core="natisk"]{--dk-r:255;--dk-g:51;--dk-b:68}
-  .dk-wave[data-core="nalet"]{--dk-r:255;--dk-g:165;--dk-b:38}
-  .dk-wave[data-core="skala"]{--dk-r:46;--dk-g:214;--dk-b:176}
-  .dk-wave[data-core="zasada"]{--dk-r:148;--dk-g:97;--dk-b:255}
-  </style>
-  <script>window.DK_CORE_CYCLE=["pink","natisk","nalet","skala","zasada"];</script>
-<!-- ЦВЕТА:КОНЕЦ -->
-</head>
-<body>
-<div class="dk-page" style="background:#08080A;min-height:100vh">
-<!-- ВИХРЬ. Фоновый рисунок страницы: ядро-печать в середине, вокруг кольца,
-     закрученные на 5° каждое. Тот же рисунок, что на лендинге
-     (src/components/landing/LandingBackground.vue) — ниже только яркость.
-     Размер и место — блок «A. «Вихрь» фоном» наверху файла.
-     ⚠️ Разметку между метками пишет node scripts/sync-core-figure.mjs.
-     Руками не править: перепишут при следующем прогоне. -->
-<div class="dk-wave" aria-hidden="true">
-  <div class="dk-wave__ink">
-<!-- ВИХРЬ:НАЧАЛО -->
-  <!-- Кольца «Вихря». НЕ ПРАВИТЬ РУКАМИ: написано
-       node scripts/sync-core-figure.mjs из src/data/coreFigure.js. -->
-  <svg class="dk-rings" viewBox="-10 -10 20 20" aria-hidden="true">
-    <g fill="none" stroke="currentColor">
-      <polygon points="4.9809,-7.1135 8.6510,0.7569 3.6700,7.8704 -4.9809,7.1135 -8.6510,-0.7569 -3.6700,-7.8704" stroke-opacity="0.0347" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <polygon points="3.2403,-5.6124 6.4806,0.0000 3.2403,5.6124 -3.2403,5.6124 -6.4806,0.0000 -3.2403,-5.6124" stroke-opacity="0.0456" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <polygon points="2.0439,-4.3831 4.8179,-0.4215 2.7740,3.9616 -2.0439,4.3831 -4.8179,0.4215 -2.7740,-3.9616" stroke-opacity="0.0601" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <polygon points="1.2344,-3.3915 3.5543,-0.6267 2.3199,2.7648 -1.2344,3.3915 -3.5543,0.6267 -2.3199,-2.7648" stroke-opacity="0.079" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <polygon points="0.6971,-2.6016 2.6016,-0.6971 1.9045,1.9045 -0.6971,2.6016 -2.6016,0.6971 -1.9045,-1.9045" stroke-opacity="0.104" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <polygon points="0.3490,-1.9795 1.8888,-0.6875 1.5397,1.2920 -0.3490,1.9795 -1.8888,0.6875 -1.5397,-1.2920" stroke-opacity="0.1368" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <polygon points="0.1307,-1.4943 1.3595,-0.6339 1.2287,0.8604 -0.1307,1.4943 -1.3595,0.6339 -1.2287,-0.8604" stroke-opacity="0.18" stroke-width="1" vector-effect="non-scaling-stroke"/>
-    </g>
-  </svg>
-<!-- ВИХРЬ:КОНЕЦ -->
-  </div>
-  <div class="dk-wave__vignette"></div>
-  <div class="dk-wave__shield"></div>
-  <div class="dk-core-slot">
-<!-- ЯДРО:НАЧАЛО -->
-  <!-- Фигура ядра «Печать». НЕ ПРАВИТЬ РУКАМИ: написана
-       node scripts/sync-core-figure.mjs из src/data/coreFigure.js — того же
-       файла, что рисует ядро на лендинге. Режим яркости — muted. -->
-  <svg class="dk-core" viewBox="0 0 600 600" style="--core-c:300px;--zone-max:0.4" aria-hidden="true">
-    <defs>
-      <radialGradient id="dkPlate">
-        <stop offset="0" stop-color="#191420" stop-opacity=".95"/>
-        <stop offset="1" stop-color="#0d0b11" stop-opacity=".55"/>
-      </radialGradient>
-      <radialGradient id="dkGlow">
-        <stop offset="0" stop-color="currentColor" stop-opacity="0.14"/>
-        <stop offset=".45" stop-color="currentColor" stop-opacity="0.056"/>
-        <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="dkZone">
-        <stop offset="0" stop-color="currentColor" stop-opacity=".55"/>
-        <stop offset="1" stop-color="currentColor" stop-opacity=".04"/>
-      </radialGradient>
-      <radialGradient id="dkGem" cx=".45" cy=".4">
-        <stop offset="0" stop-color="currentColor" stop-opacity="1"/>
-        <stop offset="1" stop-color="currentColor" stop-opacity=".55"/>
-      </radialGradient>
-      <radialGradient id="dkGemGlow">
-        <stop offset="0" stop-color="currentColor" stop-opacity=".5"/>
-        <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
-      </radialGradient>
-      <clipPath id="dkFlow-1-5">
-        <circle cx="0" cy="0" r="1" data-core-flow="1" style="--f0:55.13;--f1:83.47;--f2:111.83;--f3:140.18;--f4:168.53;--f5:196.88;--f-final:196.88"/>
-      </clipPath>
-    </defs>
-    <circle cx="300" cy="300" r="265.5" fill="url(#dkGlow)"/>
-    <polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="url(#dkPlate)"/>
-    <polygon points="300.0,300.0 300.0,75.0 494.9,187.5 494.9,412.5" opacity="0.12" fill="url(#dkZone)"/>
-    <polygon points="300.0,300.0 494.9,412.5 300.0,525.0 105.1,412.5" opacity="0.12" fill="url(#dkZone)"/>
-    <polygon points="300.0,300.0 105.1,412.5 105.1,187.5 300.0,75.0" opacity="0.12" fill="url(#dkZone)"/>
-    <g class="hc-facets">
-      <g data-core-zone="all">
-        <polygon points="300.0,300.0 300.0,75.0 494.9,187.5 494.9,412.5" fill="url(#dkZone)"/>
-        <polygon points="300.0,300.0 494.9,412.5 300.0,525.0 105.1,412.5" fill="url(#dkZone)"/>
-        <polygon points="300.0,300.0 105.1,412.5 105.1,187.5 300.0,75.0" fill="url(#dkZone)"/>
-      </g>
-    </g>
-    <polygon points="325.9,291.0 319.1,183.0 313.1,103.1 286.9,103.1 280.9,183.0 274.1,291.0" fill="#120f17" stroke="currentColor" stroke-opacity="0.26" stroke-width="1.3" stroke-linejoin="round"/>
-    <polygon points="294.9,326.9 391.8,375.1 464.0,409.7 477.0,387.1 410.9,341.9 320.7,282.1" fill="#120f17" stroke="currentColor" stroke-opacity="0.26" stroke-width="1.3" stroke-linejoin="round"/>
-    <polygon points="279.3,282.1 189.1,341.9 123.0,387.1 136.0,409.7 208.2,375.1 305.1,326.9" fill="#120f17" stroke="currentColor" stroke-opacity="0.26" stroke-width="1.3" stroke-linejoin="round"/>
-    <g class="hc-facets">
-      <g data-core-lit="1">
-        <g clip-path="url(#dkFlow-1-5)">
-          <polygon points="323.0,244.9 319.1,183.0 313.1,103.1 286.9,103.1 280.9,183.0 277.0,244.9" fill="currentColor" fill-opacity="0.5"/>
-        </g>
-        <g clip-path="url(#dkFlow-1-5)">
-          <polygon points="336.2,347.5 391.8,375.1 464.0,409.7 477.0,387.1 410.9,341.9 359.2,307.7" fill="currentColor" fill-opacity="0.5"/>
-        </g>
-        <g clip-path="url(#dkFlow-1-5)">
-          <polygon points="240.8,307.7 189.1,341.9 123.0,387.1 136.0,409.7 208.2,375.1 263.8,347.5" fill="currentColor" fill-opacity="0.5"/>
-        </g>
-      </g>
-    </g>
-    <g data-core-flick="1" style="--core-flick-dur:4.2s;--core-flick-del:0s">
-      <line x1="300.0" y1="75.0" x2="494.9" y2="187.5" stroke="currentColor" stroke-opacity="0.099" stroke-width="13" stroke-linecap="round"/>
-      <line x1="300.0" y1="75.0" x2="494.9" y2="187.5" stroke="currentColor" stroke-opacity="0.55" stroke-width="4" stroke-linecap="square"/>
-    </g>
-    <g data-core-flick="1" style="--core-flick-dur:5.1s;--core-flick-del:1.3s">
-      <line x1="494.9" y1="187.5" x2="494.9" y2="412.5" stroke="currentColor" stroke-opacity="0.099" stroke-width="13" stroke-linecap="round"/>
-      <line x1="494.9" y1="187.5" x2="494.9" y2="412.5" stroke="currentColor" stroke-opacity="0.55" stroke-width="4" stroke-linecap="square"/>
-    </g>
-    <g data-core-flick="1" style="--core-flick-dur:3.7s;--core-flick-del:2.1s">
-      <line x1="494.9" y1="412.5" x2="300.0" y2="525.0" stroke="currentColor" stroke-opacity="0.099" stroke-width="13" stroke-linecap="round"/>
-      <line x1="494.9" y1="412.5" x2="300.0" y2="525.0" stroke="currentColor" stroke-opacity="0.55" stroke-width="4" stroke-linecap="square"/>
-    </g>
-    <g data-core-flick="1" style="--core-flick-dur:6.3s;--core-flick-del:0.6s">
-      <line x1="300.0" y1="525.0" x2="105.1" y2="412.5" stroke="currentColor" stroke-opacity="0.099" stroke-width="13" stroke-linecap="round"/>
-      <line x1="300.0" y1="525.0" x2="105.1" y2="412.5" stroke="currentColor" stroke-opacity="0.55" stroke-width="4" stroke-linecap="square"/>
-    </g>
-    <g data-core-flick="1" style="--core-flick-dur:4.8s;--core-flick-del:3.4s">
-      <line x1="105.1" y1="412.5" x2="105.1" y2="187.5" stroke="currentColor" stroke-opacity="0.099" stroke-width="13" stroke-linecap="round"/>
-      <line x1="105.1" y1="412.5" x2="105.1" y2="187.5" stroke="currentColor" stroke-opacity="0.55" stroke-width="4" stroke-linecap="square"/>
-    </g>
-    <g data-core-flick="1" style="--core-flick-dur:5.6s;--core-flick-del:1.9s">
-      <line x1="105.1" y1="187.5" x2="300.0" y2="75.0" stroke="currentColor" stroke-opacity="0.099" stroke-width="13" stroke-linecap="round"/>
-      <line x1="105.1" y1="187.5" x2="300.0" y2="75.0" stroke="currentColor" stroke-opacity="0.55" stroke-width="4" stroke-linecap="square"/>
-    </g>
-    <polygon points="300.0,90.8 481.2,195.4 481.2,404.6 300.0,509.3 118.8,404.6 118.8,195.4" fill="none" stroke="currentColor" stroke-opacity="0.1925" stroke-width="1.2"/>
-    <circle cx="300" cy="300" r="104.7" fill="url(#dkGemGlow)"/>
-    <g class="hc-facets">
-      <circle data-core-heart="all" cx="300" cy="300" r="104.7" fill="url(#dkGemGlow)" style="--lift1:0.222;--lift2:0.417;--lift-max:0.556;--lift-final:0.556"/>
-    </g>
-    <polygon points="300.0,244.9 347.7,272.4 347.7,327.6 300.0,355.1 252.3,327.6 252.3,272.4" fill="#0b0910" stroke="currentColor" stroke-opacity="0.8" stroke-width="4.60" stroke-linejoin="round"/>
-    <polygon points="300.0,253.7 340.1,276.8 340.1,323.2 300.0,346.3 259.9,323.2 259.9,276.8" fill="none" stroke="currentColor" stroke-opacity="0.28" stroke-width="1"/>
-    <polygon points="300.0,271.3 324.8,285.7 324.8,314.3 300.0,328.7 275.2,314.3 275.2,285.7" fill="url(#dkGem)"/>
-  </svg>
-<!-- ЯДРО:КОНЕЦ -->
-  </div>
+</helmet>
+{{ bg }}
+<div aria-hidden="true" style="position:fixed;left:0;right:0;top:0;z-index:30;display:flex;gap:2px;height:3px;padding:0 2px;pointer-events:none">
+<sc-for list="{{ ticks }}" as="t" hint-placeholder-count="21"><i style="flex:1 1 0;min-width:0;background:{{ t.c }};margin-left:{{ t.ml }};transition:background-color 150ms"></i></sc-for>
 </div>
-<div class="dk-prog" aria-hidden="true"></div>
-<header class="dk-head" id="top">
-  <a class="dk-brand" href="#top" aria-label="HEXLASH"><img alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px"><span>HEXLASH</span></a>
-  <div class="dk-right">
-    <nav data-layer="ru" class="dk-nav off" aria-label="Разделы" lang="ru">
-      <a href="#s01" data-ch="0">ИГРА</a><a href="#s11" data-ch="1">ЭКОНОМИКА</a><a href="#s16" data-ch="2">РЫНОК И ПЛАН</a><a href="#s20" data-ch="3">РАУНД</a>
-    </nav>
-    <nav data-layer="en" class="dk-nav" aria-label="Sections" lang="en">
-      <a href="#e01" data-ch="0">GAME</a><a href="#e11" data-ch="1">ECONOMICS</a><a href="#e16" data-ch="2">MARKET &amp; PLAN</a><a href="#e20" data-ch="3">ROUND</a>
-    </nav>
-    <div class="dk-lang" role="group" aria-label="Язык страницы / Page language">
-      <a href="?lang=en" data-lang-btn="en" lang="en" class="on">EN</a>
-      <a href="?lang=ru" data-lang-btn="ru" lang="ru">RU</a>
-    </div>
-  </div>
+<header id="top" style="position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:20px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:space-between;gap:16px">
+<a href="#top" aria-label="HEXLASH" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:#F6F4F6;padding:12px 0">
+<img src="assets/mark-full-128.png" width="48" height="48" alt="" draggable="false" style="display:block;width:48px;height:48px;flex:0 0 48px">
+<span style="font:900 24px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase">HEXLASH</span>
+</a>
+<div style="display:flex;align-items:center;gap:clamp(16px,3vw,40px)">
+<sc-if value="{{ wide }}" hint-placeholder-val="{{ false }}">
+<nav aria-label="{{ navLabel }}" style="display:flex;gap:32px">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="4"><a href="{{ n.href }}" style="font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:{{ n.c }};text-decoration:none;padding:16px 0">{{ n.label }}</a></sc-for>
+</nav>
+</sc-if>
+<div role="group" aria-label="Язык страницы / Page language" style="display:flex">
+<a href="?lang=en" lang="en" onClick="{{ setEn }}" style="display:inline-flex;align-items:center;justify-content:center;height:44px;min-width:48px;padding:0 12px;border:1px solid {{ enB }};color:{{ enC }};font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-decoration:none;transition:color 150ms,border-color 150ms">EN</a>
+<a href="?lang=ru" lang="ru" onClick="{{ setRu }}" style="display:inline-flex;align-items:center;justify-content:center;height:44px;min-width:48px;padding:0 12px;margin-left:-1px;border:1px solid {{ ruB }};color:{{ ruC }};font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-decoration:none;transition:color 150ms,border-color 150ms">RU</a>
+</div>
+</div>
 </header>
-<main>
+<sc-if value="{{ isEn }}" hint-placeholder-val="{{ true }}">
 <section data-layer="en" lang="en" data-screen-label="00 Hero" style="position:relative;z-index:1;max-width:1280px;margin:0 auto;min-height:calc(100svh - 88px);padding:48px clamp(24px,5vw,64px) clamp(56px,9vw,112px);display:flex;flex-direction:column;justify-content:flex-end;gap:clamp(28px,4vw,44px)">
 <h1 style="margin:0;max-width:13ch;font:900 clamp(56px,10vw,156px)/.88 'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">You raise an AI until it starts raising others.</h1>
 <div style="display:flex;flex-wrap:wrap;gap:20px 64px;align-items:flex-end;justify-content:space-between">
@@ -678,14 +55,19 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <p style="margin:0;flex:1 1 280px;max-width:44ch;font:400 14px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">hexlash.com today is not a game but a demonstration of the idea. Part of what's described already works; the rest is marked “in development”.</p>
 </div>
 </section>
-<section data-layer="ru" lang="ru" class="off" data-screen-label="00 Hero" style="position:relative;z-index:1;max-width:1280px;margin:0 auto;min-height:calc(100svh - 88px);padding:48px clamp(24px,5vw,64px) clamp(56px,9vw,112px);display:flex;flex-direction:column;justify-content:flex-end;gap:clamp(28px,4vw,44px)">
+</sc-if>
+<sc-if value="{{ isRu }}" hint-placeholder-val="{{ false }}">
+<section data-layer="ru" lang="ru" data-screen-label="00 Hero" style="position:relative;z-index:1;max-width:1280px;margin:0 auto;min-height:calc(100svh - 88px);padding:48px clamp(24px,5vw,64px) clamp(56px,9vw,112px);display:flex;flex-direction:column;justify-content:flex-end;gap:clamp(28px,4vw,44px)">
 <h1 style="margin:0;max-width:15ch;font:700 clamp(34px,7vw,96px)/1.08 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:balance">Ты растишь ИИ, пока он не начнёт растить других.</h1>
 <div style="display:flex;flex-wrap:wrap;gap:20px 64px;align-items:flex-end;justify-content:space-between">
 <p style="margin:0;flex:1 1 320px;max-width:40ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Игра, в которой ты не дерёшься. Боец думает сам, а однажды ведёт других вместо тебя.</p>
 <p style="margin:0;flex:1 1 280px;max-width:44ch;font:400 14px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">hexlash.com сегодня — не игра, а демонстрация идеи. Часть описанного уже работает, остальное помечено «в разработке».</p>
 </div>
 </section>
-<div class="dk-layer off" data-layer="ru" lang="ru">
+</sc-if>
+
+<sc-if value="{{ isRu }}" hint-placeholder-val="{{ false }}">
+<div data-layer="ru" lang="ru" style="position:relative;z-index:1">
 <div data-rv style="max-width:1280px;margin:0 auto;padding:clamp(96px,14vw,200px) clamp(24px,5vw,64px) 0;display:flex;align-items:flex-end;gap:16px 28px;flex-wrap:wrap">
 <span style="font:900 clamp(80px,14vw,200px)/.78 'Saira Condensed',sans-serif;color:#F6F4F6">I</span>
 <span style="padding-bottom:4px;font:700 clamp(28px,5vw,64px)/1 'JetBrains Mono',monospace;color:#F6F4F6">ИГРА</span>
@@ -693,7 +75,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="s01" data-sec="0" data-screen-label="01 Проблема" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">01</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ПРОБЛЕМА</p>
@@ -718,7 +100,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s02" data-sec="1" data-screen-label="02 Модель" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">02</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">МОДЕЛЬ</p>
@@ -740,7 +122,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">EVERYONE</span> <span data-w style="display:inline-block">HAS</span> <span data-w style="display:inline-block">A</span> <span data-w style="display:inline-block">PLAN</span> <span data-w style="display:inline-block">UNTIL</span> <span data-w style="display:inline-block">THEY</span> <span data-w style="display:inline-block">GET</span> <span data-w style="display:inline-block">PUNCHED</span></p></div>
 
 <section id="s03" data-sec="2" data-screen-label="03 Живой бой" style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">03</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЖИВОЙ БОЙ</p>
@@ -750,13 +132,13 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <p style="margin:0;max-width:52ch;font:400 18px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Ни кнопки удара, ни блока, ни комбо. Боец дерётся сам — своей головой, характером и привычками. Это не ролик и не симуляция. Кнопка ниже открывает саму игру — выберите режим и запустите бой.</p>
 <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;padding:clamp(24px,3vw,32px);background:#16161B;border:1px solid rgba(255,255,255,.09)">
 <p style="flex:1 1 220px;margin:0;font:500 12px/1.7 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">НАСТОЯЩАЯ ИГРА · ВЫБЕРИТЕ РЕЖИМ И ЗАПУСТИТЕ БОЙ</p>
-<a class="dk-go" href="https://hexlash.com/play/gate" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;min-height:56px;min-width:200px;padding:0 40px;background:#08080A;border:1px solid rgba(255,255,255,.16);color:#F6F4F6;font:700 18px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-decoration:none;transition:border-color 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)">ПЕРЕЙТИ</a>
+<a href="https://hexlash.com/play/gate" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;min-height:56px;min-width:200px;padding:0 40px;background:#08080A;border:1px solid rgba(255,255,255,.16);color:#F6F4F6;font:700 18px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-decoration:none;transition:border-color 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)" style-hover="border-color:#FF0069;box-shadow:0 0 18px rgba(255,0,105,.35);transform:translateY(-1px);color:#F6F4F6" style-active="border-color:#FF0069;box-shadow:0 0 10px rgba(255,0,105,.45);transform:translateY(1px)">ПЕРЕЙТИ</a>
 </div>
 </div>
 </section>
 
 <section id="s04" data-sec="3" data-screen-label="04 Боец" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">04</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">БОЕЦ</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>РАБОТАЕТ</span></div>
@@ -764,24 +146,24 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-rv style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:clamp(28px,4vw,44px)">
 <h2 style="margin:0;max-width:22ch;font:700 clamp(30px,4.4vw,52px)/1.14 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:balance">Ядро задаёт манеру, а не цифры</h2>
 <p style="margin:0;max-width:52ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">В основе каждого бойца — ядро. Ядер четыре.</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#FF3344;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">ONSLAUGHT</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Прёт напролом и не умеет ждать.</p></div>
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#FFA526;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">RAIDER</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Бьёт коротко и сразу уходит.</p></div>
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#2ED6B0;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">BULWARK</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Стоит намертво, и об него ломаются.</p></div>
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#9461FF;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">AMBUSH</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Живёт ради одного точного момента.</p></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px">
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#FF3344;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">ONSLAUGHT</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Прёт напролом и не умеет ждать.</p></div>
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#FFA526;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">RAIDER</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Бьёт коротко и сразу уходит.</p></div>
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#2ED6B0;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">BULWARK</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Стоит намертво, и об него ломаются.</p></div>
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#9461FF;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">AMBUSH</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Живёт ради одного точного момента.</p></div>
 </div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:32px clamp(32px,5vw,64px)">
 <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:24px">
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Из ядра растут три грани — ТЕЛО, РАЗУМ и ВОЛЯ, — в каждой по пять кристаллов. У каждого ядра свои пятнадцать. Зажечь можно любые семь.</p>
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Кристалл меняет не только силу, но и характер: то, как боец выбирает намерение, а значит — как он дерётся.</p>
 </div>
-<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px"><svg viewBox="0 20 600 520" role="img" aria-label="Ядро «Печать»: три грани по пять кристаллов, зажжено семь из пятнадцати" style="display:block;width:100%;max-width:440px;margin:0 auto"><polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/><line x1="300" y1="300" x2="300.0" y2="75.0" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="494.9" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="105.1" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><polygon points="300.0,213.0 307.8,217.5 307.8,226.5 300.0,231.0 292.2,226.5 292.2,217.5" fill="#FF0069"/><polygon points="300.0,181.5 309.1,186.8 309.1,197.2 300.0,202.5 290.9,197.2 290.9,186.8" fill="#FF0069"/><polygon points="300.0,148.0 310.4,154.0 310.4,166.0 300.0,172.0 289.6,166.0 289.6,154.0" fill="#FF0069"/><polygon points="300.0,112.5 311.7,119.2 311.7,132.8 300.0,139.5 288.3,132.8 288.3,119.2" fill="#FF0069"/><polygon points="300.0,75.0 313.0,82.5 313.0,97.5 300.0,105.0 287.0,97.5 287.0,82.5" fill="#FF0069"/><polygon points="367.5,330.0 375.3,334.5 375.3,343.5 367.5,348.0 359.8,343.5 359.8,334.5" fill="#FF0069"/><polygon points="393.5,343.5 402.6,348.8 402.6,359.2 393.5,364.5 384.4,359.2 384.4,348.8" fill="#FF0069"/><polygon points="421.2,358.0 431.6,364.0 431.6,376.0 421.2,382.0 410.9,376.0 410.9,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="450.7,373.5 462.4,380.2 462.4,393.7 450.7,400.5 439.0,393.7 439.0,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="481.9,390.0 494.9,397.5 494.9,412.5 481.9,420.0 468.9,412.5 468.9,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="232.5,330.0 240.2,334.5 240.2,343.5 232.5,348.0 224.7,343.5 224.7,334.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="206.5,343.5 215.6,348.8 215.6,359.2 206.5,364.5 197.4,359.2 197.4,348.8" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="178.8,358.0 189.1,364.0 189.1,376.0 178.8,382.0 168.4,376.0 168.4,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="149.3,373.5 161.0,380.2 161.0,393.7 149.3,400.5 137.6,393.7 137.6,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="118.1,390.0 131.1,397.5 131.1,412.5 118.1,420.0 105.1,412.5 105.1,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="300.0,260.0 334.6,280.0 334.6,320.0 300.0,340.0 265.4,320.0 265.4,280.0" fill="#0b0910" stroke="rgba(255,255,255,0.3)" stroke-width="3"/><text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ТЕЛО</text><text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">РАЗУМ</text><text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ВОЛЯ</text></svg><p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">7 / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ЗАЖЖЕНО · ПРИМЕР СБОРКИ</figcaption></figure>
+<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px">{{ crystalRu }}<p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">7 / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ЗАЖЖЕНО · ПРИМЕР СБОРКИ</figcaption></figure>
 </div>
 </div>
 </section>
 
 <section id="s05" data-sec="4" data-screen-label="05 Что делает игрок" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">05</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЧТО ДЕЛАЕТ ИГРОК</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>РАБОТАЕТ</span></div>
@@ -804,12 +186,17 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Предметы, которыми игрок поддерживает бойца в бою. Кости — единственный рычаг со случайным исходом.</p>
 </div>
 </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:4px">
+<div style="display:flex;flex-direction:column;gap:12px"><i style="height:2px;background:#F6F4F6"></i><span style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ПРИМЕНИЛ</span></div>
+<div style="display:flex;flex-direction:column;gap:12px"><i style="height:2px;background:rgba(255,255,255,.16)"></i><span style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">БЛОК · НЕСКОЛЬКО СЕКУНД</span></div>
+<div style="display:flex;flex-direction:column;gap:12px"><i style="height:2px;background:#F6F4F6"></i><span style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">СНОВА ДОСТУПЕН</span></div>
+</div>
 <p style="margin:0;max-width:60ch;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">После использования любой клич или бафф на несколько секунд блокируется. Поэтому вопрос не только «что у меня осталось», но и «сейчас или чуть позже».</p>
 </div>
 </section>
 
 <section id="s06" data-sec="5" data-screen-label="06 Лестница" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">06</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЛЕСТНИЦА</p>
@@ -830,9 +217,9 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div style="display:flex;flex-direction:column;gap:28px;padding-top:clamp(32px,4vw,48px);border-top:1px solid rgba(255,255,255,.16)">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0;font:700 clamp(24px,3vw,32px)/1.2 'JetBrains Mono',monospace;color:#F6F4F6">Восхождение</h3><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>РАБОТАЕТ</span></div>
 <div aria-hidden="true" style="display:flex;flex-direction:column;gap:4px">
-<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px"><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="#0b0910" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="rgba(255,255,255,0.3)"/></svg></span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЯДРО</p></div>
-<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px"><svg width="16" height="40" viewBox="0 0 16 40" aria-hidden="true" style="display:block;margin:4px auto"><line x1="8" y1="0" x2="8" y2="30" stroke="#A9A5AF" stroke-width="2"/><polygon points="2,24 8,38 14,24" fill="#A9A5AF"/></svg></span><div style="display:flex;flex-direction:column;gap:6px"><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ВОСХОЖДЕНИЕ</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">БЕЗ КОПИИ · БЕЗ ВОЗВРАТА</p></div></div>
-<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px"><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="#FFB21D" stroke-width="3" fill="rgba(255,178,29,0.12)" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="#FFB21D"/></svg></span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">ЛЕГЕНДА · ЗОЛОТОЕ ЯДРО</p></div>
+<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px">{{ icoCore }}</span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЯДРО</p></div>
+<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px">{{ icoDown }}</span><div style="display:flex;flex-direction:column;gap:6px"><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ВОСХОЖДЕНИЕ</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">БЕЗ КОПИИ · БЕЗ ВОЗВРАТА</p></div></div>
+<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px">{{ icoLegend }}</span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">ЛЕГЕНДА · ЗОЛОТОЕ ЯДРО</p></div>
 </div>
 <p style="margin:0;max-width:60ch;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Восхождение — обмен, а не улучшение. Лучший боец навсегда уходит из ростера. Взамен над залом появляется легенда: сама она больше не дерётся — тренирует ростер и ведёт отряд в бою.</p>
 <p style="margin:0;max-width:46ch;font:500 19px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Самый тяжёлый выбор в игре: отдать лучшего бойца, чтобы получить того, кто больше не дерётся.</p>
@@ -851,14 +238,14 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 <p style="margin:0;max-width:30ch;padding:clamp(24px,4vw,48px) 0;font:700 clamp(22px,3vw,32px)/1.35 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:balance">Главная награда — не предмет, а свобода: игра продолжается и без тебя.</p>
 <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
-<div class="dk-clip" data-clip="hall"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="Зал FORGE: легенда парит над залом, бойцы внизу" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+<div style="position:relative;aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,.09);overflow:hidden"><video data-clip="hall" muted="true" loop="true" playsInline="true" preload="none" poster="assets/hall-poster.jpg" aria-label="Зал FORGE: легенда парит над залом, бойцы внизу" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block"></video></div>
 <figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">запись из игры · зал FORGE</figcaption>
 </figure>
 </div>
 </section>
 
 <section id="s07" data-sec="6" data-screen-label="07 Барьер" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">07</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">БАРЬЕР</p>
@@ -872,12 +259,12 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 <figure style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
 <div style="display:flex;justify-content:space-between;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF"><span>0 С</span><span>≈ 60 С</span></div>
-<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:2px;height:36px"><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i></div>
+<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:2px;height:36px"><sc-for list="{{ fl }}" as="t" hint-placeholder-count="60"><sc-if value="{{ t.m }}"><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i></sc-if><sc-if value="{{ t.n }}"><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i></sc-if></sc-for></div>
 <p style="display:flex;flex-wrap:wrap;gap:10px 28px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:12px;height:2px;background:#585F68"></i>БЫСТРЫЙ СЛОЙ · ≈ 1 РЕШЕНИЕ В СЕКУНДУ</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:8px;height:8px;border:1px solid #C8D1D8"></i>ЯЗЫКОВАЯ МОДЕЛЬ · ПО СОБЫТИЯМ БОЯ</span></p>
 <figcaption style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF">ДУЭЛЬ, ОДИН БОЕЦ · ≈ 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР 02.10.2026) · РАССТАНОВКА — ИЛЛЮСТРАЦИЯ</figcaption>
 </figure>
 <div style="display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)">
-<div style="display:flex;flex-direction:column;gap:12px"><p style="margin:0;font:900 clamp(72px,14vw,184px)/.82 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.01em;color:#F6F4F6">≈$0,008</p><p style="margin:0;font:500 13px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#F6F4F6">ОДНА ДУЭЛЬ</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><p style="margin:0;font:900 clamp(88px,14vw,184px)/.82 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.01em;color:#F6F4F6">≈$0,008</p><p style="margin:0;font:500 13px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#F6F4F6">ОДНА ДУЭЛЬ</p></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.09)">
 <div style="display:flex;flex-direction:column;gap:10px"><p style="margin:0;font:900 clamp(48px,6vw,72px)/.9 'Saira Condensed','JetBrains Mono',monospace;color:#F6F4F6">≈$8</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ТЫСЯЧА ДУЭЛЕЙ</p></div>
 <div style="display:flex;flex-direction:column;gap:10px"><p style="margin:0;font:900 clamp(48px,6vw,72px)/.9 'Saira Condensed','JetBrains Mono',monospace;color:#F6F4F6">≈$0,001</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ЛЕГЕНДА В ОТРЯДНОМ БОЮ</p></div>
@@ -896,7 +283,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s08" data-sec="7" data-screen-label="08 Миры" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">08</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">МИРЫ</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(255,255,255,.16);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><i style="width:6px;height:6px;border:1px solid #A9A5AF"></i>В РАЗРАБОТКЕ</span></div>
@@ -917,7 +304,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">FALL</span> <span data-w style="display:inline-block">SEVEN</span> <span data-w style="display:inline-block">TIMES.</span> <span data-w style="display:inline-block">STAND</span> <span data-w style="display:inline-block">UP</span> <span data-w style="display:inline-block">EIGHT.</span></p></div>
 
 <section id="s09" data-sec="8" data-screen-label="09 Статус" style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">09</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">СТАТУС</p>
@@ -967,7 +354,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s10" data-sec="9" data-screen-label="10 Гипотезы" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I ИГРА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">10</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ГИПОТЕЗЫ</p>
@@ -987,6 +374,10 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">TRAIN</span> <span data-w style="display:inline-block">HARD.</span> <span data-w style="display:inline-block">FIGHT</span> <span data-w style="display:inline-block">EASY.</span></p></div>
+</div>
+</sc-if>
+<sc-if value="{{ isRu }}" hint-placeholder-val="{{ false }}">
+<div data-layer="ru" lang="ru" style="position:relative;z-index:1">
 <div data-rv style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;align-items:flex-end;gap:16px 28px;flex-wrap:wrap">
 <span style="font:900 clamp(80px,14vw,200px)/.78 'Saira Condensed',sans-serif;color:#F6F4F6">II</span>
 <span style="padding-bottom:4px;font:700 clamp(28px,5vw,64px)/1 'JetBrains Mono',monospace;color:#F6F4F6">ЭКОНОМИКА</span>
@@ -994,7 +385,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="s11" data-sec="10" data-screen-label="11 Экономика игрока" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ЭКОНОМИКА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">11</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЭКОНОМИКА ИГРОКА</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(255,255,255,.16);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><i style="width:6px;height:6px;border:1px solid #A9A5AF"></i>В РАЗРАБОТКЕ</span></div>
@@ -1013,7 +404,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s12" data-sec="11" data-screen-label="12 Доход" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ЭКОНОМИКА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">12</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ДОХОД</p>
@@ -1030,7 +421,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s13" data-sec="12" data-screen-label="13 Юнит-экономика" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ЭКОНОМИКА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">13</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ЮНИТ-ЭКОНОМИКА</p>
@@ -1049,7 +440,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s14" data-sec="13" data-screen-label="14 Масштаб" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ЭКОНОМИКА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">14</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">МАСШТАБ</p>
@@ -1066,7 +457,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s15" data-sec="14" data-screen-label="15 Токен" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ЭКОНОМИКА</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">15</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ТОКЕН</p>
@@ -1096,7 +487,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="s16" data-sec="15" data-screen-label="16 Рынок" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III РЫНОК И ПЛАН</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">16</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">РЫНОК</p>
@@ -1112,7 +503,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s17" data-sec="16" data-screen-label="17 Арена агентов" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III РЫНОК И ПЛАН</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">17</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">АРЕНА АГЕНТОВ</p><p style="margin:0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF">ВТОРОЙ ВЗГЛЯД НА ТОТ ЖЕ ПРОДУКТ</p></div>
@@ -1141,7 +532,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">DON'T</span> <span data-w style="display:inline-block">COUNT</span> <span data-w style="display:inline-block">THE</span> <span data-w style="display:inline-block">DAYS.</span> <span data-w style="display:inline-block">MAKE</span> <span data-w style="display:inline-block">THE</span> <span data-w style="display:inline-block">DAYS</span> <span data-w style="display:inline-block">COUNT.</span></p></div>
 
 <section id="s18" data-sec="17" data-screen-label="18 Роадмап" style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III РЫНОК И ПЛАН</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">18</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">РОАДМАП</p>
@@ -1161,7 +552,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s19" data-sec="18" data-screen-label="19 Риски" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III РЫНОК И ПЛАН</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">19</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">РИСКИ</p>
@@ -1193,7 +584,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="s20" data-sec="19" data-screen-label="20 Раунд" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">IV РАУНД</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">20</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">РАУНД</p>
@@ -1225,7 +616,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="s21" data-sec="20" data-screen-label="21 Команда" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) clamp(96px,12vw,160px);display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">IV РАУНД</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">21</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">КОМАНДА</p>
@@ -1241,7 +632,9 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 </section>
 </div>
-<div class="dk-layer" data-layer="en" lang="en">
+</sc-if>
+<sc-if value="{{ isEn }}" hint-placeholder-val="{{ false }}">
+<div data-layer="en" lang="en" style="position:relative;z-index:1">
 <div data-rv style="max-width:1280px;margin:0 auto;padding:clamp(96px,14vw,200px) clamp(24px,5vw,64px) 0;display:flex;align-items:flex-end;gap:16px 28px;flex-wrap:wrap">
 <span style="font:900 clamp(80px,14vw,200px)/.78 'Saira Condensed',sans-serif;color:#F6F4F6">I</span>
 <span style="padding-bottom:4px;font:900 clamp(40px,8vw,104px)/.9 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">GAME</span>
@@ -1249,7 +642,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="e01" data-sec="0" data-screen-label="01 Problem" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">01</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">PROBLEM</p>
@@ -1274,7 +667,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e02" data-sec="1" data-screen-label="02 Model" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">02</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">MODEL</p>
@@ -1296,7 +689,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">EVERYONE</span> <span data-w style="display:inline-block">HAS</span> <span data-w style="display:inline-block">A</span> <span data-w style="display:inline-block">PLAN</span> <span data-w style="display:inline-block">UNTIL</span> <span data-w style="display:inline-block">THEY</span> <span data-w style="display:inline-block">GET</span> <span data-w style="display:inline-block">PUNCHED</span></p></div>
 
 <section id="e03" data-sec="2" data-screen-label="03 Live fight" style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">03</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">LIVE FIGHT</p>
@@ -1306,13 +699,13 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <p style="margin:0;max-width:52ch;font:400 18px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">No attack button, no block, no combos. The fighter fights on his own — with his own head, character and habits. Not a video, not a simulation. The button below opens the game itself — pick a mode and start a fight.</p>
 <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;padding:clamp(24px,3vw,32px);background:#16161B;border:1px solid rgba(255,255,255,.09)">
 <p style="flex:1 1 220px;margin:0;font:500 12px/1.7 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">THE REAL GAME · PICK A MODE AND START A FIGHT</p>
-<a class="dk-go" href="https://hexlash.com/play/gate" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;min-height:56px;min-width:200px;padding:0 40px;background:#08080A;border:1px solid rgba(255,255,255,.16);color:#F6F4F6;font:900 20px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-decoration:none;transition:border-color 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)">GO</a>
+<a href="https://hexlash.com/play/gate" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;min-height:56px;min-width:200px;padding:0 40px;background:#08080A;border:1px solid rgba(255,255,255,.16);color:#F6F4F6;font:900 20px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-decoration:none;transition:border-color 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1),transform 120ms cubic-bezier(.22,.61,.36,1)" style-hover="border-color:#FF0069;box-shadow:0 0 18px rgba(255,0,105,.35);transform:translateY(-1px);color:#F6F4F6" style-active="border-color:#FF0069;box-shadow:0 0 10px rgba(255,0,105,.45);transform:translateY(1px)">GO</a>
 </div>
 </div>
 </section>
 
 <section id="e04" data-sec="3" data-screen-label="04 Fighter" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">04</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">FIGHTER</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>WORKING</span></div>
@@ -1320,24 +713,24 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-rv style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:clamp(28px,4vw,44px)">
 <h2 style="margin:0;max-width:18ch;font:900 clamp(44px,6.6vw,88px)/.92 'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">The core sets the style, not the numbers</h2>
 <p style="margin:0;max-width:52ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Every fighter is built on a core. There are four.</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#FF3344;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">ONSLAUGHT</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Charges straight in and can't wait.</p></div>
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#FFA526;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">RAIDER</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Hits short and gets out.</p></div>
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#2ED6B0;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">BULWARK</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Holds his ground; others break on him.</p></div>
-<div class="dk-lift" style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)"><i style="width:10px;height:10px;background:#9461FF;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">AMBUSH</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Lives for one precise moment.</p></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px">
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#FF3344;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">ONSLAUGHT</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Charges straight in and can't wait.</p></div>
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#FFA526;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">RAIDER</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Hits short and gets out.</p></div>
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#2ED6B0;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">BULWARK</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Holds his ground; others break on him.</p></div>
+<div style="padding:22px 20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px;transition:transform 220ms cubic-bezier(.22,.61,.36,1),box-shadow 220ms cubic-bezier(.22,.61,.36,1)" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(216,227,234,.45),0 0 18px 2px rgba(200,209,216,.22)"><i style="width:10px;height:10px;background:#9461FF;transform:rotate(45deg)"></i><h3 style="margin:0;font:800 24px/1 'Saira Condensed',sans-serif;letter-spacing:.06em;color:#F6F4F6">AMBUSH</h3><p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Lives for one precise moment.</p></div>
 </div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:32px clamp(32px,5vw,64px)">
 <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:24px">
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Three facets grow from the core — BODY, MIND and WILL — five crystals in each. Every core has its own fifteen. Any seven can be lit.</p>
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">A crystal changes not just strength but character: how the fighter picks his intent — and so how he fights.</p>
 </div>
-<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px"><svg viewBox="0 20 600 520" role="img" aria-label="The “Seal” core: three facets with five crystals each, seven of fifteen lit" style="display:block;width:100%;max-width:440px;margin:0 auto"><polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/><line x1="300" y1="300" x2="300.0" y2="75.0" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="494.9" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="105.1" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><polygon points="300.0,213.0 307.8,217.5 307.8,226.5 300.0,231.0 292.2,226.5 292.2,217.5" fill="#FF0069"/><polygon points="300.0,181.5 309.1,186.8 309.1,197.2 300.0,202.5 290.9,197.2 290.9,186.8" fill="#FF0069"/><polygon points="300.0,148.0 310.4,154.0 310.4,166.0 300.0,172.0 289.6,166.0 289.6,154.0" fill="#FF0069"/><polygon points="300.0,112.5 311.7,119.2 311.7,132.8 300.0,139.5 288.3,132.8 288.3,119.2" fill="#FF0069"/><polygon points="300.0,75.0 313.0,82.5 313.0,97.5 300.0,105.0 287.0,97.5 287.0,82.5" fill="#FF0069"/><polygon points="367.5,330.0 375.3,334.5 375.3,343.5 367.5,348.0 359.8,343.5 359.8,334.5" fill="#FF0069"/><polygon points="393.5,343.5 402.6,348.8 402.6,359.2 393.5,364.5 384.4,359.2 384.4,348.8" fill="#FF0069"/><polygon points="421.2,358.0 431.6,364.0 431.6,376.0 421.2,382.0 410.9,376.0 410.9,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="450.7,373.5 462.4,380.2 462.4,393.7 450.7,400.5 439.0,393.7 439.0,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="481.9,390.0 494.9,397.5 494.9,412.5 481.9,420.0 468.9,412.5 468.9,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="232.5,330.0 240.2,334.5 240.2,343.5 232.5,348.0 224.7,343.5 224.7,334.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="206.5,343.5 215.6,348.8 215.6,359.2 206.5,364.5 197.4,359.2 197.4,348.8" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="178.8,358.0 189.1,364.0 189.1,376.0 178.8,382.0 168.4,376.0 168.4,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="149.3,373.5 161.0,380.2 161.0,393.7 149.3,400.5 137.6,393.7 137.6,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="118.1,390.0 131.1,397.5 131.1,412.5 118.1,420.0 105.1,412.5 105.1,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="300.0,260.0 334.6,280.0 334.6,320.0 300.0,340.0 265.4,320.0 265.4,280.0" fill="#0b0910" stroke="rgba(255,255,255,0.3)" stroke-width="3"/><text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">BODY</text><text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">MIND</text><text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">WILL</text></svg><p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">7 / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">LIT · SAMPLE BUILD</figcaption></figure>
+<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px">{{ crystalEn }}<p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">7 / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">LIT · SAMPLE BUILD</figcaption></figure>
 </div>
 </div>
 </section>
 
 <section id="e05" data-sec="4" data-screen-label="05 What the player does" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">05</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">WHAT THE PLAYER DOES</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>WORKING</span></div>
@@ -1360,12 +753,17 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Items that support the fighter mid-fight. The dice are the only lever with a random outcome.</p>
 </div>
 </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:4px">
+<div style="display:flex;flex-direction:column;gap:12px"><i style="height:2px;background:#F6F4F6"></i><span style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">USED</span></div>
+<div style="display:flex;flex-direction:column;gap:12px"><i style="height:2px;background:rgba(255,255,255,.16)"></i><span style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">LOCKED · A FEW SECONDS</span></div>
+<div style="display:flex;flex-direction:column;gap:12px"><i style="height:2px;background:#F6F4F6"></i><span style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">READY AGAIN</span></div>
+</div>
 <p style="margin:0;max-width:60ch;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">After use, any call or buff is locked for a few seconds. So the question is not only “what’s left” but “now or a bit later”.</p>
 </div>
 </section>
 
 <section id="e06" data-sec="5" data-screen-label="06 Ladder" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">06</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">LADDER</p>
@@ -1386,9 +784,9 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div style="display:flex;flex-direction:column;gap:28px;padding-top:clamp(32px,4vw,48px);border-top:1px solid rgba(255,255,255,.16)">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0;font:800 clamp(30px,3.6vw,40px)/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Ascension</h3><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>WORKING</span></div>
 <div aria-hidden="true" style="display:flex;flex-direction:column;gap:4px">
-<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px"><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="#0b0910" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="rgba(255,255,255,0.3)"/></svg></span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">CORE</p></div>
-<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px"><svg width="16" height="40" viewBox="0 0 16 40" aria-hidden="true" style="display:block;margin:4px auto"><line x1="8" y1="0" x2="8" y2="30" stroke="#A9A5AF" stroke-width="2"/><polygon points="2,24 8,38 14,24" fill="#A9A5AF"/></svg></span><div style="display:flex;flex-direction:column;gap:6px"><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ASCENSION</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">NO COPY · NO RETURN</p></div></div>
-<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px"><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto"><polygon points="36.0,4.0 63.7,20.0 63.7,52.0 36.0,68.0 8.3,52.0 8.3,20.0" stroke="#FFB21D" stroke-width="3" fill="rgba(255,178,29,0.12)" stroke-linejoin="round"/><polygon points="36.0,24.0 46.4,30.0 46.4,42.0 36.0,48.0 25.6,42.0 25.6,30.0" fill="#FFB21D"/></svg></span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">LEGEND · GOLDEN CORE</p></div>
+<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px">{{ icoCore }}</span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">CORE</p></div>
+<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px">{{ icoDown }}</span><div style="display:flex;flex-direction:column;gap:6px"><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ASCENSION</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">NO COPY · NO RETURN</p></div></div>
+<div style="display:flex;align-items:center;gap:20px"><span style="flex:0 0 72px">{{ icoLegend }}</span><p style="margin:0;font:700 14px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">LEGEND · GOLDEN CORE</p></div>
 </div>
 <p style="margin:0;max-width:60ch;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Ascension is an exchange, not an upgrade. Your best fighter leaves the roster for good. In return a legend appears above the hall: it no longer fights itself — it trains the roster and leads the squad in battle.</p>
 <p style="margin:0;max-width:46ch;font:500 19px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">The hardest choice in the game: give up your best fighter to get one who no longer fights.</p>
@@ -1407,14 +805,14 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 <p style="margin:0;max-width:30ch;padding:clamp(24px,4vw,48px) 0;font:800 clamp(28px,3.8vw,44px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">The top reward isn't an item. It's freedom: the game goes on without you.</p>
 <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
-<div class="dk-clip" data-clip="hall"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="The FORGE hall: the legend floats above the hall, fighters below" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+<div style="position:relative;aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,.09);overflow:hidden"><video data-clip="hall" muted="true" loop="true" playsInline="true" preload="none" poster="assets/hall-poster.jpg" aria-label="The FORGE hall: the legend floats above the hall, fighters below" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block"></video></div>
 <figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">in-game footage · FORGE hall</figcaption>
 </figure>
 </div>
 </section>
 
 <section id="e07" data-sec="6" data-screen-label="07 Barrier" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">07</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">BARRIER</p>
@@ -1428,12 +826,12 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 <figure style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
 <div style="display:flex;justify-content:space-between;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF"><span>0 S</span><span>≈ 60 S</span></div>
-<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:2px;height:36px"><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i></div>
+<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:2px;height:36px"><sc-for list="{{ fl }}" as="t" hint-placeholder-count="60"><sc-if value="{{ t.m }}"><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i></sc-if><sc-if value="{{ t.n }}"><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i></sc-if></sc-for></div>
 <p style="display:flex;flex-wrap:wrap;gap:10px 28px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:12px;height:2px;background:#585F68"></i>FAST LAYER · ≈ 1 DECISION PER SECOND</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:8px;height:8px;border:1px solid #C8D1D8"></i>LANGUAGE MODEL · ON FIGHT EVENTS</span></p>
 <figcaption style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF">DUEL, ONE FIGHTER · ≈ 8 CALLS PER FIGHT (MEASURED 02.10.2026) · PLACEMENT IS ILLUSTRATIVE</figcaption>
 </figure>
 <div style="display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)">
-<div style="display:flex;flex-direction:column;gap:12px"><p style="margin:0;font:900 clamp(72px,14vw,184px)/.82 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.01em;color:#F6F4F6">≈$0.008</p><p style="margin:0;font:500 13px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#F6F4F6">ONE DUEL</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><p style="margin:0;font:900 clamp(88px,14vw,184px)/.82 'Saira Condensed','JetBrains Mono',monospace;letter-spacing:.01em;color:#F6F4F6">≈$0.008</p><p style="margin:0;font:500 13px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#F6F4F6">ONE DUEL</p></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.09)">
 <div style="display:flex;flex-direction:column;gap:10px"><p style="margin:0;font:900 clamp(48px,6vw,72px)/.9 'Saira Condensed','JetBrains Mono',monospace;color:#F6F4F6">≈$8</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">A THOUSAND DUELS</p></div>
 <div style="display:flex;flex-direction:column;gap:10px"><p style="margin:0;font:900 clamp(48px,6vw,72px)/.9 'Saira Condensed','JetBrains Mono',monospace;color:#F6F4F6">≈$0.001</p><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">LEGEND IN A SQUAD FIGHT</p></div>
@@ -1452,7 +850,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e08" data-sec="7" data-screen-label="08 Worlds" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">08</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">WORLDS</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(255,255,255,.16);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><i style="width:6px;height:6px;border:1px solid #A9A5AF"></i>IN DEVELOPMENT</span></div>
@@ -1473,7 +871,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">FALL</span> <span data-w style="display:inline-block">SEVEN</span> <span data-w style="display:inline-block">TIMES.</span> <span data-w style="display:inline-block">STAND</span> <span data-w style="display:inline-block">UP</span> <span data-w style="display:inline-block">EIGHT.</span></p></div>
 
 <section id="e09" data-sec="8" data-screen-label="09 Status" style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">09</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">STATUS</p>
@@ -1523,7 +921,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e10" data-sec="9" data-screen-label="10 Hypotheses" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">I GAME</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">10</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">HYPOTHESES</p>
@@ -1543,6 +941,10 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">TRAIN</span> <span data-w style="display:inline-block">HARD.</span> <span data-w style="display:inline-block">FIGHT</span> <span data-w style="display:inline-block">EASY.</span></p></div>
+</div>
+</sc-if>
+<sc-if value="{{ isEn }}" hint-placeholder-val="{{ false }}">
+<div data-layer="en" lang="en" style="position:relative;z-index:1">
 <div data-rv style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;align-items:flex-end;gap:16px 28px;flex-wrap:wrap">
 <span style="font:900 clamp(80px,14vw,200px)/.78 'Saira Condensed',sans-serif;color:#F6F4F6">II</span>
 <span style="padding-bottom:4px;font:900 clamp(40px,8vw,104px)/.9 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">ECONOMICS</span>
@@ -1550,7 +952,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="e11" data-sec="10" data-screen-label="11 Player economy" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ECONOMICS</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">11</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">PLAYER ECONOMY</p><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(255,255,255,.16);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><i style="width:6px;height:6px;border:1px solid #A9A5AF"></i>IN DEVELOPMENT</span></div>
@@ -1569,7 +971,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e12" data-sec="11" data-screen-label="12 Revenue" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ECONOMICS</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">12</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">REVENUE</p>
@@ -1586,7 +988,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e13" data-sec="12" data-screen-label="13 Unit economics" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ECONOMICS</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">13</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">UNIT ECONOMICS</p>
@@ -1605,7 +1007,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e14" data-sec="13" data-screen-label="14 Scale" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ECONOMICS</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">14</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">SCALE</p>
@@ -1622,7 +1024,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e15" data-sec="14" data-screen-label="15 Token" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">II ECONOMICS</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">15</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">TOKEN</p>
@@ -1652,7 +1054,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="e16" data-sec="15" data-screen-label="16 Market" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III MARKET &amp; PLAN</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">16</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">MARKET</p>
@@ -1668,7 +1070,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e17" data-sec="16" data-screen-label="17 Agent arena" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III MARKET &amp; PLAN</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">17</p>
 <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px"><p style="margin:0;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">AGENT ARENA</p><p style="margin:0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF">A SECOND LOOK AT THE SAME PRODUCT</p></div>
@@ -1697,7 +1099,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 <div data-pause style="max-width:1280px;margin:0 auto;min-height:min(100svh,900px);padding:96px clamp(24px,5vw,64px);display:flex;align-items:center;justify-content:center;overflow-x:clip"><p lang="en" style="margin:0;text-align:center;font:900 clamp(44px,10vw,132px)/.92 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance"><span data-w style="display:inline-block">DON'T</span> <span data-w style="display:inline-block">COUNT</span> <span data-w style="display:inline-block">THE</span> <span data-w style="display:inline-block">DAYS.</span> <span data-w style="display:inline-block">MAKE</span> <span data-w style="display:inline-block">THE</span> <span data-w style="display:inline-block">DAYS</span> <span data-w style="display:inline-block">COUNT.</span></p></div>
 
 <section id="e18" data-sec="17" data-screen-label="18 Roadmap" style="max-width:1280px;margin:0 auto;padding:clamp(48px,6vw,80px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III MARKET &amp; PLAN</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">18</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ROADMAP</p>
@@ -1717,7 +1119,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e19" data-sec="18" data-screen-label="19 Risks" style="max-width:1280px;margin:0 auto;padding:clamp(96px,12vw,168px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">III MARKET &amp; PLAN</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">19</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">RISKS</p>
@@ -1749,7 +1151,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 
 <section id="e20" data-sec="19" data-screen-label="20 Round" style="max-width:1280px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(24px,5vw,64px) 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">IV ROUND</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">20</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ROUND</p>
@@ -1781,7 +1183,7 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </section>
 
 <section id="e21" data-sec="20" data-screen-label="21 Team" style="max-width:1280px;margin:0 auto;padding:clamp(120px,16vw,220px) clamp(24px,5vw,64px) clamp(96px,12vw,160px);display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px clamp(32px,6vw,96px)">
-<aside class="dk-aside" data-rv style="flex:1 1 240px;max-width:320px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
+<aside data-rv style="flex:1 1 240px;max-width:320px;position:{{ stick }};top:40px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px">
 <p style="flex:1 0 100%;margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">IV ROUND</p>
 <p style="margin:0;font:900 clamp(88px,11vw,152px)/.78 'Saira Condensed',sans-serif;color:rgba(246,244,246,.05);-webkit-text-stroke:1px rgba(246,244,246,.4)">21</p>
 <p style="margin:0 0 4px;font:700 13px/1.3 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">TEAM</p>
@@ -1797,216 +1199,123 @@ html.dk-anim .dk-now>*,html.dk-anim .dk-now [data-w]{transition:none}
 </div>
 </section>
 </div>
-</main>
-<footer class="dk-foot">
-  <div class="dk-foot-top">
-    <div class="dk-brand"><img alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px"><span>HEXLASH</span></div>
-    <span class="dk-foot-tag" lang="en">NEVER GIVE UP</span>
-  </div>
-  <div class="dk-foot-social">
-    <span class="dk-social" role="img" aria-label="X — soon"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-7.5 8.6L23.3 22h-6.8l-5.3-7-6.1 7H2l8-9.2L1 2h7l4.8 6.4L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></span>
-    <span class="dk-social" role="img" aria-label="Discord — soon"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M20.3 4.5A19 19 0 0 0 15.6 3l-.3.5a14 14 0 0 1 4.2 2 12.6 12.6 0 0 0-15 0 14 14 0 0 1 4.2-2L8.4 3a19 19 0 0 0-4.7 1.5C1 9 .3 13.3.6 17.6A19 19 0 0 0 6.4 20l.7-1.2a12 12 0 0 1-1.9-.9l.5-.4a9 9 0 0 0 7.6 0l.5.4a12 12 0 0 1-1.9.9l.7 1.2a19 19 0 0 0 5.8-2.4c.4-5-.7-9.3-3-13.1ZM8.5 15c-.9 0-1.7-.8-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Zm7 0c-.9 0-1.7-.8-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Z"/></svg></span>
-  </div>
-  <div class="dk-foot-bottom">
-    <p>hexlash.com · 02.10.2026 · CONFIDENTIAL</p>
-    <p data-layer="en" lang="en">Contact: <span class="dk-ph">[CONTACT]</span></p>
-    <p data-layer="ru" lang="ru" class="off">Контакт: <span class="dk-ph">[КОНТАКТ]</span></p>
-  </div>
-</footer>
+</sc-if>
+<footer style="position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:clamp(52px,7vh,84px) clamp(24px,5vw,64px) 40px;border-top:1px solid rgba(255,255,255,.09);background:#08080A">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:14px;color:#F6F4F6"><img src="assets/mark-full-128.png" width="48" height="48" alt="" draggable="false" style="display:block;width:48px;height:48px"><span style="font:900 24px/1 'Saira Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase">HEXLASH</span></div>
+<span lang="en" style="font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.34em;text-transform:uppercase;color:#FF0069">NEVER GIVE UP</span>
 </div>
-<script>
-/* Язык, полоса прогресса, цвет фона, появление блоков, заливка полосы «ТЫ → ИИ».
-   Образец — см. блок «ВИД ДЕКИ» в стилях. Всё здесь — только показ: тексты не
-   трогаются, без скрипта страница читается целиком (английский слой). */
-(function () {
-  window.__dkOK = 1;
-  var doc = document, root = doc.documentElement;
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var anim = root.classList.contains('dk-anim');
-  var vh = window.innerHeight;
-
-  /* --- Язык: ?lang → localStorage → английский. Ключ тот же, что был. ------ */
-  function read() {
-    var p = new URLSearchParams(location.search).get('lang');
-    if (p === 'ru' || p === 'en') return p;
-    try { var s = localStorage.getItem('hexlash-deck-lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {}
-    return 'en';
+<div style="display:flex;gap:24px;justify-content:center;margin:clamp(34px,5vh,50px) 0">
+<span role="img" aria-label="X — soon" style="display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;color:#A9A5AF">{{ icoX }}</span>
+<span role="img" aria-label="Discord — soon" style="display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;color:#A9A5AF">{{ icoDiscord }}</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:12px 24px;flex-wrap:wrap;padding-top:26px;border-top:1px solid rgba(255,255,255,.05);font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.12em;color:#A9A5AF">
+<p style="margin:0">hexlash.com · 02.10.2026 · CONFIDENTIAL</p>
+<sc-if value="{{ isEn }}" hint-placeholder-val="{{ true }}"><p data-layer="en" lang="en" style="margin:0">Contact: <span style="display:inline-block;padding:0 6px;border:1px dashed rgba(255,255,255,.22);white-space:nowrap">[CONTACT]</span></p></sc-if>
+<sc-if value="{{ isRu }}" hint-placeholder-val="{{ false }}"><p data-layer="ru" lang="ru" style="margin:0">Контакт: <span style="display:inline-block;padding:0 6px;border:1px dashed rgba(255,255,255,.22);white-space:nowrap">[КОНТАКТ]</span></p></sc-if>
+</div>
+</footer></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;bgStrength&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.4,&quot;min&quot;:0.2,&quot;max&quot;:0.9,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Фон&quot;},&quot;pauseMotion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;words&quot;,&quot;options&quot;:[&quot;words&quot;,&quot;fade&quot;,&quot;none&quot;],&quot;tsType&quot;:&quot;'words'|'fade'|'none'&quot;,&quot;section&quot;:&quot;Движение&quot;},&quot;stickyAside&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Раскладка&quot;}}">
+const CORES=['#FF0069','#FF3344','#FFA526','#2ED6B0','#9461FF'];
+const CH=[0,10,15,19];
+const MK=[3,8,15,19,27,34,43,52];
+const NAV={en:['GAME','ECONOMICS','MARKET & PLAN','ROUND'],ru:['ИГРА','ЭКОНОМИКА','РЫНОК И ПЛАН','РАУНД']};
+const chOf=i=>i<0?-1:i>=19?3:i>=15?2:i>=10?1:0;
+class Component extends DCLogic {
+  state={lang:'en',cur:-1,wide:true};
+  componentDidMount(){
+    this.reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+    this.seen=new WeakSet();
+    let l=null;try{l=new URLSearchParams(location.search).get('lang')||localStorage.getItem('hx-deck-lang');}catch(e){}
+    this.onResize=()=>{const w=innerWidth>=1024;if(w!==this.state.wide)this.setState({wide:w});};
+    this.onScroll=()=>{if(this.raf)return;this.raf=requestAnimationFrame(()=>{this.raf=0;this.tick();});};
+    addEventListener('resize',this.onResize);addEventListener('scroll',this.onScroll,{passive:true});
+    this.setState({lang:l==='ru'?'ru':'en',wide:innerWidth>=1024},()=>{this.scan();this.tick();});
+    this.timers=[400,1200,3000].map(t=>setTimeout(()=>{this.scan();this.tick();},t));
   }
-  var lang = 'en';
-  function activeLayer() { return doc.querySelector('.dk-layer:not(.off)'); }
-  function setLang(l, keepAnchor) {
-    var anchor = null, top = 0, i;
-    if (keepAnchor) {
-      /* Держим место: запоминаем первый видимый раздел и его отступ от верха экрана. */
-      var secs = [].slice.call(doc.querySelectorAll('.dk-layer section[id]'));
-      for (i = 0; i < secs.length; i++) {
-        var r = secs[i].getBoundingClientRect();
-        if (r.bottom > 0 && secs[i].offsetParent !== null) { anchor = secs[i].id.replace(/^[se]/, ''); top = r.top; break; }
-      }
+  componentWillUnmount(){removeEventListener('resize',this.onResize);removeEventListener('scroll',this.onScroll);(this.timers||[]).forEach(clearTimeout);this.io&&this.io.disconnect();this.vio&&this.vio.disconnect();}
+  componentDidUpdate(pp,ps){
+    if(ps.lang!==this.state.lang){
+      if(this.jump!=null&&this.jump>=0){const el=document.querySelector('[data-sec="'+this.jump+'"]');if(el)scrollTo(0,el.getBoundingClientRect().top+scrollY-24);}
+      this.jump=null;this.scan();this.tick();
     }
-    [].forEach.call(doc.querySelectorAll('[data-layer]'), function (el) { el.classList.toggle('off', el.getAttribute('data-layer') !== l); });
-    [].forEach.call(doc.querySelectorAll('[data-lang-btn]'), function (b) {
-      var on = b.getAttribute('data-lang-btn') === l;
-      b.classList.toggle('on', on);
-      if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-    });
-    root.lang = l;
-    try { localStorage.setItem('hexlash-deck-lang', l); } catch (e) {}
-    if (keepAnchor && anchor) {
-      var t = doc.getElementById((l === 'ru' ? 's' : 'e') + anchor);
-      if (t) window.scrollTo(0, window.scrollY + t.getBoundingClientRect().top - top);
+  }
+  setLang(l){
+    if(l===this.state.lang)return;this.jump=this.state.cur;
+    try{localStorage.setItem('hx-deck-lang',l);const u=new URL(location.href);u.searchParams.set('lang',l);history.replaceState(null,'',u);}catch(e){}
+    this.setState({lang:l});
+  }
+  scan(){
+    if(!this.io&&'IntersectionObserver' in window){
+      this.io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){this.io.unobserve(e.target);this.show(e.target);}}),{threshold:0.15,rootMargin:'0px 0px -8% 0px'});
+      this.vio=new IntersectionObserver(es=>es.forEach(e=>this.vid(e.target,e.isIntersecting)),{rootMargin:'200px 0px'});
     }
-    lang = l;
-    collect();
-    check(true);
-    tick();
-  }
-  [].forEach.call(doc.querySelectorAll('[data-lang-btn]'), function (b) {
-    b.addEventListener('click', function (e) { e.preventDefault(); setLang(b.getAttribute('data-lang-btn'), true); });
-  });
-
-  /* --- Цвета ядер: читаются из таблицы .dk-wave[data-core] (блок ЦВЕТА),
-     второго объявления нет. -------------------------------------------------- */
-  var wave = doc.querySelector('.dk-wave');
-  var CYCLE = window.DK_CORE_CYCLE || ['pink'];
-  var COLORS = CYCLE.map(function (name) {
-    var p = doc.createElement('span');
-    p.className = 'dk-wave'; p.setAttribute('data-core', name); p.style.display = 'none';
-    doc.body.appendChild(p);
-    var c = getComputedStyle(p).color;
-    doc.body.removeChild(p);
-    return c;
-  });
-  function coreOf(i) { return CYCLE[(i < 0 ? 0 : i) % CYCLE.length]; }
-  function colorOf(i) { return COLORS[(i < 0 ? 0 : i) % COLORS.length]; }
-
-  /* --- Полоса прогресса: сегмент на раздел, между главами зазор. -------------- */
-  var CH = [0, 10, 15, 19];
-  var N = 21;
-  var prog = doc.querySelector('.dk-prog');
-  var ticks = [];
-  for (var k = 0; k < N; k++) {
-    var t = doc.createElement('i');
-    if (k > 0 && CH.indexOf(k) > -1) t.className = 'ch';
-    prog.appendChild(t); ticks.push(t);
-  }
-  var cur = -2, shiftT = 0;
-  function chapterOf(i) { return i < 0 ? -1 : i >= 19 ? 3 : i >= 15 ? 2 : i >= 10 ? 1 : 0; }
-
-  /* --- Что сейчас на экране --------------------------------------------- */
-  var secEls = [], pending = [], bars = [];
-  function collect() {
-    var L = activeLayer();
-    secEls = [].slice.call(L.querySelectorAll('section[data-sec]'));
-    pending = anim ? [].slice.call(L.querySelectorAll('[data-rv],[data-pause]')).filter(function (el) { return !el.classList.contains('is-in'); }) : [];
-    bars = [].slice.call(L.querySelectorAll('[data-bar]'));
-  }
-  function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
-
-  /* Блок показывается один раз, когда его верх поднялся выше 88% экрана.
-     instant — после смены языка то, что уже в кадре или выше, встаёт готовым. */
-  function check(instant) {
-    if (!anim || !pending.length) return;
-    var left = [];
-    pending.forEach(function (el) {
-      if (el.getBoundingClientRect().top < vh * 0.88) {
-        if (instant) {
-          el.classList.add('dk-now');
-          el.classList.add('is-in');
-          requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.remove('dk-now'); }); });
-        } else el.classList.add('is-in');
-      } else left.push(el);
-    });
-    pending = left;
-  }
-
-  function tick() {
-    var c = -1, i;
-    for (i = 0; i < secEls.length; i++) if (secEls[i].getBoundingClientRect().top < vh * 0.5) c = +secEls[i].getAttribute('data-sec');
-    if (c !== cur) {
-      var recolor = coreOf(c) !== (cur === -2 ? null : coreOf(cur));
-      cur = c;
-      for (i = 0; i < N; i++) ticks[i].style.background = i === c ? colorOf(i) : i < c ? 'rgba(246,244,246,.42)' : '';
-      if (recolor) {
-        if (!reduce) { wave.classList.add('is-shifting'); clearTimeout(shiftT); shiftT = setTimeout(function () { wave.classList.remove('is-shifting'); }, 460); }
-        wave.setAttribute('data-core', coreOf(c));
-      }
-      var cc = chapterOf(c);
-      [].forEach.call(doc.querySelectorAll('.dk-nav a'), function (a) { a.classList.toggle('is-cur', +a.getAttribute('data-ch') === cc); });
-    }
-    if (!reduce) bars.forEach(function (b) {
-      var r = b.getBoundingClientRect();
-      var p = clamp((vh * 0.85 - r.top) / (vh * 0.45));
-      for (var j = 0; j < b.children.length; j++) b.children[j].style.transform = 'scaleX(' + clamp(p * 3 - j) + ')';
+    if(!this.io)return;
+    document.querySelectorAll('video[data-clip]').forEach(v=>{if(this.seen.has(v))return;this.seen.add(v);this.vio.observe(v);});
+    if(this.reduce)return;
+    const mode=this.props.pauseMotion??'words';const vh=innerHeight;
+    document.querySelectorAll('[data-rv],[data-pause]').forEach(el=>{
+      if(this.seen.has(el))return;this.seen.add(el);
+      if(el.getBoundingClientRect().top<vh*0.9)return;
+      const p=el.hasAttribute('data-pause');
+      const kids=p?(mode==='none'?[]:mode==='fade'?[el.firstElementChild]:[...el.querySelectorAll('[data-w]')]):[...el.children];
+      kids.forEach(k=>{k._t=k.style.transition;k._tr=k.style.transform;k.style.opacity='0';k.style.transform=p?'translateY(10px)':'translateY(18px)';});
+      el._kids=kids;this.io.observe(el);
     });
   }
-
-  var queued = false;
-  function frame() { queued = false; check(false); tick(); }
-  function schedule() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', function () { vh = window.innerHeight; schedule(); });
-
-  setLang(read(), false);
-  /* Подгрузка шрифтов и картинок сдвигает раскладку — перепроверить. */
-  [400, 1200, 3000].forEach(function (ms) { setTimeout(schedule, ms); });
-  if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(schedule);
-})();
-</script>
-<script>
-/* Запись из игры в разделе 06 (зал FORGE). Не качается, пока до раздела больше
-   экрана; играет, когда окно видно хотя бы на четверть; вне экрана — пауза.
-   «Уменьшить движение», нет IntersectionObserver или ошибка видео — остаётся
-   заставка. Режим энергосбережения iOS запрещает автозапуск — пробуем снова на
-   первом касании. Файл: до 700 точек ширины — 720p, иначе 1080p. */
-(function () {
-  var boxes = [].slice.call(document.querySelectorAll('[data-clip="hall"]'));
-  if (!boxes.length || !window.IntersectionObserver) return;
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var SRC = window.innerWidth <= 700 ? '/deckinvestors/hall-loop-720.mp4' : '/deckinvestors/hall-loop-1080.mp4';
-  var items = boxes.map(function (box) {
-    return { box: box, v: box.querySelector('video'), seen: false, loaded: false, failed: false };
-  });
-  function play(it) {
-    if (it.failed || !it.loaded || !it.seen || document.hidden) return;
-    it.v.muted = true;
-    var p = it.v.play();
-    if (p && p.then) p.then(null, function () { armRetry(); });
-  }
-  var armed = false;
-  var EV = ['touchstart', 'pointerdown', 'keydown'];
-  function retry() {
-    items.forEach(play);
-    if (items.some(function (it) { return it.seen && it.loaded && !it.v.paused; })) disarm();
-  }
-  function armRetry() { if (armed) return; armed = true; EV.forEach(function (e) { document.addEventListener(e, retry, { passive: true }); }); }
-  function disarm() { armed = false; EV.forEach(function (e) { document.removeEventListener(e, retry); }); }
-  items.forEach(function (it) {
-    it.v.addEventListener('playing', function () { it.box.classList.add('is-playing'); });
-    it.v.addEventListener('error', function () { it.failed = true; it.box.classList.remove('is-playing'); });
-  });
-  var near = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (!e.isIntersecting) return;
-      var it = items[boxes.indexOf(e.target)];
-      if (it.loaded) return;
-      it.loaded = true; near.unobserve(e.target);
-      it.v.preload = 'auto'; it.v.src = SRC; it.v.load();
-      play(it);
+  show(el){
+    if(el._shown)return;el._shown=true;
+    const p=el.hasAttribute('data-pause');const dur=p?560:800;
+    (el._kids||[]).forEach((k,i)=>{
+      const d=p?i*110:Math.min(i,4)*70;const ease='cubic-bezier(.2,.8,.2,1)';
+      k.style.transition='opacity '+dur+'ms '+ease+' '+d+'ms, transform '+dur+'ms '+ease+' '+d+'ms';
+      k.style.opacity='1';k.style.transform=k._tr||'';
+      setTimeout(()=>{k.style.transition=k._t||'';},d+dur+60);
     });
-  }, { rootMargin: '100% 0px' });
-  var vis = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      var it = items[boxes.indexOf(e.target)];
-      it.seen = e.isIntersecting;
-      if (it.seen) play(it); else if (it.loaded) it.v.pause();
+  }
+  vid(v,on){
+    if(on){
+      if(!v.getAttribute('src'))v.setAttribute('src',innerWidth*(devicePixelRatio||1)>1600?'assets/hall-loop-1080.mp4':'assets/hall-loop-720.mp4');
+      v.muted=true;if(!this.reduce){const pr=v.play();pr&&pr.catch(()=>{});}
+    } else v.pause();
+  }
+  tick(){
+    const vh=innerHeight;let cur=-1;
+    document.querySelectorAll('[data-sec]').forEach(s=>{if(s.getBoundingClientRect().top<vh*0.5)cur=+s.getAttribute('data-sec');});
+    if(cur!==this.state.cur)this.setState({cur});
+    if(this.reduce)return;
+    document.querySelectorAll('[data-rv],[data-pause]').forEach(el=>{if(el._kids&&!el._shown&&el.getBoundingClientRect().top<vh*0.85){this.io.unobserve(el);this.show(el);}});
+    document.querySelectorAll('[data-bar]').forEach(b=>{
+      const r=b.getBoundingClientRect();const p=Math.max(0,Math.min(1,(vh*0.85-r.top)/(vh*0.45)));
+      [...b.children].forEach((i,k)=>{i.style.transform='scaleX('+Math.max(0,Math.min(1,p*3-k))+')';});
     });
-  }, { threshold: 0.25 });
-  boxes.forEach(function (b) { near.observe(b); vis.observe(b); });
-  document.addEventListener('visibilitychange', function () {
-    items.forEach(function (it) { if (document.hidden) { if (it.loaded) it.v.pause(); } else play(it); });
-  });
-})();
+  }
+  renderVals(){
+    const {lang,cur,wide}=this.state;const A=window.HX_ART||{};
+    const art=s=>React.createElement('span',{style:{display:'contents'},dangerouslySetInnerHTML:{__html:s||''}});
+    const col=CORES[cur<0?0:cur%5];const str=this.props.bgStrength??0.5;
+    const R='clamp(91.5px, calc(12.2364vw + 43.8px), 220px)';
+    const layer=(html,k)=>React.createElement('div',{style:{position:'absolute',left:'50%',top:'36%',width:'calc('+R+' * '+k+')',height:'calc('+R+' * '+k+')',transform:'translate(-50%,-50%)',opacity:str},dangerouslySetInnerHTML:{__html:html||''}});
+    const bg=React.createElement('div',{'aria-hidden':true,style:{position:'fixed',left:0,right:0,top:0,height:'100lvh',zIndex:0,pointerEvents:'none',overflow:'hidden',color:col,transition:this.reduce?'none':'color 420ms cubic-bezier(.2,.8,.2,1)'}},
+      layer(A.rings,20),
+      React.createElement('div',{style:{position:'absolute',inset:0,background:'radial-gradient(120% 100% at 50% 40%,rgba(8,8,10,0) 36%,rgba(8,8,10,.92) 100%)'}}),
+      React.createElement('div',{style:{position:'absolute',inset:0,background:'radial-gradient(58% 72% at 50% 55%,rgba(8,8,10,.6) 0%,rgba(8,8,10,.36) 58%,rgba(8,8,10,0) 100%)'}}),
+      layer(A.core,2));
+    const ticks=Array.from({length:21},(_,i)=>({c:i===cur?CORES[i%5]:i<cur?'rgba(246,244,246,.42)':'rgba(255,255,255,.1)',ml:CH.includes(i)&&i>0?'6px':'0'}));
+    const pre=lang==='ru'?'s':'e';const cc=chOf(cur);
+    const nav=NAV[lang].map((label,i)=>({label,href:'#'+pre+String(CH[i]+1).padStart(2,'0'),c:i===cc?'#F6F4F6':'#A9A5AF'}));
+    const on='rgba(255,255,255,.32)',off='rgba(255,255,255,.09)';
+    return {
+      bg,ticks,nav,wide,navLabel:lang==='ru'?'Разделы':'Sections',
+      isEn:lang==='en',isRu:lang==='ru',
+      stick:(wide&&(this.props.stickyAside??true))?'sticky':'relative',
+      enC:lang==='en'?'#F6F4F6':'#A9A5AF',ruC:lang==='ru'?'#F6F4F6':'#A9A5AF',enB:lang==='en'?on:off,ruB:lang==='ru'?on:off,
+      setEn:e=>{e.preventDefault();this.setLang('en');},setRu:e=>{e.preventDefault();this.setLang('ru');},
+      fl:Array.from({length:60},(_,i)=>({m:MK.includes(i),n:!MK.includes(i)})),
+      crystalRu:art(A.crystalRu),crystalEn:art(A.crystalEn),icoCore:art(A.icoCore),icoLegend:art(A.icoLegend),icoDown:art(A.icoArrowDown),icoX:art(A.icoX),icoDiscord:art(A.icoDiscord)
+    };
+  }
+}
 </script>
 </body>
 </html>
