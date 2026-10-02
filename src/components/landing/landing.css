@@ -557,7 +557,7 @@ html.lp-lock, html.lp-lock body { overflow: hidden; }
 /* <button> сам по себе курсор не меняет — в отличие от <a href> у JOIN DISCORD. */
 .lp .world-cta { cursor: pointer; }
 
-/* ============ $HEX ============ */
+/* ============ $HXL ============ */
 .lp .sec-hex { text-align: center; }
 .lp .hex-word { position: relative; display: inline-block; font-weight: 900; font-size: clamp(86px, 19vw, 290px); line-height: .9; color: var(--ink);
   letter-spacing: -.01em; text-shadow: 0 0 16px rgba(var(--pink-rgb), .5), 0 0 60px rgba(var(--pink-rgb), .45), 0 0 120px rgba(var(--pink-rgb), .28); }

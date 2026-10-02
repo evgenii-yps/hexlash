@@ -102,7 +102,7 @@ const RULES = [
   { t: 'One hero glow per screen', d: 'Exactly one card carries a full bloom at rest — the featured tuning. Every other card stays restrained until hovered, then lights in its own core.' },
   { t: 'One accent per element', d: 'A card wears <b>one</b> colour: its core, or brand pink for the system layer. Never two cores in one element, never pink mixed with a core.' },
   { t: 'Colour is a signal, not decor', d: 'A core colour always means "tuned to this core." This replaces the reference\u2019s rainbow rarity — no colour without a meaning in the Hexlash system.' },
-  { t: 'Pink owns chrome + economy', d: 'Brand pink drives CTAs, balance, tabs, BUY, $HEX value (BEST VALUE, HOT). Cores own the merchandise — frames, glyphs, blooms. They never blend.' },
+  { t: 'Pink owns chrome + economy', d: 'Brand pink drives CTAs, balance, tabs, BUY, $HXL value (BEST VALUE, HOT). Cores own the merchandise — frames, glyphs, blooms. They never blend.' },
   { t: 'Glow hierarchy', d: 'Strongest \u2192 weakest: <b>hero bloom \u2192 BEST&nbsp;VALUE / HOT ring \u2192 BUY button \u2192 hover rim</b>. At most one bloom + one ring lit at rest per viewport.' },
   { t: 'Where glow is forbidden', d: 'Never on: the top chrome (matte, shared with home), SOON / gated states, owned items, body copy, or trainer-material prop bodies.' },
 ];
@@ -164,7 +164,7 @@ function PaletteBoard() {
               </div>
               <div className="pb-meta">
                 <div className="pb-nm">HEXLASH PINK</div><div className="pb-hex">#FF0069 · rgb 255,0,105</div>
-                <div className="pb-role"><b>Owns the chrome &amp; economy:</b> CTAs, BUY, balance, tabs, $HEX value cues (BEST VALUE, HOT DEAL). Glows on the system layer — never blended into a core element.</div>
+                <div className="pb-role"><b>Owns the chrome &amp; economy:</b> CTAs, BUY, balance, tabs, $HXL value cues (BEST VALUE, HOT DEAL). Glows on the system layer — never blended into a core element.</div>
               </div>
             </div>
             <div className="pb-sw" style={{ gridColumn: 'span 2', justifyContent: 'center' }}>

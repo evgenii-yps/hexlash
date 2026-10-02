@@ -25,4 +25,4 @@ port verbatim.
 - **Arrange + BUY are visual stubs** — the tray, snap-grid and ghost render, but
   placement does not persist and BUY purchases nothing. Floor props are a fixed
   default set per state, not player data.
-- **$HEX buys cosmetics/decor only** — never combat power, training or progression.
+- **$HXL buys cosmetics/decor only** — never combat power, training or progression.

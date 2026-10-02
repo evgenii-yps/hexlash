@@ -336,7 +336,7 @@ export default {
     rankValue: "UNRANKED",
     // Section rows
     rowBalance: "Balance",
-    rowBalanceSub: "Your $HEX",
+    rowBalanceSub: "Your $HXL",
     rowReferrals: "Referrals",
     rowReferralsSub: "Invite & earn",
     rowQuests: "Quests",
@@ -354,9 +354,9 @@ export default {
     toastLinked: "Account linked",
     // Balance
     balanceTitle: "Balance",
-    balanceUnit: "$HEX",
+    balanceUnit: "$HXL",
     txHistory: "Transaction history",
-    txHistoryDesc: "Your $HEX movements will show up here.",
+    txHistoryDesc: "Your $HXL movements will show up here.",
     depositWithdraw: "Deposit / Withdraw",
     depositWithdrawDesc: "On-chain deposits & withdrawals open later.",
     // Referrals
@@ -395,7 +395,7 @@ export default {
   // Currency / Specials (Stage-2 stubs behind the SOON flag). en-only.
   shop: {
     title: "Shop",
-    unit: "$HEX",
+    unit: "$HXL",
     soon: "Soon",
     buy: "Buy",
     owned: "Owned",
@@ -421,12 +421,12 @@ export default {
     ledeDecor:
       "Furnish your floor. Each piece is cut from the same low-poly stock as the arena — but now it carries the light of the core it’s tuned to. Colour tells you which core; it never buys you an edge.",
     ledeCurrency:
-      "Top up $HEX. Bigger packs carry more free $HEX and a better rate — the value ladder rewards going large.",
+      "Top up $HXL. Bigger packs carry more free $HXL and a better rate — the value ladder rewards going large.",
     // БАФФЫ. Единственный раздел магазина, который трогает бой, — и потому
-    // единственный, который НЕ продаётся за $HEX. Строка ниже говорит это прямо:
+    // единственный, который НЕ продаётся за $HXL. Строка ниже говорит это прямо:
     // общий девиз магазина «косметика не трогает бой» здесь не подходит.
     ledeBuffs:
-      "Throw-in items for the fight. Bought with LASH, which you earn by fighting — never with $HEX.",
+      "Throw-in items for the fight. Bought with LASH, which you earn by fighting — never with $HXL.",
     buffs: {
       towel: "Restores health. Faster get-up.",
       bucket: "Sharper reflexes. Slips a swing and hits back.",
@@ -459,10 +459,10 @@ export default {
       plinth: { name: "Step Plinth", sub: "Neutral base · pairs with anything" },
     },
     // currency
-    curWhatIs: "What is $HEX",
+    curWhatIs: "What is $HXL",
     curWhatIsBody: "The arena's currency. Stack it, then spend it on decor and cosmetics.",
     curRule: "Cosmetics never touch the fight.",
-    curRuleBody: "$HEX buys how your floor looks — never an edge in the cage.",
+    curRuleBody: "$HXL buys how your floor looks — never an edge in the cage.",
     bestValue: "Best Value",
     valueWord: "Value",
     bonusFree: "free",        // "+{n} free"
@@ -481,9 +481,9 @@ export default {
     bundle: "Bundle",
     claim: "Claim",
     specials: {
-      hot: { name: "Arena Cache", sub: "Hot deal · resets every 24h", l1: "2,000 $HEX", l2: "Supply Cache — decor" },
-      daily: { name: "Daily Drop", sub: "Claim once every 24h", reward: "+250 $HEX", note: "Free login reward. Stacks a streak." },
-      starter: { name: "First Blood Kit", sub: "Starter bundle · best first buy", l1: "2,500 $HEX", l2: "Ward Arch — Ambush decor" },
+      hot: { name: "Arena Cache", sub: "Hot deal · resets every 24h", l1: "2,000 $HXL", l2: "Supply Cache — decor" },
+      daily: { name: "Daily Drop", sub: "Claim once every 24h", reward: "+250 $HXL", note: "Free login reward. Stacks a streak." },
+      starter: { name: "First Blood Kit", sub: "Starter bundle · best first buy", l1: "2,500 $HXL", l2: "Ward Arch — Ambush decor" },
     },
     // buy modal
     confirmEye: "Confirm Purchase",
@@ -502,7 +502,7 @@ export default {
     done: "Done",
     // wallet modal
     walletEye: "Connect Wallet",
-    walletTitle: "Top Up $HEX",
+    walletTitle: "Top Up $HXL",
     walletBody: "Real-money top-ups need a connected wallet on Base. This goes live in Stage 2 — wiring shown for layout only.",
     provBase: "Base Wallet",
     provMeta: "MetaMask",

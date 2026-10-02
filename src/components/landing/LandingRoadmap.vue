@@ -36,7 +36,7 @@
 <script setup>
 const phases = [
   { n: '01', k: 'FOUNDATION', d: 'Arena online. The community forms.', s: 'IN PROGRESS', live: true },
-  { n: '02', k: '$HEX LAUNCH', d: 'Token goes live on Base.', s: 'COMING SOON' },
+  { n: '02', k: '$HXL LAUNCH', d: 'Token goes live on Base.', s: 'COMING SOON' },
   { n: '03', k: 'RANKED SEASONS', d: 'Competitive ladders & rewards.', s: 'COMING SOON' },
   { n: '04', k: 'THE LEAGUE', d: 'Tournaments & partnerships.', s: 'COMING SOON' },
 ];

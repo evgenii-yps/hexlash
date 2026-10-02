@@ -28,7 +28,7 @@
 
     <!-- ───────── persistent top strip ─────────
          Constant across the home AND the shop: brand-block (left) + one connected
-         cluster (right) fusing the SHOP entry + the cabinet entry. NO $HEX here
+         cluster (right) fusing the SHOP entry + the cabinet entry. NO $HXL here
          (balance lives in the cabinet / shop). Hidden only in arrange mode, which
          brings its own focused top bar. Styles: .hs-strip in home.css. -->
     <div v-if="!arrange" class="hs-strip">
@@ -504,7 +504,7 @@ const coreHue = computed(() => core.value?.hue || '#FF0069');
 const coreName = computed(() => core.value?.name || 'ONSLAUGHT');
 const coreSig = computed(() => core.value?.sig || 'PRESSURE');
 
-const balance = '2,480'; // placeholder $HEX balance (stub — no economy wired); still shown in the shop
+const balance = '2,480'; // placeholder $HXL balance (stub — no economy wired); still shown in the shop
 
 // Fixed default floor sets (from the design reference home_screen.jsx). The home
 // always renders the `empty` set — a couple of default fixtures so the bare floor

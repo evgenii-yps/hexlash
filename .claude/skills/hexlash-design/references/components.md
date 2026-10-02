@@ -96,7 +96,7 @@
 Три вкладки: **Decor · Currency · Specials** (вкладочный, не простыня).
 
 - **DECOR** — 6 presence-карточек. Привязка к ядру: banner→ONSLAUGHT (hero), plinth→AMBUSH, dais→BULWARK, crates→RAIDER, arch→ONSLAUGHT. Featured-карточка несёт **единственное свечение экрана** (bloom, 2×2 на десктопе). Теги NEW / OWNED / FEATURED.
-- **CURRENCY** — инфо-панель «What is $HEX», лесенка ценности, hex-pile чипы, розовое кольцо BEST VALUE (только когда стадия live).
+- **CURRENCY** — инфо-панель «What is $HXL», лесенка ценности, hex-pile чипы, розовое кольцо BEST VALUE (только когда стадия live).
 - **SPECIALS** — таймер hot-deal, free-claim, bundle. Акцент ядра AMBUSH только на рамке.
 
 Модалки buy / wallet / claim — листы с HUD-уголками (уголки экрана `.sb-bk` сняты, уголки модалок `.sh-bk` оставлены).

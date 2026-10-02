@@ -1,5 +1,5 @@
 // shop_art.jsx — SVG art for the Hexlash shop.
-// The brand mark + matte low-poly $HEX coin piles in the arena material family.
+// The brand mark + matte low-poly $HXL coin piles in the arena material family.
 // No prop emits light — variety lives in mass and silhouette, never neon.
 // Exports: Mark, HexPile, CoinGlyph.
 

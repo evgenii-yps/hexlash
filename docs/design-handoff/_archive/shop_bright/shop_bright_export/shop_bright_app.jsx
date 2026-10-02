@@ -38,11 +38,11 @@ const CURRENCY_B = [
 
 const SPECIALS_B = [
   { id: 'hot', kind: 'hot', name: 'ARENA CACHE', sub: 'Hot deal · resets every 24h',
-    set: [{ hex: true, t: '2,000 $HEX' }, { t: 'SUPPLY CACHE — decor' }], was: '$6.99', price: '$3.99' },
+    set: [{ hex: true, t: '2,000 $HXL' }, { t: 'SUPPLY CACHE — decor' }], was: '$6.99', price: '$3.99' },
   { id: 'daily', kind: 'free', name: 'DAILY DROP', sub: 'Claim once every 24h',
-    reward: '+250 $HEX', note: 'Free login reward. Stacks a streak.' },
+    reward: '+250 $HXL', note: 'Free login reward. Stacks a streak.' },
   { id: 'starter', kind: 'bundle', core: 'ambush', name: 'FIRST BLOOD KIT', sub: 'Starter bundle · best first buy',
-    set: [{ hex: true, t: '2,500 $HEX' }, { core: true, t: 'WARD ARCH — Ambush decor' }], price: '$2.99' },
+    set: [{ hex: true, t: '2,500 $HXL' }, { core: true, t: 'WARD ARCH — Ambush decor' }], price: '$2.99' },
 ];
 
 // helper: apply a core's CSS custom props to a card
@@ -77,7 +77,7 @@ function DecorCardB({ item, idx, onBuy }) {
         <div className="dname">{item.name}</div>
         <div className="dsub">{item.sub}</div>
         <div className="buy-row">
-          <div className="price"><span className="hx-dia"></span><b>{item.price.toLocaleString()}</b><i>$HEX</i></div>
+          <div className="price"><span className="hx-dia"></span><b>{item.price.toLocaleString()}</b><i>$HXL</i></div>
           {item.owned
             ? <div className="btn owned">OWNED</div>
             : <button className="btn buy" onClick={() => onBuy && onBuy(item)}>BUY<span aria-hidden="true">→</span></button>}
@@ -97,7 +97,7 @@ function CurrencyCardB({ pack, idx, showLadder, live, onPrice }) {
       <div className="cc-top">
         <div className="cc-frame"><BrightHexPile tier={pack.tier} best={best} /></div>
         <div className="cc-body">
-          <div className="cc-amt"><b>{pack.amount.toLocaleString()}</b><i>$HEX</i></div>
+          <div className="cc-amt"><b>{pack.amount.toLocaleString()}</b><i>$HXL</i></div>
           {pack.bonus > 0
             ? <div className="cc-bonus"><em>+{pack.bonus.toLocaleString()} free</em> included</div>
             : <div className="cc-bonus">base rate</div>}
@@ -194,7 +194,7 @@ function BuyModalB({ item, balance, stage, onConfirm, onClose }) {
           <div className="sh-ok"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l5 5L20 6" /></svg></div>
           <div className="sh-title">UNLOCKED</div>
           <div className="sh-sub">{item.name} is yours. Place it from <b>ARRANGE MODE</b> on your floor.</div>
-          <div className="sh-rows"><div className="sh-r"><span>New balance</span><b><span className="hx-dia"></span>{(balance - item.price).toLocaleString()} $HEX</b></div></div>
+          <div className="sh-rows"><div className="sh-r"><span>New balance</span><b><span className="hx-dia"></span>{(balance - item.price).toLocaleString()} $HXL</b></div></div>
           <div className="sh-actions"><button className="btn buy" onClick={onClose}>DONE</button></div>
         </div>
       </div>
@@ -208,9 +208,9 @@ function BuyModalB({ item, balance, stage, onConfirm, onClose }) {
         <div className="sh-title">{item.name}</div>
         <div className="sh-sub">{c ? `${c.name} tuning` : 'Neutral piece'}. Cosmetic only — it never touches the fight.</div>
         <div className="sh-rows">
-          <div className="sh-r"><span>Price</span><b><span className="hx-dia"></span>{item.price.toLocaleString()} $HEX</b></div>
-          <div className="sh-r"><span>Balance</span><b><span className="hx-dia"></span>{balance.toLocaleString()} $HEX</b></div>
-          <div className="sh-r neg"><span>Balance after</span><b><span className="hx-dia"></span>{(balance - item.price).toLocaleString()} $HEX</b></div>
+          <div className="sh-r"><span>Price</span><b><span className="hx-dia"></span>{item.price.toLocaleString()} $HXL</b></div>
+          <div className="sh-r"><span>Balance</span><b><span className="hx-dia"></span>{balance.toLocaleString()} $HXL</b></div>
+          <div className="sh-r neg"><span>Balance after</span><b><span className="hx-dia"></span>{(balance - item.price).toLocaleString()} $HXL</b></div>
         </div>
         <div className="sh-actions">
           <button className="btn ghost" onClick={onClose}>CANCEL</button>
@@ -227,7 +227,7 @@ function WalletModalB({ onClose }) {
       <div className="sheet" onClick={e => e.stopPropagation()}>
         <span className="sh-bk tl"></span><span className="sh-bk tr"></span>
         <div className="sh-eye">CONNECT WALLET</div>
-        <div className="sh-title">TOP UP $HEX</div>
+        <div className="sh-title">TOP UP $HXL</div>
         <div className="sh-sub">Real-money top-ups need a connected wallet on Base. This goes live in <b>Stage 2</b> — wiring shown for layout only.</div>
         <div className="wprov">
           <div className="wrow"><span className="wic">◇</span>Base Wallet</div>
@@ -282,10 +282,10 @@ function CurrencyViewB({ showLadder, live, onPrice }) {
     <div className="grid currency">
       <div className="cur-info">
         <div className="ci-l">
-          <div className="ci-h"><span className="hx-dia"></span>WHAT IS $HEX</div>
+          <div className="ci-h"><span className="hx-dia"></span>WHAT IS $HXL</div>
           <p>The arena's currency. Stack it, then spend it on decor and cosmetics.</p>
         </div>
-        <div className="ci-rule"><b>Cosmetics never touch the fight.</b> $HEX buys how your floor looks — never an edge in the cage.</div>
+        <div className="ci-rule"><b>Cosmetics never touch the fight.</b> $HXL buys how your floor looks — never an edge in the cage.</div>
       </div>
       {CURRENCY_B.map((p, i) => <CurrencyCardB key={p.id} pack={p} idx={i} showLadder={showLadder} live={live} onPrice={onPrice} />)}
     </div>
@@ -304,7 +304,7 @@ function SpecialsViewB({ live, onPrice, onClaim }) {
 const TAB_LABEL_B = { decor: 'DECOR', currency: 'CURRENCY', specials: 'SPECIALS' };
 const LEDE_B = {
   decor: 'Furnish your floor. Each piece is cut from the same low-poly stock as the arena — but now it carries the light of the core it\u2019s tuned to. Colour tells you which core; it never buys you an edge.',
-  currency: 'Top up $HEX. Bigger packs carry more free $HEX and a better rate — the value ladder rewards going large.',
+  currency: 'Top up $HXL. Bigger packs carry more free $HXL and a better rate — the value ladder rewards going large.',
   specials: 'Rotating deals, a free daily drop and a starter bundle. Timers and rewards run on the Stage-2 economy.',
 };
 
@@ -327,7 +327,7 @@ function ShopBright({
             ? <div className="sb-brand"><Mark className="mk" /><span className="wm">HEXLASH</span><span className="sea">SHOP</span></div>
             : <button className="sb-back">← BACK TO HOME</button>}
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div className="sb-bal"><span className="hx-dia"></span><b>{balance.toLocaleString()}</b>&nbsp;<i>$HEX</i></div>
+            <div className="sb-bal"><span className="hx-dia"></span><b>{balance.toLocaleString()}</b>&nbsp;<i>$HXL</i></div>
             <div className="sb-cab"><span className="av">◇</span>NOVA·7</div>
           </div>
         </div>

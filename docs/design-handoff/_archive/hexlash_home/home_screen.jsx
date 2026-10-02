@@ -91,7 +91,7 @@ function HomeScreen({ state = 'empty', onCustomize, onFight, onShop }) {
               <span className="season">SEASON 0</span>
             </div>
             <div className="hs-topr">
-              <div className="hs-bal"><span className="dia"></span><b>2,480</b>&nbsp;<i>$HEX</i></div>
+              <div className="hs-bal"><span className="dia"></span><b>2,480</b>&nbsp;<i>$HXL</i></div>
               <div className="hs-prof">
                 <span className="hand">GHOST_0xA4</span>
                 <span className="av"><span></span></span>

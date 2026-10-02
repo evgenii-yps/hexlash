@@ -24,13 +24,13 @@
     <div class="sb-bg" aria-hidden="true"></div>
 
     <!-- head — the first blocks of the single page flow (NOT pinned): balance
-         ($HEX allowed in the shop body, never the strip) + SHOP title + tabs.
+         ($HXL allowed in the shop body, never the strip) + SHOP title + tabs.
          Brand / cabinet / back live in the strip (which scrolls with the page). -->
     <div class="sb-head">
       <div v-if="tab !== 'dev'" class="sb-top">
         <!-- ДВЕ ВАЛЮТЫ, НО НИКОГДА ОДНОВРЕМЕННО. На вкладке баффов счёт — LASH, на
-             остальных — $HEX. Показать их рядом значило бы намекнуть на обмен, а
-             обмена нет и не будет: $HEX платит за внешний вид, LASH — за бой. -->
+             остальных — $HXL. Показать их рядом значило бы намекнуть на обмен, а
+             обмена нет и не будет: $HXL платит за внешний вид, LASH — за бой. -->
         <div v-if="tab === 'buffs'" class="sb-bal"><b>{{ lash }}</b>&nbsp;<i>{{ t.lash.unit }}</i></div>
         <div v-else class="sb-bal"><span class="hx-dia"></span><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
       </div>
@@ -298,7 +298,7 @@ import buffDice from '@/assets/images/buff_dice.png';
 defineProps({ balance: { type: String, default: '2,480' } });
 defineEmits(['back']);
 
-const BALANCE = 2480;           // hardcoded $HEX — never actually debited on Stage 1
+const BALANCE = 2480;           // hardcoded $HXL — never actually debited on Stage 1
 const stageTwoLive = false;     // master flag: false ⇒ Currency/Specials/claim are SOON stubs
 
 // DEV console — owner tool, temporary. One flag + one TABS entry to remove it.

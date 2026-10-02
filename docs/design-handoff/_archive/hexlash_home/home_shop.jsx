@@ -31,7 +31,7 @@ function ShopCard({ kind, owned, featured, previewScale }) {
         <div className="sp-name">{o.name}</div>
         <div className="sp-sub">{o.tag}</div>
         <div className="sp-buy">
-          <div className="sp-price"><span className="dia"></span><b>{o.price.toLocaleString()}</b><i>$HEX</i></div>
+          <div className="sp-price"><span className="dia"></span><b>{o.price.toLocaleString()}</b><i>$HXL</i></div>
           {owned
             ? <div className="sp-btn owned">OWNED</div>
             : <div className="sp-btn buy">BUY<span className="ar">→</span></div>}
@@ -57,7 +57,7 @@ function ShopDecor() {
           <span className="season">SHOP</span>
         </div>
         <div className="hs-topr">
-          <div className="hs-bal"><span className="dia"></span><b>2,480</b>&nbsp;<i>$HEX</i></div>
+          <div className="hs-bal"><span className="dia"></span><b>2,480</b>&nbsp;<i>$HXL</i></div>
           <div className="sp-back">← BACK TO HOME</div>
         </div>
       </div>

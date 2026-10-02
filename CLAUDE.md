@@ -6062,7 +6062,7 @@ Closes Эпик 8 (final marketing site sub-epic). Extends MarketingView with 5 
 **5 new sections (between 8b About and Footer):**
 
 - **Gameplay (C2):** "ENTER THE OCTAGON" heading + 16:9 aspect-ratio placeholder card + descriptive copy ("Train. Strategize. Fight."). Placeholder ready for video/screenshot via Stream 4 polish.
-- **Token (C3):** "$HEX TOKEN" + ticker placeholder + "Powered by Base" reference. Coming-soon framing per decision #2 — no live token data, no DEX integration. Stream 5 sub-epic territory for full tokenomics.
+- **Token (C3):** "$HXL TOKEN" + ticker placeholder + "Powered by Base" reference. Coming-soon framing per decision #2 — no live token data, no DEX integration. Stream 5 sub-epic territory for full tokenomics.
 - **Roadmap (C4):** 4 phase cards (Q1/Q2/Q3/Q4 placeholders + descriptive bullets). CSS Grid responsive: 4 cols (≥1024px) → 2 cols (≥640px) → 1 col (mobile). Per-phase fade-in via composable.
 - **Partners (C5):** "PARTNERSHIPS" + "COMING SOON" centered placeholder. Empty state explicitly framed as coming soon (no fake logos, no placeholder grid).
 - **Subscribe (C6):** "STAY UPDATED" + email input form (HTML5 type=email + required) + Subscribe button. Submit handler → Vuex `master/setInfoMessage` MUTATION (NOT action — Lesson #11 catch documented in adaptation-tier section below). Toast displays "Coming soon — stay tuned!" 3s auto-dismiss. Email field clears + button disabled 600ms post-submit (debounce against rapid resubmit).
@@ -6076,7 +6076,7 @@ Closes Эпик 8 (final marketing site sub-epic). Extends MarketingView with 5 
 **Decisions locked (8c-specific, 8 items):**
 1. Composable extraction first (C1) — extract `useScrollFadeIn` BEFORE adding 5 new sections to avoid 5x duplication of IntersectionObserver inline logic
 2. Section ordering: Gameplay → Token → Roadmap → Partners → Subscribe → (8b Footer)
-3. Token section framing: $HEX placeholder + Base chain mention (no live ticker, no DEX widget)
+3. Token section framing: $HXL placeholder + Base chain mention (no live ticker, no DEX widget)
 4. Roadmap content: 4 generic phase cards (Q1/Q2/Q3/Q4 placeholders) — real roadmap deferred to user content pass
 5. Partners section: COMING SOON placeholder (no fake logos)
 6. Subscribe infrastructure: Vuex toast only — no email collection backend (Mailchimp/SendGrid deferred to Stream 3)
@@ -6093,7 +6093,7 @@ Closes Эпик 8 (final marketing site sub-epic). Extends MarketingView with 5 
 - Phase 0 (`ace3733`): docs(8c): Phase 0 investigation report
 - C1 (`08e3823`): feat(marketing): extract useScrollFadeIn composable + refactor About to use it
 - C2 (`4c39c68`): feat(marketing): add Gameplay section with 16:9 video placeholder
-- C3 (`8fc666b`): feat(marketing): add Token section with $HEX placeholder + Base reference
+- C3 (`8fc666b`): feat(marketing): add Token section with $HXL placeholder + Base reference
 - C4 (`f9dd125`): feat(marketing): add Roadmap section with 4 phase cards
 - C5 (`140df60`): feat(marketing): add Partners section with COMING SOON placeholder
 - C6 (`cb794a7`): feat(marketing): add Subscribe section with email form + toast
@@ -6157,7 +6157,7 @@ For any sub-epic touching layout, scroll, viewport, or page-level visual charact
 | Stream 4 Visual Polish | Gameplay section 16:9 placeholder → real video / screenshot asset | 8c decision #2 |
 | Stream 4 Visual Polish | Roadmap content from generic Q1-Q4 placeholders → real product roadmap once user supplies content | 8c decision #4 |
 | Stream 4 Visual Polish | Partners section COMING SOON → real partner logos when partnerships sign | 8c decision #5 |
-| Stream 5 (Token launch) | $HEX Token section live ticker + DEX widget + tokenomics page (currently placeholder + Base chain reference only) | 8c decision #3 |
+| Stream 5 (Token launch) | $HXL Token section live ticker + DEX widget + tokenomics page (currently placeholder + Base chain reference only) | 8c decision #3 |
 | Stream 6 (Web3) | Connect Wallet auth — actual SIWE backend integration. Currently FE button shows "Coming soon" toast | 1b decision #5 |
 | Эпик 6 deferred | Carry-overs #38-#46 (Эпик 6 Sub-epic 8 forward — see Sub-epic 8 closure entry above) | Эпик 6 Sub-epic 8 |
 

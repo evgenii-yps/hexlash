@@ -35,7 +35,7 @@
    single CONNECTED cluster on the RIGHT (not three scattered corners). The cluster
    fuses the SHOP entry + the cabinet entry into one segmented element, anchored at
    the right edge the cabinet slides out from. Matte chrome only — NO pink, NO glow,
-   NO $HEX balance here (balance lives in the cabinet / shop body). Sits above both
+   NO $HXL balance here (balance lives in the cabinet / shop body). Sits above both
    surfaces; its own pointer-events are none, the interactive pieces opt back in. */
 .hs-strip { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: var(--z-topbar);
   display: flex; align-items: center; justify-content: space-between; padding: 0 var(--sp-5); pointer-events: none; }

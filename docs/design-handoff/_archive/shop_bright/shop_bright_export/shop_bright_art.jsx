@@ -75,7 +75,7 @@ function GlowProp({ kind, core, scale = 1, lvl = 'rest' }) {
 }
 
 // ── currency pile — brand-pink economy, kept matte (trainer material) ─────
-// Currency is the $HEX layer, not a core. Reuse the matte HexPile silhouette;
+// Currency is the $HXL layer, not a core. Reuse the matte HexPile silhouette;
 // the value/heat lives in the card frame (pink), never recolouring the chips.
 function BrightHexPile({ tier = 1, best = false }) {
   return (

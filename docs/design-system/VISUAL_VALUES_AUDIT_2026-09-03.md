@@ -417,7 +417,7 @@
 
 ### 4.6.3 `text-shadow` — 15 записей, все свечения
 
-`0 1px 0 rgba(120,0,40,0.5)` (единственная со смещением, надпись FIGHT) · `0 0 8px + 0 0 36px + 0 0 78px rgba(accent,.55/.55/.45)` (заголовок лендинга) · `0 0 16px + 0 0 60px + 0 0 120px rgba(accent,.5/.45/.28)` (слово `$HEX`) · `0 0 44px rgba(accent,.35)` · `0 0 30px/38px rgba(255,255,255,.1/.18)` · `0 0 20px rgba(accent,.6/.3)` · `0 0 5vmin rgba(accent,.35)` (число процентов) · `0 0 2vmin rgba(accent,.8)` (знак %) · `0 0 1vmin + 0 0 4vmin rgba(accent,.7/.6)` (кредо) · `0 0 1.2vmin + 0 0 5vmin` · `0 0 4vmin + 0 0 9vmin` · `0 0 12/14px color-mix(...)`.
+`0 1px 0 rgba(120,0,40,0.5)` (единственная со смещением, надпись FIGHT) · `0 0 8px + 0 0 36px + 0 0 78px rgba(accent,.55/.55/.45)` (заголовок лендинга) · `0 0 16px + 0 0 60px + 0 0 120px rgba(accent,.5/.45/.28)` (слово `$HXL`) · `0 0 44px rgba(accent,.35)` · `0 0 30px/38px rgba(255,255,255,.1/.18)` · `0 0 20px rgba(accent,.6/.3)` · `0 0 5vmin rgba(accent,.35)` (число процентов) · `0 0 2vmin rgba(accent,.8)` (знак %) · `0 0 1vmin + 0 0 4vmin rgba(accent,.7/.6)` (кредо) · `0 0 1.2vmin + 0 0 5vmin` · `0 0 4vmin + 0 0 9vmin` · `0 0 12/14px color-mix(...)`.
 
 ### 4.6.4 Внутренние подсветки
 

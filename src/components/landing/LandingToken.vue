@@ -10,9 +10,9 @@
            span нет — обрезать не по чему, и на экране слой пуст. Это порт из
            прототипа один в один, не поломка. Такой же пустой слой стоял в
            заголовке первого экрана и снят вместе с ним 05.09.2026.
-           Чтобы блик заработал, слою нужен тот же текст ($HEX) внутри. -->
+           Чтобы блик заработал, слою нужен тот же текст ($HXL) внутри. -->
       <h2 class="hex-word" data-reveal data-d="1">
-        $HEX<span class="sheen"></span>
+        $HXL<span class="sheen"></span>
       </h2>
       <p class="hex-status" data-reveal data-d="2">COMING SOON</p>
       <p class="hex-chain" data-reveal data-d="3">LAUNCHING ON BASE</p>
