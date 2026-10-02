@@ -1,0 +1,1870 @@
+[
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "HEAVY HIT",
+  "dataName": "Heavy Hit",
+  "declaredShifts": [
+   "weight+14"
+  ],
+  "bonuses": [
+   "strikePower +1%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "weight": 14
+  },
+  "dAxesMarg": {
+   "weight": 14
+  },
+  "dStats": {
+   "strikePower": 1,
+   "mobility": -11
+  },
+  "effectText": "Hits harder. Every step carries more weight.",
+  "characterText": "Heavy and unhurried. Trades speed for mass.",
+  "verdict": "частично (не двигаются: tempo)"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "GUARD CRUSH",
+  "dataName": "Guard Crush",
+  "declaredShifts": [
+   "weight+8"
+  ],
+  "bonuses": [
+   "strikePower +2%",
+   "blockPenetration +12%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "guard_crush"
+  ],
+  "dAxes": {
+   "weight": 8
+  },
+  "dAxesMarg": {
+   "weight": 8
+  },
+  "dStats": {
+   "strikePower": 1,
+   "blockPenetration": 0.12,
+   "mobility": -6
+  },
+  "effectText": "His blows break through a raised guard.",
+  "characterText": "Sees a closed guard and swings into it anyway.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "UNSHAKEN",
+  "dataName": "Unshaken",
+  "declaredShifts": [
+   "resilience+5"
+  ],
+  "bonuses": [
+   "strikePower +3%",
+   "interruptResist +10%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "unshaken"
+  ],
+  "dAxes": {
+   "resilience": 5
+  },
+  "dAxesMarg": {
+   "resilience": 5
+  },
+  "dStats": {
+   "strikePower": 2
+  },
+  "effectText": "A hit no longer knocks him off his swing.",
+  "characterText": "Stands his ground when the opponent attacks.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "INSIDE WORK",
+  "dataName": "Close Power",
+  "declaredShifts": [
+   "distance−8",
+   "weight+6"
+  ],
+  "bonuses": [
+   "strikePower +4%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "close_damage_ramp"
+  ],
+  "dAxes": {
+   "distance": -8,
+   "weight": 6
+  },
+  "dAxesMarg": {
+   "distance": -8,
+   "weight": 6
+  },
+  "dStats": {
+   "strikePower": 3,
+   "mobility": -5
+  },
+  "effectText": "Hits harder and fights from closer in.",
+  "characterText": "Wants to be right up close. Swings the moment he is in reach.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "BREAKTHROUGH",
+  "dataName": "Breakthrough",
+  "declaredShifts": [
+   "weight+10"
+  ],
+  "bonuses": [
+   "strikePower +4%",
+   "blockPenetration +20%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "overload_strike"
+  ],
+  "dAxes": {
+   "weight": 10
+  },
+  "dAxesMarg": {
+   "weight": 10
+  },
+  "dStats": {
+   "strikePower": 4,
+   "blockPenetration": 0.2,
+   "mobility": -8
+  },
+  "effectText": "Goes straight through the guard.",
+  "characterText": "Smells a hurt opponent and goes for the finish.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "HARD ENTRY",
+  "dataName": "Hard Entry",
+  "declaredShifts": [
+   "distance−6",
+   "initiative+6"
+  ],
+  "bonuses": [
+   "accuracy +20%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "hard_entry"
+  ],
+  "dAxes": {
+   "distance": -6,
+   "initiative": 6
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "initiative": 6
+  },
+  "dStats": {
+   "accuracy": 10
+  },
+  "effectText": "Closes the gap fast. His first blow rarely misses.",
+  "characterText": "Goes in first and swings on arrival.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "RUN-DOWN",
+  "dataName": "Run-Down",
+  "declaredShifts": [
+   "stick+5",
+   "distance−4"
+  ],
+  "bonuses": [
+   "strikePower +4%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "chase_strike"
+  ],
+  "dAxes": {
+   "distance": -4,
+   "stick": 5
+  },
+  "dAxesMarg": {
+   "distance": -4,
+   "stick": 5
+  },
+  "dStats": {
+   "strikePower": 4
+  },
+  "effectText": "Hits a little harder and keeps the distance short.",
+  "characterText": "When the opponent goes quiet, he attacks.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "STICKY",
+  "dataName": "Cut Off",
+  "declaredShifts": [
+   "stick+6"
+  ],
+  "bonuses": [
+   "blockPenetration +25%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "cut_off"
+  ],
+  "dAxes": {
+   "stick": 6
+  },
+  "dAxesMarg": {
+   "stick": 6
+  },
+  "dStats": {
+   "blockPenetration": 0.25
+  },
+  "effectText": "Stays on the opponent after the exchange. Breaks through guards.",
+  "characterText": "Once he is close, he stays there and holds his ground.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "CLING",
+  "dataName": "Cling",
+  "declaredShifts": [
+   "stick+6",
+   "distance−4"
+  ],
+  "bonuses": [
+   "interruptResist +30%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "cling"
+  ],
+  "dAxes": {
+   "distance": -4,
+   "stick": 6
+  },
+  "dAxesMarg": {
+   "distance": -4,
+   "stick": 6
+  },
+  "dStats": {},
+  "effectText": "Hard to knock off his swing. Stays glued in close.",
+  "characterText": "Refuses to step back once inside.",
+  "verdict": "частично (не двигаются: resilience)"
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "LOCKDOWN",
+  "dataName": "Lockdown",
+  "declaredShifts": [
+   "stick+8",
+   "distance−6"
+  ],
+  "bonuses": [
+   "strikePower +4%",
+   "blockPenetration +10%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "lockdown"
+  ],
+  "dAxes": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "stick": 8
+  },
+  "dStats": {
+   "strikePower": 4,
+   "blockPenetration": 0.1
+  },
+  "effectText": "Hits harder, breaks guards and stays right on top of the opponent.",
+  "characterText": "Pins himself to the opponent. Almost never lets go.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "LONG COMBO",
+  "dataName": "Long Combo",
+  "declaredShifts": [
+   "tempo+3"
+  ],
+  "bonuses": [
+   "strikePower +1%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "long_combo"
+  ],
+  "dAxes": {
+   "tempo": 3
+  },
+  "dAxesMarg": {
+   "tempo": 3
+  },
+  "dStats": {
+   "strikePower": 1
+  },
+  "effectText": "A touch quicker, a touch heavier on the hands.",
+  "characterText": "In reach, he throws instead of waiting.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "NO PAUSE",
+  "dataName": "No Pause",
+  "declaredShifts": [
+   "tempo+3"
+  ],
+  "bonuses": [
+   "strikePower +2%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "no_pause"
+  ],
+  "dAxes": {
+   "tempo": 3
+  },
+  "dAxesMarg": {
+   "tempo": 3
+  },
+  "dStats": {
+   "strikePower": 2
+  },
+  "effectText": "Quicker pace and harder hits.",
+  "characterText": "Swings the moment the opponent is caught off balance.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "LATE FIRE",
+  "dataName": "Building Momentum",
+  "declaredShifts": [
+   "tempo+2"
+  ],
+  "bonuses": [
+   "strikePower +2%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "hit_accel"
+  ],
+  "dAxes": {
+   "tempo": 2
+  },
+  "dAxesMarg": {
+   "tempo": 2
+  },
+  "dStats": {
+   "strikePower": 2
+  },
+  "effectText": "Picks up the pace and hits a little harder.",
+  "characterText": "The longer the fight, the more he swings.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "NO LETUP",
+  "dataName": "No Breather",
+  "declaredShifts": [
+   "tempo+3",
+   "stick+6"
+  ],
+  "bonuses": [
+   "strikePower +2%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "no_breather"
+  ],
+  "dAxes": {
+   "tempo": 3,
+   "stick": 6
+  },
+  "dAxesMarg": {
+   "tempo": 3,
+   "stick": 6
+  },
+  "dStats": {
+   "strikePower": 2
+  },
+  "effectText": "Quicker, harder, and stays on the opponent after the exchange.",
+  "characterText": "If the opponent stops attacking, he does not stop.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "RAMPAGE",
+  "dataName": "Rampage",
+  "declaredShifts": [
+   "tempo+3"
+  ],
+  "bonuses": [
+   "strikePower +7%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "rampage"
+  ],
+  "dAxes": {
+   "tempo": 3
+  },
+  "dAxesMarg": {
+   "tempo": 3
+  },
+  "dStats": {
+   "strikePower": 7
+  },
+  "effectText": "The biggest gain in hitting power in this branch.",
+  "characterText": "Swings at every chance he gets.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "QUICK OUT",
+  "dataName": "Quick Out",
+  "declaredShifts": [
+   "distance+8",
+   "tempo+6"
+  ],
+  "bonuses": [
+   "strikePower +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "quick_out"
+  ],
+  "dAxes": {
+   "distance": 8,
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "distance": 8,
+   "tempo": 6
+  },
+  "dStats": {
+   "strikePower": 5
+  },
+  "effectText": "Hits harder and keeps more distance.",
+  "characterText": "Lands and gets out. Breaks off when the opponent gets close.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "PINPOINT ENTRY",
+  "dataName": "Pinpoint Entry",
+  "declaredShifts": [
+   "initiative+9"
+  ],
+  "bonuses": [
+   "accuracy +20%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "pinpoint_entry"
+  ],
+  "dAxes": {
+   "initiative": 9
+  },
+  "dAxesMarg": {
+   "initiative": 9
+  },
+  "dStats": {
+   "accuracy": 10
+  },
+  "effectText": "His entry rarely misses.",
+  "characterText": "Takes the initiative when the opponent goes quiet.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "FAR BOUNCE",
+  "dataName": "Far Bounce",
+  "declaredShifts": [
+   "distance+10",
+   "slip+6"
+  ],
+  "bonuses": [
+   "strikePower +4%"
+  ],
+  "liveSeam": true,
+  "tags": [],
+  "dAxes": {
+   "distance": 10,
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "distance": 10,
+   "slip": 6
+  },
+  "dStats": {
+   "strikePower": 4
+  },
+  "effectText": "Hits harder, bounces far out after the exchange and slips more.",
+  "characterText": "Lives at long range.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "CLEAN EXCHANGE",
+  "dataName": "Clean Exchange",
+  "declaredShifts": [
+   "tempo+8"
+  ],
+  "bonuses": [
+   "strikePower +7%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "clean_chain"
+  ],
+  "dAxes": {
+   "tempo": 8
+  },
+  "dAxesMarg": {
+   "tempo": 8
+  },
+  "dStats": {
+   "strikePower": 7
+  },
+  "effectText": "Quicker in and out, with harder hits.",
+  "characterText": "Prefers quick pokes to a long exchange.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "PERFECT PRICK",
+  "dataName": "Perfect Prick",
+  "declaredShifts": [
+   "initiative+10",
+   "distance+8",
+   "slip+6"
+  ],
+  "bonuses": [
+   "strikePower +8%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "perfect_jab"
+  ],
+  "dAxes": {
+   "distance": 8,
+   "initiative": 10,
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "distance": 8,
+   "initiative": 10,
+   "slip": 6
+  },
+  "dStats": {
+   "strikePower": 8
+  },
+  "effectText": "In, hit, out: the hardest pokes in this branch, and hard to touch.",
+  "characterText": "When the opponent goes quiet, he darts in.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "FAKE-IN",
+  "dataName": "Fake-In",
+  "declaredShifts": [
+   "tempo+4"
+  ],
+  "bonuses": [
+   "feintChance +5%",
+   "strikePower +3%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "fake_in"
+  ],
+  "dAxes": {
+   "tempo": 4
+  },
+  "dAxesMarg": {
+   "tempo": 4
+  },
+  "dStats": {
+   "strikePower": 3
+  },
+  "effectText": "Fakes more often.",
+  "characterText": "When the opponent swings, he steps off instead of meeting it.",
+  "verdict": "не совпало (slip не двигаются)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "PUNISH REACTION",
+  "dataName": "Punish Reaction",
+  "declaredShifts": [
+   "tempo+4"
+  ],
+  "bonuses": [
+   "feintPayoff +50%",
+   "strikePower +6%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "punish_reaction"
+  ],
+  "dAxes": {
+   "tempo": 4
+  },
+  "dAxesMarg": {
+   "tempo": 4
+  },
+  "dStats": {
+   "strikePower": 6
+  },
+  "effectText": "When the opponent bites on a fake, the answer hits harder.",
+  "characterText": "Presses in when the opponent covers up.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "BROKEN RHYTHM",
+  "dataName": "Broken Rhythm",
+  "declaredShifts": [
+   "tempo+8"
+  ],
+  "bonuses": [
+   "strikePower +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "rhythm_break"
+  ],
+  "dAxes": {
+   "tempo": 8
+  },
+  "dAxesMarg": {
+   "tempo": 8
+  },
+  "dStats": {
+   "strikePower": 5
+  },
+  "effectText": "Quicker pace and harder hits.",
+  "characterText": "Breaks off in close and comes back on his own timing.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "STING THE SWING",
+  "dataName": "Feint to Interrupt",
+  "declaredShifts": [
+   "tempo+6"
+  ],
+  "bonuses": [
+   "strikePower +6%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "feint_interrupt"
+  ],
+  "dAxes": {
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "tempo": 6
+  },
+  "dStats": {
+   "strikePower": 6
+  },
+  "effectText": "Quicker and harder.",
+  "characterText": "Answers the opponent's swing with a quick poke.",
+  "verdict": "частично (не двигаются: counter)"
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "SETUP COMBO",
+  "dataName": "Setup Combo",
+  "declaredShifts": [
+   "tempo+6"
+  ],
+  "bonuses": [
+   "feintPayoff +120%",
+   "strikePower +4%",
+   "blockPenetration +20%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "feint_combo"
+  ],
+  "dAxes": {
+   "tempo": 6
+  },
+  "dAxesMarg": {
+   "tempo": 6
+  },
+  "dStats": {
+   "strikePower": 4,
+   "blockPenetration": 0.2
+  },
+  "effectText": "The fake opens the way: the follow-up hits hardest and breaks through guards.",
+  "characterText": "Up close, he commits to the full combination.",
+  "verdict": "частично (не двигаются: distance)"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "READ THE TELL",
+  "dataName": "Read the Tell",
+  "declaredShifts": [
+   "initiative−6"
+  ],
+  "bonuses": [
+   "strikePower +2%",
+   "accuracy +16%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "read_tell"
+  ],
+  "dAxes": {
+   "initiative": -6
+  },
+  "dAxesMarg": {
+   "initiative": -6
+  },
+  "dStats": {
+   "strikePower": 2,
+   "accuracy": 8
+  },
+  "effectText": "Hits harder and more accurately.",
+  "characterText": "Waits for the opponent to swing, then answers.",
+  "verdict": "частично (не двигаются: counter)"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "SEIZE THE OPEN",
+  "dataName": "Strike the Open",
+  "declaredShifts": [
+   "initiative+4"
+  ],
+  "bonuses": [
+   "strikePower +4%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "punish_exhausted"
+  ],
+  "dAxes": {
+   "initiative": 4
+  },
+  "dAxesMarg": {
+   "initiative": 4
+  },
+  "dStats": {
+   "strikePower": 3
+  },
+  "effectText": "Hits harder.",
+  "characterText": "Goes in when the opponent is off balance.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "CHARGED RUN",
+  "dataName": "Charged Run",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +5%",
+   "chargeGain +30%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "charged_run"
+  ],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 5,
+   "chargeGainPerSec": 3.6
+  },
+  "effectText": "Hits harder and builds his power blow faster.",
+  "characterText": "Keeps his distance and pokes while he loads.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "PUNISH AGGRESSION",
+  "dataName": "Punish Aggression",
+  "declaredShifts": [
+   "counter+10"
+  ],
+  "bonuses": [
+   "strikePower +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "hunt_reply"
+  ],
+  "dAxes": {
+   "counter": 10
+  },
+  "dAxesMarg": {
+   "counter": 10
+  },
+  "dStats": {
+   "strikePower": 5
+  },
+  "effectText": "Hits harder and punishes openings.",
+  "characterText": "Answers aggression with a counter.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "KILLING RUN",
+  "dataName": "Killing Run",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +6%",
+   "chargePower +30%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "lethal_entry"
+  ],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 6,
+   "chargePowerBonusMax": 0.18
+  },
+  "effectText": "His charged blow lands much harder.",
+  "characterText": "Once loaded, he goes in to spend it.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "TOUGH HIDE",
+  "dataName": "Tough Hide",
+  "declaredShifts": [
+   "resilience+3"
+  ],
+  "bonuses": [
+   "toughness +3%",
+   "blockMitigation +3%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "tough_hide"
+  ],
+  "dAxes": {
+   "resilience": 3
+  },
+  "dAxesMarg": {
+   "resilience": 3
+  },
+  "dStats": {
+   "toughness": 6,
+   "blockMitigation": 0.015
+  },
+  "effectText": "Takes hits better. A slightly stronger guard.",
+  "characterText": "Holds his ground in close.",
+  "verdict": "частично (не двигаются: stick)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "STEADY GUARD",
+  "dataName": "Steady Guard",
+  "declaredShifts": [
+   "resilience+2"
+  ],
+  "bonuses": [
+   "toughness +5%",
+   "interruptResist +15%",
+   "blockMitigation +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "steady_guard"
+  ],
+  "dAxes": {
+   "resilience": 2
+  },
+  "dAxesMarg": {
+   "resilience": 2
+  },
+  "dStats": {
+   "toughness": 10,
+   "blockMitigation": 0.025
+  },
+  "effectText": "Harder to knock off his rhythm. A stronger guard.",
+  "characterText": "Holds his ground against an attack.",
+  "verdict": "частично (не двигаются: stick)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "CATCH BREATH",
+  "dataName": "Catch Breath",
+  "declaredShifts": [
+   "resilience+3"
+  ],
+  "bonuses": [
+   "toughness +7%",
+   "staminaRegen +70%",
+   "blockMitigation +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "catch_breath"
+  ],
+  "dAxes": {
+   "resilience": 3
+  },
+  "dAxesMarg": {
+   "resilience": 3
+  },
+  "dStats": {
+   "toughness": 14,
+   "blockMitigation": 0.025
+  },
+  "effectText": "Tougher, and recovers his wind faster.",
+  "characterText": "Uses the quiet moments to steady himself.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "DIG IN",
+  "dataName": "Dig In",
+  "declaredShifts": [
+   "distance−6"
+  ],
+  "bonuses": [
+   "toughness +9%",
+   "blockMitigation +12%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "dig_in"
+  ],
+  "dAxes": {
+   "distance": -6
+  },
+  "dAxesMarg": {
+   "distance": -6
+  },
+  "dStats": {
+   "toughness": 18,
+   "blockMitigation": 0.06
+  },
+  "effectText": "Tougher, with a much stronger guard. Plants himself closer.",
+  "characterText": "Close in, he digs in and does not move.",
+  "verdict": "частично (не двигаются: stick)"
+ },
+ {
+  "core": "skala",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "UNBREAKABLE",
+  "dataName": "Unbreakable",
+  "declaredShifts": [
+   "resilience+2"
+  ],
+  "bonuses": [
+   "toughness +6%",
+   "blockMitigation +15%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "fortress"
+  ],
+  "dAxes": {
+   "resilience": 2
+  },
+  "dAxesMarg": {
+   "resilience": 2
+  },
+  "dStats": {
+   "toughness": 12,
+   "blockMitigation": 0.075
+  },
+  "effectText": "His guard stops even more of the damage.",
+  "characterText": "Always ready to stand and absorb.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "RIPOSTE",
+  "dataName": "Riposte",
+  "declaredShifts": [
+   "counter+8",
+   "stick+6"
+  ],
+  "bonuses": [
+   "toughness +4%",
+   "blockCounter +50%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "riposte"
+  ],
+  "dAxes": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dStats": {
+   "toughness": 8
+  },
+  "effectText": "Tougher. After a block, his answer hits harder.",
+  "characterText": "Meets an attack by stepping into it.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "CATCH & PUNISH",
+  "dataName": "Catch & Punish",
+  "declaredShifts": [
+   "counter+8"
+  ],
+  "bonuses": [
+   "toughness +7%",
+   "interruptBonus +40%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "catch_punish"
+  ],
+  "dAxes": {
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "counter": 8
+  },
+  "dStats": {
+   "toughness": 14
+  },
+  "effectText": "Catching a swing mid-motion hurts the opponent more.",
+  "characterText": "Pushes in when the opponent is off balance.",
+  "verdict": "частично (не двигаются: initiative)"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "HARD MEET",
+  "dataName": "Hard Meet",
+  "declaredShifts": [
+   "counter+10",
+   "stick+6"
+  ],
+  "bonuses": [
+   "toughness +10%",
+   "interruptBonus +90%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "hard_meet"
+  ],
+  "dAxes": {
+   "stick": 6,
+   "counter": 10
+  },
+  "dAxesMarg": {
+   "stick": 6,
+   "counter": 10
+  },
+  "dStats": {
+   "toughness": 20
+  },
+  "effectText": "Catching a swing hurts even more.",
+  "characterText": "Steps forward into anyone who comes close.",
+  "verdict": "частично (не двигаются: distance)"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "RETALIATION",
+  "dataName": "Retaliation",
+  "declaredShifts": [
+   "counter+7"
+  ],
+  "bonuses": [
+   "toughness +14%",
+   "blockCounter +30%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "retaliate_ramp"
+  ],
+  "dAxes": {
+   "counter": 7
+  },
+  "dAxesMarg": {
+   "counter": 7
+  },
+  "dStats": {
+   "toughness": 28
+  },
+  "effectText": "His answer after a block hits harder.",
+  "characterText": "Swings back when the opponent swings.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "SEA WALL",
+  "dataName": "Sea Wall",
+  "declaredShifts": [
+   "counter+8",
+   "stick+6"
+  ],
+  "bonuses": [
+   "toughness +14%",
+   "blockCounter +60%",
+   "interruptBonus +60%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "counter_trap"
+  ],
+  "dAxes": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dAxesMarg": {
+   "stick": 6,
+   "counter": 8
+  },
+  "dStats": {
+   "toughness": 28
+  },
+  "effectText": "His strongest answer after a block. A swing he catches hurts too.",
+  "characterText": "In a long fight he waits for the swing and punishes it.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "BODY SHOVE",
+  "dataName": "Body Shove",
+  "declaredShifts": [
+   "stick+6",
+   "distance−6"
+  ],
+  "bonuses": [
+   "blockPenetration +10%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "body_shove"
+  ],
+  "dAxes": {
+   "distance": -6,
+   "stick": 6
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "stick": 6
+  },
+  "dStats": {
+   "blockPenetration": 0.1
+  },
+  "effectText": "Fights closer and breaks guards a little.",
+  "characterText": "Leans on the opponent in close.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "HEAVY SLAM",
+  "dataName": "Heavy Slam",
+  "declaredShifts": [
+   "weight+10"
+  ],
+  "bonuses": [
+   "blockPenetration +30%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "heavy_slam"
+  ],
+  "dAxes": {
+   "weight": 10
+  },
+  "dAxesMarg": {
+   "weight": 10
+  },
+  "dStats": {
+   "blockPenetration": 0.3,
+   "mobility": -8
+  },
+  "effectText": "His blows break through a guard. Heavier on his feet.",
+  "characterText": "In reach, he throws the heavy one.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "NO WAY AROUND",
+  "dataName": "No Way Around",
+  "declaredShifts": [
+   "stick+7"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "no_way_around"
+  ],
+  "dAxes": {
+   "stick": 7
+  },
+  "dAxesMarg": {
+   "stick": 7
+  },
+  "dStats": {},
+  "effectText": "Stays on the opponent after the exchange.",
+  "characterText": "When the opponent covers up, he holds his place and keeps him in front.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "PIN",
+  "dataName": "Pin",
+  "declaredShifts": [
+   "stick+6",
+   "distance−6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "pin"
+  ],
+  "dAxes": {
+   "distance": -6,
+   "stick": 6
+  },
+  "dAxesMarg": {
+   "distance": -6,
+   "stick": 6
+  },
+  "dStats": {},
+  "effectText": "Fights closer and stays there.",
+  "characterText": "Once close, he holds the opponent in place.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "CLINCH",
+  "dataName": "Clinch",
+  "declaredShifts": [
+   "stick+11",
+   "weight+8"
+  ],
+  "bonuses": [
+   "blockPenetration +40%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "clinch"
+  ],
+  "dAxes": {
+   "weight": 8,
+   "stick": 11
+  },
+  "dAxesMarg": {
+   "weight": 8,
+   "stick": 11
+  },
+  "dStats": {
+   "blockPenetration": 0.4,
+   "mobility": -6
+  },
+  "effectText": "Breaks through guards and stays fully on the opponent.",
+  "characterText": "Grinds forward in close and never lets go.",
+  "verdict": "частично (не двигаются: distance)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 0,
+  "facet": "BODY",
+  "crystal": "HARD COUNTER",
+  "dataName": "Hard Counter",
+  "declaredShifts": [
+   "counter+6"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "hard_counter"
+  ],
+  "dAxes": {
+   "counter": 6
+  },
+  "dAxesMarg": {
+   "counter": 6
+  },
+  "dStats": {},
+  "effectText": "His counters come more readily.",
+  "characterText": "Answers a swing with a swing.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 1,
+  "facet": "BODY",
+  "crystal": "SLIP COUNTER",
+  "dataName": "Slip Counter",
+  "declaredShifts": [
+   "slip+4"
+  ],
+  "bonuses": [
+   "dodgeCounter +3%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "slip_counter"
+  ],
+  "dAxes": {
+   "slip": 4
+  },
+  "dAxesMarg": {
+   "slip": 4
+  },
+  "dStats": {},
+  "effectText": "A slipped blow arms a stronger counter.",
+  "characterText": "Strikes when the opponent goes quiet.",
+  "verdict": "частично (не двигаются: counter,initiative)"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 2,
+  "facet": "BODY",
+  "crystal": "ANSWER THE SWING",
+  "dataName": "Punish Aggression",
+  "declaredShifts": [
+   "counter+5"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "punish_aggression"
+  ],
+  "dAxes": {
+   "counter": 5
+  },
+  "dAxesMarg": {
+   "counter": 5
+  },
+  "dStats": {},
+  "effectText": "Punishes openings more.",
+  "characterText": "The opponent's attack is his cue to strike.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 3,
+  "facet": "BODY",
+  "crystal": "PUNISH WHIFF",
+  "dataName": "Punish Whiff",
+  "declaredShifts": [
+   "counter+5"
+  ],
+  "bonuses": [
+   "missCounter +40%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "punish_whiff"
+  ],
+  "dAxes": {
+   "counter": 5
+  },
+  "dAxesMarg": {
+   "counter": 5
+  },
+  "dStats": {},
+  "effectText": "The opponent's miss opens a counter.",
+  "characterText": "Strikes the moment the opponent is off balance.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 4,
+  "facet": "BODY",
+  "crystal": "PERFECT TRAP",
+  "dataName": "Perfect Trap",
+  "declaredShifts": [
+   "counter+2",
+   "slip+2"
+  ],
+  "bonuses": [
+   "dodgeCounter +5%",
+   "missCounter +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "perfect_trap"
+  ],
+  "dAxes": {
+   "counter": 2,
+   "slip": 2
+  },
+  "dAxesMarg": {
+   "slip": 2
+  },
+  "dStats": {},
+  "effectText": "A slip arms his strongest counter. The opponent's misses are punished too.",
+  "characterText": "Waits in silence, then strikes.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 0,
+  "facet": "MIND",
+  "crystal": "LONG SLIP",
+  "dataName": "Long Slip",
+  "declaredShifts": [
+   "slip+8",
+   "distance+5"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "long_slip"
+  ],
+  "dAxes": {
+   "distance": 5,
+   "slip": 8
+  },
+  "dAxesMarg": {
+   "distance": 5,
+   "slip": 8
+  },
+  "dStats": {},
+  "effectText": "Slips further and keeps more distance.",
+  "characterText": "Meets a swing with a poke from range.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 1,
+  "facet": "MIND",
+  "crystal": "HARD TO REACH",
+  "dataName": "Hard to Reach",
+  "declaredShifts": [
+   "slip+6",
+   "distance+5"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "hard_to_reach"
+  ],
+  "dAxes": {
+   "distance": 5,
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "distance": 5,
+   "slip": 6
+  },
+  "dStats": {},
+  "effectText": "Harder to hit and harder to reach.",
+  "characterText": "In a long fight he works from range.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 2,
+  "facet": "MIND",
+  "crystal": "LONG GAME",
+  "dataName": "Run 'Em Ragged",
+  "declaredShifts": [
+   "distance+4",
+   "slip+4"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "exhaust"
+  ],
+  "dAxes": {
+   "distance": 4,
+   "slip": 4
+  },
+  "dAxesMarg": {
+   "distance": 4,
+   "slip": 4
+  },
+  "dStats": {},
+  "effectText": "Keeps distance and slips more.",
+  "characterText": "Settles into pokes from range as the fight drags on.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 3,
+  "facet": "MIND",
+  "crystal": "OPEN WINDOW",
+  "dataName": "Open Window",
+  "declaredShifts": [
+   "slip+6"
+  ],
+  "bonuses": [
+   "dodgeCounter +15%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "open_window"
+  ],
+  "dAxes": {
+   "slip": 6
+  },
+  "dAxesMarg": {
+   "slip": 6
+  },
+  "dStats": {},
+  "effectText": "A slip sets up his next blow.",
+  "characterText": "Strikes when the opponent is off balance.",
+  "verdict": "частично (не двигаются: counter)"
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 4,
+  "facet": "MIND",
+  "crystal": "PHANTOM",
+  "dataName": "Phantom",
+  "declaredShifts": [
+   "slip+9",
+   "distance+5"
+  ],
+  "bonuses": [],
+  "liveSeam": false,
+  "tags": [
+   "phantom"
+  ],
+  "dAxes": {
+   "distance": 5,
+   "slip": 9
+  },
+  "dAxesMarg": {
+   "distance": 5,
+   "slip": 9
+  },
+  "dStats": {},
+  "effectText": "The hardest fighter in this branch to touch.",
+  "characterText": "When he takes damage, he goes elusive and pokes.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 0,
+  "facet": "WILL",
+  "crystal": "LOADED HIT",
+  "dataName": "Loaded Hit",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +4%",
+   "chargePower +5%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "loaded_hit"
+  ],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 4,
+   "chargePowerBonusMax": 0.03
+  },
+  "effectText": "Hits harder. His charged blow lands heavier.",
+  "characterText": "Once loaded, he lets it go.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 1,
+  "facet": "WILL",
+  "crystal": "LONG CHARGE",
+  "dataName": "Long Charge",
+  "declaredShifts": [
+   "distance+4"
+  ],
+  "bonuses": [
+   "strikePower +9%",
+   "chargeMax +60%",
+   "strikePower +3%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "long_charge"
+  ],
+  "dAxes": {
+   "distance": 4
+  },
+  "dAxesMarg": {
+   "distance": 4
+  },
+  "dStats": {
+   "strikePower": 12,
+   "chargeMax": 60
+  },
+  "effectText": "Hits harder and can store a bigger charge.",
+  "characterText": "Keeps loading instead of spending.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 2,
+  "facet": "WILL",
+  "crystal": "HIT THE OPENING",
+  "dataName": "Hit the Opening",
+  "declaredShifts": [
+   "initiative−6"
+  ],
+  "bonuses": [
+   "strikePower +10%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "vulnerable_strike"
+  ],
+  "dAxes": {
+   "initiative": -6
+  },
+  "dAxesMarg": {
+   "initiative": -6
+  },
+  "dStats": {
+   "strikePower": 10
+  },
+  "effectText": "Hits harder.",
+  "characterText": "Waits for the opening, then strikes.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 3,
+  "facet": "WILL",
+  "crystal": "PIERCE",
+  "dataName": "Pierce",
+  "declaredShifts": [
+   "distance+6"
+  ],
+  "bonuses": [
+   "strikePower +11%",
+   "chargePen +80%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "pierce"
+  ],
+  "dAxes": {
+   "distance": 6
+  },
+  "dAxesMarg": {
+   "distance": 6
+  },
+  "dStats": {
+   "strikePower": 11,
+   "chargePenetrationBonusMax": 0.56
+  },
+  "effectText": "His charged blow breaks through a guard.",
+  "characterText": "Swings into a raised guard.",
+  "verdict": "совпало"
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 4,
+  "facet": "WILL",
+  "crystal": "EXECUTION",
+  "dataName": "Execution",
+  "declaredShifts": [
+   "distance+5"
+  ],
+  "bonuses": [
+   "strikePower +7%",
+   "chargePower +7%"
+  ],
+  "liveSeam": true,
+  "tags": [
+   "execute"
+  ],
+  "dAxes": {
+   "distance": 5
+  },
+  "dAxesMarg": {
+   "distance": 5
+  },
+  "dStats": {
+   "strikePower": 7,
+   "chargePowerBonusMax": 0.042
+  },
+  "effectText": "The heaviest charged blow in this branch.",
+  "characterText": "Close in, he goes for the finish.",
+  "verdict": "совпало"
+ }
+]

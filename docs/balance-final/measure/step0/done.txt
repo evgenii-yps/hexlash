@@ -1,0 +1,4 @@
+fight-regression exit 0
+fight-regression-builds exit 0
+fight-regression-klich exit 0
+fight-regression-buffs exit 0
