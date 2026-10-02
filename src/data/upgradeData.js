@@ -306,9 +306,9 @@ export const CRYSTALS = {
       { name: 'Punish Aggression', shifts: [s('counter', 5)], conditionals: ['punish_aggression'] },
       // Punishes a whiff — the foe's miss opens the counter window (onMiss seam).
       { name: 'Punish Whiff', shifts: [s('counter', 5)], bonuses: [b('missCounter', COMBAT_BALANCE.trapMissCounter)], conditionals: ['punish_whiff'] },
-      // VERTEX — perfect trap: the branch's strongest post-dodge counter (+5%); the post-whiff
-      // counter is +5% too (Punish Whiff's +40% is higher).
-      { name: 'Perfect Trap', shifts: [s('counter', 2), s('slip', 2)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },
+      // VERTEX — perfect trap: the branch's strongest post-dodge counter (+40%, above Slip Counter's +30%; заход 6); the post-whiff
+      // counter is +5% (Punish Whiff's +40% is higher). Оси вершины (counter +2, slip +2) убраны — компенсация внутри вершины, одиночка в Ц3 ≤ +12.
+      { name: 'Perfect Trap', shifts: [], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },
     ], null, 'zasada.a'),
     // SHADOW (ТЕНЬ) — an untouchable that wears the foe down with distance. Number/
     // movement: high slip + distance (elusive, far). No counter (not its home).

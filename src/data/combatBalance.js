@@ -1037,7 +1037,7 @@ export const COMBAT_BALANCE = {
   //   charge        — ЖАЛО: power (Loaded / Execution), ceiling (Long Charge), pierce.
   trapDodgeCounter: 0.30, // КАПКАН-2 «уход + контр» (Slip Counter, «a slipped blow arms a stronger counter») — +30% dmg on the strike after a dodge (было +3%: обещание не читалось; заход 6, группа 1). Компенсация внутри кристалла — увод slip +4 → +1 (upgradeData.js); вершина Perfect Trap выше: trapPerfectDodge
   trapMissCounter: 0.4, // КАПКАН-4 «наказывает промах» — +40% dmg after the foe whiffs (было +50%)
-  trapPerfectDodge: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-dodge riposte (было +100%)
+  trapPerfectDodge: 0.40, // КАПКАН-5 «идеальный капкан» (vertex, «A slip arms his strongest counter») — +40% post-dodge riposte: ВЫШЕ Slip Counter (trapDodgeCounter 0.30) (было +5%; заход 6, группа 1). Компенсация внутри вершины — её сдвиги осей убраны (upgradeData.js)
   trapPerfectMiss: 0.05, // КАПКАН-5 «идеальный капкан» (vertex) — +5% post-whiff riposte (было +100%)
   shadowDodgeWindow: 0.15, // ТЕНЬ-4 «окно для своего захода шире» — +15% dmg after a dodge (own opening; было +40%)
   stingLoadedPower: 0.05, // ЖАЛО-1 «накопленный удар тяжёлый» — +5% charge-release power (было +50%)
