@@ -169,7 +169,8 @@ a:hover{color:#FF0069}
   html.dk-rail .dk-toc-in{position:absolute;left:0;top:0;width:100%;will-change:transform}
   html.dk-rail .dk-toc.is-ready .dk-toc-in{transition:transform 520ms cubic-bezier(.2,.8,.2,1)}
   html.dk-rail .dk-toc a{pointer-events:auto}
-  html.dk-rail .dk-toc .dk-toc-h{display:block;height:20px;font:700 11px/20px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#A9A5AF;white-space:nowrap;transition:color 220ms}
+  html.dk-rail .dk-toc-ch + .dk-toc-ch{margin-top:var(--rgap,16px)}
+  html.dk-rail .dk-toc .dk-toc-h{display:block;height:var(--rhh,26px);font:700 calc(var(--rhs,15) * 1px)/var(--rhh,26px) 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#D2CFD6;white-space:nowrap;transition:color 220ms}
   html.dk-rail .dk-toc-ch.is-cur-ch .dk-toc-h,html.dk-rail .dk-toc .dk-toc-h:hover{color:#F6F4F6}
   html.dk-rail .dk-toc li a[data-sec]{display:block;position:relative;height:18px;color:#A9A5AF}
   html.dk-rail .dk-toc.is-ready li a[data-sec]{transition:height 520ms cubic-bezier(.2,.8,.2,1),color 220ms}
@@ -177,11 +178,12 @@ a:hover{color:#FF0069}
   html.dk-rail .dk-toc li a[data-sec][data-d="1"]{color:#F6F4F6}
   html.dk-rail .dk-toc li a[data-sec]:hover{color:#F6F4F6}
   /* Строка: номер и название мелко. */
-  html.dk-rail .dk-toc .rs{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;gap:.6em;white-space:nowrap;font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;opacity:1}
-  html.dk-rail .dk-toc.is-ready .rs{transition:font-size 520ms cubic-bezier(.2,.8,.2,1),opacity 140ms ease-out 80ms}
-  html.dk-rail .dk-toc a[data-d="2"] .rs{font-size:12px}
-  html.dk-rail .dk-toc a[data-d="1"] .rs{font-size:13px}
-  html.dk-rail .dk-toc a[data-d="0"] .rs{font-size:13px;opacity:0}
+  html.dk-rail .dk-toc .rs{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;gap:.6em;white-space:nowrap;font:500 calc(var(--rs,13) * 1px)/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;opacity:1}
+  html.dk-rail .dk-toc.is-ready .rs{transition:font-size 520ms cubic-bezier(.2,.8,.2,1),opacity 120ms ease-out 140ms}
+  html.dk-rail .dk-toc a[data-d="2"] .rs{font-size:calc(var(--rs,13) * 1px + .5px)}
+  html.dk-rail .dk-toc a[data-d="1"] .rs{font-size:calc(var(--rs,13) * 1px + 1px)}
+  html.dk-rail .dk-toc a[data-d="0"] .rs{font-size:calc(var(--rs,13) * 1px + 1px);opacity:0}
+  html.dk-rail .dk-toc.is-ready a[data-d="0"] .rs{transition:font-size 520ms cubic-bezier(.2,.8,.2,1),opacity 90ms ease-in}
   html.dk-rail .dk-toc .rs b{flex:0 0 auto;font-weight:500;font-variant-numeric:tabular-nums}
   /* Раскрытый номер: слой .rb растёт из строки (масштаб от левого верхнего угла). */
   html.dk-rail .dk-toc .rb{position:absolute;left:0;top:0;width:100%;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 18px;transform-origin:0 0;transform:scale(.12);opacity:0;pointer-events:none;transition:opacity 140ms ease-in,transform 220ms ease-in}
@@ -2203,14 +2205,40 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
      влезает целиком — двигается только в зазоре, не влезает — скользит.
      Высоты и сдвиг идут одним ходом (520 мс), поэтому рост читается непрерывно. */
   var railMQ = window.matchMedia ? window.matchMedia('(min-width:1024px) and (pointer:fine)') : { matches: false };
-  var RAIL = { head: 20, gap: 10, h1: 26, h2: 22, h3: 18, anchor: 56, top: 24, bot: 28 };
+  var RAIL = { anchor: 56, top: 24, bot: 28, fill: 6 };
+  /* Размеры колонки — от высоты окна. u: -0.4 (самое плотное) … 1 (самое свободное);
+     railFit подбирает наибольшее u, при котором весь список (с раскрытым номером)
+     влезает в окно. Всё, что растёт с u, растёт вместе: кегль, шаг строки,
+     высота и отступы глав — поэтому на высоком окне список растягивается, на
+     низком садится плотнее, а пункты друг на друга не налезают. */
+  function railMetrics(u) {
+    var P = 21 + 15 * u;
+    return { fs: 13.3 + 1.3 * u, P: P, h2: P * 1.17, h1: P * 1.34, head: P * 1.35, gap: P * 0.95, hfs: 14.3 + 1.5 * u };
+  }
+  var rbH = [], rbRef = 120;
+  function railTotal(m, h0ref) {
+    var y = 0, ci, n, d;
+    for (ci = 0; ci < 4; ci++) {
+      if (ci > 0) y += m.gap;
+      y += m.head;
+      var end = ci < 3 ? CH_START[ci + 1] : 21;
+      for (n = CH_START[ci]; n < end; n++) { d = Math.abs(n - 10); y += d === 0 ? h0ref : d === 1 ? m.h1 : d === 2 ? m.h2 : m.P; }
+    }
+    return y;
+  }
+  function railFit(avail) {
+    var lo = -0.4, hi = 1, i;
+    if (railTotal(railMetrics(hi), rbRef) <= avail) return hi;
+    if (railTotal(railMetrics(lo), rbRef) > avail) return lo;
+    for (i = 0; i < 14; i++) { var mid = (lo + hi) / 2; if (railTotal(railMetrics(mid), rbRef) <= avail) lo = mid; else hi = mid; }
+    return lo;
+  }
   var CH_START = [0, 10, 15, 19];
   var railSig = '', railReady = false;
   tocLinks.forEach(function (a) {
     var n = a.getAttribute('data-sec');
     if (n !== null) a.style.setProperty('--sec-c', colorOf(+n));
   });
-  tocNavs.forEach(function (nav) { [].forEach.call(nav.querySelectorAll('.dk-toc-ch'), function (ch, ci) { if (ci > 0) ch.style.marginTop = RAIL.gap + 'px'; }); });
   function railMeasure() {
     var L = activeLayer(), as = L && L.querySelector('aside.dk-aside');
     if (!as) return;
@@ -2219,6 +2247,11 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
     railL = Math.round(r.left); railR = railL + w;
     root.style.setProperty('--rail-l', railL + 'px');
     root.style.setProperty('--rail-w', w + 'px');
+    /* Высоты раскрытых слоёв (название может встать под номер) — по активному языку. */
+    var cl = doc.querySelectorAll('.dk-toc:not(.off) a[data-sec] .rb'), mx = 0, k;
+    rbH = [];
+    for (k = 0; k < cl.length; k++) { rbH[k] = cl[k].offsetHeight + 6; if (rbH[k] > mx) mx = rbH[k]; }
+    if (mx) rbRef = mx;
   }
   function railApply(c, force) {
     if (!railMQ.matches) return;
@@ -2232,18 +2265,23 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
       var cl = doc.querySelector('.dk-toc:not(.off) a[data-sec="' + c + '"] .rb');
       h0 = cl ? cl.offsetHeight + 6 : 0;
     }
-    var sig = [c, top, vh, h0, window.innerWidth].join('|');
+    var sig = [c, top, vh, h0, rbRef, window.innerWidth].join('|');
     if (!force && sig === railSig) return;
     railSig = sig;
+    var m = railMetrics(railFit(bot - top - RAIL.fill));
+    root.style.setProperty('--rs', (Math.round(m.fs * 10) / 10));
+    root.style.setProperty('--rhs', (Math.round(m.hfs * 10) / 10));
+    root.style.setProperty('--rhh', Math.round(m.head) + 'px');
+    root.style.setProperty('--rgap', Math.round(m.gap) + 'px');
     function hOf(n) {
-      if (c < 0) return RAIL.h3;
+      if (c < 0) return m.P;
       var d = Math.abs(n - c);
-      return d === 0 ? h0 : d === 1 ? RAIL.h1 : d === 2 ? RAIL.h2 : RAIL.h3;
+      return d === 0 ? h0 : d === 1 ? m.h1 : d === 2 ? m.h2 : m.P;
     }
     var y = 0, offs = [], ci, n;
     for (ci = 0; ci < 4; ci++) {
-      if (ci > 0) y += RAIL.gap;
-      y += RAIL.head;
+      if (ci > 0) y += Math.round(m.gap);
+      y += Math.round(m.head);
       var end = ci < 3 ? CH_START[ci + 1] : 21;
       for (n = CH_START[ci]; n < end; n++) { offs[n] = y; y += hOf(n); }
     }
@@ -2256,9 +2294,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
       if (inner) inner.style.transform = 'translateY(' + Lp + 'px)';
       [].forEach.call(nav.querySelectorAll('.dk-toc-ch'), function (ch, k) { ch.classList.toggle('is-cur-ch', k === curCh); });
       [].forEach.call(nav.querySelectorAll('a[data-sec]'), function (a) {
-        var m = +a.getAttribute('data-sec');
-        a.style.height = hOf(m) + 'px';
-        a.setAttribute('data-d', c < 0 ? 3 : Math.min(3, Math.abs(m - c)));
+        var k = +a.getAttribute('data-sec');
+        a.style.height = hOf(k).toFixed(1) + 'px';
+        a.setAttribute('data-d', c < 0 ? 3 : Math.min(3, Math.abs(k - c)));
       });
     });
     if (!railReady) {
@@ -2282,6 +2320,16 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
       return t;
     });
   }
+  /* Текст, который ещё не проявился (ждёт своего появления), колонку не прячет:
+     итоговая прозрачность = произведение по цепочке вверх до самого блока. */
+  function shownOp(el, stop) {
+    var o = 1;
+    for (; el; el = el.parentElement) {
+      o *= parseFloat(getComputedStyle(el).opacity);
+      if (el === stop || o < 0.15) break;
+    }
+    return o;
+  }
   function railAway() {
     if (!railMQ.matches) return;
     var away = false;
@@ -2291,7 +2339,7 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
       var ts = awayTexts[i];
       for (var j = 0; j < ts.length; j++) {
         var q = ts[j].getBoundingClientRect();
-        if (q.width > 1 && q.bottom > 0 && q.top < vh && q.right > railL && q.left < railR) { away = true; break; }
+        if (q.width > 1 && q.bottom > 0 && q.top < vh && q.right > railL && q.left < railR && shownOp(ts[j], awayEls[i]) > 0.15) { away = true; break; }
       }
     }
     tocNavs.forEach(function (nav) { nav.classList.toggle('is-away', away); });
