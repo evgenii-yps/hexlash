@@ -40,21 +40,22 @@ export const fmt = (frames) => { const s = frames / FPS; return `${Math.floor(s 
  */
 export function encodeTimeline({ root, every, out, crf = 16, preset = 'medium', size = [1280, 720], blend30 = false, doGrade = true }) {
   const ff = findFfmpeg();
-  const { parts } = layout();
+  const { parts: allParts } = layout(); const parts = process.env.SHOWCASE_PARTS ? allParts.slice(0, Number(process.env.SHOWCASE_PARTS)) : allParts;   // SHOWCASE_PARTS=n — отладка: только первые n кусков
   const [W, H] = size;
   const outFps = (FPS / every) / (blend30 ? 2 : 1);   // blend30: снимали 60 кадр/с, в файл — 30, каждый кадр = среднее двух соседних (как затвор 180° при 30)
   const inFps = FPS / every;
-  const inputs = []; const filters = []; const labels = [];
+  const tmp = path.resolve(path.dirname(out), '_parts-' + path.basename(out, '.mp4')); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
+  const run = (args) => { const r = spawnSync(ff, ['-y', '-hide_banner', '-loglevel', process.env.SHOWCASE_FFLOG || 'error', ...args], { stdio: 'inherit' }); if (r.status !== 0) throw new Error('ffmpeg не собрал шкалу'); };
+  // Каждый кусок кодируется БЕЗ потерь (ffv1, RGB) в свой файл и склеивается демуксером concat. Фильтр concat на длинных кусках с разной длиной
+  // терял кадры на 60 кадр/с (общая длина выходила ≈ половиной), а демуксер склеивает кусок за куском по их собственным меткам времени.
+  const files = [];
   parts.forEach((p, i) => {
-    if (p.plan) {
-      const dir = path.join(root, p.plan.id, 'frames');
-      if (p.head % every) throw new Error(`trim.head плана ${p.id} должен быть кратен every=${every}`);
-      inputs.push('-framerate', String(inFps), '-start_number', String(p.head / every), '-t', String(p.len / FPS), '-i', path.join(dir, '%05d.png'));
-    } else {
-      inputs.push('-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=${W}x${H}:r=${outFps}`);
-    }
+    const input = p.plan
+      ? ['-framerate', String(inFps), '-start_number', String(p.head / every), '-i', path.join(root, p.plan.id, 'frames', '%05d.png')]
+      : ['-f', 'lavfi', '-t', String(p.len / FPS), '-i', `color=c=black:s=${W}x${H}:r=${outFps}`];
+    if (p.plan && p.head % every) throw new Error(`trim.head плана ${p.id} должен быть кратен every=${every}`);
     const len = p.len / FPS;
-    let f = `[${i}:v]scale=${W}:${H},setsar=1,fps=${inFps}`;
+    let f = `scale=${W}:${H},setsar=1,fps=${inFps}`;
     if (p.plan) {
       // цветокоррекция — на игровые кадры; титры и логотип (графика бренда с заданными цветами) не трогаем
       if (doGrade && p.plan.kind !== 'title' && p.plan.kind !== 'logo') f += gradeFilter(grade.params);
@@ -64,14 +65,16 @@ export function encodeTimeline({ root, every, out, crf = 16, preset = 'medium', 
       if (fin > 0) f += `,fade=t=in:st=0:d=${fin}`;
       if (fout > 0) f += `,fade=t=out:st=${Math.max(0, len - fout)}:d=${fout}`;
     }
-    f += `,fps=${outFps}[v${i}]`;
-    filters.push(f); labels.push(`[v${i}]`);
+    const file = path.join(tmp, `part${String(i).padStart(2, '0')}.nut`);
+    run([...input, '-vf', `${f},fps=${outFps},format=rgb24`, '-r', String(outFps), '-frames:v', String(p.len / every / (blend30 ? 2 : 1)), '-c:v', 'ffv1', '-level', '3', '-threads', '4', '-an', file]);
+    files.push(file);
   });
-  filters.push(`${labels.join('')}concat=n=${parts.length}:v=1:a=0,${TO_YUV}[vout]`);
-  const args = ['-y', '-hide_banner', '-loglevel', 'error', ...inputs, '-filter_complex', filters.join(';'), '-map', '[vout]',
-    '-c:v', 'libx264', '-preset', preset, '-crf', String(crf), '-x264-params', 'colorprim=bt709:transfer=bt709:colormatrix=bt709:range=tv', ...COLOR_TAGS, '-movflags', '+faststart', out];
-  const r = spawnSync(ff, args, { stdio: 'inherit' });
-  if (r.status !== 0) throw new Error('ffmpeg не собрал шкалу');
+  const list = path.join(tmp, 'list.txt'); writeFileSync(list, files.map((x, i) => `file '${path.resolve(x)}'\nduration ${(parts[i].len / every / (blend30 ? 2 : 1) / outFps).toFixed(6)}`).join('\n') + '\n');
+  const args = ['-f', 'concat', '-safe', '0', '-i', list, '-vf', TO_YUV, '-r', String(outFps), '-fps_mode', 'cfr',
+    '-c:v', 'libx264', '-preset', preset, '-crf', String(crf), '-x264-params', 'colorprim=bt709:transfer=bt709:colormatrix=bt709', ...COLOR_TAGS, '-movflags', '+faststart', out];
+  if (process.env.SHOWCASE_PRINT) console.log(JSON.stringify(args));
+  run(args);
+  if (!process.env.SHOWCASE_KEEP) rmSync(tmp, { recursive: true, force: true });
 }
 
 /** Дорожка меток: действия из планов + события боя из журналов + границы кусков. */

@@ -1,0 +1,51 @@
+▶ эталон 5b0d765bff7a67ed4236ed8ef3c0cb6b15be6629 5b0d765b
+  home@390x844
+  home@844x390
+  home@1280x720
+  home@1920x1080
+  gate@390x844
+  gate@844x390
+  gate@1280x720
+  gate@1920x1080
+  forge@390x844
+  forge@844x390
+  forge@1280x720
+  forge@1920x1080
+  arena-bout@390x844
+  arena-bout@844x390
+  arena-bout@1280x720
+  arena-bout@1920x1080
+▶ рабочая копия 04842a06
+  home@390x844
+  home@844x390
+  home@1280x720
+  home@1920x1080
+  gate@390x844
+  gate@844x390
+  gate@1280x720
+  gate@1920x1080
+  forge@390x844
+  forge@844x390
+  forge@1280x720
+  forge@1920x1080
+  arena-bout@390x844
+  arena-bout@844x390
+  arena-bout@1280x720
+  arena-bout@1920x1080
+  ≈ home@390x844  87e37e20c14c 04bb0a3b83e7  пикселей 215 (0.065 %), макс. разница 1 из 255
+  ✓ home@844x390  5052a25af5e2 5052a25af5e2
+  ✓ home@1280x720  0f19a2e2eb06 0f19a2e2eb06
+  ✓ home@1920x1080  c83ac223464e c83ac223464e
+  ✓ gate@390x844  ab5d06477423 ab5d06477423
+  ✓ gate@844x390  0bec6b1ec6fb 0bec6b1ec6fb
+  ✓ gate@1280x720  4f9a0ce1550b 4f9a0ce1550b
+  ✓ gate@1920x1080  d39b0ccbc633 d39b0ccbc633
+  ✓ forge@390x844  72d1cf5675c8 72d1cf5675c8
+  ✓ forge@844x390  38064be7a431 38064be7a431
+  ✓ forge@1280x720  18f90da4548a 18f90da4548a
+  ✓ forge@1920x1080  efbdb2c7951a efbdb2c7951a
+  ✓ arena-bout@390x844  dea11fef9fc4 dea11fef9fc4
+  ✓ arena-bout@844x390  c02a23af19de c02a23af19de
+  ✓ arena-bout@1280x720  f21f2952a557 f21f2952a557
+  ✓ arena-bout@1920x1080  96d73a791c9b 96d73a791c9b
+побайтно совпало 15 из 16; в допуске (≤0,1 % пикселей и ≤2 уровней на канал) ещё 1; настоящих расхождений 0

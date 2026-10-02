@@ -1,0 +1,101 @@
+{
+ "provenance": {
+  "head": "04842a0687fa810fab1ef8d9fb81142f96e5df49",
+  "headSubject": "showcase: этап 4 — пересборка 720p (музыка B) принята сверками; замер цвета по 7 эталонам (итог: тождественная коррекция, настоящая правка — метки BT.709 в файле); размытие движения (4 подкадра камеры); сборка 1080p/60 и веб-30",
+  "main": "702596addbe06484d7b1e7f86aa9a092fcca7cef",
+  "mainSubject": "Merge branch 'claude/compassionate-faraday-fnd8zs': баланс-фикс (ядра, грани, 60 кристаллов, клич, баффы)",
+  "mergeBase": "5b0d765bff7a67ed4236ed8ef3c0cb6b15be6629",
+  "mainContainedInBranch": false,
+  "behindMain": 29,
+  "gameFilesChangedVsMain": 47,
+  "gameFilesChangedVsMergeBase": 0,
+  "combatFingerprint": "360b763cd8654e87",
+  "combatFiles": 26,
+  "date": "2026-10-01T22:39:51.816Z"
+ },
+ "lock": {
+  "fingerprint": "360b763cd8654e87",
+  "fights": {
+   "duel": {
+    "seedBuild": 1,
+    "fightSeed": 9001,
+    "offset": 0,
+    "tried": 3,
+    "cores": [
+     "natisk",
+     "zasada"
+    ]
+   },
+   "squad": {
+    "seedBuild": 9,
+    "fightSeed": 9009,
+    "offset": 2022,
+    "tried": 9,
+    "cores": [
+     "natisk",
+     "skala",
+     "natisk",
+     "zasada"
+    ]
+   }
+  }
+ },
+ "size": [
+  1920,
+  1080
+ ],
+ "every": 1,
+ "timeline": [
+  {
+   "id": "s01-home",
+   "start": 0,
+   "len": 180
+  },
+  {
+   "id": "s02-gate",
+   "start": 180,
+   "len": 336
+  },
+  {
+   "id": "s03-duel",
+   "start": 516,
+   "len": 654
+  },
+  {
+   "id": "t1-title",
+   "start": 1170,
+   "len": 78
+  },
+  {
+   "id": "s05a-squad",
+   "start": 1248,
+   "len": 496
+  },
+  {
+   "id": "t2-title",
+   "start": 1744,
+   "len": 80
+  },
+  {
+   "id": "s05b-forge",
+   "start": 1824,
+   "len": 544
+  },
+  {
+   "id": "t3-title",
+   "start": 2368,
+   "len": 88
+  },
+  {
+   "id": "s09-finale",
+   "start": 2456,
+   "len": 520
+  },
+  {
+   "id": "s10-logo",
+   "start": 2976,
+   "len": 300
+  }
+ ],
+ "seconds": 5528
+}

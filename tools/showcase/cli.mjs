@@ -102,8 +102,9 @@ async function shootAll(root, port) {
   const s = await startServer({ root, port });
   const hashes = {}; const bufs = {};
   try {
-    await warm(s.base, GUARD_SCENES.map((x) => x[1]), [1280, 720]);
+    await warm(s.base, GUARD_SCENES.filter((x) => !process.env.GUARD_ONLY || process.env.GUARD_ONLY.startsWith(x[0] + '@')).map((x) => x[1]), [1280, 720]);
     for (const [id, pl] of GUARD_SCENES) for (const lay of GUARD_LAYOUTS) {
+      if (process.env.GUARD_ONLY && process.env.GUARD_ONLY !== `${id}@${lay.join('x')}`) continue;   // перепроверка одного снимка
       const sess = await openSession({ base: s.base, plan: pl, size: lay, log: () => {} });
       if (pl.kind === 'arena') await sess.run({ capture: false, frames: 300 }); else await sess.pump(30);
       const png = await sess.snapshot();
