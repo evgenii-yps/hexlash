@@ -589,7 +589,9 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
    раздела, тот же, что ведёт фон; без ореола.
    Шаг засечек сжимается на низком окне, зона нажатия у каждой — 44 точки, соседние
    зоны при сжатии перекрываются (побеждает нижняя), центр каждой остаётся своим. */
-.dk-scale,.dk-strip{display:none}
+/* .dk-top — закреплённая панель сверху (полоса глав + надпись текущего раздела). Нужна там,
+   где надпись не стоит у засечки: телефон и окна, где справа от колонки нет места. */
+.dk-scale{display:none}
 .dk-scale{--tk-h:clamp(24px,calc((100vh - 130px - 48px) / 18),44px);
   position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:15;flex-direction:column;align-items:flex-end;pointer-events:none}
 .dk-tk{position:relative;display:block;width:30px;height:44px;margin:calc((var(--tk-h) - 44px) / 2) 0;
@@ -611,30 +613,37 @@ html.dk-anim .dk-pause [data-dk-in].dk-done .dk-w[data-w]::after{animation:none;
 /* Надпись текущего раздела — всегда на виду («02 · МОДЕЛЬ»), в той же рамке, что и
    подпись при наведении. Компьютер: стоит у засечки текущего раздела и за ~0,3 с
    переезжает к следующей (.is-side). Не хватает места справа от контента (до 1180 по
-   центру) — показывается только номер; нет места и под номер, а также на телефоне —
-   маленькая плашка у левого края под полосой глав (без .is-side). Подпись при
-   наведении на другую засечку рисуется поверх (засечка шкалы выше по слоям), у
-   текущей засечки своей подписи нет — она и так стоит рядом (.has-side).
+   центру) — показывается только номер. Нет места и под номер, а также на телефоне —
+   панель .dk-top: закреплена сверху, сплошной фон #08080A, внутри полоса глав и строка
+   надписи. Панель включает сценарий классом html.dk-topbar; страница получает верхний
+   отступ под её высоту (--dk-top-h), якоря — scroll-padding-top на ту же высоту.
+   Подпись при наведении на другую засечку рисуется поверх (засечка шкалы выше по
+   слоям), у текущей засечки своей подписи нет — она и так стоит рядом (.has-side).
    Без свечения, без розового. Без сценария надписи нет вовсе; «уменьшить движение» —
    общее правило страницы гасит переезд. */
-.dk-now{position:fixed;left:8px;top:10px;z-index:14;max-width:calc(100vw - 16px);padding:4px 6px;
-  white-space:nowrap;background:rgba(8,8,10,.94);border:1px solid rgba(255,255,255,.16);
+.dk-now{position:fixed;top:0;z-index:14;display:block;width:fit-content;white-space:nowrap;
+  padding:4px 6px;margin:3px 8px;background:#08080A;border:1px solid rgba(255,255,255,.16);
   font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;
   opacity:0;pointer-events:none;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)}
 .dk-now.is-on{opacity:1}
-.dk-now.is-side{left:auto;right:22px;top:0;padding:6px 9px;font-size:10px;
+.dk-now.is-side{right:22px;margin:0;padding:6px 9px;font-size:10px;background:rgba(8,8,10,.94);
   transition:opacity 150ms cubic-bezier(.2,.8,.2,1),transform 300ms cubic-bezier(.2,.8,.2,1)}
 .dk-now.is-side.is-num{padding:6px 5px}
 .dk-now.is-side.is-num::after{content:'';display:inline-block;width:0;margin-right:-.16em}
 .dk-now.no-tr{transition:none !important}
 .dk-scale.has-side .dk-tk.is-cur::before{display:none}
 
-.dk-strip{position:fixed;left:0;right:0;top:0;height:4px;gap:2px;padding:0 2px;z-index:20;pointer-events:none}
+.dk-top{display:none;position:fixed;left:0;right:0;top:0;height:29px;overflow:hidden;z-index:20;
+  background:#08080A;pointer-events:none}
+.dk-top .dk-now{position:static;max-width:calc(100vw - 16px)}
+html.dk-topbar{scroll-padding-top:29px}
+html.dk-topbar body{padding-top:29px}
+html.dk-topbar .dk-top{display:block}
+.dk-strip{display:flex;height:4px;gap:2px;padding:0 2px}
 .dk-strip>i{flex:1 1 0;min-width:0;background:rgba(255,255,255,.1)}
 .dk-strip>i.dk-gap{margin-left:6px}
 .dk-strip>i.is-pass{background:rgba(246,244,246,.42)}
 .dk-strip>i.is-cur{background:var(--tk)}
-@media (max-width:1023px){.dk-strip{display:flex}}
 
 /* --- 4. Заголовки разделов выезжают из-под маски --------------------------
    Заменяет прежнее подъёмное появление заголовка (он исключён из общего правила
@@ -2988,11 +2997,15 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   var scaleEl = document.createElement('nav');
   var stripEl = document.createElement('div');
   scaleEl.className = 'dk-scale'; stripEl.className = 'dk-strip'; stripEl.setAttribute('aria-hidden', 'true');
+  var topEl = document.createElement('div');
+  topEl.className = 'dk-top'; topEl.setAttribute('aria-hidden', 'true');
+  topEl.appendChild(stripEl);
   document.body.appendChild(scaleEl);
-  document.body.appendChild(stripEl);
+  document.body.appendChild(topEl);
   var nowEl = document.createElement('div');
   nowEl.className = 'dk-now'; nowEl.setAttribute('aria-hidden', 'true');
   document.body.appendChild(nowEl);
+  var topbar = false;                          // панель сверху включена
   var wide = window.matchMedia ? window.matchMedia('(min-width:1024px)') : { matches: false };
 
   function build() {
@@ -3041,29 +3054,45 @@ html.dk-anim .dk-bar,html.dk-anim .dk-road{--p:0}
   var CONTENT_W = 1180;                       // ширина колонки страницы (тот же max-width у разделов)
   function place() {
     if (cur === -2) return;                   // пересборка (смена языка): ждём кадр, надпись не трогаем
-    if (cur < 0 || !labels[cur]) {
-      nowEl.classList.remove('is-on'); nowShown = false; nowText = ''; return;
-    }
-    var full = labels[cur], num = full.split(' · ')[0];
+    var full = cur >= 0 ? labels[cur] : '', num = full.split(' · ')[0];
+    var vw = document.documentElement.clientWidth;
+    var room = vw - 22 - Math.min(vw, (vw + CONTENT_W) / 2);
+    /* Режим: у засечки (место есть хотя бы под номер) или панель сверху. Решается и до
+       раздела 01 — иначе панель появлялась бы скачком вместе с надписью. */
     var side = false, useNum = false;
-    var tk = scaleEl.children[cur];
-    if (wide.matches && tk) {
-      var vw = document.documentElement.clientWidth;
-      var room = vw - 22 - Math.min(vw, (vw + CONTENT_W) / 2);
-      nowEl.classList.add('is-side'); nowEl.classList.remove('is-num');
-      nowEl.textContent = full;
-      if (nowEl.offsetWidth <= room) side = true;
-      else {
-        nowEl.classList.add('is-num'); nowEl.textContent = num;
-        if (nowEl.offsetWidth <= room) { side = true; useNum = true; }
+    if (wide.matches) {
+      if (nowEl.parentNode !== document.body) document.body.appendChild(nowEl);
+      nowEl.classList.add('is-side', 'is-num'); nowEl.textContent = '00';
+      var numW = nowEl.offsetWidth;
+      if (numW <= room) {
+        side = true;
+        if (full) {
+          nowEl.classList.remove('is-num'); nowEl.textContent = full;
+          if (nowEl.offsetWidth <= room) useNum = false;
+          else { nowEl.classList.add('is-num'); useNum = true; }
+        }
       }
+    }
+    var wantTop = !side;
+    if (wantTop !== topbar) {
+      topbar = wantTop;
+      root.classList.toggle('dk-topbar', topbar);
+      measure();                              // верхний отступ сдвинул раздел вниз
     }
     scaleEl.classList.toggle('has-side', side);
     nowEl.classList.toggle('is-side', side);
-    nowEl.classList.toggle('is-num', useNum);
-    nowEl.textContent = useNum ? num : full;
+    nowEl.classList.toggle('is-num', side && useNum);
+    if (side) { if (nowEl.parentNode !== document.body) document.body.appendChild(nowEl); }
+    else if (nowEl.parentNode !== topEl) topEl.appendChild(nowEl);
+    if (cur < 0 || !full) {
+      nowEl.textContent = '';
+      nowEl.classList.remove('is-on'); nowShown = false; nowText = ''; nowEl.style.transform = '';
+      return;
+    }
+    nowEl.textContent = side && useNum ? num : full;
     var jump = !nowShown || nowText === '';
     if (side) {
+      var tk = scaleEl.children[cur];
       var r = tk.getBoundingClientRect();
       var y = Math.round(r.top + r.height / 2);
       if (jump) nowEl.classList.add('no-tr');
