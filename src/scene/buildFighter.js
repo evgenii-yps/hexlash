@@ -2475,6 +2475,10 @@ export function buildFighter(
   // COMBO/PUNCH/DOUBLE are weighted (legs mixed in by distance — see pickKick); an
   // incoming hit adds a rhythm hitch (in takeDamage). Live random — no seed. Returns
   // true if a strike / step-in started.
+  // LONG COMBO «длинные серии»: sb.seriesBias (base 0) — шанс, что одиночный прямой (PUNCH) становится серией (DOUBLE — единственный ход с двумя
+  // касаниями). Работает на выборе хода в decideAttack и на ответе-выпаде после чтения открытия (gather → PUNCH — основной источник прямых). Один rand()
+  // только у того, кто несёт кристалл: у остальных ход боя не меняется ни на один вызов.
+  const seriesUp = (atk) => (atk === PUNCH && sb.seriesBias && rand() < sb.seriesBias ? DOUBLE : atk);
   const decideAttack = (t) => {
     // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce (base 0) — на ПРОЧИТАННОЕ открытие врага (отдача / сбив, шумное чтение perceivedPhase)
     // боец не досиживает последние с паузы между ударами. Нет кристалла → cut = 0 → строка условия та же.
@@ -2498,9 +2502,6 @@ export function buildFighter(
       const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
       atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     }
-    // LONG COMBO «длинные серии»: sb.seriesBias (base 0) — шанс, что одиночный удар станет серией (чаще DOUBLE, реже COMBO). Один rand() только у того,
-    // кто несёт кристалл (у остальных ход боя не меняется ни на один вызов).
-    if (atk === PUNCH && sb.seriesBias && rand() < sb.seriesBias) atk = rand() < 0.35 ? COMBO : DOUBLE;
     // Legs in the mix — with a per-intention chance the hand pick becomes the kick that
     // suits the current gap (knee close · front kick mid · teep far). Distance decides
     // WHICH kick; intention tints HOW OFTEN (manner via the existing channel). Hands
@@ -2516,6 +2517,7 @@ export function buildFighter(
       const power = pickPowerHand(d, intentionFlags.attack);
       if (power && rand() < handShareFor(intentionFlags.attack)) atk = power;
     }
+    atk = seriesUp(atk); // sb.seriesBias — после ног и силовых рук: серией становится именно прямой
     const reach = atk.reach || character.range;
     if (d > reach + B.reachStepMax) return false; // too far even to step in → navigate closes neutral spacing first
     if (d <= reach + B.reachHitTol) {
@@ -2697,8 +2699,9 @@ export function buildFighter(
           // at air — otherwise two waiters whiff at each other from the window edge forever (TZ_combat_distance_v1).
           const fp = getFoePos && getFoePos();
           const fd = fp ? Math.hypot(fp.x - group.position.x, fp.z - group.position.z) : 0;
-          if (fp && fd > (PUNCH.reach || 1) + B.reachHitTol - 0.05) beginLunge(PUNCH, lastT);
-          else launchStrike(lastT, PUNCH);
+          const ans = seriesUp(PUNCH); // sb.seriesBias: ответ на прочитанное открытие может быть серией
+          if (fp && fd > (ans.reach || 1) + B.reachHitTol - 0.05) beginLunge(ans, lastT);
+          else launchStrike(lastT, ans);
         }
       }
       gathering = gatherUntil > 0 && lastT < gatherUntil;
