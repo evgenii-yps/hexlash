@@ -377,10 +377,10 @@ export const COMBAT_BALANCE = {
     // ONS FRENZY — нарастающий натиск
     // Заход 6, группа 2: обещания текстов выполняются боем (форма, не сила — компенсация внутри кристалла, см. upgradeData.js).
     //   c1 Long Combo — seriesBias: доля одиночных прямых, ставших серией (DOUBLE); pauseCut: доля паузы между ударами, которую он не ждёт («в радиусе бросает, а не ждёт»)
-    //   c2 No Pause   — openPounce: читает открытие врага быстрее, реже пропускает, охотнее бьёт и обрывает хвост своего удара ради ответа
+    //   c2 No Pause   — openPounce: шанс на каждое открытие врага (отдача / сбив) тут же бросить быстрый одиночный, обрывая хвост своего удара
     //   c3 Late Fire  — lateRamp: доля паузы, которая растёт со временем боя (в начале спокойнее, к концу разгон; кривая — combatBalance.lateRamp)
-    'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.26, accuracy: -0.4 },
-    'natisk.c.2': { strikePower: 0.02, openPounce: 0.31 },
+    'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.26, accuracy: -0.2 },
+    'natisk.c.2': { strikePower: 0.02, openPounce: 0.4 },
     'natisk.c.3': { strikePower: 0.02, lateRamp: 0.55 },
     'natisk.c.4': { strikePower: 0.02 },
     'natisk.c.5': { strikePower: 0.07 },
