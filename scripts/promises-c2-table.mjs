@@ -6,6 +6,7 @@ const BR={a:'BODY',b:'MIND',c:'WILL'};
 const out=[];let ok=0,tot=0;
 for(const c of Object.keys(NAME)){for(const b of ['a5','b5','c5']){
  const cell=[];let good=true;
+ if(!fs.existsSync(`${dir}raw-${c}-bare-s1.json`)) continue; // считали не все ядра
  for(const s of [1,801]){
   const d=JSON.parse(fs.readFileSync(`${dir}raw-${c}-bare-s${s}.json`,'utf8')).builds;
   const w0=d['голое'].w,w1=d[b].w;const n=w0.length;
