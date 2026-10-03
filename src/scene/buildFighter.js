@@ -2235,7 +2235,7 @@ export function buildFighter(
     feintActive = true;
     feintBaited = false;
     feintAdvUntil = 0;
-    feintBaitUntil = t + B.feintBaitWindowSec; // watch for the foe's reaction
+    feintBaitUntil = t + B.feintBaitWindowSec * (1 + (sb.feintWindow || 0)); // watch for the foe's reaction (sb.feintWindow — PUNISH REACTION / SETUP COMBO, base 0: окно длиннее)
     if (onFeint) onFeint(); // readable feint event (ФИНТ-branch seam)
     if (onAttackStart) onAttackStart(); // SAME threat signal as a real attack → the bluff
     // Short follow so a real punish can land inside the advantage window.
@@ -2418,7 +2418,12 @@ export function buildFighter(
     const dz = f.z - group.position.z;
     const d = Math.hypot(dx, dz) || 1e-4;
     const reach = lunge.atk.reach || character.range;
-    if (d <= reach + 0.04) { const atk = lunge.atk; lunge.active = false; launchStrike(t, atk); return; } // arrived → strike
+    if (d <= reach + 0.04) {
+      const atk = lunge.atk; lunge.active = false;
+      // sb.feintLunge (PUNISH REACTION / SETUP COMBO, base 0): на подходе под удар может вместо него бросить финт — иначе лунж финта не бросает вовсе. Один rand() только у носителя.
+      if (sb.feintLunge && !feintAdvUntil && rand() < sb.feintLunge) { doFeint(t); return; }
+      launchStrike(t, atk); return; // arrived → strike
+    }
     if (t >= lunge.until) { // timed out (foe ran) → strike if barely in, else abort to navigate
       const atk = lunge.atk; lunge.active = false;
       if (d <= reach + B.reachHitTol) launchStrike(t, atk);
@@ -2638,7 +2643,7 @@ export function buildFighter(
     // stamina. The advantage window lapses on its own if no punish is thrown. Runs
     // in every alive state (the windows are fight logic, not animation).
     if (feintBaitUntil) {
-      if (getFoeReacting && getFoeReacting()) { feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec; }
+      if (getFoeReacting && getFoeReacting()) { feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec * (1 + (sb.feintWindow || 0)); }
       else if (t > feintBaitUntil) feintBaitUntil = 0; // bait expired — bluff wasted
     }
     if (feintAdvUntil && t > feintAdvUntil) { feintAdvUntil = 0; feintBaited = false; } // advantage lapsed
