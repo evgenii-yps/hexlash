@@ -2338,7 +2338,6 @@ export function buildFighter(
   //     rare ложное чтение (readFalseChance) makes it lunge at nothing. All numbers
   //     in combatBalance.read. Full motion only (reduced never reaches the AI tick).
   let pounceOpen = false; // NO PAUSE: открытие врага уже встречено (бросок сделан)
-  let pounceReadyAt = 0; // NO PAUSE: раньше этого времени нового броска нет
   let pounceRoll = false; // NO PAUSE: бросок на это открытие выпал — ударить, как только можно
   let truePhaseSeen = 'neutral'; // last TRUE foe phase observed (edge-tracking)
   let perceivedPhase = 'neutral'; // what THIS fighter currently BELIEVES the foe is doing (noised)
@@ -2735,7 +2734,7 @@ export function buildFighter(
       const tp = getFoePhase ? getFoePhase() : 'neutral';
       const open = tp === 'recovery' || tp === 'stagger';
       if (!open) { pounceOpen = false; pounceRoll = false; }
-      else if (!pounceOpen) { pounceOpen = true; pounceRoll = t >= pounceReadyAt && rand() < sb.openPounce; } // один бросок на открытие; не чаще раза в B.pounceCooldownSec (враг, открывающийся часто, не даёт бесплатных ударов без конца)
+      else if (!pounceOpen) { pounceOpen = true; pounceRoll = rand() < sb.openPounce; }
       if (pounceRoll && !gathering && !blocking && lastT >= staggerUntil && !lunge.active) {
         const fpz = getFoePos && getFoePos();
         const dz = fpz ? Math.hypot(fpz.x - group.position.x, fpz.z - group.position.z) : Infinity;
@@ -2747,7 +2746,7 @@ export function buildFighter(
             clip = null; dodgeRun = null; free = true;
           }
         }
-        if (free && dz <= (PUNCH.reach || 1) + B.reachHitTol) { pounceRoll = false; pounceReadyAt = t + (B.pounceCooldownSec || 0); launchStrike(t, PUNCH); }
+        if (free && dz <= (PUNCH.reach || 1) + B.reachHitTol) { pounceRoll = false; launchStrike(t, PUNCH); }
       }
     }
     if (ai.on && !clip && !gathering) {

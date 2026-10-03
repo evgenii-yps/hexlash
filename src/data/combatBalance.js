@@ -1109,7 +1109,6 @@ export const COMBAT_BALANCE = {
   //     потом держится на hi. lo < 0 — спокойнее в начале; hi > 0 — разгон к концу. Множитель темпа: см. paceMul в buildFighter.js.
   //     lo = −2 (глубже, чем −0.8): спокойный старт ЗДЕСЬ даёт грани WILL +3 п.п. почти бесплатно для сборок (замер захода 6) — единственный «бесплатный» рычаг подбора.
   lateRamp: { sec: 40, lo: -2, hi: 1.4 },
-  pounceCooldownSec: 0, // NO PAUSE: пауза между бросками на открытие врага, с (0 — без паузы)
 
   read: {
     delayMsLow: 460, delayMsHigh: 95, // perception latency (ms): counter01 0 → 1
