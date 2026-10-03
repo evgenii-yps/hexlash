@@ -2468,7 +2468,10 @@ export function buildFighter(
   // incoming hit adds a rhythm hitch (in takeDamage). Live random — no seed. Returns
   // true if a strike / step-in started.
   const decideAttack = (t) => {
-    if (clip || t < ai.nextAt || lunge.active) return false;
+    // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce (base 0) — на ПРОЧИТАННОЕ открытие врага (отдача / сбив, шумное чтение perceivedPhase)
+    // боец не досиживает последние с паузы между ударами. Нет кристалла → cut = 0 → строка условия та же.
+    const pounceCut = sb.openPounce && (perceivedPhase === 'recovery' || perceivedPhase === 'stagger') ? sb.openPounce : 0;
+    if (clip || t < ai.nextAt - pounceCut || lunge.active) return false;
     if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
     const f = getFoePos && getFoePos();
     if (!f) return false;
