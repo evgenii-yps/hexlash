@@ -380,7 +380,7 @@ export const COMBAT_BALANCE = {
     //   c2 No Pause   — openPounce: читает открытие врага быстрее, реже пропускает, охотнее бьёт и обрывает хвост своего удара ради ответа
     //   c3 Late Fire  — lateRamp: доля паузы, которая растёт со временем боя (в начале спокойнее, к концу разгон; кривая — combatBalance.lateRamp)
     'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.26 },
-    'natisk.c.2': { strikePower: 0.02, openPounce: 0.28 },
+    'natisk.c.2': { strikePower: 0.02, openPounce: 0.31 },
     'natisk.c.3': { strikePower: 0.02, lateRamp: 0.55 },
     'natisk.c.4': { strikePower: 0.02 },
     'natisk.c.5': { strikePower: 0.07 },
