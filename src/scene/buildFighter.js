@@ -2294,7 +2294,7 @@ export function buildFighter(
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
     const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + rand() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
-    ai.nextAt = t + atk.dur + pause * B.distance.attackPauseMul; // pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
+    ai.nextAt = t + atk.dur + pause * (1 - (sb.pauseCut || 0)) * B.distance.attackPauseMul; // sb.pauseCut (LONG COMBO / NO PAUSE, base 0) — доля паузы между ударами, которую боец не ждёт; pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
@@ -2487,6 +2487,9 @@ export function buildFighter(
       const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
       atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     }
+    // LONG COMBO «длинные серии»: sb.seriesBias (base 0) — шанс, что одиночный удар станет серией (чаще DOUBLE, реже COMBO). Один rand() только у того,
+    // кто несёт кристалл (у остальных ход боя не меняется ни на один вызов).
+    if (atk === PUNCH && sb.seriesBias && rand() < sb.seriesBias) atk = rand() < 0.35 ? COMBO : DOUBLE;
     // Legs in the mix — with a per-intention chance the hand pick becomes the kick that
     // suits the current gap (knee close · front kick mid · teep far). Distance decides
     // WHICH kick; intention tints HOW OFTEN (manner via the existing channel). Hands
