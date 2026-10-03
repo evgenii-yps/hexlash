@@ -28,7 +28,7 @@ const faceOf = (core, br, idx) => CRYSTALS[core].find((x) => x.id === br).faces[
 let behT = null;
 if (job.mode === 'full') {
   behT = resolveBehavior(job.core, [1, 2, 3, 4, 5].map((i) => faceOf(job.core, job.branch, i)));
-} else if (job.mode === 'set') {
+} else if (job.mode === 'set' || job.mode === 'build') {
   // набор граней из разных веток: job.faces = [['b',5],['c',2]] (в cells — core:set:b5+c2)
   behT = resolveBehavior(job.core, job.faces.map(([br, i]) => faceOf(job.core, br, i)));
 } else if (job.mode !== 'bare') {
