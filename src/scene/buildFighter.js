@@ -2332,6 +2332,8 @@ export function buildFighter(
   //     waiter pounces hardest), so CATCH converts a held wait into a strike. A
   //     rare ложное чтение (readFalseChance) makes it lunge at nothing. All numbers
   //     in combatBalance.read. Full motion only (reduced never reaches the AI tick).
+  let pounceOpen = false; // NO PAUSE: открытие врага уже встречено (бросок сделан)
+  let pounceRoll = false; // NO PAUSE: бросок на это открытие выпал — ударить, как только можно
   let truePhaseSeen = 'neutral'; // last TRUE foe phase observed (edge-tracking)
   let perceivedPhase = 'neutral'; // what THIS fighter currently BELIEVES the foe is doing (noised)
   let readPendingPhase = null; // a perceived-phase update waiting out the perception delay
@@ -2345,10 +2347,8 @@ export function buildFighter(
     if (truePhase !== truePhaseSeen) {
       truePhaseSeen = truePhase;
       const BRX = buffReactOn ? bucketRx : null; // ведро: быстрее читает и реже пропускает
-      // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce (0…1, база 0) — открытие врага (отдача / сбив) читается быстрее и реже пропускается.
-      const pz = sb.openPounce && (truePhase === 'recovery' || truePhase === 'stagger') ? sb.openPounce : 0;
-      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (1 - pz) * (0.75 + rand() * 0.5); // jittered latency
-      const missed = rand() < readMissChance(counter01) * (BRX ? BRX.missMul : 1) * (1 - pz); // failed to register this transition
+      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + rand() * 0.5); // jittered latency
+      const missed = rand() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition
       readPendingAt = t + delay;
       readPendingPhase = missed ? null : truePhase; // null = miss → perception stays stale (didn't see it)
     }
@@ -2362,8 +2362,7 @@ export function buildFighter(
   // cooldown, reach, and a counter-scaled chance (CATCH/HOLD boosted). NOT gated by
   // intentionFlags.attack — that's the point: CATCH (attack:'none') can pounce here.
   const tryReadReaction = (t) => {
-    // sb.openPounce (NO PAUSE): на прочитанное открытие пауза между ответами сокращается на долю openPounce от полной (кристалла нет → вычитаем 0).
-    if (t < readReactUntil - (sb.openPounce && (perceivedPhase === 'recovery' || perceivedPhase === 'stagger') ? B.read.reactCooldownSec * sb.openPounce : 0)) return false;
+    if (t < readReactUntil) return false;
     const f = getFoePos && getFoePos();
     if (!f) return false;
     const c = counter01;
@@ -2386,9 +2385,9 @@ export function buildFighter(
     if (phase === 'recovery' || phase === 'stagger') {
       const reach = Math.min(character.range + RANGE_HYST, STRIKE);
       if (dist > reach) return false; // open but out of reach — let nav close in normally
-      if (rand() > Math.min(1, readOpenReactChance(c) * boost * rx * (1 + (sb.openPounce || 0)))) return false; // sb.openPounce (NO PAUSE): охотнее бьёт в прочитанное открытие
+      if (rand() > Math.min(1, readOpenReactChance(c) * boost * rx)) return false;
       readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1) * paceMul();
-      gatherUntil = t + B.read.gatherSec * (1 - (sb.openPounce || 0) * 0.5); // visible coil (sb.openPounce — короче «собрался») → the lunge fires on expiry (in update)
+      gatherUntil = t + B.read.gatherSec; // visible coil → the lunge fires on expiry (in update)
       lastReadAction = phantom ? 'contra?' : 'contra'; lastReadActionAt = t;
       return true;
     }
@@ -2707,9 +2706,7 @@ export function buildFighter(
           // at air — otherwise two waiters whiff at each other from the window edge forever (TZ_combat_distance_v1).
           const fp = getFoePos && getFoePos();
           const fd = fp ? Math.hypot(fp.x - group.position.x, fp.z - group.position.z) : 0;
-          // sb.seriesBias: ответ на прочитанное открытие может быть серией. Вместе с No Pause (sb.openPounce) ответов втрое больше и каждый мог бы быть серией —
-          // произведение двух рычагов уводило сборки с обоими за потолок Ц6 (+36 при пределе +30), поэтому шанс серии на ответе там ×0.4: перехваченное открытие чаще — быстрый одиночный.
-          const ans = sb.seriesBias && rand() < sb.seriesBias * (sb.openPounce ? 0.4 : 1) ? DOUBLE : PUNCH;
+          const ans = seriesUp(PUNCH); // sb.seriesBias: ответ на прочитанное открытие может быть серией
           if (fp && fd > (ans.reach || 1) + B.reachHitTol - 0.05) beginLunge(ans, lastT);
           else launchStrike(lastT, ans);
         }
@@ -2722,14 +2719,27 @@ export function buildFighter(
     // it fall through to normal cadence attacking (decideAttack). A strike starts a
     // clip that plays out below this same frame. While in a block stance OR
     // staggered (interrupt lock) the fighter does NOT attack.
-    // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce — хвост СВОЕГО удара (после последнего касания) обрывается, как только прочитано
-    // открытие врага: иначе в большинстве обменов боец занят собственным клипом, пока враг открыт (~93%), и ответить просто нечем.
-    // Только атакующий клип после последнего касания (финт и уворот не трогает); у остальных строка не срабатывает.
-    if (ai.on && clip && sb.openPounce && clip.dmgMult && !gathering && !blocking && lastT >= staggerUntil && (perceivedPhase === 'recovery' || perceivedPhase === 'stagger')) {
-      const lastImpactT = clip.impacts ? clip.impacts[clip.impacts.length - 1] : clip.impact;
-      if (typeof lastImpactT === 'number' && lastImpactT >= 0 && t - clipStart >= lastImpactT + 0.02) {
-        feintPayoffActive = false; chargeShotPower = 0; chargeShotPen = 0; windupVulnUntil = 0;
-        clip = null; dodgeRun = null; // хвост оборван — следующий удар решается ниже в этот же кадр
+    // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce (0…1, база 0) — на каждое открытие врага (отдача после его удара / сбив, ИСТИННАЯ фаза:
+    // это не чтение, а «поймал на неустойчивом») один бросок: с шансом openPounce боец тут же бросает быстрый одиночный. Если он ещё в хвосте своего удара
+    // (после последнего касания), хвост обрывается — иначе в большинстве обменов боец занят собственным клипом, пока враг открыт (~93%), и ответить нечем.
+    // Один rand() на открытие и только у носителя: у остальных строка не срабатывает.
+    if (ai.on && sb.openPounce && state === 'alive') {
+      const tp = getFoePhase ? getFoePhase() : 'neutral';
+      const open = tp === 'recovery' || tp === 'stagger';
+      if (!open) { pounceOpen = false; pounceRoll = false; }
+      else if (!pounceOpen) { pounceOpen = true; pounceRoll = rand() < sb.openPounce; }
+      if (pounceRoll && !gathering && !blocking && lastT >= staggerUntil && !lunge.active) {
+        const fpz = getFoePos && getFoePos();
+        const dz = fpz ? Math.hypot(fpz.x - group.position.x, fpz.z - group.position.z) : Infinity;
+        let free = !clip;
+        if (clip && clip.dmgMult) { // хвост своего удара после последнего касания — обрываем
+          const lastImpactT = clip.impacts ? clip.impacts[clip.impacts.length - 1] : clip.impact;
+          if (typeof lastImpactT === 'number' && lastImpactT >= 0 && t - clipStart >= lastImpactT + 0.02) {
+            feintPayoffActive = false; chargeShotPower = 0; chargeShotPen = 0; windupVulnUntil = 0;
+            clip = null; dodgeRun = null; free = true;
+          }
+        }
+        if (free && dz <= (PUNCH.reach || 1) + B.reachHitTol) { pounceRoll = false; launchStrike(t, PUNCH); }
       }
     }
     if (ai.on && !clip && !gathering) {
