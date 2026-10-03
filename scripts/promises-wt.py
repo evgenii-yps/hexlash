@@ -33,8 +33,8 @@ patch(B,
       f"    const _sd = strikeDamage(c);\n    {PR}contact(lastT, c, _sd, dmgBonus, feintPayoffActive, riposte, chargeShotPower, pen);\n"
       "    onImpact(_sd * (1 + dmgBonus), pen, sb.interruptBonus || 0, contactPoint, c.weight || 0);")
 # 2. запуск удара
-patch(B, "  const launchStrike = (t, atk) => {\n    play(atk);\n",
-      f"  const launchStrike = (t, atk) => {{\n    play(atk);\n    {PR}launch(t, atk);\n")
+patch(B, "  const launchStrike = (t, atk) => {\n    rushedClip = answerPending; answerPending = false; // удар-ответ на чтение несёт sb.rushMiss до конца клипа\n    play(atk);\n",
+      f"  const launchStrike = (t, atk) => {{\n    rushedClip = answerPending; answerPending = false; // удар-ответ на чтение несёт sb.rushMiss до конца клипа\n    play(atk);\n    {PR}launch(t, atk);\n")
 # 3. финт брошен
 patch(B, "    play(FEINT);\n    stamina = THREE.MathUtils.clamp(stamina - B.feintStaminaCost",
       f"    play(FEINT);\n    {PR}feint(t);\n    stamina = THREE.MathUtils.clamp(stamina - B.feintStaminaCost")

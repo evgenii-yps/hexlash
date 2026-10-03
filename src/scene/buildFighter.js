@@ -737,7 +737,11 @@ export function buildFighter(
     B.missChanceBase + ((B.accuracyMid - stats.accuracy) / 100) * B.accuracyMissSwing,
     B.missChanceFloor, B.missChanceCap,
   );
-  const rollMiss = () => rand() < missChance;
+  // LONG COMBO / LATE FIRE «размашистее»: sb.rushMiss (база 0) — добавка к шансу промаха у ударов, брошенных ОТВЕТОМ на чтение (контра / сбив): больше ответов — больше размашистых.
+  // Штраф идёт за каждый такой удар, поэтому растёт вместе с тем, что рычаги темпа прибавляют (в отличие от общей точности, которую чужие кристаллы сборки гасят своими плюсами).
+  let rushedClip = false; // текущий удар — ответ на чтение
+  let answerPending = false; // ближайший запущенный удар будет ответом на чтение
+  const rollMiss = () => rand() < missChance + (rushedClip ? (sb.rushMiss || 0) : 0);
   // resilience → incoming-damage / stagger multipliers, derived in takeDamage
   // from the fighter's resilience axis (manner — constant this pass).
   const RES = COMBAT_BALANCE.resilience; // 🔒 числа вынесены в combatBalance.resilience (TZ_balance_fix_v2, этап Б)
@@ -2283,6 +2287,7 @@ export function buildFighter(
   // and tryReadReaction (the conscious сбив / контра — which fires even under an
   // attack:'none' mode like CATCH, since a read punish is not normal initiation).
   const launchStrike = (t, atk) => {
+    rushedClip = answerPending; answerPending = false; // удар-ответ на чтение несёт sb.rushMiss до конца клипа
     play(atk);
     stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
     // CHARGE release (TEMPORARY decideRelease — near-full + foe in reach): empower
@@ -2379,6 +2384,7 @@ export function buildFighter(
       if (rand() > Math.min(1, readWindupReactChance(c) * boost * rx)) return false;
       readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1) * paceMul();
       lastReadAction = 'sbiv'; lastReadActionAt = t;
+      answerPending = true;
       launchStrike(t, INTERCEPT); // fast intercept jab → catch the windup in time (→ staggerInterrupt in the foe)
       return true;
     }
@@ -2707,6 +2713,7 @@ export function buildFighter(
           const fp = getFoePos && getFoePos();
           const fd = fp ? Math.hypot(fp.x - group.position.x, fp.z - group.position.z) : 0;
           const ans = seriesUp(PUNCH); // sb.seriesBias: ответ на прочитанное открытие может быть серией
+          answerPending = true; // sb.rushMiss: этот удар — ответ на чтение
           if (fp && fd > (ans.reach || 1) + B.reachHitTol - 0.05) beginLunge(ans, lastT);
           else launchStrike(lastT, ans);
         }
