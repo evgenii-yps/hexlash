@@ -22,7 +22,7 @@ for (const spec of process.argv.slice(2)) {
   await page.waitForFunction('window.__ready === true', null, { timeout: 90000 });
   const info = await page.evaluate(() => window.__shot);
   await page.locator('canvas').screenshot({ path: `${OUT}/${TAG}${core}.png` });
-  console.log(core, yaw, info.hue, '->', `${OUT}/${TAG}${core}.png`);
+  console.log(core, yaw, info.hue, JSON.stringify(info.stats), '->', `${OUT}/${TAG}${core}.png`);
   await ctx.close();
 }
 await browser.close();
