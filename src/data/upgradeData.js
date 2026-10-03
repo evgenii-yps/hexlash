@@ -171,12 +171,12 @@ export const CRYSTALS = {
     // now. Rampage ramps with no ceiling, the escalate safeguard as the backstop.
     mkBranch('c', 'FRENZY', [
       // Longer strings of blows.
-      // Заход 6: серии + короче пауза в радиусе (facetBonus natisk.c.1). Компенсация внутри кристалла — accuracy −65% (facetBonus: серия размашистее, больше промахов — «Looser aim»): штраф множится на силу самой сборки, поэтому не даёт перекоса между одиночкой, гранью и сборками.
+      // Заход 6: серии + короче пауза в радиусе (facetBonus natisk.c.1). Компенсация внутри кристалла — rushMiss +12 п.п. к промаху у ударов-ответов на чтение (facetBonus): чем больше рычаги темпа добавляют ответов, тем больше размашистых.
       { name: 'Long Combo', shifts: [s('tempo', 3)], conditionals: ['long_combo'] },
       // Shorter gaps between attacks.
       { name: 'No Pause', shifts: [s('tempo', 3)], conditionals: ['no_pause'] },
       // Speeds up as it lands (hit_accel — conditional, accruing accel later).
-      // Заход 6: разгон со временем боя (facetBonus natisk.c.3 lateRamp). Компенсация — accuracy −42% (facetBonus): разогнавшийся чаще мажет.
+      // Заход 6: разгон со временем боя (facetBonus natisk.c.3 lateRamp). Компенсация — rushMiss +8 п.п. (facetBonus): разогнавшийся чаще мажет в ответах.
       { name: 'Building Momentum', shifts: [s('tempo', 2)], conditionals: ['hit_accel'] },
       // Never lets the foe recover (no_breather — REQUIRES a cross-fighter regen-
       // suppression seam; tagged + approximated by tempo+stick pressure for now).

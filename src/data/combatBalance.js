@@ -379,9 +379,9 @@ export const COMBAT_BALANCE = {
     //   c1 Long Combo — seriesBias: доля одиночных прямых, ставших серией (DOUBLE); pauseCut: доля паузы между ударами, которую он не ждёт («в радиусе бросает, а не ждёт»)
     //   c2 No Pause   — openPounce: шанс на каждое открытие врага (отдача / сбив) тут же бросить быстрый одиночный, обрывая хвост своего удара
     //   c3 Late Fire  — lateRamp: доля паузы, которая растёт со временем боя (в начале спокойнее, к концу разгон; кривая — combatBalance.lateRamp)
-    'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.34, accuracy: -0.65 },
+    'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.34, rushMiss: 0.12 },
     'natisk.c.2': { strikePower: 0.02, openPounce: 0.4 },
-    'natisk.c.3': { strikePower: 0.02, lateRamp: 0.66, accuracy: -0.42 },
+    'natisk.c.3': { strikePower: 0.02, lateRamp: 0.66, rushMiss: 0.08 },
     'natisk.c.4': { strikePower: 0.02 },
     'natisk.c.5': { strikePower: 0.07 },
     // RAI JAB
