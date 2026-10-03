@@ -13,9 +13,11 @@ const FOES = ['natisk', 'nalet', 'skala', 'zasada'];
 const jobs = [];
 for (const spec of process.argv.slice(2)) {
   const [core, mode, branch, idx] = spec.split(':');
-  if (mode === 'set') { // core:set:b5+c2 — набор граней из разных веток
-    const faces = branch.split('+').map((x) => [x[0], Number(x.slice(1))]);
-    for (const [from, to] of SEEDS) jobs.push({ core, mode, faces, foes: FOES, seedFrom: from, seedTo: to, out: join(OUT, `${core}-${branch}-set-s${from}.json`) });
+  if (mode === 'set' || mode === 'build') { // core:set:b1+b2+c1 — перечень граней; core:build:b5+c2 — сборка «до глубины» (b1…b5 и c1…c2), как названы сборки в Ц6
+    const faces = mode === 'set'
+      ? branch.split('+').map((x) => [x[0], Number(x.slice(1))])
+      : branch.split('+').flatMap((x) => Array.from({ length: Number(x.slice(1)) }, (_, i) => [x[0], i + 1]));
+    for (const [from, to] of SEEDS) jobs.push({ core, mode, faces, foes: FOES, seedFrom: from, seedTo: to, out: join(OUT, `${core}-${branch}-${mode}-s${from}.json`) });
     continue;
   }
   const name = [core, branch ? branch + (idx || '') : '', mode].filter(Boolean).join('-');
