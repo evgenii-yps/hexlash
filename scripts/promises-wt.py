@@ -39,8 +39,8 @@ patch(B, "  const launchStrike = (t, atk) => {\n    play(atk);\n",
 patch(B, "    play(FEINT);\n    stamina = THREE.MathUtils.clamp(stamina - B.feintStaminaCost",
       f"    play(FEINT);\n    {PR}feint(t);\n    stamina = THREE.MathUtils.clamp(stamina - B.feintStaminaCost")
 # 4. враг «клюнул» на финт
-patch(B, "{ feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec; }",
-      f"{{ {PR}bait(t); feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec; }}")
+patch(B, "{ feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec",
+      f"{{ {PR}bait(t); feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec")
 # 5. удар-расплата взведён
 patch(B, "if (feintBaited && feintAdvUntil && t < feintAdvUntil) { feintPayoffActive = true;",
       f"if (feintBaited && feintAdvUntil && t < feintAdvUntil) {{ {PR}payoff(t); feintPayoffActive = true;")
