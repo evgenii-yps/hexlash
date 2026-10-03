@@ -1,0 +1,7115 @@
+{
+ "thresh": {
+  "ciZ": 1.96,
+  "foeZ": 2.576,
+  "behShare": 0.05,
+  "noiseK": 3,
+  "emptyTag": 0.01,
+  "skew": 20,
+  "medianWarn": 55
+ },
+ "cells": [
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/HEAVY HIT (a1)",
+   "dataName": "Heavy Hit",
+   "tags": [],
+   "inBranch": {
+    "win": {
+     "rate": 70.75,
+     "base": 71.25,
+     "n": 800,
+     "delta": -0.5,
+     "se": 2.2092506615608345,
+     "flips": 312,
+     "ciLo": -4.830131296659236,
+     "ciHi": 3.8301312966592356
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.883333333332125,
+     "base": 43.64166666666547,
+     "delta": 0.24166666666665293
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -1,
+      "se": 4.369262210179949,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.00011943150603129105
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -3,
+      "se": 4.534069799277867,
+      "flips": 82,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0005775672865888876
+     },
+     "skala": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.42185072329398,
+      "flips": 78,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.00011437721605856113
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -1,
+      "se": 4.36926221017995,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.001011008762075938
+     }
+    },
+    "decisions": {
+     "n": 34675,
+     "need": 0.0793943763518385,
+     "chgAll": 0.0004614275414563807,
+     "chgAx": 0.0004614275414563807,
+     "chgLn": 0,
+     "tagTrue": 0,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 50.5,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": -2.375,
+     "se": 2.4718336656900193,
+     "flips": 391,
+     "ciLo": -7.219793984752438,
+     "ciHi": 2.469793984752438
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35456,
+     "need": 0.08430166967509026,
+     "chgAll": 0.08847585740072202,
+     "chgAx": 0.08847585740072202,
+     "chgLn": 0,
+     "tagTrue": 0,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/GUARD CRUSH (a2)",
+   "dataName": "Guard Crush",
+   "tags": [
+    "guard_crush"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 70.75,
+     "base": 68.125,
+     "n": 800,
+     "delta": 2.625,
+     "se": 2.280572951032517,
+     "flips": 333,
+     "ciLo": -1.8449229840237331,
+     "ciHi": 7.094922984023733
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.883333333332125,
+     "base": 43.78333333333213,
+     "delta": 0.09999999999999432
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 4.1623763506466025,
+      "flips": 69,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.00011943150603129105
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 0.5,
+      "se": 4.936659094476277,
+      "flips": 97,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0006930807439066651
+     },
+     "skala": {
+      "n": 200,
+      "delta": 9,
+      "se": 4.493993758284214,
+      "flips": 82,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.00011437721605856113
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.621204132928009,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0013480116827679174
+     }
+    },
+    "decisions": {
+     "n": 34675,
+     "need": 0.0793943763518385,
+     "chgAll": 0.0005767844268204759,
+     "chgAx": 0.0003460706560922855,
+     "chgLn": 0.00040374909877433307,
+     "tagTrue": 0.21865897620764238,
+     "tagFlip": 0.00040374909877433307,
+     "tagFlipOfTrue": 0.0018464785017145871
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 51.87500000000001,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": -1,
+     "se": 2.4824792807240077,
+     "flips": 394,
+     "ciLo": -5.865659390219055,
+     "ciHi": 3.8656593902190552
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35449,
+     "need": 0.08496713588535643,
+     "chgAll": 0.2891195802420379,
+     "chgAx": 0.1756043894044966,
+     "chgLn": 0.05170808767525177,
+     "tagTrue": 0.24485881124996473,
+     "tagFlip": 0.05170808767525177,
+     "tagFlipOfTrue": 0.21117511520737328
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/UNSHAKEN (a3)",
+   "dataName": "Unshaken",
+   "tags": [
+    "unshaken"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 70.75,
+     "base": 63.5,
+     "n": 800,
+     "delta": 7.249999999999999,
+     "se": 1.9847470622541368,
+     "flips": 256,
+     "ciLo": 3.359895757981891,
+     "ciHi": 11.140104242018108
+    },
+    "outcome": true,
+    "median": {
+     "cell": 43.883333333332125,
+     "base": 44.04166666666545,
+     "delta": -0.15833333333332433
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 10,
+      "se": 3.9468835107254137,
+      "flips": 64,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.164337707572905,
+      "flips": 70,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "skala": {
+      "n": 200,
+      "delta": 6,
+      "se": 3.8593357410063494,
+      "flips": 60,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 6,
+      "se": 3.923899199090503,
+      "flips": 62,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     }
+    },
+    "decisions": {
+     "n": 34675,
+     "need": 0.0793943763518385,
+     "chgAll": 0,
+     "chgAx": 0,
+     "chgLn": 0,
+     "tagTrue": 0.5162509012256669,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 59.25,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 6.375,
+     "se": 2.4180846004986893,
+     "flips": 377,
+     "ciLo": 1.6355541830225686,
+     "ciHi": 11.114445816977431
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35934,
+     "need": 0.08640841542828519,
+     "chgAll": 0.2803473033895475,
+     "chgAx": 0.00461958034173763,
+     "chgLn": 0.2803473033895475,
+     "tagTrue": 0.5534312906996159,
+     "tagFlip": 0.2803473033895475,
+     "tagFlipOfTrue": 0.5065620757278624
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/INSIDE WORK (a4)",
+   "dataName": "Close Power",
+   "tags": [
+    "close_damage_ramp"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 70.75,
+     "base": 67.125,
+     "n": 800,
+     "delta": 3.6249999999999996,
+     "se": 2.27198186518834,
+     "flips": 331,
+     "ciLo": -0.8280844557691469,
+     "ciHi": 8.078084455769146
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.883333333332125,
+     "base": 43.916666666665456,
+     "delta": -0.03333333333333144
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 6,
+      "se": 4.463137684404303,
+      "flips": 80,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.048250328436641586
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -6,
+      "se": 5.044525367257519,
+      "flips": 102,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.03326787570751993
+     },
+     "skala": {
+      "n": 200,
+      "delta": 9,
+      "se": 3.958960322378947,
+      "flips": 64,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.02539174196500057
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 5.5,
+      "se": 4.604864153191348,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.023590204448438554
+     }
+    },
+    "decisions": {
+     "n": 34675,
+     "need": 0.0793943763518385,
+     "chgAll": 0.03241528478731074,
+     "chgAx": 0.03229992790194665,
+     "chgLn": 0.00011535688536409517,
+     "tagTrue": 0.8611679884643114,
+     "tagFlip": 0.00011535688536409517,
+     "tagFlipOfTrue": 0.0001339539868055323
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52.625,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": -0.25,
+     "se": 2.4952865454050923,
+     "flips": 398,
+     "ciLo": -5.140761628993981,
+     "ciHi": 4.640761628993981
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35358,
+     "need": 0.0861191243848634,
+     "chgAll": 0.08965439221675434,
+     "chgAx": 0.0019514678432038012,
+     "chgLn": 0.08860795293851462,
+     "tagTrue": 0.9049720006787714,
+     "tagFlip": 0.08860795293851462,
+     "tagFlipOfTrue": 0.09791236952309519
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/BREAKTHROUGH (a5)",
+   "dataName": "Breakthrough",
+   "tags": [
+    "overload_strike"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 70.75,
+     "base": 64.625,
+     "n": 800,
+     "delta": 6.125,
+     "se": 2.3466708437296875,
+     "flips": 355,
+     "ciLo": 1.5255251462898123,
+     "ciHi": 10.724474853710188
+    },
+    "outcome": true,
+    "median": {
+     "cell": 43.883333333332125,
+     "base": 44.233333333332105,
+     "delta": -0.3499999999999801
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.366242131599984,
+      "flips": 77,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0002388630120625821
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 5,
+      "se": 5.000000000000002,
+      "flips": 100,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0010396211158599977
+     },
+     "skala": {
+      "n": 200,
+      "delta": 10,
+      "se": 4.539054425249484,
+      "flips": 84,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0008006405124099279
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.857776235043018,
+      "flips": 94,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0019096832172545495
+     }
+    },
+    "decisions": {
+     "n": 34675,
+     "need": 0.0793943763518385,
+     "chgAll": 0.0010093727469358328,
+     "chgAx": 0.00040374909877433307,
+     "chgLn": 0.0008940158615717375,
+     "tagTrue": 0.15910598413842827,
+     "tagFlip": 0.0008940158615717375,
+     "tagFlipOfTrue": 0.005618995831067609
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 58.12500000000001,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 5.25,
+     "se": 2.500922858452439,
+     "flips": 402,
+     "ciLo": 0.3481911974332199,
+     "ciHi": 10.15180880256678
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34899,
+     "need": 0.08407117682455084,
+     "chgAll": 0.16917390183099804,
+     "chgAx": 0.06292443909567609,
+     "chgLn": 0.029714318461847043,
+     "tagTrue": 0.1334995272070833,
+     "tagFlip": 0.029714318461847043,
+     "tagFlipOfTrue": 0.2225799527795664
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "natisk",
+    "branch": "a",
+    "win": {
+     "rate": 70.75,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 17.875,
+     "se": 2.304423665319957,
+     "flips": 365,
+     "ciLo": 13.358329615972885,
+     "ciHi": 22.391670384027115
+    },
+    "median": {
+     "cell": 43.883333333332125,
+     "base": 45.04166666666539,
+     "delta": -1.1583333333332675
+    },
+    "sample": {
+     "median": 43.883333333332125,
+     "over100": 0,
+     "capped": 0,
+     "max": 57.59999999999801
+    }
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/HARD ENTRY (b1)",
+   "dataName": "Hard Entry",
+   "tags": [
+    "hard_entry"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.125,
+     "base": 63.24999999999999,
+     "n": 800,
+     "delta": 2.875,
+     "se": 2.266431967008129,
+     "flips": 329,
+     "ciLo": -1.5672066553359327,
+     "ciHi": 7.317206655335933
+    },
+    "outcome": false,
+    "median": {
+     "cell": 44.77499999999874,
+     "base": 44.9666666666654,
+     "delta": -0.19166666666665577
+    },
+    "identical": 1,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.718055770257104,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0025217790004585052
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 0.5,
+      "se": 4.675258303132028,
+      "flips": 87,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.004317200636219041
+     },
+     "skala": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 4.275529295159701,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.004339601646823189
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.478311778104509,
+      "flips": 80,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.005141388174807198
+     }
+    },
+    "decisions": {
+     "n": 35460,
+     "need": 0.08708403835307389,
+     "chgAll": 0.0040891144952058655,
+     "chgAx": 0.004568527918781726,
+     "chgLn": 0.0018612521150592216,
+     "tagTrue": 1,
+     "tagFlip": 0.0018612521150592216,
+     "tagFlipOfTrue": 0.0018612521150592216
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 53.125,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 0.25,
+     "se": 2.4952865454050914,
+     "flips": 398,
+     "ciLo": -4.640761628993979,
+     "ciHi": 5.140761628993979
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35289,
+     "need": 0.08640086145824478,
+     "chgAll": 0.06171894924764091,
+     "chgAx": 0.07716285528068237,
+     "chgLn": 0.06594122814474765,
+     "tagTrue": 1,
+     "tagFlip": 0.06594122814474765,
+     "tagFlipOfTrue": 0.06594122814474765
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/RUN-DOWN (b2)",
+   "dataName": "Run-Down",
+   "tags": [
+    "chase_strike"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.125,
+     "base": 60.375,
+     "n": 800,
+     "delta": 5.75,
+     "se": 2.2630341423433604,
+     "flips": 330,
+     "ciLo": 1.3144530810070139,
+     "ciHi": 10.185546918992987
+    },
+    "outcome": true,
+    "median": {
+     "cell": 44.77499999999874,
+     "base": 44.82499999999874,
+     "delta": -0.04999999999999716
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.804598927514276,
+      "flips": 93,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.00011462631820265933
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 4,
+      "se": 4.90308076672464,
+      "flips": 96,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0009088843444671666
+     },
+     "skala": {
+      "n": 200,
+      "delta": 9,
+      "se": 4.083918701418892,
+      "flips": 68,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.002670524090352732
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.279053809843676,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.003576617860735442
+     }
+    },
+    "decisions": {
+     "n": 35460,
+     "need": 0.08708403835307389,
+     "chgAll": 0.0018330513254371122,
+     "chgAx": 0.0018612521150592216,
+     "chgLn": 0.0018048505358150028,
+     "tagTrue": 0.22461928934010153,
+     "tagFlip": 0.0018048505358150028,
+     "tagFlipOfTrue": 0.008035153797865662
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52.5,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": -0.375,
+     "se": 2.473225682250629,
+     "flips": 391,
+     "ciLo": -5.222522337211233,
+     "ciHi": 4.472522337211233
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35399,
+     "need": 0.08551089013813949,
+     "chgAll": 0.06048193451792423,
+     "chgAx": 0.04070736461481963,
+     "chgLn": 0.05830673182858273,
+     "tagTrue": 0.21754851831972655,
+     "tagFlip": 0.05830673182858273,
+     "tagFlipOfTrue": 0.2680171406310869
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/STICKY (b3)",
+   "dataName": "Cut Off",
+   "tags": [
+    "cut_off"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.125,
+     "base": 65.875,
+     "n": 800,
+     "delta": 0.25,
+     "se": 2.1591663609406826,
+     "flips": 298,
+     "ciLo": -3.9819660674437376,
+     "ciHi": 4.481966067443738
+    },
+    "outcome": false,
+    "median": {
+     "cell": 44.77499999999874,
+     "base": 44.64999999999875,
+     "delta": 0.1249999999999929
+    },
+    "identical": 45,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 4.275529295159701,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 12,
+      "chg": 0.10167354424575882
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 4.5654096009143155,
+      "flips": 83,
+      "sigCi99": false,
+      "identical": 8,
+      "chg": 0.10645307884571688
+     },
+     "skala": {
+      "n": 200,
+      "delta": 0,
+      "se": 4.072212491123753,
+      "flips": 66,
+      "sigCi99": false,
+      "identical": 10,
+      "chg": 0.1003671970624235
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -4,
+      "se": 4.3606278649850925,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 15,
+      "chg": 0.11389292500279423
+     }
+    },
+    "decisions": {
+     "n": 35460,
+     "need": 0.08708403835307389,
+     "chgAll": 0.10561195713479977,
+     "chgAx": 0.001551043429216018,
+     "chgLn": 0.10366610265087423,
+     "tagTrue": 0.8836999435984207,
+     "tagFlip": 0.10366610265087423,
+     "tagFlipOfTrue": 0.11730916517743172
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 54.50000000000001,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 1.625,
+     "se": 2.466257742575992,
+     "flips": 389,
+     "ciLo": -3.2088651754489446,
+     "ciHi": 6.458865175448945
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35874,
+     "need": 0.08488041478508111,
+     "chgAll": 0.5109828845403356,
+     "chgAx": 0.01987511847020126,
+     "chgLn": 0.4953726933154931,
+     "tagTrue": 0.8858783520098121,
+     "tagFlip": 0.4953726933154931,
+     "tagFlipOfTrue": 0.5591881686595342
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/CLING (b4)",
+   "dataName": "Cling",
+   "tags": [
+    "cling"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.125,
+     "base": 69.5,
+     "n": 800,
+     "delta": -3.375,
+     "se": 2.320154221871149,
+     "flips": 345,
+     "ciLo": -7.922502274867452,
+     "ciHi": 1.172502274867452
+    },
+    "outcome": false,
+    "median": {
+     "cell": 44.77499999999874,
+     "base": 43.54999999999881,
+     "delta": 1.2249999999999304
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -9,
+      "se": 4.712327466417606,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.2094222833562586
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 0,
+      "se": 5.062424389906242,
+      "flips": 102,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.2225630538513974
+     },
+     "skala": {
+      "n": 200,
+      "delta": 0,
+      "se": 4.010037656936684,
+      "flips": 64,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.21063758762657173
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -4.5,
+      "se": 4.718055770257104,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.2153794568011624
+     }
+    },
+    "decisions": {
+     "n": 35460,
+     "need": 0.08708403835307389,
+     "chgAll": 0.21449520586576423,
+     "chgAx": 0.002086858432036097,
+     "chgLn": 0.2110547095318669,
+     "tagTrue": 0.8836999435984207,
+     "tagFlip": 0.2110547095318669,
+     "tagFlipOfTrue": 0.23883073780954814
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 52,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": -0.8750000000000001,
+     "se": 2.4856872832956896,
+     "flips": 395,
+     "ciLo": -5.746947075259551,
+     "ciHi": 3.996947075259551
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35960,
+     "need": 0.08470522803114572,
+     "chgAll": 0.5795328142380423,
+     "chgAx": 0.017157953281423804,
+     "chgLn": 0.5661846496106785,
+     "tagTrue": 0.8884593993325918,
+     "tagFlip": 0.5661846496106785,
+     "tagFlipOfTrue": 0.6372656421171241
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/LOCKDOWN (b5)",
+   "dataName": "Lockdown",
+   "tags": [
+    "lockdown"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.125,
+     "base": 64.875,
+     "n": 800,
+     "delta": 1.25,
+     "se": 2.3529167317253306,
+     "flips": 354,
+     "ciLo": -3.361716794181648,
+     "ciHi": 5.861716794181648
+    },
+    "outcome": false,
+    "median": {
+     "cell": 44.77499999999874,
+     "base": 44.641666666665415,
+     "delta": 0.13333333333332575
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 0.5,
+      "se": 4.885497973826339,
+      "flips": 95,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1020174232003668
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -1,
+      "se": 5.160246186328477,
+      "flips": 106,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.10713474210406726
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.1514966726610325,
+      "flips": 69,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.10237009013018805
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 1,
+      "se": 4.593528329352379,
+      "flips": 84,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.11590477254945791
+     }
+    },
+    "decisions": {
+     "n": 35460,
+     "need": 0.08708403835307389,
+     "chgAll": 0.1068809926677947,
+     "chgAx": 0.003722504230118443,
+     "chgLn": 0.10366610265087423,
+     "tagTrue": 0.8836999435984207,
+     "tagFlip": 0.10366610265087423,
+     "tagFlipOfTrue": 0.11730916517743172
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 57.25,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 4.375,
+     "se": 2.4493260739478226,
+     "flips": 385,
+     "ciLo": -0.425679104937732,
+     "ciHi": 9.175679104937732
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35224,
+     "need": 0.08664546899841018,
+     "chgAll": 0.062400635930047695,
+     "chgAx": 0.5330456506927095,
+     "chgLn": 0.004513967749261867,
+     "tagTrue": 0.9117079264138087,
+     "tagFlip": 0.004513967749261867,
+     "tagFlipOfTrue": 0.004951111664694526
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "natisk",
+    "branch": "b",
+    "win": {
+     "rate": 66.125,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 13.25,
+     "se": 2.392739722415295,
+     "flips": 380,
+     "ciLo": 8.560230144066022,
+     "ciHi": 17.939769855933978
+    },
+    "median": {
+     "cell": 44.77499999999874,
+     "base": 45.04166666666539,
+     "delta": -0.2666666666666515
+    },
+    "sample": {
+     "median": 44.77499999999874,
+     "over100": 0,
+     "capped": 0,
+     "max": 58.23333333333131
+    }
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/LONG COMBO (c1)",
+   "dataName": "Long Combo",
+   "tags": [
+    "long_combo"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.75,
+     "base": 68.375,
+     "n": 800,
+     "delta": -1.625,
+     "se": 2.3359462804249795,
+     "flips": 349,
+     "ciLo": -6.20345470963296,
+     "ciHi": 2.95345470963296
+    },
+    "outcome": false,
+    "median": {
+     "cell": 42.341666666665546,
+     "base": 43.28333333333216,
+     "delta": -0.9416666666666131
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -5.5,
+      "se": 4.549973769873033,
+      "flips": 83,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -2,
+      "se": 4.805775419943659,
+      "flips": 92,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "skala": {
+      "n": 200,
+      "delta": -2,
+      "se": 4.591887099622372,
+      "flips": 84,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.750561987384221,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     }
+    },
+    "decisions": {
+     "n": 33666,
+     "need": 0.21558842749361373,
+     "chgAll": 0,
+     "chgAx": 0,
+     "chgLn": 0,
+     "tagTrue": 0.8304817917186479,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 53.125,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 0.25,
+     "se": 2.4827155940423786,
+     "flips": 394,
+     "ciLo": -4.616122564323062,
+     "ciHi": 5.116122564323062
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34974,
+     "need": 0.0864070452336021,
+     "chgAll": 0.08500600446045634,
+     "chgAx": 0,
+     "chgLn": 0.08500600446045634,
+     "tagTrue": 0.9057013781666381,
+     "tagFlip": 0.08500600446045634,
+     "tagFlipOfTrue": 0.0938565475438818
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/NO PAUSE (c2)",
+   "dataName": "No Pause",
+   "tags": [
+    "no_pause"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.75,
+     "base": 59.62499999999999,
+     "n": 800,
+     "delta": 7.124999999999999,
+     "se": 2.4024743125115458,
+     "flips": 373,
+     "ciLo": 2.4161503474773696,
+     "ciHi": 11.833849652522629
+    },
+    "outcome": true,
+    "median": {
+     "cell": 42.341666666665546,
+     "base": 42.24166666666555,
+     "delta": 0.09999999999999432
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 13,
+      "se": 4.387625357913672,
+      "flips": 80,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.0028224322002699718
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 6.5,
+      "se": 5.115622932737495,
+      "flips": 105,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.011693791440626884
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4,
+      "se": 4.693628740512911,
+      "flips": 88,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0125263404354952
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 5,
+      "se": 5.000000000000002,
+      "flips": 100,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.013940092165898617
+     }
+    },
+    "decisions": {
+     "n": 33666,
+     "need": 0.21558842749361373,
+     "chgAll": 0.010336838353234717,
+     "chgAx": 0,
+     "chgLn": 0.010336838353234717,
+     "tagTrue": 0.45615754767421135,
+     "tagFlip": 0.010336838353234717,
+     "tagFlipOfTrue": 0.02266067591326431
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 54.37499999999999,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 1.5,
+     "se": 2.52589839530002,
+     "flips": 408,
+     "ciLo": -3.4507608547880393,
+     "ciHi": 6.450760854788039
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35807,
+     "need": 0.10556595079174463,
+     "chgAll": 0.06953947552154606,
+     "chgAx": 0,
+     "chgLn": 0.06953947552154606,
+     "tagTrue": 0.4502471583768537,
+     "tagFlip": 0.06953947552154606,
+     "tagFlipOfTrue": 0.15444733903982136
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/LATE FIRE (c3)",
+   "dataName": "Building Momentum",
+   "tags": [
+    "hit_accel"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.75,
+     "base": 72.5,
+     "n": 800,
+     "delta": -5.75,
+     "se": 2.317679102146294,
+     "flips": 346,
+     "ciLo": -10.292651040206737,
+     "ciHi": -1.2073489597932632
+    },
+    "outcome": true,
+    "median": {
+     "cell": 42.341666666665546,
+     "base": 43.20833333333216,
+     "delta": -0.8666666666666174
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -9.5,
+      "se": 4.680629386875915,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0013498588783899864
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -2.5,
+      "se": 4.77837991089703,
+      "flips": 91,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0027727546714888486
+     },
+     "skala": {
+      "n": 200,
+      "delta": -10.5,
+      "se": 4.276704456123323,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.005033949894638258
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.781533783905864,
+      "flips": 91,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.006336405529953917
+     }
+    },
+    "decisions": {
+     "n": 33666,
+     "need": 0.21558842749361373,
+     "chgAll": 0.003920869720192479,
+     "chgAx": 0,
+     "chgLn": 0.003920869720192479,
+     "tagTrue": 0.28711459632864017,
+     "tagFlip": 0.003920869720192479,
+     "tagFlipOfTrue": 0.013656114214773432
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 56.00000000000001,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 3.125,
+     "se": 2.508492303315827,
+     "flips": 403,
+     "ciLo": -1.7916449144990212,
+     "ciHi": 8.04164491449902
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34640,
+     "need": 0.08322748267898383,
+     "chgAll": 0.07883949191685913,
+     "chgAx": 0,
+     "chgLn": 0.07883949191685913,
+     "tagTrue": 0.3071593533487298,
+     "tagFlip": 0.07883949191685913,
+     "tagFlipOfTrue": 0.2566729323308271
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": [
+     "ВРЕДИТ"
+    ]
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/NO LETUP (c4)",
+   "dataName": "No Breather",
+   "tags": [
+    "no_breather"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.75,
+     "base": 67.375,
+     "n": 800,
+     "delta": -0.625,
+     "se": 2.0360054927991684,
+     "flips": 265,
+     "ciLo": -4.615570765886369,
+     "ciHi": 3.36557076588637
+    },
+    "outcome": false,
+    "median": {
+     "cell": 42.341666666665546,
+     "base": 42.43333333333221,
+     "delta": -0.09166666666666146
+    },
+    "identical": 60,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -5,
+      "se": 3.597179241080751,
+      "flips": 52,
+      "sigCi99": false,
+      "identical": 32,
+      "chg": 0.0030678610872499693
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -3,
+      "se": 4.1279778348514835,
+      "flips": 68,
+      "sigCi99": false,
+      "identical": 6,
+      "chg": 0.013984327908378542
+     },
+     "skala": {
+      "n": 200,
+      "delta": 1,
+      "se": 4.193198608802638,
+      "flips": 70,
+      "sigCi99": false,
+      "identical": 12,
+      "chg": 0.018379770545539686
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.329256554139271,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 10,
+      "chg": 0.022235023041474653
+     }
+    },
+    "decisions": {
+     "n": 33666,
+     "need": 0.21558842749361373,
+     "chgAll": 0.01458444721677657,
+     "chgAx": 0.0040693875126240125,
+     "chgLn": 0.015386443295906849,
+     "tagTrue": 0.32020436048238576,
+     "tagFlip": 0.015386443295906849,
+     "tagFlipOfTrue": 0.048051948051948054
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52.125,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": -0.75,
+     "se": 2.2788787781729445,
+     "flips": 332,
+     "ciLo": -5.216602405218971,
+     "ciHi": 3.7166024052189712
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35346,
+     "need": 0.08705369773100209,
+     "chgAll": 0.06515588751202399,
+     "chgAx": 0.03352571719572229,
+     "chgLn": 0.06422225994454818,
+     "tagTrue": 0.21713913879929836,
+     "tagFlip": 0.06422225994454818,
+     "tagFlipOfTrue": 0.29576547231270356
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "natisk",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/RAMPAGE (c5)",
+   "dataName": "Rampage",
+   "tags": [
+    "rampage"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 66.75,
+     "base": 64.375,
+     "n": 800,
+     "delta": 2.375,
+     "se": 2.064922298507519,
+     "flips": 273,
+     "ciLo": -1.6722477050747369,
+     "ciHi": 6.422247705074737
+    },
+    "outcome": false,
+    "median": {
+     "cell": 42.341666666665546,
+     "base": 43.03333333333217,
+     "delta": -0.6916666666666273
+    },
+    "identical": 31,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 3.207834316953595,
+      "flips": 41,
+      "sigCi99": false,
+      "identical": 18,
+      "chg": 0.003681433304699963
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.306708568439169,
+      "flips": 74,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.017480409885473176
+     },
+     "skala": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.534069799277868,
+      "flips": 82,
+      "sigCi99": false,
+      "identical": 5,
+      "chg": 0.022594240224771717
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.367536706705747,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.03225806451612903
+     }
+    },
+    "decisions": {
+     "n": 33666,
+     "need": 0.21558842749361373,
+     "chgAll": 0.019247905899126717,
+     "chgAx": 0,
+     "chgLn": 0.019247905899126717,
+     "tagTrue": 1,
+     "tagFlip": 0.019247905899126717,
+     "tagFlipOfTrue": 0.019247905899126717
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 61.12499999999999,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 8.25,
+     "se": 2.414219842269655,
+     "flips": 378,
+     "ciLo": 3.5181291091514764,
+     "ciHi": 12.981870890848523
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35018,
+     "need": 0.08361414129876064,
+     "chgAll": 0.7303957964475413,
+     "chgAx": 0,
+     "chgLn": 0.7303957964475413,
+     "tagTrue": 1,
+     "tagFlip": 0.7303957964475413,
+     "tagFlipOfTrue": 0.7303957964475413
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "natisk",
+    "branch": "c",
+    "win": {
+     "rate": 66.75,
+     "base": 52.87500000000001,
+     "n": 800,
+     "delta": 13.875000000000002,
+     "se": 2.4497412126102116,
+     "flips": 399,
+     "ciLo": 9.073507223283986,
+     "ciHi": 18.676492776716017
+    },
+    "median": {
+     "cell": 42.341666666665546,
+     "base": 45.04166666666539,
+     "delta": -2.6999999999998465
+    },
+    "sample": {
+     "median": 42.341666666665546,
+     "over100": 0,
+     "capped": 0,
+     "max": 54.36666666666486
+    }
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/QUICK OUT (a1)",
+   "dataName": "Quick Out",
+   "tags": [
+    "quick_out"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 69.125,
+     "base": 62.5,
+     "n": 800,
+     "delta": 6.625,
+     "se": 2.270397564332107,
+     "flips": 333,
+     "ciLo": 2.175020773909071,
+     "ciHi": 11.074979226090928
+    },
+    "outcome": true,
+    "median": {
+     "cell": 44.79166666666541,
+     "base": 45.016666666665394,
+     "delta": -0.2249999999999872
+    },
+    "identical": 23,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 3.7091154859942272,
+      "flips": 55,
+      "sigCi99": false,
+      "identical": 19,
+      "chg": 0.026336975273145487
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 17.5,
+      "se": 4.67203268901623,
+      "flips": 93,
+      "sigCi99": true,
+      "identical": 1,
+      "chg": 0.024149163203414578
+     },
+     "skala": {
+      "n": 200,
+      "delta": -1.5,
+      "se": 4.780482724095642,
+      "flips": 91,
+      "sigCi99": false,
+      "identical": 3,
+      "chg": 0.02348993288590604
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.834445086717036,
+      "flips": 94,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.017239423840308497
+     }
+    },
+    "decisions": {
+     "n": 35355,
+     "need": 0.14345919954744732,
+     "chgAll": 0.022797341253005234,
+     "chgAx": 0.022797341253005234,
+     "chgLn": 0,
+     "tagTrue": 0.7056427662282563,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 49.75,
+     "base": 47.375,
+     "n": 800,
+     "delta": 2.375,
+     "se": 2.577183843744093,
+     "flips": 425,
+     "ciLo": -2.676280333738422,
+     "ciHi": 7.426280333738422
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35284,
+     "need": 0.12237841514567509,
+     "chgAll": 0.1920417186260061,
+     "chgAx": 0.041803650379775535,
+     "chgLn": 0.15397914068699695,
+     "tagTrue": 0.6869685976646639,
+     "tagFlip": 0.15397914068699695,
+     "tagFlipOfTrue": 0.22414291018606378
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/PINPOINT ENTRY (a2)",
+   "dataName": "Pinpoint Entry",
+   "tags": [
+    "pinpoint_entry"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 69.125,
+     "base": 64.625,
+     "n": 800,
+     "delta": 4.5,
+     "se": 1.6326418465937624,
+     "flips": 172,
+     "ciLo": 1.3000219806762257,
+     "ciHi": 7.699978019323774
+    },
+    "outcome": true,
+    "median": {
+     "cell": 44.79166666666541,
+     "base": 44.79999999999874,
+     "delta": -0.00833333333333286
+    },
+    "identical": 362,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -1.5,
+      "se": 3.285226562634487,
+      "flips": 43,
+      "sigCi99": false,
+      "identical": 67,
+      "chg": 0.01437607820586544
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 9.5,
+      "se": 3.369796379336737,
+      "flips": 47,
+      "sigCi99": true,
+      "identical": 94,
+      "chg": 0.01145681231045715
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 3.193704548595349,
+      "flips": 41,
+      "sigCi99": false,
+      "identical": 95,
+      "chg": 0.01174496644295302
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 5.5,
+      "se": 3.1858275985114455,
+      "flips": 41,
+      "sigCi99": false,
+      "identical": 106,
+      "chg": 0.01032097085176364
+     }
+    },
+    "decisions": {
+     "n": 35355,
+     "need": 0.14345919954744732,
+     "chgAll": 0.011964361476453118,
+     "chgAx": 0.01131381699901004,
+     "chgLn": 0.0007919671899307029,
+     "tagTrue": 0.30272945835101117,
+     "tagFlip": 0.0007919671899307029,
+     "tagFlipOfTrue": 0.002616088947024199
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 46.625,
+     "base": 47.375,
+     "n": 800,
+     "delta": -0.75,
+     "se": 2.457253445030936,
+     "flips": 386,
+     "ciLo": -5.566216752260634,
+     "ciHi": 4.066216752260634
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36093,
+     "need": 0.1216025268057518,
+     "chgAll": 0.3522566702684731,
+     "chgAx": 0.17053168204360955,
+     "chgLn": 0.14434931981270607,
+     "tagTrue": 0.25669797467653005,
+     "tagFlip": 0.14434931981270607,
+     "tagFlipOfTrue": 0.5623313545601728
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/FAR BOUNCE (a3)",
+   "dataName": "Far Bounce",
+   "tags": [],
+   "inBranch": {
+    "win": {
+     "rate": 69.125,
+     "base": 61.375,
+     "n": 800,
+     "delta": 7.75,
+     "se": 2.2555556497482874,
+     "flips": 330,
+     "ciLo": 3.3291109264933567,
+     "ciHi": 12.170889073506643
+    },
+    "outcome": true,
+    "median": {
+     "cell": 44.79166666666541,
+     "base": 44.26666666666544,
+     "delta": 0.5249999999999702
+    },
+    "identical": 10,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.249593536578607,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 7,
+      "chg": 0.04634847613571018
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 13,
+      "se": 4.44452121653403,
+      "flips": 82,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.042008311805009545
+     },
+     "skala": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.753205741825255,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 3,
+      "chg": 0.03859060402684564
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 4.581890286002585,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.027446977429964842
+     }
+    },
+    "decisions": {
+     "n": 35355,
+     "need": 0.14345919954744732,
+     "chgAll": 0.03858011596662424,
+     "chgAx": 0.03858011596662424,
+     "chgLn": 0,
+     "tagTrue": 0,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 54.625,
+     "base": 47.375,
+     "n": 800,
+     "delta": 7.249999999999999,
+     "se": 2.456744057529249,
+     "flips": 390,
+     "ciLo": 2.434781647242671,
+     "ciHi": 12.065218352757327
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35662,
+     "need": 0.12304413661600583,
+     "chgAll": 0.09009590039818294,
+     "chgAx": 0.09009590039818294,
+     "chgLn": 0,
+     "tagTrue": 0,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/CLEAN EXCHANGE (a4)",
+   "dataName": "Clean Exchange",
+   "tags": [
+    "clean_chain"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 69.125,
+     "base": 63.87500000000001,
+     "n": 800,
+     "delta": 5.25,
+     "se": 1.6677900886276626,
+     "flips": 180,
+     "ciLo": 1.9811314262897812,
+     "ciHi": 8.518868573710218
+    },
+    "outcome": true,
+    "median": {
+     "cell": 44.79166666666541,
+     "base": 45.33333333333204,
+     "delta": -0.5416666666666359
+    },
+    "identical": 62,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 3.4274607856525385,
+      "flips": 47,
+      "sigCi99": false,
+      "identical": 16,
+      "chg": 0.06463484761357102
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 6.5,
+      "se": 3.2544905196840856,
+      "flips": 43,
+      "sigCi99": false,
+      "identical": 15,
+      "chg": 0.059755138717286306
+     },
+     "skala": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 3.504304603451137,
+      "flips": 49,
+      "sigCi99": false,
+      "identical": 16,
+      "chg": 0.0558165548098434
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 3.152529494081734,
+      "flips": 41,
+      "sigCi99": true,
+      "identical": 15,
+      "chg": 0.04048996257230351
+     }
+    },
+    "decisions": {
+     "n": 35355,
+     "need": 0.14345919954744732,
+     "chgAll": 0.05515485787017395,
+     "chgAx": 0.00033941450997030124,
+     "chgLn": 0.05557912600763683,
+     "tagTrue": 1,
+     "tagFlip": 0.05557912600763683,
+     "tagFlipOfTrue": 0.05557912600763683
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 54.125,
+     "base": 47.375,
+     "n": 800,
+     "delta": 6.75,
+     "se": 2.5399036917675333,
+     "flips": 416,
+     "ciLo": 1.7717887641356347,
+     "ciHi": 11.728211235864364
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35176,
+     "need": 0.12164544007277689,
+     "chgAll": 0.15402547191266772,
+     "chgAx": 0.005742551739822606,
+     "chgLn": 0.1530304753240846,
+     "tagTrue": 1,
+     "tagFlip": 0.1530304753240846,
+     "tagFlipOfTrue": 0.1530304753240846
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/PERFECT PRICK (a5)",
+   "dataName": "Perfect Prick",
+   "tags": [
+    "perfect_jab"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 69.125,
+     "base": 58.12500000000001,
+     "n": 800,
+     "delta": 11,
+     "se": 2.3742464715957445,
+     "flips": 370,
+     "ciLo": 6.346476915672341,
+     "ciHi": 15.65352308432766
+    },
+    "outcome": true,
+    "median": {
+     "cell": 44.79166666666541,
+     "base": 44.641666666665415,
+     "delta": 0.14999999999999147
+    },
+    "identical": 5,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 13,
+      "se": 4.271560740031555,
+      "flips": 76,
+      "sigCi99": true,
+      "identical": 5,
+      "chg": 0.03001725129384704
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 20.5,
+      "se": 4.771012766077065,
+      "flips": 99,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.03392115017409862
+     },
+     "skala": {
+      "n": 200,
+      "delta": 5,
+      "se": 4.846902341863078,
+      "flips": 94,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.042058165548098436
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 5.5,
+      "se": 5.022437094863328,
+      "flips": 101,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.08823862991947375
+     }
+    },
+    "decisions": {
+     "n": 35355,
+     "need": 0.14345919954744732,
+     "chgAll": 0.0485645594682506,
+     "chgAx": 0.014594823928722953,
+     "chgLn": 0.029755338707396408,
+     "tagTrue": 0.30272945835101117,
+     "tagFlip": 0.029755338707396408,
+     "tagFlipOfTrue": 0.09829019900962348
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52.625,
+     "base": 47.375,
+     "n": 800,
+     "delta": 5.25,
+     "se": 2.4567440575292476,
+     "flips": 388,
+     "ciLo": 0.43478164724267465,
+     "ciHi": 10.065218352757325
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35299,
+     "need": 0.12575427065922548,
+     "chgAll": 0.18156321708830278,
+     "chgAx": 0.047140145613190174,
+     "chgLn": 0.12286467038726309,
+     "tagTrue": 0.29978186350888125,
+     "tagFlip": 0.12286467038726309,
+     "tagFlipOfTrue": 0.40984690984690986
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "nalet",
+    "branch": "a",
+    "win": {
+     "rate": 69.125,
+     "base": 47.375,
+     "n": 800,
+     "delta": 21.75,
+     "se": 2.2449881602805317,
+     "flips": 360,
+     "ciLo": 17.349823205850157,
+     "ciHi": 26.150176794149843
+    },
+    "median": {
+     "cell": 44.79166666666541,
+     "base": 45.23333333333205,
+     "delta": -0.44166666666664156
+    },
+    "sample": {
+     "median": 44.79166666666541,
+     "over100": 0,
+     "capped": 0,
+     "max": 60.783333333331164
+    }
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/FAKE-IN (b1)",
+   "dataName": "Fake-In",
+   "tags": [
+    "fake_in"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 61.375,
+     "base": 62.375,
+     "n": 800,
+     "delta": -1,
+     "se": 1.5517764054513998,
+     "flips": 154,
+     "ciLo": -4.041481754684744,
+     "ciHi": 2.0414817546847437
+    },
+    "outcome": false,
+    "median": {
+     "cell": 41.80833333333224,
+     "base": 41.89166666666557,
+     "delta": -0.0833333333333286
+    },
+    "identical": 199,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 3.128528159088722,
+      "flips": 39,
+      "sigCi99": false,
+      "identical": 59,
+      "chg": 0.00024679170779861795
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -2,
+      "se": 3.321923521003601,
+      "flips": 44,
+      "sigCi99": false,
+      "identical": 48,
+      "chg": 0.0003562522265764161
+     },
+     "skala": {
+      "n": 200,
+      "delta": -2.5,
+      "se": 3.043858632867894,
+      "flips": 37,
+      "sigCi99": false,
+      "identical": 54,
+      "chg": 0.00012135922330097087
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -1,
+      "se": 2.9219323130782926,
+      "flips": 34,
+      "sigCi99": false,
+      "identical": 38,
+      "chg": 0
+     }
+    },
+    "decisions": {
+     "n": 32690,
+     "need": 0.1197308045273784,
+     "chgAll": 0.0001835423676965433,
+     "chgAx": 0.0001835423676965433,
+     "chgLn": 0,
+     "tagTrue": 0.4627408993576017,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 49.375,
+     "base": 47.375,
+     "n": 800,
+     "delta": 2,
+     "se": 2.494298881175994,
+     "flips": 398,
+     "ciLo": -2.888825807104948,
+     "ciHi": 6.888825807104948
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35553,
+     "need": 0.12043990661828818,
+     "chgAll": 0.15852389390487442,
+     "chgAx": 0.0007031755407419908,
+     "chgLn": 0.15838325879672602,
+     "tagTrue": 0.49649818580710486,
+     "tagFlip": 0.15838325879672602,
+     "tagFlipOfTrue": 0.3190006798096533
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/PUNISH REACTION (b2)",
+   "dataName": "Punish Reaction",
+   "tags": [
+    "punish_reaction"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 61.375,
+     "base": 61.12499999999999,
+     "n": 800,
+     "delta": 0.25,
+     "se": 2.08545157228008,
+     "flips": 278,
+     "ciLo": -3.837485081668957,
+     "ciHi": 4.337485081668957
+    },
+    "outcome": false,
+    "median": {
+     "cell": 41.80833333333224,
+     "base": 42.79999999999885,
+     "delta": -0.9916666666666103
+    },
+    "identical": 51,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 3.9070545653835427,
+      "flips": 61,
+      "sigCi99": false,
+      "identical": 19,
+      "chg": 0.0017275419545903258
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -6.5,
+      "se": 4.316469569884482,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 13,
+      "chg": 0.010687566797292483
+     },
+     "skala": {
+      "n": 200,
+      "delta": 1,
+      "se": 4.311373296119521,
+      "flips": 74,
+      "sigCi99": false,
+      "identical": 10,
+      "chg": 0.003762135922330097
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.1279778348514835,
+      "flips": 68,
+      "sigCi99": false,
+      "identical": 9,
+      "chg": 0.008580441640378548
+     }
+    },
+    "decisions": {
+     "n": 32690,
+     "need": 0.1197308045273784,
+     "chgAll": 0.006209850107066381,
+     "chgAx": 0.0001835423676965433,
+     "chgLn": 0.006056898133985928,
+     "tagTrue": 0.20933007035790763,
+     "tagFlip": 0.006056898133985928,
+     "tagFlipOfTrue": 0.028934677772906616
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52.87500000000001,
+     "base": 47.375,
+     "n": 800,
+     "delta": 5.5,
+     "se": 2.351935798975621,
+     "flips": 356,
+     "ciLo": 0.8902058340077827,
+     "ciHi": 10.109794165992216
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35088,
+     "need": 0.12186502507979936,
+     "chgAll": 0.15962722298221615,
+     "chgAx": 0.007267441860465116,
+     "chgLn": 0.1524452804377565,
+     "tagTrue": 0.19100547195622436,
+     "tagFlip": 0.1524452804377565,
+     "tagFlipOfTrue": 0.798119964189794
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/BROKEN RHYTHM (b3)",
+   "dataName": "Broken Rhythm",
+   "tags": [
+    "rhythm_break"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 61.375,
+     "base": 64.5,
+     "n": 800,
+     "delta": -3.125,
+     "se": 1.688410904661162,
+     "flips": 183,
+     "ciLo": -6.434285373135877,
+     "ciHi": 0.18428537313587734
+    },
+    "outcome": false,
+    "median": {
+     "cell": 41.80833333333224,
+     "base": 42.12499999999889,
+     "delta": -0.31666666666664867
+    },
+    "identical": 143,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 0,
+      "se": 3.248501780682208,
+      "flips": 42,
+      "sigCi99": false,
+      "identical": 47,
+      "chg": 0.0004935834155972359
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -6.5,
+      "se": 3.5498956032494604,
+      "flips": 51,
+      "sigCi99": false,
+      "identical": 34,
+      "chg": 0.0003562522265764161
+     },
+     "skala": {
+      "n": 200,
+      "delta": -4,
+      "se": 3.603460090401395,
+      "flips": 52,
+      "sigCi99": false,
+      "identical": 28,
+      "chg": 0.00012135922330097087
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -2,
+      "se": 3.0866872518858712,
+      "flips": 38,
+      "sigCi99": false,
+      "identical": 34,
+      "chg": 0
+     }
+    },
+    "decisions": {
+     "n": 32690,
+     "need": 0.1197308045273784,
+     "chgAll": 0.0002447231569287244,
+     "chgAx": 0.0002447231569287244,
+     "chgLn": 0,
+     "tagTrue": 0.7097583358825329,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52.125,
+     "base": 47.375,
+     "n": 800,
+     "delta": 4.75,
+     "se": 2.4516443614631047,
+     "flips": 386,
+     "ciLo": -0.055222948467685384,
+     "ciHi": 9.555222948467685
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35548,
+     "need": 0.12304489704062113,
+     "chgAll": 0.15773039270845055,
+     "chgAx": 0.004641611342410262,
+     "chgLn": 0.156464498705975,
+     "tagTrue": 0.6971137616743558,
+     "tagFlip": 0.156464498705975,
+     "tagFlipOfTrue": 0.22444614825874662
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/STING THE SWING (b4)",
+   "dataName": "Feint to Interrupt",
+   "tags": [
+    "feint_interrupt"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 61.375,
+     "base": 62.25000000000001,
+     "n": 800,
+     "delta": -0.8750000000000001,
+     "se": 2.0889884656843325,
+     "flips": 279,
+     "ciLo": -4.969417392741292,
+     "ciHi": 3.219417392741292
+    },
+    "outcome": false,
+    "median": {
+     "cell": 41.80833333333224,
+     "base": 41.86666666666557,
+     "delta": -0.05833333333333002
+    },
+    "identical": 25,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.566510163722058,
+      "flips": 83,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.22174234945705823
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 3,
+      "se": 4.306708568439169,
+      "flips": 74,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.11423821398883743
+     },
+     "skala": {
+      "n": 200,
+      "delta": -4.5,
+      "se": 3.9657769648170347,
+      "flips": 63,
+      "sigCi99": false,
+      "identical": 6,
+      "chg": 0.09660194174757282
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -1.5,
+      "se": 3.848741881492155,
+      "flips": 59,
+      "sigCi99": false,
+      "identical": 15,
+      "chg": 0.08391167192429022
+     }
+    },
+    "decisions": {
+     "n": 32690,
+     "need": 0.1197308045273784,
+     "chgAll": 0.12909146527990212,
+     "chgAx": 0.00021413276231263382,
+     "chgLn": 0.12896910370143774,
+     "tagTrue": 0.4627408993576017,
+     "tagFlip": 0.12896910370143774,
+     "tagFlipOfTrue": 0.2787069478416077
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 55.25,
+     "base": 47.375,
+     "n": 800,
+     "delta": 7.875,
+     "se": 2.4190225415072946,
+     "flips": 379,
+     "ciLo": 3.133715818645703,
+     "ciHi": 12.616284181354297
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35521,
+     "need": 0.11990090369077447,
+     "chgAll": 0.1620168351116241,
+     "chgAx": 0.0030123025815714647,
+     "chgLn": 0.15925790377523155,
+     "tagTrue": 0.492384786464345,
+     "tagFlip": 0.15925790377523155,
+     "tagFlipOfTrue": 0.32344196683819326
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/SETUP COMBO (b5)",
+   "dataName": "Setup Combo",
+   "tags": [
+    "feint_combo"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 61.375,
+     "base": 55.625,
+     "n": 800,
+     "delta": 5.75,
+     "se": 2.304139361615779,
+     "flips": 342,
+     "ciLo": 1.2338868512330734,
+     "ciHi": 10.266113148766927
+    },
+    "outcome": true,
+    "median": {
+     "cell": 41.80833333333224,
+     "base": 43.73333333333213,
+     "delta": -1.9249999999998906
+    },
+    "identical": 1,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 16,
+      "se": 4.672167134065644,
+      "flips": 92,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.506786771964462
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -2,
+      "se": 4.96014264667629,
+      "flips": 98,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.34782092388077424
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.329256554139273,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.4483009708737864
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.386909490104842,
+      "flips": 77,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.3567192429022082
+     }
+    },
+    "decisions": {
+     "n": 32690,
+     "need": 0.1197308045273784,
+     "chgAll": 0.41471397981033953,
+     "chgAx": 0.00021413276231263382,
+     "chgLn": 0.4145610278372591,
+     "tagTrue": 0.7097583358825329,
+     "tagFlip": 0.4145610278372591,
+     "tagFlipOfTrue": 0.5840875786570123
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 53.5,
+     "base": 47.375,
+     "n": 800,
+     "delta": 6.125,
+     "se": 2.418893191956311,
+     "flips": 377,
+     "ciLo": 1.3839693437656306,
+     "ciHi": 10.866030656234368
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34480,
+     "need": 0.11792343387470998,
+     "chgAll": 0.1130800464037123,
+     "chgAx": 0.0012180974477958237,
+     "chgLn": 0.10965777262180974,
+     "tagTrue": 0.7412703016241299,
+     "tagFlip": 0.10965777262180974,
+     "tagFlipOfTrue": 0.1479322352204703
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "nalet",
+    "branch": "b",
+    "win": {
+     "rate": 61.375,
+     "base": 47.375,
+     "n": 800,
+     "delta": 14.000000000000002,
+     "se": 2.464770550646488,
+     "flips": 404,
+     "ciLo": 9.169049720732886,
+     "ciHi": 18.830950279267118
+    },
+    "median": {
+     "cell": 41.80833333333224,
+     "base": 45.23333333333205,
+     "delta": -3.4249999999998053
+    },
+    "sample": {
+     "median": 41.80833333333224,
+     "over100": 0,
+     "capped": 0,
+     "max": 59.69999999999789
+    }
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/READ THE TELL (c1)",
+   "dataName": "Read the Tell",
+   "tags": [
+    "read_tell"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 63.87500000000001,
+     "n": 800,
+     "delta": 4.125,
+     "se": 2.030889240612227,
+     "flips": 265,
+     "ciLo": 0.1444570884000349,
+     "ciHi": 8.105542911599965
+    },
+    "outcome": true,
+    "median": {
+     "cell": 42.69999999999886,
+     "base": 43.299999999998825,
+     "delta": -0.5999999999999659
+    },
+    "identical": 65,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.2833087290483425,
+      "flips": 74,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.15263157894736842
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.068354401682391,
+      "flips": 67,
+      "sigCi99": false,
+      "identical": 15,
+      "chg": 0.0890924229808493
+     },
+     "skala": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.102793508435971,
+      "flips": 67,
+      "sigCi99": false,
+      "identical": 16,
+      "chg": 0.07973305233579206
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 3.7802382206714316,
+      "flips": 57,
+      "sigCi99": false,
+      "identical": 30,
+      "chg": 0.06596399810516343
+     }
+    },
+    "decisions": {
+     "n": 33752,
+     "need": 0.14671723157146244,
+     "chgAll": 0.09667575254799715,
+     "chgAx": 0.01576202891680493,
+     "chgLn": 0.08272102393932211,
+     "tagTrue": 0.48009006873666743,
+     "tagFlip": 0.08272102393932211,
+     "tagFlipOfTrue": 0.17230313502838807
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 52.25,
+     "base": 47.375,
+     "n": 800,
+     "delta": 4.875,
+     "se": 2.4417454043213374,
+     "flips": 383,
+     "ciLo": 0.08917900753017882,
+     "ciHi": 9.660820992469821
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35489,
+     "need": 0.12203781453408098,
+     "chgAll": 0.14897573896136831,
+     "chgAx": 0.03237622925413509,
+     "chgLn": 0.11865648510806165,
+     "tagTrue": 0.5002958663247767,
+     "tagFlip": 0.11865648510806165,
+     "tagFlipOfTrue": 0.23717262742889325
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/SEIZE THE OPEN (c2)",
+   "dataName": "Strike the Open",
+   "tags": [
+    "punish_exhausted"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 66.875,
+     "n": 800,
+     "delta": 1.125,
+     "se": 1.386613262295572,
+     "flips": 123,
+     "ciLo": -1.592761994099321,
+     "ciHi": 3.842761994099321
+    },
+    "outcome": false,
+    "median": {
+     "cell": 42.69999999999886,
+     "base": 43.008333333332175,
+     "delta": -0.3083333333333158
+    },
+    "identical": 238,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 9,
+      "se": 3.0233596407949737,
+      "flips": 38,
+      "sigCi99": true,
+      "identical": 62,
+      "chg": 0.011602870813397129
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 0,
+      "se": 2.835524820033344,
+      "flips": 32,
+      "sigCi99": false,
+      "identical": 63,
+      "chg": 0.020578089687165457
+     },
+     "skala": {
+      "n": 200,
+      "delta": -3.5000000000000004,
+      "se": 2.59275178315342,
+      "flips": 27,
+      "sigCi99": false,
+      "identical": 55,
+      "chg": 0.01498653553448074
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -1,
+      "se": 2.5549243023922967,
+      "flips": 26,
+      "sigCi99": false,
+      "identical": 58,
+      "chg": 0.016935101847465658
+     }
+    },
+    "decisions": {
+     "n": 33752,
+     "need": 0.14671723157146244,
+     "chgAll": 0.016028679781938848,
+     "chgAx": 0.007584735719364778,
+     "chgLn": 0.008562455558189144,
+     "tagTrue": 0.24952595401753971,
+     "tagFlip": 0.008562455558189144,
+     "tagFlipOfTrue": 0.03431488957492282
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 48.375,
+     "base": 47.375,
+     "n": 800,
+     "delta": 1,
+     "se": 2.258068553430111,
+     "flips": 326,
+     "ciLo": -3.425814364723017,
+     "ciHi": 5.425814364723017
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35441,
+     "need": 0.11932507547755425,
+     "chgAll": 0.19150136847154425,
+     "chgAx": 0.034028385203577774,
+     "chgLn": 0.1812589938207161,
+     "tagTrue": 0.287971558364606,
+     "tagFlip": 0.1812589938207161,
+     "tagFlipOfTrue": 0.6294336664707034
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/CHARGED RUN (c3)",
+   "dataName": "Charged Run",
+   "tags": [
+    "charged_run"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 64.875,
+     "n": 800,
+     "delta": 3.125,
+     "se": 2.2729112665879034,
+     "flips": 331,
+     "ciLo": -1.3299060825122906,
+     "ciHi": 7.579906082512291
+    },
+    "outcome": false,
+    "median": {
+     "cell": 42.69999999999886,
+     "base": 43.60833333333214,
+     "delta": -0.9083333333332817
+    },
+    "identical": 2,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 9,
+      "se": 4.205165524141362,
+      "flips": 72,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.041866028708133975
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 6.5,
+      "se": 4.652632042685422,
+      "flips": 87,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.06328059950041633
+     },
+     "skala": {
+      "n": 200,
+      "delta": -5.5,
+      "se": 4.3811783367138135,
+      "flips": 77,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.06919564453811029
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.882411258639776,
+      "flips": 95,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.06324017053529134
+     }
+    },
+    "decisions": {
+     "n": 33752,
+     "need": 0.14671723157146244,
+     "chgAll": 0.05946314292486371,
+     "chgAx": 0.02444299597060915,
+     "chgLn": 0.05158212846646125,
+     "tagTrue": 1,
+     "tagFlip": 0.05158212846646125,
+     "tagFlipOfTrue": 0.05158212846646125
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 51.625,
+     "base": 47.375,
+     "n": 800,
+     "delta": 4.25,
+     "se": 2.4077309516262915,
+     "flips": 372,
+     "ciLo": -0.46915266518753107,
+     "ciHi": 8.969152665187531
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35447,
+     "need": 0.137839591502807,
+     "chgAll": 0.26146077242079724,
+     "chgAx": 0.09904928484780094,
+     "chgLn": 0.20760572121759246,
+     "tagTrue": 1,
+     "tagFlip": 0.20760572121759246,
+     "tagFlipOfTrue": 0.20760572121759246
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/PUNISH AGGRESSION (c4)",
+   "dataName": "Punish Aggression",
+   "tags": [
+    "hunt_reply"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 65.375,
+     "n": 800,
+     "delta": 2.625,
+     "se": 2.3280972412478422,
+     "flips": 347,
+     "ciLo": -1.9380705928457704,
+     "ciHi": 7.18807059284577
+    },
+    "outcome": false,
+    "median": {
+     "cell": 42.69999999999886,
+     "base": 43.6749999999988,
+     "delta": -0.9749999999999446
+    },
+    "identical": 2,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 12,
+      "se": 4.837042993877881,
+      "flips": 96,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.24019138755980862
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.190051630149277,
+      "flips": 71,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1398834304746045
+     },
+     "skala": {
+      "n": 200,
+      "delta": -5.5,
+      "se": 4.549973769873033,
+      "flips": 83,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.12726846973422315
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -3.5000000000000004,
+      "se": 4.930547789803653,
+      "flips": 97,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.10705826622453814
+     }
+    },
+    "decisions": {
+     "n": 33752,
+     "need": 0.14671723157146244,
+     "chgAll": 0.15332424745200285,
+     "chgAx": 0.03703484237971083,
+     "chgLn": 0.15824247452002843,
+     "tagTrue": 0.48009006873666743,
+     "tagFlip": 0.15824247452002843,
+     "tagFlipOfTrue": 0.3296099728462108
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 55.375,
+     "base": 47.375,
+     "n": 800,
+     "delta": 8,
+     "se": 2.4281927745110643,
+     "flips": 382,
+     "ciLo": 3.2407421619583143,
+     "ciHi": 12.759257838041686
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35239,
+     "need": 0.1474786458185533,
+     "chgAll": 0.17335906240245183,
+     "chgAx": 0.06623343454695083,
+     "chgLn": 0.12091716564034166,
+     "tagTrue": 0.49626833905615936,
+     "tagFlip": 0.12091716564034166,
+     "tagFlipOfTrue": 0.24365279048490393
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "nalet",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/KILLING RUN (c5)",
+   "dataName": "Killing Run",
+   "tags": [
+    "lethal_entry"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 62.74999999999999,
+     "n": 800,
+     "delta": 5.25,
+     "se": 2.339313437570734,
+     "flips": 352,
+     "ciLo": 0.6649456623613617,
+     "ciHi": 9.835054337638638
+    },
+    "outcome": true,
+    "median": {
+     "cell": 42.69999999999886,
+     "base": 43.45833333333215,
+     "delta": -0.7583333333332902
+    },
+    "identical": 7,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.341571861797959,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 7,
+      "chg": 0.01602870813397129
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 12,
+      "se": 4.888711229704323,
+      "flips": 98,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.08302604972047103
+     },
+     "skala": {
+      "n": 200,
+      "delta": -1,
+      "se": 4.426394110799516,
+      "flips": 78,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.07024938531787847
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 3,
+      "se": 5.008033746896109,
+      "flips": 100,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.10303173851255329
+     }
+    },
+    "decisions": {
+     "n": 33752,
+     "need": 0.14671723157146244,
+     "chgAll": 0.06820336572647547,
+     "chgAx": 0.02444299597060915,
+     "chgLn": 0.05057478075373311,
+     "tagTrue": 0.09220194358852808,
+     "tagFlip": 0.05057478075373311,
+     "tagFlipOfTrue": 0.5485218508997429
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 53.625,
+     "base": 47.375,
+     "n": 800,
+     "delta": 6.25,
+     "se": 2.4728658894355586,
+     "flips": 394,
+     "ciLo": 1.4031828567063052,
+     "ciHi": 11.096817143293695
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35546,
+     "need": 0.12265796432791312,
+     "chgAll": 0.2042142575817251,
+     "chgAx": 0.029117200247566533,
+     "chgLn": 0.18840375851009958,
+     "tagTrue": 0.2372418837562595,
+     "tagFlip": 0.18840375851009958,
+     "tagFlipOfTrue": 0.7941420609510257
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "nalet",
+    "branch": "c",
+    "win": {
+     "rate": 68,
+     "base": 47.375,
+     "n": 800,
+     "delta": 20.625,
+     "se": 2.4413289060026475,
+     "flips": 415,
+     "ciLo": 15.839995344234811,
+     "ciHi": 25.41000465576519
+    },
+    "median": {
+     "cell": 42.69999999999886,
+     "base": 45.23333333333205,
+     "delta": -2.5333333333331893
+    },
+    "sample": {
+     "median": 42.69999999999886,
+     "over100": 0,
+     "capped": 0,
+     "max": 54.18333333333154
+    }
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/TOUGH HIDE (a1)",
+   "dataName": "Tough Hide",
+   "tags": [
+    "tough_hide"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 71.125,
+     "base": 72.5,
+     "n": 800,
+     "delta": -1.375,
+     "se": 1.7548821136449524,
+     "flips": 197,
+     "ciLo": -4.814568942744106,
+     "ciHi": 2.0645689427441067
+    },
+    "outcome": false,
+    "median": {
+     "cell": 50.13333333333177,
+     "base": 48.91666666666517,
+     "delta": 1.2166666666665975
+    },
+    "identical": 25,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -7.5,
+      "se": 3.9429027900850344,
+      "flips": 63,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.1062150279776179
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 5,
+      "se": 3.381147853025669,
+      "flips": 46,
+      "sigCi99": false,
+      "identical": 8,
+      "chg": 0.09759759759759759
+     },
+     "skala": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 3.434783645801777,
+      "flips": 47,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.10525272547076313
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -4.5,
+      "se": 3.1937045485953455,
+      "flips": 41,
+      "sigCi99": false,
+      "identical": 12,
+      "chg": 0.08807657061399043
+     }
+    },
+    "decisions": {
+     "n": 39909,
+     "need": 0.17675211105264477,
+     "chgAll": 0.09935102357864141,
+     "chgAx": 0.001804104337367511,
+     "chgLn": 0.09682026610538977,
+     "tagTrue": 0.8076624320328748,
+     "tagFlip": 0.09682026610538977,
+     "tagFlipOfTrue": 0.1198771445413086
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 55.625,
+     "base": 48.625,
+     "n": 800,
+     "delta": 7.000000000000001,
+     "se": 2.34694166287985,
+     "flips": 356,
+     "ciLo": 2.3999943407554953,
+     "ciHi": 11.600005659244506
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36595,
+     "need": 0.1724006011750239,
+     "chgAll": 0.15103156168875528,
+     "chgAx": 0.0030058751195518514,
+     "chgLn": 0.14821696953135674,
+     "tagTrue": 0.7660882634239651,
+     "tagFlip": 0.14821696953135674,
+     "tagFlipOfTrue": 0.1934724451578384
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/STEADY GUARD (a2)",
+   "dataName": "Steady Guard",
+   "tags": [
+    "steady_guard"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 71.125,
+     "base": 68.875,
+     "n": 800,
+     "delta": 2.25,
+     "se": 2.053702508273928,
+     "flips": 270,
+     "ciLo": -1.7752569162168994,
+     "ciHi": 6.275256916216899
+    },
+    "outcome": false,
+    "median": {
+     "cell": 50.13333333333177,
+     "base": 48.73333333333185,
+     "delta": 1.3999999999999204
+    },
+    "identical": 11,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -1,
+      "se": 4.754791288900604,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.10971223021582734
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 4,
+      "se": 4.0623284656480125,
+      "flips": 66,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.11611611611611612
+     },
+     "skala": {
+      "n": 200,
+      "delta": 9.5,
+      "se": 3.92117688209848,
+      "flips": 63,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.1087215064420218
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -3.5000000000000004,
+      "se": 3.571066026106778,
+      "flips": 51,
+      "sigCi99": false,
+      "identical": 9,
+      "chg": 0.10161897973729762
+     }
+    },
+    "decisions": {
+     "n": 39909,
+     "need": 0.17675211105264477,
+     "chgAll": 0.10907314139667744,
+     "chgAx": 0.0011776792202260141,
+     "chgLn": 0.10759477812022351,
+     "tagTrue": 0.5367962113808915,
+     "tagFlip": 0.10759477812022351,
+     "tagFlipOfTrue": 0.2004387807496616
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 59,
+     "base": 48.625,
+     "n": 800,
+     "delta": 10.375,
+     "se": 2.259691788158693,
+     "flips": 335,
+     "ciLo": 5.946004095208962,
+     "ciHi": 14.803995904791037
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36611,
+     "need": 0.17030400699243398,
+     "chgAll": 0.07014285324082926,
+     "chgAx": 0.002840676299472836,
+     "chgLn": 0.06762994728360329,
+     "tagTrue": 0.5147633224987026,
+     "tagFlip": 0.06762994728360329,
+     "tagFlipOfTrue": 0.13138066433195372
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/CATCH BREATH (a3)",
+   "dataName": "Catch Breath",
+   "tags": [
+    "catch_breath"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 71.125,
+     "base": 61.875,
+     "n": 800,
+     "delta": 9.25,
+     "se": 2.0443877510383732,
+     "flips": 274,
+     "ciLo": 5.243000007964788,
+     "ciHi": 13.256999992035212
+    },
+    "outcome": true,
+    "median": {
+     "cell": 50.13333333333177,
+     "base": 49.69166666666513,
+     "delta": 0.44166666666664156
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 5,
+      "se": 2.628601860056688,
+      "flips": 28,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.010891286970423662
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.423413039110509,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.08168168168168168
+     },
+     "skala": {
+      "n": 200,
+      "delta": 14.499999999999998,
+      "se": 4.33505635117229,
+      "flips": 79,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.10069375619425174
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 10,
+      "se": 4.6484449228752895,
+      "flips": 88,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.15751960085531005
+     }
+    },
+    "decisions": {
+     "n": 39909,
+     "need": 0.17675211105264477,
+     "chgAll": 0.08739883234358164,
+     "chgAx": 0.001804104337367511,
+     "chgLn": 0.0856197850108998,
+     "tagTrue": 0.2463604700694079,
+     "tagFlip": 0.0856197850108998,
+     "tagFlipOfTrue": 0.3475386493083808
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 57.49999999999999,
+     "base": 48.625,
+     "n": 800,
+     "delta": 8.875,
+     "se": 2.3423334789068773,
+     "flips": 357,
+     "ciLo": 4.284026381342521,
+     "ciHi": 13.465973618657479
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36722,
+     "need": 0.17128696694079842,
+     "chgAll": 0.1399433582048908,
+     "chgAx": 0.011736833505800338,
+     "chgLn": 0.1365666358041501,
+     "tagTrue": 0.2689668318719024,
+     "tagFlip": 0.1365666358041501,
+     "tagFlipOfTrue": 0.5077452667814114
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/DIG IN (a4)",
+   "dataName": "Dig In",
+   "tags": [
+    "dig_in"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 71.125,
+     "base": 68.375,
+     "n": 800,
+     "delta": 2.75,
+     "se": 2.2423385064418344,
+     "flips": 322,
+     "ciLo": -1.644983472625995,
+     "ciHi": 7.144983472625995
+    },
+    "outcome": false,
+    "median": {
+     "cell": 50.13333333333177,
+     "base": 48.74166666666518,
+     "delta": 1.3916666666665876
+    },
+    "identical": 1,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -5.5,
+      "se": 4.49441305886748,
+      "flips": 81,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1008193445243805
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 8,
+      "se": 4.3904876619286535,
+      "flips": 78,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.09559559559559559
+     },
+     "skala": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 4.470871667509224,
+      "flips": 81,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.10277502477700694
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 0,
+      "se": 4.53905442524948,
+      "flips": 82,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.08919661948885042
+     }
+    },
+    "decisions": {
+     "n": 39909,
+     "need": 0.17675211105264477,
+     "chgAll": 0.09714600716630334,
+     "chgAx": 0.0015034202811395926,
+     "chgLn": 0.09682026610538977,
+     "tagTrue": 0.8076624320328748,
+     "tagFlip": 0.09682026610538977,
+     "tagFlipOfTrue": 0.1198771445413086
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 57.25,
+     "base": 48.625,
+     "n": 800,
+     "delta": 8.625,
+     "se": 2.5110791737859,
+     "flips": 409,
+     "ciLo": 3.703284819379636,
+     "ciHi": 13.546715180620364
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36899,
+     "need": 0.1747472831242039,
+     "chgAll": 0.2573511477275807,
+     "chgAx": 0.10414916393398195,
+     "chgLn": 0.15331038781538794,
+     "tagTrue": 0.787121602211442,
+     "tagFlip": 0.15331038781538794,
+     "tagFlipOfTrue": 0.19477344718358353
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/UNBREAKABLE (a5)",
+   "dataName": "Unbreakable",
+   "tags": [
+    "fortress"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 71.125,
+     "base": 66.5,
+     "n": 800,
+     "delta": 4.625,
+     "se": 1.8939695402842114,
+     "flips": 231,
+     "ciLo": 0.9128197010429457,
+     "ciHi": 8.337180298957055
+    },
+    "outcome": true,
+    "median": {
+     "cell": 50.13333333333177,
+     "base": 48.94166666666517,
+     "delta": 1.191666666666599
+    },
+    "identical": 18,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3,
+      "se": 3.4662768753930275,
+      "flips": 48,
+      "sigCi99": false,
+      "identical": 10,
+      "chg": 0.05315747402078337
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 3.736113316478476,
+      "flips": 57,
+      "sigCi99": false,
+      "identical": 3,
+      "chg": 0.06136136136136136
+     },
+     "skala": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 3.610252013085787,
+      "flips": 53,
+      "sigCi99": false,
+      "identical": 3,
+      "chg": 0.058771060455896924
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.282575423889991,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.07707972711536504
+     }
+    },
+    "decisions": {
+     "n": 39909,
+     "need": 0.17675211105264477,
+     "chgAll": 0.06251722669072139,
+     "chgAx": 0.0011776792202260141,
+     "chgLn": 0.059886241198727104,
+     "tagTrue": 1,
+     "tagFlip": 0.059886241198727104,
+     "tagFlipOfTrue": 0.059886241198727104
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 54.125,
+     "base": 48.625,
+     "n": 800,
+     "delta": 5.5,
+     "se": 2.4814077114186266,
+     "flips": 396,
+     "ciLo": 0.6364408856194919,
+     "ciHi": 10.363559114380507
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 37136,
+     "need": 0.17489767341663076,
+     "chgAll": 0.15287052994398967,
+     "chgAx": 0.004119991383024558,
+     "chgLn": 0.15128177509694096,
+     "tagTrue": 1,
+     "tagFlip": 0.15128177509694096,
+     "tagFlipOfTrue": 0.15128177509694096
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "skala",
+    "branch": "a",
+    "win": {
+     "rate": 71.125,
+     "base": 48.625,
+     "n": 800,
+     "delta": 22.5,
+     "se": 2.4301892466880903,
+     "flips": 418,
+     "ciLo": 17.736829076491343,
+     "ciHi": 27.263170923508657
+    },
+    "median": {
+     "cell": 50.13333333333177,
+     "base": 46.49999999999864,
+     "delta": 3.633333333333127
+    },
+    "sample": {
+     "median": 50.13333333333177,
+     "over100": 0,
+     "capped": 0,
+     "max": 67.2333333333308
+    }
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/RIPOSTE (b1)",
+   "dataName": "Riposte",
+   "tags": [
+    "riposte"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 64.5,
+     "n": 800,
+     "delta": 1,
+     "se": 2.2090382097793886,
+     "flips": 312,
+     "ciLo": -3.329714891167601,
+     "ciHi": 5.329714891167601
+    },
+    "outcome": false,
+    "median": {
+     "cell": 46.333333333331986,
+     "base": 46.216666666665326,
+     "delta": 0.11666666666666003
+    },
+    "identical": 9,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 4.4483354687131085,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.028032286212914485
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -8,
+      "se": 4.215310690934363,
+      "flips": 72,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.030575342465753424
+     },
+     "skala": {
+      "n": 200,
+      "delta": 6,
+      "se": 4.463137684404299,
+      "flips": 80,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.024879965080750764
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.507810084596948,
+      "flips": 81,
+      "sigCi99": false,
+      "identical": 8,
+      "chg": 0.028972282422721568
+     }
+    },
+    "decisions": {
+     "n": 36224,
+     "need": 0.2808083038869258,
+     "chgAll": 0.028102915194346288,
+     "chgAx": 0.012312279151943464,
+     "chgLn": 0.021946775618374558,
+     "tagTrue": 0.4751821996466431,
+     "tagFlip": 0.021946775618374558,
+     "tagFlipOfTrue": 0.0461860221925289
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 53.75,
+     "base": 48.625,
+     "n": 800,
+     "delta": 5.125,
+     "se": 2.4153333647404747,
+     "flips": 375,
+     "ciLo": 0.3909466051086694,
+     "ciHi": 9.85905339489133
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36350,
+     "need": 0.19730398899587345,
+     "chgAll": 0.19491059147180193,
+     "chgAx": 0.06470426409903714,
+     "chgLn": 0.056588720770288856,
+     "tagTrue": 0.5104264099037139,
+     "tagFlip": 0.056588720770288856,
+     "tagFlipOfTrue": 0.11086558154575832
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/CATCH & PUNISH (b2)",
+   "dataName": "Catch & Punish",
+   "tags": [
+    "catch_punish"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 66,
+     "n": 800,
+     "delta": -0.5,
+     "se": 2.2303936468199264,
+     "flips": 318,
+     "ciLo": -4.871571547767055,
+     "ciHi": 3.871571547767055
+    },
+    "outcome": false,
+    "median": {
+     "cell": 46.333333333331986,
+     "base": 46.19999999999866,
+     "delta": 0.13333333333332575
+    },
+    "identical": 5,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 4.414315451406098,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.027050610820244327
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -10.5,
+      "se": 4.561004694044443,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.032657534246575345
+     },
+     "skala": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.3408483991174585,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.029899607158446095
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 0.5,
+      "se": 4.455108298318768,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.03330671837572716
+     }
+    },
+    "decisions": {
+     "n": 36224,
+     "need": 0.2808083038869258,
+     "chgAll": 0.030697879858657243,
+     "chgAx": 0.014382729681978798,
+     "chgLn": 0.022719743816254415,
+     "tagTrue": 0.22382950530035337,
+     "tagFlip": 0.022719743816254415,
+     "tagFlipOfTrue": 0.10150468672915637
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 55.00000000000001,
+     "base": 48.625,
+     "n": 800,
+     "delta": 6.375,
+     "se": 2.392065360647982,
+     "flips": 369,
+     "ciLo": 1.6865518931299555,
+     "ciHi": 11.063448106870045
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36077,
+     "need": 0.1938631260914156,
+     "chgAll": 0.11857970452088588,
+     "chgAx": 0.03082296199794883,
+     "chgLn": 0.09471408376527982,
+     "tagTrue": 0.24963272999417913,
+     "tagFlip": 0.09471408376527982,
+     "tagFlipOfTrue": 0.3794137241838774
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/HARD MEET (b3)",
+   "dataName": "Hard Meet",
+   "tags": [
+    "hard_meet"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 61,
+     "n": 800,
+     "delta": 4.5,
+     "se": 2.300826972187384,
+     "flips": 340,
+     "ciLo": -0.009620865487272923,
+     "ciHi": 9.009620865487273
+    },
+    "outcome": false,
+    "median": {
+     "cell": 46.333333333331986,
+     "base": 46.54999999999864,
+     "delta": -0.21666666666665435
+    },
+    "identical": 3,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 12.5,
+      "se": 4.959002777042333,
+      "flips": 101,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.039485165794066315
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -1,
+      "se": 4.701651586218506,
+      "flips": 88,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.036931506849315066
+     },
+     "skala": {
+      "n": 200,
+      "delta": 6.5,
+      "se": 4.316469569884481,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.03568310781318201
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 0,
+      "se": 4.369837226594908,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 3,
+      "chg": 0.03456142352001825
+     }
+    },
+    "decisions": {
+     "n": 36224,
+     "need": 0.2808083038869258,
+     "chgAll": 0.036688383392226145,
+     "chgAx": 0.014824425795053003,
+     "chgLn": 0.03323763250883392,
+     "tagTrue": 0.730758613074205,
+     "tagFlip": 0.03323763250883392,
+     "tagFlipOfTrue": 0.04548373691964792
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 55.875,
+     "base": 48.625,
+     "n": 800,
+     "delta": 7.249999999999999,
+     "se": 2.4052605831991234,
+     "flips": 374,
+     "ciLo": 2.535689256929717,
+     "ciHi": 11.964310743070282
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35974,
+     "need": 0.2014788458331017,
+     "chgAll": 0.2334185800856174,
+     "chgAx": 0.03193973425251571,
+     "chgLn": 0.11841885806415745,
+     "tagTrue": 0.7675821426585867,
+     "tagFlip": 0.11841885806415745,
+     "tagFlipOfTrue": 0.1542751602506066
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/RETALIATION (b4)",
+   "dataName": "Retaliation",
+   "tags": [
+    "retaliate_ramp"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 59.375,
+     "n": 800,
+     "delta": 6.125,
+     "se": 2.14463978759212,
+     "flips": 297,
+     "ciLo": 1.9215060163194444,
+     "ciHi": 10.328493983680556
+    },
+    "outcome": true,
+    "median": {
+     "cell": 46.333333333331986,
+     "base": 46.333333333331986,
+     "delta": 0
+    },
+    "identical": 10,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 11,
+      "se": 4.18119744335298,
+      "flips": 72,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.029232111692844676
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -4,
+      "se": 4.530189076112237,
+      "flips": 82,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.03221917808219178
+     },
+     "skala": {
+      "n": 200,
+      "delta": 10,
+      "se": 4.31195603225736,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.029899607158446095
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.068354401682391,
+      "flips": 67,
+      "sigCi99": false,
+      "identical": 7,
+      "chg": 0.028401961902589257
+     }
+    },
+    "decisions": {
+     "n": 36224,
+     "need": 0.2808083038869258,
+     "chgAll": 0.029952517667844524,
+     "chgAx": 0.012367491166077738,
+     "chgLn": 0.020814929328621907,
+     "tagTrue": 0.4751821996466431,
+     "tagFlip": 0.020814929328621907,
+     "tagFlipOfTrue": 0.0438041015511532
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 58.875,
+     "base": 48.625,
+     "n": 800,
+     "delta": 10.25,
+     "se": 2.4497292384418854,
+     "flips": 392,
+     "ciLo": 5.448530692653905,
+     "ciHi": 15.051469307346096
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36148,
+     "need": 0.1878112205377891,
+     "chgAll": 0.09906495518424256,
+     "chgAx": 0.04608830364058869,
+     "chgLn": 0.0756058426468961,
+     "tagTrue": 0.5068330198074582,
+     "tagFlip": 0.0756058426468961,
+     "tagFlipOfTrue": 0.1491730800720485
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/SEA WALL (b5)",
+   "dataName": "Sea Wall",
+   "tags": [
+    "counter_trap"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 64.5,
+     "n": 800,
+     "delta": 1,
+     "se": 2.237187130711748,
+     "flips": 320,
+     "ciLo": -3.3848867761950263,
+     "ciHi": 5.384886776195026
+    },
+    "outcome": false,
+    "median": {
+     "cell": 46.333333333331986,
+     "base": 45.166666666665385,
+     "delta": 1.1666666666666003
+    },
+    "identical": 5,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.500000000000006,
+      "flips": 81,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1556500872600349
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -7.5,
+      "se": 4.4234130391105095,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1496986301369863
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.610317247828853,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1501527717154081
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.337374098501504,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 5,
+      "chg": 0.14554579673776663
+     }
+    },
+    "decisions": {
+     "n": 36224,
+     "need": 0.2808083038869258,
+     "chgAll": 0.15031470848056538,
+     "chgAx": 0.012312279151943464,
+     "chgLn": 0.1388030035335689,
+     "tagTrue": 0.34002318904593637,
+     "tagFlip": 0.1388030035335689,
+     "tagFlipOfTrue": 0.40821628643338476
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 56.25,
+     "base": 48.625,
+     "n": 800,
+     "delta": 7.625,
+     "se": 2.4457465760259542,
+     "flips": 387,
+     "ciLo": 2.83133671098913,
+     "ciHi": 12.418663289010869
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36704,
+     "need": 0.19627288578901483,
+     "chgAll": 0.19774411508282477,
+     "chgAx": 0.05135680034873583,
+     "chgLn": 0.1502561028770706,
+     "tagTrue": 0.34612031386224934,
+     "tagFlip": 0.1502561028770706,
+     "tagFlipOfTrue": 0.4341152392947103
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "skala",
+    "branch": "b",
+    "win": {
+     "rate": 65.5,
+     "base": 48.625,
+     "n": 800,
+     "delta": 16.875,
+     "se": 2.5271329545479815,
+     "flips": 431,
+     "ciLo": 11.921819409085955,
+     "ciHi": 21.828180590914045
+    },
+    "median": {
+     "cell": 46.333333333331986,
+     "base": 46.49999999999864,
+     "delta": -0.1666666666666572
+    },
+    "sample": {
+     "median": 46.333333333331986,
+     "over100": 0,
+     "capped": 0,
+     "max": 63.91666666666432
+    }
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/BODY SHOVE (c1)",
+   "dataName": "Body Shove",
+   "tags": [
+    "body_shove"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.25,
+     "base": 67.875,
+     "n": 800,
+     "delta": 0.375,
+     "se": 2.3164426610651123,
+     "flips": 343,
+     "ciLo": -4.16522761568762,
+     "ciHi": 4.91522761568762
+    },
+    "outcome": false,
+    "median": {
+     "cell": 45.483333333332034,
+     "base": 45.949999999998674,
+     "delta": -0.46666666666664014
+    },
+    "identical": 1,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.610317247828853,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.16294290227939517
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -8,
+      "se": 5.030559875731188,
+      "flips": 102,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.3221372353397628
+     },
+     "skala": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.0373569641885,
+      "flips": 65,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.17984102450872158
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.77837991089703,
+      "flips": 91,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1831277965731747
+     }
+    },
+    "decisions": {
+     "n": 36104,
+     "need": 0.16693441169953468,
+     "chgAll": 0.21208176379348548,
+     "chgAx": 0.001274097052958121,
+     "chgLn": 0.18322069576778197,
+     "tagTrue": 0.8824506979836029,
+     "tagFlip": 0.18322069576778197,
+     "tagFlipOfTrue": 0.2076271186440678
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 52.25,
+     "base": 48.625,
+     "n": 800,
+     "delta": 3.6249999999999996,
+     "se": 2.4508585441134856,
+     "flips": 385,
+     "ciLo": -1.178682746462432,
+     "ciHi": 8.428682746462432
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36530,
+     "need": 0.17240624144538735,
+     "chgAll": 0.2502874349849439,
+     "chgAx": 0.024938406788940597,
+     "chgLn": 0.13837941418012592,
+     "tagTrue": 0.7799616753353408,
+     "tagFlip": 0.13837941418012592,
+     "tagFlipOfTrue": 0.17741822265899201
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/HEAVY SLAM (c2)",
+   "dataName": "Heavy Slam",
+   "tags": [
+    "heavy_slam"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.25,
+     "base": 62.625,
+     "n": 800,
+     "delta": 5.625,
+     "se": 2.3146860333620327,
+     "flips": 345,
+     "ciLo": 1.0882153746104164,
+     "ciHi": 10.161784625389583
+    },
+    "outcome": true,
+    "median": {
+     "cell": 45.483333333332034,
+     "base": 46.099999999998666,
+     "delta": -0.6166666666666316
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 4.35702517111257,
+      "flips": 77,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -1.5,
+      "se": 5.08606827050732,
+      "flips": 103,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     },
+     "skala": {
+      "n": 200,
+      "delta": 13,
+      "se": 4.271560740031554,
+      "flips": 76,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.725505476671278,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0
+     }
+    },
+    "decisions": {
+     "n": 36104,
+     "need": 0.16693441169953468,
+     "chgAll": 0,
+     "chgAx": 0,
+     "chgLn": 0,
+     "tagTrue": 0.8824506979836029,
+     "tagFlip": 0,
+     "tagFlipOfTrue": 0
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 54.125,
+     "base": 48.625,
+     "n": 800,
+     "delta": 5.5,
+     "se": 2.456059401710568,
+     "flips": 388,
+     "ciLo": 0.6861235726472863,
+     "ciHi": 10.313876427352714
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35941,
+     "need": 0.16312846053253943,
+     "chgAll": 0.15956706825074427,
+     "chgAx": 0.007901839125233021,
+     "chgLn": 0.1461840238168109,
+     "tagTrue": 0.7565732728638602,
+     "tagFlip": 0.1461840238168109,
+     "tagFlipOfTrue": 0.1932185937040306
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/NO WAY AROUND (c3)",
+   "dataName": "No Way Around",
+   "tags": [
+    "no_way_around"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.25,
+     "base": 70.375,
+     "n": 800,
+     "delta": -2.125,
+     "se": 2.1614972951512472,
+     "flips": 299,
+     "ciLo": -6.3615346984964445,
+     "ciHi": 2.1115346984964445
+    },
+    "outcome": false,
+    "median": {
+     "cell": 45.483333333332034,
+     "base": 45.341666666665375,
+     "delta": 0.1416666666666586
+    },
+    "identical": 13,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -1,
+      "se": 4.482797941792013,
+      "flips": 80,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.060708643647032275
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -7.000000000000001,
+      "se": 4.4558132093686265,
+      "flips": 80,
+      "sigCi99": false,
+      "identical": 11,
+      "chg": 0.04578206407271921
+     },
+     "skala": {
+      "n": 200,
+      "delta": -2.5,
+      "se": 3.6448835206899224,
+      "flips": 53,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.08710532126297196
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.646282352428923,
+      "flips": 86,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.072247080650442
+     }
+    },
+    "decisions": {
+     "n": 36104,
+     "need": 0.16693441169953468,
+     "chgAll": 0.06653002437403058,
+     "chgAx": 0,
+     "chgLn": 0.06653002437403058,
+     "tagTrue": 0.20673609572346555,
+     "tagFlip": 0.06653002437403058,
+     "tagFlipOfTrue": 0.3218113612004287
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 49.75,
+     "base": 48.625,
+     "n": 800,
+     "delta": 1.125,
+     "se": 2.322883488980707,
+     "flips": 345,
+     "ciLo": -3.4278516384021858,
+     "ciHi": 5.677851638402186
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36657,
+     "need": 0.17183621136481436,
+     "chgAll": 0.1933327877349483,
+     "chgAx": 0.11269334642769457,
+     "chgLn": 0.08233079630084295,
+     "tagTrue": 0.14769348282729083,
+     "tagFlip": 0.08233079630084295,
+     "tagFlipOfTrue": 0.5574436645733284
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/PIN (c4)",
+   "dataName": "Pin",
+   "tags": [
+    "pin"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.25,
+     "base": 72.375,
+     "n": 800,
+     "delta": -4.125,
+     "se": 2.2151159997538348,
+     "flips": 315,
+     "ciLo": -8.466627359517517,
+     "ciHi": 0.2166273595175161
+    },
+    "outcome": false,
+    "median": {
+     "cell": 45.483333333332034,
+     "base": 45.249999999998714,
+     "delta": 0.23333333333332007
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -8.5,
+      "se": 4.298971479190628,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.3332204919882645
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -7.5,
+      "se": 4.908074569512926,
+      "flips": 97,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.15652366699922404
+     },
+     "skala": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.007530599700726,
+      "flips": 64,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.2570103775667918
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -2.5,
+      "se": 4.451723171534802,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.22438066135545126
+     }
+    },
+    "decisions": {
+     "n": 36104,
+     "need": 0.16693441169953468,
+     "chgAll": 0.24232771992023044,
+     "chgAx": 0.001274097052958121,
+     "chgLn": 0.24241081320629293,
+     "tagTrue": 0.8824506979836029,
+     "tagFlip": 0.24241081320629293,
+     "tagFlipOfTrue": 0.27470182046453234
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 53,
+     "base": 48.625,
+     "n": 800,
+     "delta": 4.375,
+     "se": 2.512387177648584,
+     "flips": 405,
+     "ciLo": -0.5492788681912248,
+     "ciHi": 9.299278868191225
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36748,
+     "need": 0.17636333950146946,
+     "chgAll": 0.2715794056819419,
+     "chgAx": 0.1157341896157614,
+     "chgLn": 0.15619897681506476,
+     "tagTrue": 0.7879884619571134,
+     "tagFlip": 0.15619897681506476,
+     "tagFlipOfTrue": 0.19822495424249748
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "skala",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/CLINCH (c5)",
+   "dataName": "Clinch",
+   "tags": [
+    "clinch"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.25,
+     "base": 62.25000000000001,
+     "n": 800,
+     "delta": 6,
+     "se": 2.2897169048553843,
+     "flips": 338,
+     "ciLo": 1.5121548664834465,
+     "ciHi": 10.487845133516554
+    },
+    "outcome": true,
+    "median": {
+     "cell": 45.483333333332034,
+     "base": 46.49166666666531,
+     "delta": -1.008333333333276
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.329256554139271,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.1518844504626495
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -4.5,
+      "se": 4.823388370936399,
+      "flips": 93,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.3018512360048775
+     },
+     "skala": {
+      "n": 200,
+      "delta": 16,
+      "se": 4.220076447901223,
+      "flips": 76,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.14252594391697945
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 8,
+      "se": 4.826642975408508,
+      "flips": 94,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.15366146458583432
+     }
+    },
+    "decisions": {
+     "n": 36104,
+     "need": 0.16693441169953468,
+     "chgAll": 0.18745845335696876,
+     "chgAx": 0.0008309328606248615,
+     "chgLn": 0.18322069576778197,
+     "tagTrue": 0.8824506979836029,
+     "tagFlip": 0.18322069576778197,
+     "tagFlipOfTrue": 0.2076271186440678
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 55.625,
+     "base": 48.625,
+     "n": 800,
+     "delta": 7.000000000000001,
+     "se": 2.501814110261374,
+     "flips": 404,
+     "ciLo": 2.0964443438877085,
+     "ciHi": 11.903555656112292
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 36309,
+     "need": 0.17061885482938113,
+     "chgAll": 0.24718389380043515,
+     "chgAx": 0.014486766366465615,
+     "chgLn": 0.23561651381200252,
+     "tagTrue": 0.7685146933267234,
+     "tagFlip": 0.23561651381200252,
+     "tagFlipOfTrue": 0.30658686926605505
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "skala",
+    "branch": "c",
+    "win": {
+     "rate": 68.25,
+     "base": 48.625,
+     "n": 800,
+     "delta": 19.625,
+     "se": 2.413032869292371,
+     "flips": 403,
+     "ciLo": 14.895455576186954,
+     "ciHi": 24.354544423813046
+    },
+    "median": {
+     "cell": 45.483333333332034,
+     "base": 46.49999999999864,
+     "delta": -1.0166666666666089
+    },
+    "sample": {
+     "median": 45.483333333332034,
+     "over100": 0,
+     "capped": 0,
+     "max": 57.849999999998
+    }
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 1,
+   "label": "BODY/HARD COUNTER (a1)",
+   "dataName": "Hard Counter",
+   "tags": [
+    "hard_counter"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 65,
+     "n": 800,
+     "delta": 0.5,
+     "se": 2.278964589347397,
+     "flips": 332,
+     "ciLo": -3.966770595120898,
+     "ciHi": 4.966770595120898
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.358333333332155,
+     "base": 44.116666666665445,
+     "delta": -0.7583333333332902
+    },
+    "identical": 5,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.646282352428923,
+      "flips": 86,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.15724703737465817
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -4.5,
+      "se": 4.270825417731771,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.0937386459973356
+     },
+     "skala": {
+      "n": 200,
+      "delta": -2.5,
+      "se": 4.617940762333585,
+      "flips": 85,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.08504228942185146
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.675930025999133,
+      "flips": 88,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.07624633431085044
+     }
+    },
+    "decisions": {
+     "n": 33507,
+     "need": 0.2474109887486197,
+     "chgAll": 0.10403796221685022,
+     "chgAx": 0.047034947921329874,
+     "chgLn": 0.0825499149431462,
+     "tagTrue": 0.42847763153967827,
+     "tagFlip": 0.0825499149431462,
+     "tagFlipOfTrue": 0.192658633419238
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 54.125,
+     "base": 49.625,
+     "n": 800,
+     "delta": 4.5,
+     "se": 2.2106664849960738,
+     "flips": 314,
+     "ciLo": 0.16709368940769576,
+     "ciHi": 8.832906310592303
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34854,
+     "need": 0.2401159120904344,
+     "chgAll": 0.06383772307339186,
+     "chgAx": 0.0280312159293051,
+     "chgLn": 0.05029551844838469,
+     "tagTrue": 0.445859872611465,
+     "tagFlip": 0.05029551844838469,
+     "tagFlipOfTrue": 0.1128056628056628
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 2,
+   "label": "BODY/SLIP COUNTER (a2)",
+   "dataName": "Slip Counter",
+   "tags": [
+    "slip_counter"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 61.12499999999999,
+     "n": 800,
+     "delta": 4.375,
+     "se": 2.263427290111618,
+     "flips": 329,
+     "ciLo": -0.061317488618771065,
+     "ciHi": 8.811317488618771
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.358333333332155,
+     "base": 44.71666666666541,
+     "delta": -1.3583333333332561
+    },
+    "identical": 47,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -2.5,
+      "se": 3.5752850678768113,
+      "flips": 51,
+      "sigCi99": false,
+      "identical": 44,
+      "chg": 0.028258887876025523
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 10.5,
+      "se": 4.723378188070234,
+      "flips": 91,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.116991643454039
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.926469374969527,
+      "flips": 97,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.13926543853551152
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 5,
+      "se": 4.74209206847881,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.15262017085298993
+     }
+    },
+    "decisions": {
+     "n": 33507,
+     "need": 0.2474109887486197,
+     "chgAll": 0.10782821499985078,
+     "chgAx": 0,
+     "chgLn": 0.10782821499985078,
+     "tagTrue": 0.32527531560569434,
+     "tagFlip": 0.10782821499985078,
+     "tagFlipOfTrue": 0.3314983025965685
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 60.75000000000001,
+     "base": 49.625,
+     "n": 800,
+     "delta": 11.125,
+     "se": 2.3569815806374788,
+     "flips": 365,
+     "ciLo": 6.505316101950542,
+     "ciHi": 15.744683898049459
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34854,
+     "need": 0.22097894072416366,
+     "chgAll": 0.11622769266081368,
+     "chgAx": 0.00034429333792391115,
+     "chgLn": 0.11611292821483904,
+     "tagTrue": 0.3123027486084811,
+     "tagFlip": 0.11611292821483904,
+     "tagFlipOfTrue": 0.37179604960955437
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 3,
+   "label": "BODY/ANSWER THE SWING (a3)",
+   "dataName": "Punish Aggression",
+   "tags": [
+    "punish_aggression"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 65.25,
+     "n": 800,
+     "delta": 0.25,
+     "se": 2.3265721668496586,
+     "flips": 346,
+     "ciLo": -4.310081447025331,
+     "ciHi": 4.810081447025331
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.358333333332155,
+     "base": 43.98333333333212,
+     "delta": -0.6249999999999645
+    },
+    "identical": 6,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 6.5,
+      "se": 4.543342359870647,
+      "flips": 83,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.15895624430264357
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -4.5,
+      "se": 4.38690949010484,
+      "flips": 77,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.09180089620927698
+     },
+     "skala": {
+      "n": 200,
+      "delta": -3.5000000000000004,
+      "se": 4.981246236671277,
+      "flips": 99,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.08423125941374117
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.672032689016222,
+      "flips": 87,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.07586382761698329
+     }
+    },
+    "decisions": {
+     "n": 33507,
+     "need": 0.2474109887486197,
+     "chgAll": 0.10370967260572418,
+     "chgAx": 0.04590085653743994,
+     "chgLn": 0.0825499149431462,
+     "tagTrue": 0.42847763153967827,
+     "tagFlip": 0.0825499149431462,
+     "tagFlipOfTrue": 0.192658633419238
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 53.125,
+     "base": 49.625,
+     "n": 800,
+     "delta": 3.5000000000000004,
+     "se": 2.2270242581318804,
+     "flips": 318,
+     "ciLo": -0.8649675459384851,
+     "ciHi": 7.864967545938486
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34618,
+     "need": 0.2390374949448264,
+     "chgAll": 0.059882142238142005,
+     "chgAx": 0.019411866658963543,
+     "chgLn": 0.05266046565370616,
+     "tagTrue": 0.4479750418857242,
+     "tagFlip": 0.05266046565370616,
+     "tagFlipOfTrue": 0.11755223110652566
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 4,
+   "label": "BODY/PUNISH WHIFF (a4)",
+   "dataName": "Punish Whiff",
+   "tags": [
+    "punish_whiff"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 66.625,
+     "n": 800,
+     "delta": -1.125,
+     "se": 2.3228834889807053,
+     "flips": 345,
+     "ciLo": -5.677851638402182,
+     "ciHi": 3.427851638402182
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.358333333332155,
+     "base": 43.766666666665465,
+     "delta": -0.4083333333333101
+    },
+    "identical": 7,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 5.232172411217307,
+      "flips": 109,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.17217411121239745
+     },
+     "nalet": {
+      "n": 200,
+      "delta": -6.5,
+      "se": 4.316469569884481,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.11045173791934117
+     },
+     "skala": {
+      "n": 200,
+      "delta": -3,
+      "se": 4.643577723087208,
+      "flips": 86,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.10578148534352914
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 4.333897012687646,
+      "flips": 75,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.09129159760295805
+     }
+    },
+    "decisions": {
+     "n": 33507,
+     "need": 0.2474109887486197,
+     "chgAll": 0.12092995493478975,
+     "chgAx": 0.04590085653743994,
+     "chgLn": 0.0825499149431462,
+     "tagTrue": 0.198436147670636,
+     "tagFlip": 0.0825499149431462,
+     "tagFlipOfTrue": 0.4160024063768987
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 54.25,
+     "base": 49.625,
+     "n": 800,
+     "delta": 4.625,
+     "se": 2.220935030400844,
+     "flips": 317,
+     "ciLo": 0.27196734041434567,
+     "ciHi": 8.978032659585654
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34441,
+     "need": 0.23782700850730235,
+     "chgAll": 0.06704218808977672,
+     "chgAx": 0.024941203797799134,
+     "chgLn": 0.05911558897825266,
+     "tagTrue": 0.21419238698063356,
+     "tagFlip": 0.05911558897825266,
+     "tagFlipOfTrue": 0.2759929510641182
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "a",
+   "idx": 5,
+   "label": "BODY/PERFECT TRAP (a5)",
+   "dataName": "Perfect Trap",
+   "tags": [
+    "perfect_trap"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 65.5,
+     "base": 61.25000000000001,
+     "n": 800,
+     "delta": 4.25,
+     "se": 2.2946140071485317,
+     "flips": 338,
+     "ciLo": -0.24744345401112167,
+     "ciHi": 8.747443454011123
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.358333333332155,
+     "base": 44.84999999999874,
+     "delta": -1.4916666666665819
+    },
+    "identical": 43,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": -2,
+      "se": 3.6118175660812706,
+      "flips": 52,
+      "sigCi99": false,
+      "identical": 40,
+      "chg": 0.028258887876025523
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 9,
+      "se": 4.869657877017233,
+      "flips": 96,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.116991643454039
+     },
+     "skala": {
+      "n": 200,
+      "delta": 5,
+      "se": 5.050001243842826,
+      "flips": 102,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.13926543853551152
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 5,
+      "se": 4.688808443849626,
+      "flips": 88,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.15262017085298993
+     }
+    },
+    "decisions": {
+     "n": 33507,
+     "need": 0.2474109887486197,
+     "chgAll": 0.10782821499985078,
+     "chgAx": 0,
+     "chgLn": 0.10782821499985078,
+     "tagTrue": 0.32527531560569434,
+     "tagFlip": 0.10782821499985078,
+     "tagFlipOfTrue": 0.3314983025965685
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 60.75000000000001,
+     "base": 49.625,
+     "n": 800,
+     "delta": 11.125,
+     "se": 2.316814084713948,
+     "flips": 353,
+     "ciLo": 6.584044393960663,
+     "ciHi": 15.665955606039336
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34778,
+     "need": 0.22091552130657313,
+     "chgAll": 0.11668296049226523,
+     "chgAx": 0,
+     "chgLn": 0.11668296049226523,
+     "tagTrue": 0.31390534245787566,
+     "tagFlip": 0.11668296049226523,
+     "tagFlipOfTrue": 0.37171384079875425
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "zasada",
+    "branch": "a",
+    "win": {
+     "rate": 65.5,
+     "base": 49.625,
+     "n": 800,
+     "delta": 15.875,
+     "se": 2.402148697876217,
+     "flips": 389,
+     "ciLo": 11.166788552162615,
+     "ciHi": 20.583211447837385
+    },
+    "median": {
+     "cell": 43.358333333332155,
+     "base": 45.5249999999987,
+     "delta": -2.1666666666665435
+    },
+    "sample": {
+     "median": 43.358333333332155,
+     "over100": 0,
+     "capped": 0,
+     "max": 60.61666666666451
+    }
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 1,
+   "label": "MIND/LONG SLIP (b1)",
+   "dataName": "Long Slip",
+   "tags": [
+    "long_slip"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.625,
+     "base": 60.75000000000001,
+     "n": 800,
+     "delta": 7.875,
+     "se": 2.272291707892539,
+     "flips": 335,
+     "ciLo": 3.4213082525306238,
+     "ciHi": 12.328691747469376
+    },
+    "outcome": true,
+    "median": {
+     "cell": 49.066666666665164,
+     "base": 48.64166666666519,
+     "delta": 0.42499999999997584
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 6.5,
+      "se": 4.257862959857284,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.37829118534707046
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 12,
+      "se": 4.624601028560928,
+      "flips": 88,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.1955723321771067
+     },
+     "skala": {
+      "n": 200,
+      "delta": 5,
+      "se": 4.580382025277741,
+      "flips": 84,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.17182583984573227
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 8,
+      "se": 4.721382984511229,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.13051643192488263
+     }
+    },
+    "decisions": {
+     "n": 38849,
+     "need": 0.2481144945815851,
+     "chgAll": 0.21869288784782104,
+     "chgAx": 0.013925712373548869,
+     "chgLn": 0.19923292748848104,
+     "tagTrue": 0.47591958608973206,
+     "tagFlip": 0.19923292748848104,
+     "tagFlipOfTrue": 0.41862729190329384
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 48.5,
+     "base": 49.625,
+     "n": 800,
+     "delta": -1.125,
+     "se": 2.4346873715112185,
+     "flips": 379,
+     "ciLo": -5.896987248161988,
+     "ciHi": 3.646987248161988
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35296,
+     "need": 0.2392905711695376,
+     "chgAll": 0.2260312783318223,
+     "chgAx": 0.05060063463281958,
+     "chgLn": 0.19489460562103356,
+     "tagTrue": 0.46682343608340887,
+     "tagFlip": 0.19489460562103356,
+     "tagFlipOfTrue": 0.41749104812769317
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 2,
+   "label": "MIND/HARD TO REACH (b2)",
+   "dataName": "Hard to Reach",
+   "tags": [
+    "hard_to_reach"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.625,
+     "base": 64.625,
+     "n": 800,
+     "delta": 4,
+     "se": 2.1179251659964167,
+     "flips": 288,
+     "ciLo": -0.1511333253529763,
+     "ciHi": 8.151133325352976
+    },
+    "outcome": false,
+    "median": {
+     "cell": 49.066666666665164,
+     "base": 48.316666666665206,
+     "delta": 0.7499999999999574
+    },
+    "identical": 57,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 5,
+      "se": 3.4546596600583053,
+      "flips": 48,
+      "sigCi99": false,
+      "identical": 30,
+      "chg": 0.05983973358309918
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.224242074683652,
+      "flips": 72,
+      "sigCi99": false,
+      "identical": 13,
+      "chg": 0.0634564374617425
+     },
+     "skala": {
+      "n": 200,
+      "delta": 1.5,
+      "se": 4.453980208587873,
+      "flips": 79,
+      "sigCi99": false,
+      "identical": 10,
+      "chg": 0.06759362630670862
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2.5,
+      "se": 4.725505476671276,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.06207616066770996
+     }
+    },
+    "decisions": {
+     "n": 38849,
+     "need": 0.2481144945815851,
+     "chgAll": 0.06327061185616104,
+     "chgAx": 0.012818862776390641,
+     "chgLn": 0.04527787073026333,
+     "tagTrue": 0.383561996447785,
+     "tagFlip": 0.04527787073026333,
+     "tagFlipOfTrue": 0.118045768740353
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 48.375,
+     "base": 49.625,
+     "n": 800,
+     "delta": -1.25,
+     "se": 2.372779905638264,
+     "flips": 360,
+     "ciLo": -5.900648615050997,
+     "ciHi": 3.400648615050997
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35429,
+     "need": 0.2339044285754608,
+     "chgAll": 0.20677975669649157,
+     "chgAx": 0.032995568601992716,
+     "chgLn": 0.1829574642242231,
+     "tagTrue": 0.3326371051963081,
+     "tagFlip": 0.1829574642242231,
+     "tagFlipOfTrue": 0.5500212134068732
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 3,
+   "label": "MIND/LONG GAME (b3)",
+   "dataName": "Run 'Em Ragged",
+   "tags": [
+    "exhaust"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.625,
+     "base": 65.5,
+     "n": 800,
+     "delta": 3.125,
+     "se": 1.994276659090017,
+     "flips": 255,
+     "ciLo": -0.783782251816433,
+     "ciHi": 7.033782251816433
+    },
+    "outcome": false,
+    "median": {
+     "cell": 49.066666666665164,
+     "base": 48.724999999998516,
+     "delta": 0.34166666666664725
+    },
+    "identical": 143,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 3.038901877836072,
+      "flips": 37,
+      "sigCi99": false,
+      "identical": 69,
+      "chg": 0.018836507440940786
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 3.703692304095623,
+      "flips": 55,
+      "sigCi99": false,
+      "identical": 33,
+      "chg": 0.02550499897980004
+     },
+     "skala": {
+      "n": 200,
+      "delta": 0,
+      "se": 4.369837226594908,
+      "flips": 76,
+      "sigCi99": false,
+      "identical": 30,
+      "chg": 0.030041611691870498
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.664497581566775,
+      "flips": 87,
+      "sigCi99": false,
+      "identical": 11,
+      "chg": 0.03202921231090245
+     }
+    },
+    "decisions": {
+     "n": 38849,
+     "need": 0.2481144945815851,
+     "chgAll": 0.026615871708409483,
+     "chgAx": 0.011660531802620402,
+     "chgLn": 0.011814975932456433,
+     "tagTrue": 0.383561996447785,
+     "tagFlip": 0.011814975932456433,
+     "tagFlipOfTrue": 0.03080330179182605
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 52,
+     "base": 49.625,
+     "n": 800,
+     "delta": 2.375,
+     "se": 2.407710646432872,
+     "flips": 371,
+     "ciLo": -2.3441128670084286,
+     "ciHi": 7.094112867008429
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35471,
+     "need": 0.22951143187392517,
+     "chgAll": 0.06298102675424995,
+     "chgAx": 0.021482337684305488,
+     "chgLn": 0.050266414817738435,
+     "tagTrue": 0.33083363874714555,
+     "tagFlip": 0.050266414817738435,
+     "tagFlipOfTrue": 0.15193864507882404
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 4,
+   "label": "MIND/OPEN WINDOW (b4)",
+   "dataName": "Open Window",
+   "tags": [
+    "open_window"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.625,
+     "base": 60.75000000000001,
+     "n": 800,
+     "delta": 7.875,
+     "se": 2.3864669491476778,
+     "flips": 369,
+     "ciLo": 3.1975247796705517,
+     "ciHi": 12.552475220329448
+    },
+    "outcome": true,
+    "median": {
+     "cell": 49.066666666665164,
+     "base": 49.54999999999847,
+     "delta": -0.48333333333330586
+    },
+    "identical": 0,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 4.470871667509225,
+      "flips": 81,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.05338744926631283
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 9,
+      "se": 4.658703423479509,
+      "flips": 88,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.046419098143236075
+     },
+     "skala": {
+      "n": 200,
+      "delta": 5.5,
+      "se": 4.870044833820013,
+      "flips": 95,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.05480564295138537
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 8.5,
+      "se": 5.100867006804392,
+      "flips": 105,
+      "sigCi99": false,
+      "identical": 0,
+      "chg": 0.04507042253521127
+     }
+    },
+    "decisions": {
+     "n": 38849,
+     "need": 0.2481144945815851,
+     "chgAll": 0.04993693531365029,
+     "chgAx": 0.027156426162835593,
+     "chgLn": 0.02350124842338284,
+     "tagTrue": 0.2343689670261783,
+     "tagFlip": 0.02350124842338284,
+     "tagFlipOfTrue": 0.10027457440966502
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 57.75,
+     "base": 49.625,
+     "n": 800,
+     "delta": 8.125,
+     "se": 2.114223946835275,
+     "flips": 291,
+     "ciLo": 3.9811210642028607,
+     "ciHi": 12.26887893579714
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34863,
+     "need": 0.22849439233571409,
+     "chgAll": 0.05203224048418094,
+     "chgAx": 0.009953245561196684,
+     "chgLn": 0.04210767862777156,
+     "tagTrue": 0.22456472477985256,
+     "tagFlip": 0.04210767862777156,
+     "tagFlipOfTrue": 0.18750798313960912
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "b",
+   "idx": 5,
+   "label": "MIND/PHANTOM (b5)",
+   "dataName": "Phantom",
+   "tags": [
+    "phantom"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68.625,
+     "base": 56.99999999999999,
+     "n": 800,
+     "delta": 11.625,
+     "se": 2.2520632661947344,
+     "flips": 335,
+     "ciLo": 7.210955998258321,
+     "ciHi": 16.03904400174168
+    },
+    "outcome": true,
+    "median": {
+     "cell": 49.066666666665164,
+     "base": 48.3916666666652,
+     "delta": 0.6749999999999616
+    },
+    "identical": 55,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 12,
+      "se": 4.044973305873123,
+      "flips": 68,
+      "sigCi99": true,
+      "identical": 31,
+      "chg": 0.013216775939223645
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 13,
+      "se": 4.665170853835629,
+      "flips": 90,
+      "sigCi99": true,
+      "identical": 12,
+      "chg": 0.025198938992042442
+     },
+     "skala": {
+      "n": 200,
+      "delta": 11,
+      "se": 4.527415094420428,
+      "flips": 84,
+      "sigCi99": false,
+      "identical": 10,
+      "chg": 0.027504313407084136
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 10.5,
+      "se": 4.7762761719096325,
+      "flips": 93,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.027125717266562335
+     }
+    },
+    "decisions": {
+     "n": 38849,
+     "need": 0.2481144945815851,
+     "chgAll": 0.0232953229169348,
+     "chgAx": 0.014440526139668975,
+     "chgLn": 0.007773687868413601,
+     "tagTrue": 0.15150969136914721,
+     "tagFlip": 0.007773687868413601,
+     "tagFlipOfTrue": 0.05130818892286782
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 53.5,
+     "base": 49.625,
+     "n": 800,
+     "delta": 3.875,
+     "se": 2.443986867499625,
+     "flips": 383,
+     "ciLo": -0.9152142602992646,
+     "ciHi": 8.665214260299265
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35741,
+     "need": 0.23516409725525306,
+     "chgAll": 0.12324781063764305,
+     "chgAx": 0.03550544192943678,
+     "chgLn": 0.09622002741949022,
+     "tagTrue": 0.17791891665034554,
+     "tagFlip": 0.09622002741949022,
+     "tagFlipOfTrue": 0.5408083031923259
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "zasada",
+    "branch": "b",
+    "win": {
+     "rate": 68.625,
+     "base": 49.625,
+     "n": 800,
+     "delta": 19,
+     "se": 2.3768807190182053,
+     "flips": 390,
+     "ciLo": 14.341313790724318,
+     "ciHi": 23.658686209275682
+    },
+    "median": {
+     "cell": 49.066666666665164,
+     "base": 45.5249999999987,
+     "delta": 3.5416666666664653
+    },
+    "sample": {
+     "median": 49.066666666665164,
+     "over100": 0,
+     "capped": 0,
+     "max": 73.33333333333046
+    }
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 1,
+   "label": "WILL/LOADED HIT (c1)",
+   "dataName": "Loaded Hit",
+   "tags": [
+    "loaded_hit"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 64.625,
+     "n": 800,
+     "delta": 3.375,
+     "se": 1.9054987209309038,
+     "flips": 233,
+     "ciLo": -0.3597774930245712,
+     "ciHi": 7.109777493024572
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.1916666666655,
+     "base": 43.63333333333214,
+     "delta": -0.44166666666664156
+    },
+    "identical": 104,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 3.2103788971578653,
+      "flips": 42,
+      "sigCi99": false,
+      "identical": 60,
+      "chg": 0.019523809523809523
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 3.6102520130857867,
+      "flips": 53,
+      "sigCi99": false,
+      "identical": 18,
+      "chg": 0.04220702664465928
+     },
+     "skala": {
+      "n": 200,
+      "delta": -3,
+      "se": 3.8115138975156317,
+      "flips": 58,
+      "sigCi99": false,
+      "identical": 14,
+      "chg": 0.0367170626349892
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.481116156723706,
+      "flips": 80,
+      "sigCi99": false,
+      "identical": 12,
+      "chg": 0.04181968961023575
+     }
+    },
+    "decisions": {
+     "n": 34120,
+     "need": 0.20879249706916764,
+     "chgAll": 0.03511137162954279,
+     "chgAx": 0.027491207502930833,
+     "chgLn": 0.008733880422039859,
+     "tagTrue": 0.0813012895662368,
+     "tagFlip": 0.008733880422039859,
+     "tagFlipOfTrue": 0.10742609949531363
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 57.25,
+     "base": 49.625,
+     "n": 800,
+     "delta": 7.625,
+     "se": 2.4393415510652545,
+     "flips": 385,
+     "ciLo": 2.8438905599121016,
+     "ciHi": 12.4061094400879
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34815,
+     "need": 0.22019244578486286,
+     "chgAll": 0.06548901335631194,
+     "chgAx": 0.00904782421370099,
+     "chgLn": 0.05839437024271148,
+     "tagTrue": 0.17121930202498922,
+     "tagFlip": 0.05839437024271148,
+     "tagFlipOfTrue": 0.3410501593692334
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": false
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 2,
+   "label": "WILL/LONG CHARGE (c2)",
+   "dataName": "Long Charge",
+   "tags": [
+    "long_charge"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 64,
+     "n": 800,
+     "delta": 4,
+     "se": 2.019615943861821,
+     "flips": 262,
+     "ciLo": 0.04155275003083059,
+     "ciHi": 7.958447249969169
+    },
+    "outcome": true,
+    "median": {
+     "cell": 43.1916666666655,
+     "base": 42.983333333332176,
+     "delta": 0.2083333333333215
+    },
+    "identical": 70,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 11.5,
+      "se": 3.485612928515895,
+      "flips": 51,
+      "sigCi99": true,
+      "identical": 43,
+      "chg": 0.012261904761904762
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 8,
+      "se": 4.032531033068848,
+      "flips": 66,
+      "sigCi99": false,
+      "identical": 9,
+      "chg": 0.03572270690874794
+     },
+     "skala": {
+      "n": 200,
+      "delta": -3,
+      "se": 3.745013434974663,
+      "flips": 56,
+      "sigCi99": false,
+      "identical": 13,
+      "chg": 0.023530749119017848
+     },
+     "zasada": {
+      "n": 200,
+      "delta": -0.5,
+      "se": 4.728694615199747,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 5,
+      "chg": 0.04928326027721834
+     }
+    },
+    "decisions": {
+     "n": 34120,
+     "need": 0.20879249706916764,
+     "chgAll": 0.03015826494724502,
+     "chgAx": 0.013042203985932005,
+     "chgLn": 0.01626611957796014,
+     "tagTrue": 0.0813012895662368,
+     "tagFlip": 0.01626611957796014,
+     "tagFlipOfTrue": 0.20007209805335258
+    },
+    "behByDecision": false
+   },
+   "solo": {
+    "win": {
+     "rate": 51.24999999999999,
+     "base": 49.625,
+     "n": 800,
+     "delta": 1.625,
+     "se": 2.4977735705548243,
+     "flips": 399,
+     "ciLo": -3.2706361982874554,
+     "ciHi": 6.520636198287455
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 35881,
+     "need": 0.22117555252083276,
+     "chgAll": 0.10529249463504362,
+     "chgAx": 0.008388840890722109,
+     "chgLn": 0.09319695660656058,
+     "tagTrue": 0.25531618405284134,
+     "tagFlip": 0.09319695660656058,
+     "tagFlipOfTrue": 0.36502565222137323
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 3,
+   "label": "WILL/HIT THE OPENING (c3)",
+   "dataName": "Hit the Opening",
+   "tags": [
+    "vulnerable_strike"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 61.5,
+     "n": 800,
+     "delta": 6.5,
+     "se": 1.9879958902307686,
+     "flips": 256,
+     "ciLo": 2.6035280551476934,
+     "ciHi": 10.396471944852307
+    },
+    "outcome": true,
+    "median": {
+     "cell": 43.1916666666655,
+     "base": 43.974999999998786,
+     "delta": -0.7833333333332888
+    },
+    "identical": 57,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 13.5,
+      "se": 3.9262996759963005,
+      "flips": 65,
+      "sigCi99": true,
+      "identical": 9,
+      "chg": 0.07142857142857142
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 3.901906504756278,
+      "flips": 61,
+      "sigCi99": false,
+      "identical": 16,
+      "chg": 0.05977363829285546
+     },
+     "skala": {
+      "n": 200,
+      "delta": 4.5,
+      "se": 4.270825417731773,
+      "flips": 73,
+      "sigCi99": false,
+      "identical": 7,
+      "chg": 0.05149482778219848
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 3.5000000000000004,
+      "se": 3.77624817130128,
+      "flips": 57,
+      "sigCi99": false,
+      "identical": 25,
+      "chg": 0.038857955218576
+     }
+    },
+    "decisions": {
+     "n": 34120,
+     "need": 0.20879249706916764,
+     "chgAll": 0.05533411488862837,
+     "chgAx": 0.012807737397420868,
+     "chgLn": 0.047860492379835876,
+     "tagTrue": 0.21931418522860494,
+     "tagFlip": 0.047860492379835876,
+     "tagFlipOfTrue": 0.21822798342910596
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 56.00000000000001,
+     "base": 49.625,
+     "n": 800,
+     "delta": 6.375,
+     "se": 2.031312878106403,
+     "flips": 267,
+     "ciLo": 2.3936267589114504,
+     "ciHi": 10.35637324108855
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34289,
+     "need": 0.22931552392895682,
+     "chgAll": 0.05080346466796932,
+     "chgAx": 0.01916066376972207,
+     "chgLn": 0.040421126308728746,
+     "tagTrue": 0.22217037533903,
+     "tagFlip": 0.040421126308728746,
+     "tagFlipOfTrue": 0.18193751640850617
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 4,
+   "label": "WILL/PIERCE (c4)",
+   "dataName": "Pierce",
+   "tags": [
+    "pierce"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 64.625,
+     "n": 800,
+     "delta": 3.375,
+     "se": 2.122974445057668,
+     "flips": 289,
+     "ciLo": -0.7860299123130297,
+     "ciHi": 7.53602991231303
+    },
+    "outcome": false,
+    "median": {
+     "cell": 43.1916666666655,
+     "base": 44.033333333332116,
+     "delta": -0.8416666666666188
+    },
+    "identical": 24,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 10.5,
+      "se": 4.096664901670976,
+      "flips": 69,
+      "sigCi99": false,
+      "identical": 6,
+      "chg": 0.07916666666666666
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 0,
+      "se": 4.010037656936684,
+      "flips": 64,
+      "sigCi99": false,
+      "identical": 12,
+      "chg": 0.049988210327752886
+     },
+     "skala": {
+      "n": 200,
+      "delta": -3,
+      "se": 4.534069799277867,
+      "flips": 82,
+      "sigCi99": false,
+      "identical": 2,
+      "chg": 0.08218710924178697
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 6,
+      "se": 4.29092767376794,
+      "flips": 74,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.06598744224617936
+     }
+    },
+    "decisions": {
+     "n": 34120,
+     "need": 0.20879249706916764,
+     "chgAll": 0.06943141852286049,
+     "chgAx": 0.027491207502930833,
+     "chgLn": 0.05867526377491208,
+     "tagTrue": 0.1705158264947245,
+     "tagFlip": 0.05867526377491208,
+     "tagFlipOfTrue": 0.34410450326572706
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 59.62499999999999,
+     "base": 49.625,
+     "n": 800,
+     "delta": 10,
+     "se": 2.4382229520605585,
+     "flips": 388,
+     "ciLo": 5.221083013961305,
+     "ciHi": 14.778916986038695
+    },
+    "outcome": true,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 33917,
+     "need": 0.22478403160656898,
+     "chgAll": 0.06356694283102869,
+     "chgAx": 0.01317923165374296,
+     "chgLn": 0.050564613615591,
+     "tagTrue": 0.143969101040776,
+     "tagFlip": 0.050564613615591,
+     "tagFlipOfTrue": 0.3512185132090928
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": true,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "core": "zasada",
+   "branch": "c",
+   "idx": 5,
+   "label": "WILL/EXECUTION (c5)",
+   "dataName": "Execution",
+   "tags": [
+    "execute"
+   ],
+   "inBranch": {
+    "win": {
+     "rate": 68,
+     "base": 60,
+     "n": 800,
+     "delta": 8,
+     "se": 2.261391687757088,
+     "flips": 332,
+     "ciLo": 3.567672291996108,
+     "ciHi": 12.432327708003893
+    },
+    "outcome": true,
+    "median": {
+     "cell": 43.1916666666655,
+     "base": 44.24999999999877,
+     "delta": -1.0583333333332732
+    },
+    "identical": 6,
+    "bouts": 800,
+    "perFoe": {
+     "natisk": {
+      "n": 200,
+      "delta": 15.5,
+      "se": 4.317633587857473,
+      "flips": 79,
+      "sigCi99": true,
+      "identical": 0,
+      "chg": 0.1448809523809524
+     },
+     "nalet": {
+      "n": 200,
+      "delta": 7.000000000000001,
+      "se": 4.283308729048339,
+      "flips": 74,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.13499174722942703
+     },
+     "skala": {
+      "n": 200,
+      "delta": 2,
+      "se": 4.753205741825256,
+      "flips": 90,
+      "sigCi99": false,
+      "identical": 1,
+      "chg": 0.1385699670342162
+     },
+     "zasada": {
+      "n": 200,
+      "delta": 7.5,
+      "se": 4.698845148400107,
+      "flips": 89,
+      "sigCi99": false,
+      "identical": 4,
+      "chg": 0.10757019310508234
+     }
+    },
+    "decisions": {
+     "n": 34120,
+     "need": 0.20879249706916764,
+     "chgAll": 0.13156506447831184,
+     "chgAx": 0.01503516998827667,
+     "chgLn": 0.1253810082063306,
+     "tagTrue": 0.6893903868698711,
+     "tagFlip": 0.1253810082063306,
+     "tagFlipOfTrue": 0.18187228977127795
+    },
+    "behByDecision": true
+   },
+   "solo": {
+    "win": {
+     "rate": 53.25,
+     "base": 49.625,
+     "n": 800,
+     "delta": 3.6249999999999996,
+     "se": 2.5014037047961626,
+     "flips": 401,
+     "ciLo": -1.277751261400479,
+     "ciHi": 8.527751261400478
+    },
+    "outcome": false,
+    "behavior": true,
+    "behByDecision": true,
+    "decisions": {
+     "n": 34040,
+     "need": 0.22385428907168037,
+     "chgAll": 0.1584018801410106,
+     "chgAx": 0.010223266745005875,
+     "chgLn": 0.1481786133960047,
+     "tagTrue": 0.6739424206815511,
+     "tagFlip": 0.1481786133960047,
+     "tagFlipOfTrue": 0.2198683579617279
+    }
+   },
+   "alive": {
+    "solo": true,
+    "branch": true
+   },
+   "absorbed": false,
+   "marks": {
+    "solo": [],
+    "branch": []
+   }
+  },
+  {
+   "fullVsBare": {
+    "core": "zasada",
+    "branch": "c",
+    "win": {
+     "rate": 68,
+     "base": 49.625,
+     "n": 800,
+     "delta": 18.375,
+     "se": 2.4381868596773595,
+     "flips": 407,
+     "ciLo": 13.596153755032375,
+     "ciHi": 23.153846244967625
+    },
+    "median": {
+     "cell": 43.1916666666655,
+     "base": 45.5249999999987,
+     "delta": -2.3333333333332007
+    },
+    "sample": {
+     "median": 43.1916666666655,
+     "over100": 0,
+     "capped": 0,
+     "max": 61.18333333333114
+    }
+   }
+  }
+ ]
+}
