@@ -375,9 +375,13 @@ export const COMBAT_BALANCE = {
     'natisk.b.4': { interruptResist: 0.3 },
     'natisk.b.5': { strikePower: 0.04, blockPenetration: 0.1 },
     // ONS FRENZY — нарастающий натиск
-    'natisk.c.1': { strikePower: 0.01 },
-    'natisk.c.2': { strikePower: 0.02 },
-    'natisk.c.3': { strikePower: 0.02 },
+    // Заход 6, группа 2: обещания текстов выполняются боем (форма, не сила — компенсация внутри кристалла, см. upgradeData.js).
+    //   c1 Long Combo — seriesBias: доля одиночных прямых, ставших серией (DOUBLE); pauseCut: доля паузы между ударами, которую он не ждёт («в радиусе бросает, а не ждёт»)
+    //   c2 No Pause   — openPounce: читает открытие врага быстрее, реже пропускает, охотнее бьёт и обрывает хвост своего удара ради ответа
+    //   c3 Late Fire  — lateRamp: доля паузы, которая растёт со временем боя (в начале спокойнее, к концу разгон; кривая — combatBalance.lateRamp)
+    'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.26 },
+    'natisk.c.2': { strikePower: 0.02, openPounce: 0.28 },
+    'natisk.c.3': { strikePower: 0.02, lateRamp: 0.55 },
     'natisk.c.4': { strikePower: 0.02 },
     'natisk.c.5': { strikePower: 0.07 },
     // RAI JAB
@@ -389,10 +393,12 @@ export const COMBAT_BALANCE = {
     'nalet.a.5': { strikePower: 0.08 },
     // RAI FEINT
     'nalet.b.1': { strikePower: 0.03 },
-    'nalet.b.2': { strikePower: 0.06 },
+    // Заход 6, группа 2: ФИНТ-2 / ФИНТ-5 — feintWindow: окна приманки и преимущества длиннее (враг чаще «клюёт», расплата успевает);
+    // feintLunge: шанс бросить финт на подходе под удар (раньше лунж финта не бросал вовсе — расплат было ~0.1 за бой). Сила расплаты — feintPunishPayoff / feintSetupPayoff ниже.
+    'nalet.b.2': { strikePower: 0.09, feintWindow: 0.8, feintLunge: 0.45 },
     'nalet.b.3': { strikePower: 0.05 },
     'nalet.b.4': { strikePower: 0.06 },
-    'nalet.b.5': { strikePower: 0.04, blockPenetration: 0.2 },
+    'nalet.b.5': { strikePower: 0.10, feintWindow: 0.8, feintLunge: 0.45 }, // постоянный пробой гарда +0.2 убран: «ломает защиту» — только у удара-расплаты (feintPayoff), обычный удар пробивает как у голого
     // BULWARK BASTION
     'skala.a.1': { blockMitigation: 0.03 },
     'skala.a.2': { interruptResist: 0.15, blockMitigation: 0.05 },
@@ -1007,8 +1013,8 @@ export const COMBAT_BALANCE = {
   jabPinpointAccuracy: 0.2, // УКОЛ-2 «точнее на входе» — +accuracy (+20%; было 0.35)
   huntReadAccuracy: 0.16, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry
   feintFakeInChance: 0.05, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)
-  feintPunishPayoff: 0.5, // ФИНТ-2 «наказывает раскрытие» — ×1.5 the feint payoff (pierce + dmg)
-  feintSetupPayoff: 1.2, // ФИНТ-5 «развод-связка» (vertex) — ×2.2 the feint payoff (guard ≈ moot on the punish)
+  feintPunishPayoff: 1.4, // ФИНТ-2 «наказывает раскрытие» — ×2.4 the feint payoff (+60% к урону расплаты, пробой гарда 1.44; было ×1.5 / +43%: «ответ сильнее» не читался)
+  feintSetupPayoff: 2.6, // ФИНТ-5 «развод-связка» (vertex) — ×3.6 the feint payoff (guard ≈ moot on the punish; было ×2.2)
   huntChargedGain: 0.3, // ОХОТА-3 «копит в маневрировании» — +30% charge gain (было +60%)
   huntKillingPower: 0.3, // ОХОТА-5 «смертельный заход» (vertex) — +30% charge-release power (было +60%)
 

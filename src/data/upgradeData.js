@@ -171,11 +171,13 @@ export const CRYSTALS = {
     // now. Rampage ramps with no ceiling, the escalate safeguard as the backstop.
     mkBranch('c', 'FRENZY', [
       // Longer strings of blows.
-      { name: 'Long Combo', shifts: [s('tempo', 3)], conditionals: ['long_combo'] },
+      // Заход 6: серии + короче пауза в радиусе (facetBonus natisk.c.1). Компенсация внутри кристалла — resilience −12 (бросает вместо того, чтобы держать гарду: «More fragile»).
+      { name: 'Long Combo', shifts: [s('tempo', 3), s('resilience', -12)], conditionals: ['long_combo'] },
       // Shorter gaps between attacks.
       { name: 'No Pause', shifts: [s('tempo', 3)], conditionals: ['no_pause'] },
       // Speeds up as it lands (hit_accel — conditional, accruing accel later).
-      { name: 'Building Momentum', shifts: [s('tempo', 2)], conditionals: ['hit_accel'] },
+      // Заход 6: разгон со временем боя (facetBonus natisk.c.3 lateRamp). Компенсация — resilience −14: чем дольше машет, тем меньше закрывается.
+      { name: 'Building Momentum', shifts: [s('tempo', 2), s('resilience', -14)], conditionals: ['hit_accel'] },
       // Never lets the foe recover (no_breather — REQUIRES a cross-fighter regen-
       // suppression seam; tagged + approximated by tempo+stick pressure for now).
       { name: 'No Breather', shifts: [s('tempo', 3), s('stick', 6)], conditionals: ['no_breather'] },

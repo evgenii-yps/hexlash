@@ -39,6 +39,13 @@ const STAT_PHRASES = {
   missCounter: { up: 'Punishes whiffs', down: 'Softer punish' },
   chargeMax: { up: 'Bigger charge', down: 'Smaller charge' },
   chargePen: { up: 'Charge pierces', down: 'Less pierce' },
+  // Заход 6, группа 2 — рычаги, которые боец читает сам (buildFighter), а не множители характеристик.
+  seriesBias: { up: 'Longer combos', down: 'Shorter combos' },
+  pauseCut: { up: 'Shorter pauses', down: 'Longer pauses' },
+  openPounce: { up: 'Pounces on openings', down: 'Slower on openings' },
+  lateRamp: { up: 'Builds pace', down: 'Fades late' },
+  feintWindow: { up: 'Longer bait window', down: 'Shorter bait window' },
+  feintLunge: { up: 'Fakes on the approach', down: 'Fakes less on approach' },
 };
 
 // axis → phrase by direction (behaviour branches). Short (2–3 words); meaning
