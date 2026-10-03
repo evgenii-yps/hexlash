@@ -83,6 +83,7 @@ let flight = null;      // измерено в момент отрыва: куд
 let noFly = false;      // лететь некуда (шапки не видно) — знак гаснет на месте
 let aborted = false;    // сорвано прокруткой/размером — знак убран до следующего круга
 let flashed = false;    // вспышка шапки на этом круге уже была
+let flightProgress = 0; // доля пути, показанная последним кадром полёта
 let inFlight = false;   // летит прямо сейчас (держит rAF)
 let flashAnim = null;
 
@@ -90,6 +91,10 @@ let flashAnim = null;
    перерисовывается чаще. Полёт между кадрами видео дорисовывается по
    часам, но не дальше, чем на один кадр, и только пока видео живо: встало
    (вкладка, трейлер, пауза вне экрана) — полёт замирает вместе с ним. */
+/* Шов петли может прийти раньше кадра прилёта (слабое устройство отдаёт кадры
+   редко, а до шва после прилёта всего 0.15 с). Если копия к тому моменту уже
+   прошла почти весь путь, она стоит на знаке шапки — шапка принимает как обычно. */
+const SEAM_ARRIVE_MIN = 0.9;
 const STALE_MS = 120;
 const EXTRAPOLATE_MS = 40;
 let lastT = 0;
@@ -158,7 +163,10 @@ function paint(time) {
   if (!el || !mark) return;
   let fx = loopFx(time, { fly: !noFly });
   if (!fx.active) {
-    if (fxOn) clearFx();
+    if (fxOn) {
+      if (flight && !aborted && !flashed && flightProgress >= SEAM_ARRIVE_MIN) flash();
+      clearFx();
+    }
     return;
   }
   fxOn = true;
@@ -181,6 +189,7 @@ function paint(time) {
   }
 
   if (flight && (fx.flying || fx.arrived)) {
+    flightProgress = fx.flight;
     const e = flight.ease(fx.flight);
     // Дуга: боковое отклонение от прямой, максимальное на середине пути.
     const bow = FLIGHT_ARC * Math.sin(Math.PI * e);
@@ -237,6 +246,7 @@ function clearFx() {
   noFly = false;
   aborted = false;
   flashed = false;
+  flightProgress = 0;
   inFlight = false;
   lastPaintT = -1;
   cancelAnimationFrame(raf);

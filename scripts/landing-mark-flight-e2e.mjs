@@ -157,9 +157,13 @@ for (const [w, h, name] of SIZES) {
     const tick = () => {
       const op = +getComputedStyle(hero).opacity;
       if (op > 0) last = { op, hero: rc(hero), t: v.currentTime };
-      if (op === 0 && last && hero.style.getPropertyValue('--mark-x')) {
+      // Прилёт — кадр, где копия погасла на месте (--mark-x есть). Если шов петли пришёл раньше
+      // (редкие кадры слабой машины), копия снимается переменными, но шапка всё равно принимает
+      // вспышкой; тогда место прилёта — последний показанный кадр копии.
+      const seam = op === 0 && last && !hero.style.getPropertyValue('--mark-x') && nav.getAnimations().length > 0;
+      if (op === 0 && last && (hero.style.getPropertyValue('--mark-x') || seam)) {
         v.pause();
-        res({ ok: true, last, hero: rc(hero), nav: rc(nav), t: v.currentTime });
+        res({ ok: true, seam, last, hero: seam ? last.hero : rc(hero), nav: rc(nav), t: v.currentTime });
         return;
       }
       if (performance.now() - t0 > 12000) res({ ok: false, last });
@@ -167,7 +171,7 @@ for (const [w, h, name] of SIZES) {
     };
     tick();
   }));
-  ok(arr.ok, 'прилёт: копия погасла на кадре прилёта');
+  ok(arr.ok, 'прилёт: копия погасла, шапка приняла' + (arr.ok && arr.seam ? ' (шов раньше кадра прилёта)' : ''));
   if (arr.ok) {
     const dc = [(arr.hero[0] + arr.hero[2] / 2) - (arr.nav[0] + arr.nav[2] / 2), (arr.hero[1] + arr.hero[3] / 2) - (arr.nav[1] + arr.nav[3] / 2)];
     ok(Math.abs(dc[0]) < 0.3 && Math.abs(dc[1]) < 0.3, 'место прилёта = центр знака шапки', `Δ=(${dc[0].toFixed(3)}, ${dc[1].toFixed(3)}) px`);
