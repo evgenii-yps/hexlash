@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- Служебная страница съёмки портретов для деки /deckinvestors (ТЗ TZ_deck_team_portraits_v1).
+     Не часть приложения: нет в роутере, не попадает в сборку (Vite собирает только корневой
+     index.html), открывается только dev-сервером по прямому адресу
+       /scripts/portrait-shoot/index.html?core=nalet&yaw=-18&w=720&h=900&dpr=1
+     Боец — настоящий buildFighter, НЕ изменённый: снаружи заданы только камера, свет,
+     поворот группы и фон. Поза покоя = режим reduced-motion (статичная, без дыхания). -->
+<meta charset="utf-8">
+<title>portrait shoot</title>
+<style>html,body{margin:0;background:#08080A}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import '/src/styles/tokens.css';
+import { buildFighter } from '/src/scene/buildFighter.js';
+import { getCore } from '/src/data/upgradeData.js';
+import { resolveBehavior } from '/src/data/behavior.js';
+
+const q = new URLSearchParams(location.search);
+const coreId = q.get('core') || 'nalet';
+const yaw = (parseFloat(q.get('yaw') || '0') * Math.PI) / 180;
+const W = parseInt(q.get('w') || '720', 10);
+const H = parseInt(q.get('h') || '900', 10);
+const DPR = parseFloat(q.get('dpr') || '1');
+// Кадр — ОДИН на все три окна. Менять только вместе.
+const FOV = parseFloat(q.get('fov') || '26');
+const CAM_Y = parseFloat(q.get('cy') || '1.06');   // куда смотрит камера
+const CAM_D = parseFloat(q.get('d') || '1.9');    // дистанция
+
+const BASE = '#08080A';  // базовый тёмный цвет деки (html/body background)
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(DPR);
+renderer.setSize(W, H, false);
+canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(BASE);
+
+const camera = new THREE.PerspectiveCamera(FOV, W / H, 0.1, 50);
+// боец смотрит в -Z, камера стоит перед ним
+const EY = parseFloat(q.get('ey') || '0');       // подъём камеры над точкой взгляда
+camera.position.set(0, CAM_Y + EY, -CAM_D);
+camera.lookAt(0, CAM_Y, 0);
+
+// Свет: нейтральный белый, без цветных источников и без розового. Рецепт главного острова
+// (один ключ сверху-спереди + заливка + мягкий верхний свет), но белый и чуть сильнее —
+// чтобы тело читалось на тёмном фоне, а ядро оставалось самой яркой точкой.
+const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+const key = new THREE.DirectionalLight(0xffffff, num('key', 5.4));
+key.position.set(-2.5, 6.0, -5.0);       // сверху-спереди-слева (боец смотрит в -Z)
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, num('fill', 2.0));
+fill.position.set(4.0, 1.5, -4.5);       // спереди-справа, ниже — открывает тени
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, num('rim', 2.2));
+rim.position.set(0, 3.0, 5.0);           // контровой: отделяет контур от фона
+scene.add(rim);
+scene.add(new THREE.AmbientLight(0xffffff, num('amb', 1.0)));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x303038, num('hemi', 0.8)));
+
+const hue = getCore(coreId).hue;
+const fighter = buildFighter(hue, {
+  side: 'player', coreId,
+  behavior: resolveBehavior(coreId, []),
+});
+fighter.setReducedMotion(true);          // поза покоя, без дыхания
+fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; }); // плашка HP
+// Ореол ядра (спрайт внутри торса) снаружи: не обрезается торсом по глубине и без розового
+// оттенка в центре текстуры — окрашен в цвет ядра. Файл бойца не тронут.
+if (q.get('halo') !== '0') {
+  fighter.group.traverse((o) => {
+    if (o.isSprite && o.material && o.material.blending === THREE.AdditiveBlending) {
+      o.material.depthTest = false;
+      o.material.color = new THREE.Color(hue);
+      o.renderOrder = 10;
+      o.userData.haloK = num('haloK', 0.5);
+    }
+  });
+}
+scene.add(fighter.group);
+fighter.update(1.0, camera);
+fighter.group.rotation.y = yaw;
+fighter.group.position.set(0, 0, 0);
+fighter.update(1.1, camera);
+fighter.group.rotation.y = yaw;
+fighter.group.traverse((o) => { if (o.userData.haloK) o.material.opacity *= o.userData.haloK; });
+
+renderer.render(scene, camera);
+renderer.render(scene, camera);
+// Контроль: самая яркая точка кадра должна быть ядром.
+{
+  const c2 = document.createElement('canvas'); c2.width = canvas.width; c2.height = canvas.height;
+  const x = c2.getContext('2d'); x.drawImage(canvas, 0, 0);
+  const d = x.getImageData(0, 0, c2.width, c2.height).data;
+  let max = 0, mx = 0, my = 0, bodyMax = 0;
+  const gem = new THREE.Vector3(0, 0, 0);
+  for (let i = 0; i < d.length; i += 4) {
+    const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    if (l > max) { max = l; const p = i / 4; mx = p % c2.width; my = (p / c2.width) | 0; }
+  }
+  window.__stats = { maxLum: Math.round(max), maxAt: [mx, my], size: [c2.width, c2.height] };
+}
+window.__shot = { coreId, hue, W, H, DPR, stats: window.__stats };
+window.__ready = true;
+</script>
