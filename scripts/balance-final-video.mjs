@@ -6,13 +6,14 @@
 //
 //   npx vite build && npx vite preview --port 4173 &
 //   PW=/путь/к/playwright/index.mjs CHROME=/путь/к/chrome node scripts/balance-final-video.mjs
-//   (OUT=папка, ONLY=natisk,raid — только эти записи)
+//   (OUT=папка, ONLY=onslaught,raider — только эти записи; LIT — какие грани зажечь бойцу: '{"natisk":{"c":[1,2,3]},"nalet":{"b":[2,5]}}')
 import { mkdirSync, writeFileSync, renameSync } from 'node:fs';
 
 const { chromium } = await import(process.env.PW || 'playwright');
 const BASE = process.env.BASE || 'http://127.0.0.1:4173';
 const OUT = process.env.OUT || '/tmp/balance-final-video';
 const ONLY = (process.env.ONLY || '').split(',').filter(Boolean);
+const LIT = process.env.LIT ? JSON.parse(process.env.LIT) : null;
 mkdirSync(OUT, { recursive: true });
 const SIZE = { width: 390, height: 844 };
 const NAME = { natisk: 'ONSLAUGHT', nalet: 'RAIDER', skala: 'BULWARK', zasada: 'AMBUSH' };
@@ -39,16 +40,17 @@ async function run(label, mode, core) {
 
   await page.goto(`${BASE}/play`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1500);
-  const seeded = await page.evaluate(({ mode, core }) => {
+  const seeded = await page.evaluate(({ mode, core, lit }) => {
     const raw = JSON.parse(sessionStorage.getItem('hexlash_progress') || '{}');
     const list = raw?.roster?.fighters || [];
     if (!list.length) return null;
     if (core) list[0].core = core;
+    if (lit && lit[core]) list[0].lit = lit[core]; // зажечь грани бойцу (LIT='{"natisk":{"c":[1,2,3]}}') — иначе в бою голое ядро
     raw.prefight = { core: list[0].core, squad: [list[0].id], mode, n: 1 };
     raw.buffs = { stock: { towel: 3, bucket: 3, dice: 3 }, kit: ['towel', 'bucket', 'dice'], gifted: true };
     sessionStorage.setItem('hexlash_progress', JSON.stringify(raw));
     return { core: list[0].core };
-  }, { mode, core });
+  }, { mode, core, lit: LIT });
   ok(!!seeded, 'стартовый ростер завёлся', seeded ? `(ядро ${seeded.core})` : '');
   if (!seeded) { await ctx.close(); return; }
 

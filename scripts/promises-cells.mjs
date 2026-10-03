@@ -13,6 +13,11 @@ const FOES = ['natisk', 'nalet', 'skala', 'zasada'];
 const jobs = [];
 for (const spec of process.argv.slice(2)) {
   const [core, mode, branch, idx] = spec.split(':');
+  if (mode === 'set') { // core:set:b5+c2 — набор граней из разных веток
+    const faces = branch.split('+').map((x) => [x[0], Number(x.slice(1))]);
+    for (const [from, to] of SEEDS) jobs.push({ core, mode, faces, foes: FOES, seedFrom: from, seedTo: to, out: join(OUT, `${core}-${branch}-set-s${from}.json`) });
+    continue;
+  }
   const name = [core, branch ? branch + (idx || '') : '', mode].filter(Boolean).join('-');
   for (const [from, to] of SEEDS) jobs.push({ core, mode, branch, idx: idx ? Number(idx) : undefined, foes: FOES, seedFrom: from, seedTo: to, out: join(OUT, `${name}-s${from}.json`) });
 }
