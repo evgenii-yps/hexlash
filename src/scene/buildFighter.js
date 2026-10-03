@@ -2720,6 +2720,16 @@ export function buildFighter(
     // it fall through to normal cadence attacking (decideAttack). A strike starts a
     // clip that plays out below this same frame. While in a block stance OR
     // staggered (interrupt lock) the fighter does NOT attack.
+    // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce — хвост СВОЕГО удара (после последнего касания) обрывается, как только прочитано
+    // открытие врага: иначе в большинстве обменов боец занят собственным клипом, пока враг открыт (~93%), и ответить просто нечем.
+    // Только атакующий клип после последнего касания (финт и уворот не трогает); у остальных строка не срабатывает.
+    if (ai.on && clip && sb.openPounce && clip.dmgMult && !gathering && !blocking && lastT >= staggerUntil && (perceivedPhase === 'recovery' || perceivedPhase === 'stagger')) {
+      const lastImpactT = clip.impacts ? clip.impacts[clip.impacts.length - 1] : clip.impact;
+      if (typeof lastImpactT === 'number' && lastImpactT >= 0 && t - clipStart >= lastImpactT + 0.02) {
+        feintPayoffActive = false; chargeShotPower = 0; chargeShotPen = 0; windupVulnUntil = 0;
+        clip = null; dodgeRun = null; // хвост оборван — следующий удар решается ниже в этот же кадр
+      }
+    }
     if (ai.on && !clip && !gathering) {
       faceFoe(dt);
       // DISENGAGING phases (a BREAK phase of the distance breathing, or the BREAK / BREATHE intention)
