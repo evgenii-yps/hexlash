@@ -801,10 +801,7 @@ export function buildFighter(
     const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance + klichDelta.distance - escFwd, DX.axisMin, DX.axisMax);
     const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative + klichDelta.initiative, DX.axisMin, DX.axisMax);
     stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick + klichDelta.stick) / 100, 0, 1);
-    // LATE FIRE «чем дольше бой, тем больше машет»: sb.lateRamp (base 0, в очках оси темпа) × кривая по времени боя — в начале спокойнее, к концу разгон
-    // (форма, а не сила: средний темп за бой почти не растёт). Нет кристалла → 0 → строка считается как раньше.
-    const lateDelta = sb.lateRamp ? sb.lateRamp * (B.lateRamp.lo + (B.lateRamp.hi - B.lateRamp.lo) * THREE.MathUtils.clamp(((fc && fc.elapsed) || 0) / B.lateRamp.sec, 0, 1)) : 0;
-    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo + klichDelta.tempo + lateDelta) / 100, 0, 1);
+    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo + klichDelta.tempo) / 100, 0, 1);
     character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, RANGE_MAX);
     character.aggression = THREE.MathUtils.clamp(effInit / 100 + escAggr + character.aggrJit, 0, 1);
   };
@@ -2269,6 +2266,17 @@ export function buildFighter(
     return charge / stats.chargeMax >= B.chargeReleaseThreshold;
   };
 
+  // ТЕМП ударов поверх оси темпа (LONG COMBO / NO PAUSE / LATE FIRE): доля, на которую боец НЕ досиживает паузу между ударами и паузу между
+  // реакциями-ответами (последние — основной источник запусков у ядер с чтением: см. tryReadReaction). sb.pauseCut — постоянная доля;
+  // sb.lateRamp — доля, растущая со временем боя (в начале спокойнее — отрицательная, к концу разгон). Оба базово 0 → множитель ровно 1.
+  const paceMul = () => {
+    let cut = sb.pauseCut || 0;
+    if (sb.lateRamp) {
+      const fc = getFightContext && getFightContext();
+      cut += sb.lateRamp * (B.lateRamp.lo + (B.lateRamp.hi - B.lateRamp.lo) * THREE.MathUtils.clamp(((fc && fc.elapsed) || 0) / B.lateRamp.sec, 0, 1));
+    }
+    return 1 - THREE.MathUtils.clamp(cut, -0.5, 0.6);
+  };
   // Launch a chosen strike clip + its bookkeeping: spend stamina, (maybe) release
   // charge, arm a feint-payoff if a bait window is open, signal the foe, set the
   // post-strike cadence + follow-up nav. Shared by decideAttack (normal initiation)
@@ -2297,7 +2305,7 @@ export function buildFighter(
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
     const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + rand() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
-    ai.nextAt = t + atk.dur + pause * (1 - (sb.pauseCut || 0)) * B.distance.attackPauseMul; // sb.pauseCut (LONG COMBO / NO PAUSE, base 0) — доля паузы между ударами, которую боец не ждёт; pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
+    ai.nextAt = t + atk.dur + pause * paceMul() * B.distance.attackPauseMul; // paceMul (sb.pauseCut / sb.lateRamp, база ×1) — доля паузы, которую боец не ждёт; pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
@@ -2337,8 +2345,10 @@ export function buildFighter(
     if (truePhase !== truePhaseSeen) {
       truePhaseSeen = truePhase;
       const BRX = buffReactOn ? bucketRx : null; // ведро: быстрее читает и реже пропускает
-      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (0.75 + rand() * 0.5); // jittered latency
-      const missed = rand() < readMissChance(counter01) * (BRX ? BRX.missMul : 1); // failed to register this transition
+      // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce (0…1, база 0) — открытие врага (отдача / сбив) читается быстрее и реже пропускается.
+      const pz = sb.openPounce && (truePhase === 'recovery' || truePhase === 'stagger') ? sb.openPounce : 0;
+      const delay = readDelaySec(counter01) * (BRX ? BRX.delayMul : 1) * (1 - pz) * (0.75 + rand() * 0.5); // jittered latency
+      const missed = rand() < readMissChance(counter01) * (BRX ? BRX.missMul : 1) * (1 - pz); // failed to register this transition
       readPendingAt = t + delay;
       readPendingPhase = missed ? null : truePhase; // null = miss → perception stays stale (didn't see it)
     }
@@ -2367,7 +2377,7 @@ export function buildFighter(
     if (phase === 'windup') {
       if (dist > STRIKE) return false; // must be in reach to land inside the foe's vuln window
       if (rand() > Math.min(1, readWindupReactChance(c) * boost * rx)) return false;
-      readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);
+      readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1) * paceMul();
       lastReadAction = 'sbiv'; lastReadActionAt = t;
       launchStrike(t, INTERCEPT); // fast intercept jab → catch the windup in time (→ staggerInterrupt in the foe)
       return true;
@@ -2375,9 +2385,9 @@ export function buildFighter(
     if (phase === 'recovery' || phase === 'stagger') {
       const reach = Math.min(character.range + RANGE_HYST, STRIKE);
       if (dist > reach) return false; // open but out of reach — let nav close in normally
-      if (rand() > Math.min(1, readOpenReactChance(c) * boost * rx)) return false;
-      readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1);
-      gatherUntil = t + B.read.gatherSec; // visible coil → the lunge fires on expiry (in update)
+      if (rand() > Math.min(1, readOpenReactChance(c) * boost * rx * (1 + (sb.openPounce || 0)))) return false; // sb.openPounce (NO PAUSE): охотнее бьёт в прочитанное открытие
+      readReactUntil = t + B.read.reactCooldownSec * (BRX ? BRX.cooldownMul : 1) * paceMul();
+      gatherUntil = t + B.read.gatherSec * (1 - (sb.openPounce || 0) * 0.5); // visible coil (sb.openPounce — короче «собрался») → the lunge fires on expiry (in update)
       lastReadAction = phantom ? 'contra?' : 'contra'; lastReadActionAt = t;
       return true;
     }
@@ -2480,10 +2490,7 @@ export function buildFighter(
   // только у того, кто несёт кристалл: у остальных ход боя не меняется ни на один вызов.
   const seriesUp = (atk) => (atk === PUNCH && sb.seriesBias && rand() < sb.seriesBias ? DOUBLE : atk);
   const decideAttack = (t) => {
-    // NO PAUSE «бьёт в момент, когда враг открыт»: sb.openPounce (base 0) — на ПРОЧИТАННОЕ открытие врага (отдача / сбив, шумное чтение perceivedPhase)
-    // боец не досиживает последние с паузы между ударами. Нет кристалла → cut = 0 → строка условия та же.
-    const pounceCut = sb.openPounce && (perceivedPhase === 'recovery' || perceivedPhase === 'stagger') ? sb.openPounce : 0;
-    if (clip || t < ai.nextAt - pounceCut || lunge.active) return false;
+    if (clip || t < ai.nextAt || lunge.active) return false;
     if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
     const f = getFoePos && getFoePos();
     if (!f) return false;
