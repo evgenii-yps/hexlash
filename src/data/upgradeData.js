@@ -171,7 +171,7 @@ export const CRYSTALS = {
     // now. Rampage ramps with no ceiling, the escalate safeguard as the backstop.
     mkBranch('c', 'FRENZY', [
       // Longer strings of blows.
-      // Заход 6: серии + короче пауза в радиусе (facetBonus natisk.c.1). Компенсация внутри кристалла — resilience −12 (бросает вместо того, чтобы держать гарду: «More fragile»).
+      // Заход 6: серии + короче пауза в радиусе (facetBonus natisk.c.1). Компенсация внутри кристалла — resilience −12 (бросает вместо того, чтобы держать гарду: «More fragile») и accuracy −40% (серия размашистее: «Looser aim», facetBonus).
       { name: 'Long Combo', shifts: [s('tempo', 3), s('resilience', -12)], conditionals: ['long_combo'] },
       // Shorter gaps between attacks.
       { name: 'No Pause', shifts: [s('tempo', 3)], conditionals: ['no_pause'] },

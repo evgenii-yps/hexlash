@@ -2707,7 +2707,9 @@ export function buildFighter(
           // at air — otherwise two waiters whiff at each other from the window edge forever (TZ_combat_distance_v1).
           const fp = getFoePos && getFoePos();
           const fd = fp ? Math.hypot(fp.x - group.position.x, fp.z - group.position.z) : 0;
-          const ans = seriesUp(PUNCH); // sb.seriesBias: ответ на прочитанное открытие может быть серией
+          // sb.seriesBias: ответ на прочитанное открытие может быть серией. Вместе с No Pause (sb.openPounce) ответов втрое больше и каждый мог бы быть серией —
+          // произведение двух рычагов уводило сборки с обоими за потолок Ц6 (+36 при пределе +30), поэтому шанс серии на ответе там ×0.4: перехваченное открытие чаще — быстрый одиночный.
+          const ans = sb.seriesBias && rand() < sb.seriesBias * (sb.openPounce ? 0.4 : 1) ? DOUBLE : PUNCH;
           if (fp && fd > (ans.reach || 1) + B.reachHitTol - 0.05) beginLunge(ans, lastT);
           else launchStrike(lastT, ans);
         }
