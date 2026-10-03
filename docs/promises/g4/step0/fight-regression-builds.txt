@@ -1,4 +1,4 @@
-seed=1 natisk:s1 vs natisk -> winner=player sec=38.9000 capped=false winHp=0.405569
+seed=1 natisk:s1 vs natisk -> winner=foe sec=40.4500 capped=false winHp=0.365411
 seed=1 natisk:ba vs natisk -> winner=player sec=34.7833 capped=false winHp=0.597910
 seed=1 natisk:xab vs natisk -> winner=player sec=39.5667 capped=false winHp=0.365387
 seed=1 nalet:s1 vs nalet -> winner=player sec=37.5500 capped=false winHp=0.805281
@@ -10,7 +10,7 @@ seed=1 skala:xab vs skala -> winner=player sec=62.3333 capped=false winHp=0.2610
 seed=1 zasada:s1 vs zasada -> winner=foe sec=51.7333 capped=false winHp=0.041999
 seed=1 zasada:ba vs zasada -> winner=player sec=38.3667 capped=false winHp=0.799061
 seed=1 zasada:xab vs zasada -> winner=foe sec=51.1833 capped=false winHp=0.740863
-seed=7 natisk:s1 vs natisk -> winner=player sec=46.2167 capped=false winHp=0.154180
+seed=7 natisk:s1 vs natisk -> winner=player sec=44.3167 capped=false winHp=0.597409
 seed=7 natisk:ba vs natisk -> winner=player sec=39.9000 capped=false winHp=0.299211
 seed=7 natisk:xab vs natisk -> winner=foe sec=43.1167 capped=false winHp=0.215719
 seed=7 nalet:s1 vs nalet -> winner=player sec=40.2833 capped=false winHp=0.272435
@@ -22,7 +22,7 @@ seed=7 skala:xab vs skala -> winner=player sec=51.0667 capped=false winHp=0.3833
 seed=7 zasada:s1 vs zasada -> winner=player sec=49.8333 capped=false winHp=0.395362
 seed=7 zasada:ba vs zasada -> winner=foe sec=34.8500 capped=false winHp=0.983964
 seed=7 zasada:xab vs zasada -> winner=player sec=35.8000 capped=false winHp=0.693073
-seed=12345 natisk:s1 vs natisk -> winner=player sec=41.3000 capped=false winHp=0.444439
+seed=12345 natisk:s1 vs natisk -> winner=player sec=46.8667 capped=false winHp=0.081388
 seed=12345 natisk:ba vs natisk -> winner=player sec=39.6833 capped=false winHp=0.311783
 seed=12345 natisk:xab vs natisk -> winner=foe sec=41.4833 capped=false winHp=0.061092
 seed=12345 nalet:s1 vs nalet -> winner=foe sec=42.6833 capped=false winHp=0.202913
@@ -36,4 +36,4 @@ seed=12345 zasada:ba vs zasada -> winner=player sec=52.1500 capped=false winHp=0
 seed=12345 zasada:xab vs zasada -> winner=player sec=46.1167 capped=false winHp=0.061978
 ---
 fights: 36
-checksum: b5a8931256453c6ccc507be53923481d6ebbc47565153e255c440b88f65aaa47
+checksum: 90c21c6bc804e0df0e32c794181f095f8104b4fcd21f28629b819d690c26d87a
