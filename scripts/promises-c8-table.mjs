@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-const A=JSON.parse(fs.readFileSync('docs/balance-fix/out/g2-B1/buffs.json','utf8')),B=JSON.parse(fs.readFileSync('docs/balance-fix/out/g2-B2/buffs.json','utf8'));
+const TAG=process.argv[2]||'g2';
+const A=JSON.parse(fs.readFileSync(`docs/balance-fix/out/${TAG}-B1/buffs.json`,'utf8')),B=JSON.parse(fs.readFileSync(`docs/balance-fix/out/${TAG}-B2/buffs.json`,'utf8'));
 const N={natisk:'ONSLAUGHT',nalet:'RAIDER',skala:'BULWARK',zasada:'AMBUSH'};
 const f=x=>(x>=0?'+':'')+x.toFixed(1);
 const L=['| ядро | набор | TOWEL | BUCKET | DICE (в среднем) | худшая грань | лучшая грань | все сразу | вразбивку | по правилу бота |','| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'];

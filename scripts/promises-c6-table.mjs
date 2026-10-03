@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-const j=JSON.parse(fs.readFileSync('docs/balance-fix/out/g2-F6/builds.json','utf8'));
+const TAG=process.argv[2]||'g2';
+const j=JSON.parse(fs.readFileSync(`docs/balance-fix/out/${TAG}-F6/builds.json`,'utf8'));
 const N={natisk:'ONSLAUGHT',nalet:'RAIDER',skala:'BULWARK',zasada:'AMBUSH'};
 const f=(x)=>(x>=0?'+':'')+x.toFixed(1);
 for(const field of ['bare','bot']){

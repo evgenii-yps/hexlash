@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-const dir='docs/balance-fix/out/g2-F2/';
+const TAG=process.argv[2]||'g2';
+const dir=`docs/balance-fix/out/${TAG}-F2/`;
 const NAME={natisk:'ONSLAUGHT',nalet:'RAIDER',skala:'BULWARK',zasada:'AMBUSH'};
 const BR={a:'BODY',b:'MIND',c:'WILL'};
 const out=[];let ok=0,tot=0;
