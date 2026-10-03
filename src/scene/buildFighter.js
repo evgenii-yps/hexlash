@@ -2362,7 +2362,8 @@ export function buildFighter(
   // cooldown, reach, and a counter-scaled chance (CATCH/HOLD boosted). NOT gated by
   // intentionFlags.attack — that's the point: CATCH (attack:'none') can pounce here.
   const tryReadReaction = (t) => {
-    if (t < readReactUntil) return false;
+    // sb.openPounce (NO PAUSE): на прочитанное открытие пауза между ответами сокращается на долю openPounce от полной (кристалла нет → вычитаем 0).
+    if (t < readReactUntil - (sb.openPounce && (perceivedPhase === 'recovery' || perceivedPhase === 'stagger') ? B.read.reactCooldownSec * sb.openPounce : 0)) return false;
     const f = getFoePos && getFoePos();
     if (!f) return false;
     const c = counter01;

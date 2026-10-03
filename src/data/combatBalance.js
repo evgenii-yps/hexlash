@@ -1101,7 +1101,7 @@ export const COMBAT_BALANCE = {
   //     the helpers below (one tuning point).
   // --- LATE FIRE (Building Momentum): кривая добавки к темпу по времени боя. Добавка = sb.lateRamp × (lo … hi), линейно за `sec` секунд боя,
   //     потом держится на hi. lo < 0 — спокойнее в начале; hi > 0 — разгон к концу. Множитель темпа: см. paceMul в buildFighter.js.
-  lateRamp: { sec: 40, lo: -1, hi: 1 },
+  lateRamp: { sec: 40, lo: -0.8, hi: 1.2 },
 
   read: {
     delayMsLow: 460, delayMsHigh: 95, // perception latency (ms): counter01 0 → 1
