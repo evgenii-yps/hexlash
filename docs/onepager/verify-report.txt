@@ -1,0 +1,160 @@
+== pdfinfo ==
+Title:           HEXLASH — одностраничник для инвесторов
+Pages:           1
+Page size:       594.96 x 841.92 pts (A4)
+PDF version:     1.4
+
+== pdffonts ==
+name                                 type              encoding         emb sub uni object ID
+------------------------------------ ----------------- ---------------- --- --- --- ---------
+AAAAAA+SairaCondensed-Black          CID TrueType      Identity-H       yes yes yes      7  0
+BAAAAA+SairaCondensed-Bold           CID TrueType      Identity-H       yes yes yes      8  0
+CAAAAA+JetBrainsMono-Bold            CID TrueType      Identity-H       yes yes yes      9  0
+DAAAAA+JetBrainsMono-Regular         CID TrueType      Identity-H       yes yes yes     10  0
+CAAAAA+JetBrainsMono-Bold            CID TrueType      Identity-H       yes yes yes     12  0
+DAAAAA+JetBrainsMono-Regular         CID TrueType      Identity-H       yes yes yes     13  0
+AAAAAA+SairaCondensed-Black          CID TrueType      Identity-H       yes yes yes     14  0
+AAAAAA+SairaCondensed-Black          CID TrueType      Identity-H       yes yes yes     15  0
+AAAAAA+SairaCondensed-Black          CID TrueType      Identity-H       yes yes yes     16  0
+AAAAAA+SairaCondensed-Black          CID TrueType      Identity-H       yes yes yes     17  0
+CAAAAA+JetBrainsMono-Bold            CID TrueType      Identity-H       yes yes yes     20  0
+AAAAAA+SairaCondensed-Black          CID TrueType      Identity-H       yes yes yes     21  0
+
+== pdfimages ==
+page   num  type   width height color comp bpc  enc interp  object ID x-ppi y-ppi size ratio
+--------------------------------------------------------------------------------------------
+   1     0 image     512   512  icc     3   8  image  no         4  0   833   833 69.9K 9.1%
+   1     1 smask     512   512  gray    1   8  image  no         4  0   833   833 21.6K 8.4%
+
+== pdftotext -raw ==
+H E X LA SH I N VE S T O R O N E -PA GE R · CO N FI DE N T I A L · 03 . 10. 2 02 6
+Ты растишь ИИ,
+пока он не начнёт
+растить других
+hexlash.com сегодня — не
+игра, а демонстрация идеи.
+0 1 П Р О Б Л Е М А
+75,5%
+из 2 817 web3-игр 2018–2023
+годов стали неактивны:
+активность упала на 99% и
+более.
+CoinGecko, ноябрь 2023
+0 2 Р Е Ш Е Н И Е
+Ты не дерёшься сам, а растишь бойца-ИИ.
+Сначала решает игрок, затем легенда, которую
+он вырастил. Ядер четыре, у каждого свои 15
+кристаллов. Игрок направляет бой двумя
+рычагами: кличами и баффами.
+ONSLAUGHT RAI DER BULWARK AMBUSH
+0 3 Б А Р Ь Е Р — Ц Е Н А Б О Я
+≈ $0,008 за дуэль
+≈ $8 за тысячу дуэлей
+Замер 02.10.2026, 21 дуэль. Серверы, хранение и
+сеть не входят.
+0 4 Д О Х О Д
+Платят за облик, а не за силу: облик за
+$HXL, комиссия с рынка бойцов,
+брендированные арены партнёров. Ни один
+источник не продаёт силу.
+0 5 С Т А Т У С Н А 0 2 . 1 0 . 2 0 2 6
+В демонстрации работают ДУЭЛЬ и ОТРЯД.
+В разработке: ЦЕПЬ, РЕЙД, ОБВАЛ, ОХОТА.
+Не доказано: удержание игроков. Шесть
+проверяемых гипотез — в деке, раздел 10.
+0 6 Т О К Е Н И Р А У Н Д
+$HXL · сеть Base
+Э М И С С И Я 1 000 000 000
+Ц Е Н А Р А У Н Д А $0,0025
+О Ц Е Н К А $2 500 000
+Размер раунда открыт — верхнего порога нет.
+Юрлицо и правовое заключение — до закрытия раунда.
+0 7 Р Ы Н О К Ближайший аналог — AI Arena: раунд $6M, январь 2024, по открытым источникам.
+0 8 К О М А Н Д А
+Юрий Варваров
+C E O · С О - О С Н О В А Т Е Л Ь
+Евгений Бобров
+С О - О С Н О В А Т Е Л Ь
+Иван Король
+C T O · С О - О С Н О В А Т Е Л Ь
+h e x la s h . c o m · CO N FI DE N T I A L
+== grep [ ] ==
+0
+
+== verify.mjs ==
+1. Страница
+  ✓ страниц: 1
+  ✓ формат A4 (594.96 × 841.92 pt)
+2. Шрифты (pdffonts)
+    SairaCondensed-Black, SairaCondensed-Bold, JetBrainsMono-Bold, JetBrainsMono-Regular
+  ✓ только Saira Condensed и JetBrains Mono
+  ✓ все встроены (emb=yes)
+3. Текст (pdftotext)
+  ✓ живой текст: 1553 знаков
+  ✓ нет квадратных скобок-заглушек
+  ✓ проверены запрещённые слова (12)
+  ✓ все строки text.json напечатаны в PDF
+  ✓ строка «дека целиком» — выключена, в PDF её нет
+  ✓ контакт — выключен, в PDF его нет
+4. Сверка чисел с кодом деки
+  ✓ 03
+  ✓ 10
+  ✓ 2
+  ✓ 02
+  ✓ 6
+  ✓ 0
+  ✓ 1
+  ✓ 75,5%
+  ✓ 2 817
+  ✓ 3
+  ✓ 2018
+  ✓ 2023
+  ✓ 99%
+  ✓ 15
+  ✓ $0,008
+  ✓ $8
+  ✓ 02.10.2026
+  ✓ 21
+  ✓ 4
+  ✓ 5
+  ✓ 1 000 000 000
+  ✓ $0,0025
+  ✓ $2 500 000
+  ✓ 7
+  ✓ $6M
+  ✓ 2024
+  ✓ 8
+    дословные формулировки:
+  ✓ сверено формулировок: 25 (расхождения — строки ⚠ выше, если есть)
+5. Цвета PDF против tokens.css
+    fill #08080A ×3                    = --void
+    fill #0B0910 ×1                    = генератор ядра «Печать» (не токен)
+    fill #120F17 ×3                    = генератор ядра «Печать» (не токен)
+    fill #16161B ×8                    = --panel
+    fill #FF0069 ×3 α0.5               = --pink
+    fill #FF0069 ×1                    = --pink
+    fill #FFFFFF ×5 α0.09              = --line / --line-strong (белый с прозрачностью)
+    fill #FFFFFF ×3                    = --line / --line-strong (белый с прозрачностью)
+    stroke #FF0069 ×6 α0.032           = --pink
+    stroke #FF0069 ×1 α0.063           = --pink
+    stroke #FF0069 ×6 α0.18            = --pink
+    stroke #FF0069 ×3 α0.26            = --pink
+    stroke #FF0069 ×1 α0.35            = --pink
+    stroke #FF0069 ×1                  = --pink
+    stroke #FFFFFF ×7 α0.09            = --line / --line-strong (белый с прозрачностью)
+    text #2ED6B0 ×1                    = --core-skala
+    text #9461FF ×1                    = --core-zasada
+    text #A9A5AF ×24                   = --ink-dim
+    text #F6F4F6 ×41                   = --ink
+    text #FF0069 ×4                    = --pink
+    text #FF3344 ×1                    = --core-natisk
+    text #FFA526 ×1                    = --core-nalet
+    белые «непрозрачные» заливки на деле нарисованы так: #2A2A2E
+  ✓ это рамки —line— с прозрачностью, чисто-белого на странице нет
+  ✓ все цвета PDF — из токенов (и констант генератора ядра)
+  ✓ чисто-белого и чисто-чёрного текста нет
+6. Кегли — только из шкалы токенов (px)
+    в PDF: 10, 11, 12, 13, 14, 24, 32, 40   шкала: 10, 11, 12, 13, 14, 18, 24, 32, 40, 72
+  ✓ все кегли из шкалы, минимум 10
+
+Все проверки пройдены.

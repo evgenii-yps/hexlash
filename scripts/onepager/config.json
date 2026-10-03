@@ -1,0 +1,7 @@
+{
+  "lang": "ru",
+  "showDeckLink": false,
+  "showContact": false,
+  "contact": "",
+  "output": "docs/onepager/HEXLASH_onepager_{lang}.pdf"
+}

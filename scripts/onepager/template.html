@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head>
+<meta charset="utf-8">
+<title>{{docTitle}}</title>
+<style>{{{tokensCss}}}</style>
+<style>{{{fontsCss}}}</style>
+<style>{{{styleCss}}}</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="top">
+    <div class="lockup">
+      <img class="mark" src="{{markSrc}}" alt="">
+      <span class="word">HEXLASH</span>
+    </div>
+    <div class="meta">{{meta}} · {{date}}</div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1>{{hero.title}}</h1>
+      <p class="sub">{{hero.sub}}</p>
+    </div>
+    <div class="hero-core">{{{coreSvg}}}</div>
+  </section>
+
+  <section class="grid">
+
+    <article class="card problem">
+      <h2 class="label"><span class="n">01</span>{{problem.label}}</h2>
+      <div class="stat">
+        <span class="big">{{problem.big}}</span>
+        <p class="lead">{{problem.text}}</p>
+      </div>
+      <p class="src">{{problem.src}}</p>
+    </article>
+
+    <article class="card solution">
+      <h2 class="label"><span class="n">02</span>{{solution.label}}</h2>
+      <p class="lead">{{solution.text}}</p>
+      <ul class="cores">{{{coresHtml}}}</ul>
+    </article>
+
+    <article class="card barrier">
+      <h2 class="label"><span class="n">03</span>{{barrier.label}}</h2>
+      <div class="tiles">{{{tilesHtml}}}</div>
+      <p class="src">{{barrier.note}}</p>
+    </article>
+
+    <article class="card revenue">
+      <h2 class="label"><span class="n">04</span>{{revenue.label}}</h2>
+      <p class="lead">{{revenue.text}}</p>
+    </article>
+
+    <article class="card status">
+      <h2 class="label"><span class="n">05</span>{{status.label}}</h2>
+      <p class="lead">{{{status.works}}}</p>
+      <p class="lead dim">{{{status.dev}}}</p>
+      <p class="src">{{status.unproven}}</p>
+    </article>
+
+    <article class="card token">
+      <h2 class="label"><span class="n">06</span>{{token.label}}</h2>
+      <p class="head">{{token.head}}</p>
+      <dl class="ledger">{{{tokenRowsHtml}}}</dl>
+      <p class="lead">{{token.open}}</p>
+      <p class="src">{{token.legal}}</p>
+    </article>
+
+    <article class="card market wide">
+      <h2 class="label"><span class="n">07</span>{{market.label}}</h2>
+      <p class="lead">{{market.text}}</p>
+    </article>
+
+    <article class="card team wide">
+      <h2 class="label"><span class="n">08</span>{{team.label}}</h2>
+      <ul class="people">{{{peopleHtml}}}</ul>
+    </article>
+
+  </section>
+
+  <footer class="foot">
+    <span class="site">{{footer.site}}</span>
+    {{{footExtraHtml}}}
+  </footer>
+
+</main>
+</body>
+</html>
