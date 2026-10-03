@@ -8,7 +8,7 @@
 
    Шкала петли (секунды от начала файла):
      0.0 … 16.2   дуэль → зал → остров, остров уходит в темноту
-     16.2 … 17.9  тёмная пауза: в ней лежит удар (HIT_S)
+     16.2 … 17.9  тёмная пауза: в ней лежит удар (HIT_S), потом знак летит в шапку
      17.9 … 18.7  дуэль проявляется из темноты — это и есть шов петли
    ──────────────────────────────────────────────────────────────────────────── */
 
@@ -17,11 +17,36 @@ export const LOOP_BASE = '/landing-trailer';
 /** Время удара внутри петли, секунды. Знак появляется и слово бьёт ровно тут. */
 export const HIT_S = 16.45;
 
-/* Знак над словом. Появление быстрое, потом держится и гаснет, пока
-   проявляется дуэль. Числа — из утверждённого превью варианта B. */
+/* Знак над словом. Появление быстрое, потом держится и улетает в знак шапки.
+   Числа появления — из утверждённого превью варианта B.
+
+   ⚠️ ВРЕМЯ НА КРУГЕ ПОДСЧИТАНО И ТЕСНОЕ. Удар в 16.45, конец файла 18.7: на
+   всё про всё 2.25 с. Раньше знак держался 1.45 с и гас ещё полсекунды (до
+   17.9 + 0.5) — но гашение заканчивалось внутри круга. Полёт ~1.1 с с той же
+   паузой (1.45 + 1.1 = 2.55) в круг не влезает на 0.3 с, поэтому пауза урезана до
+   1.0: 1.0 + 1.1 = 2.1 → прилёт в 18.55, запас до шва 0.15 с.
+   Отдать паузе обратно её 0.45 с можно только за счёт полёта (≈0.75 с) или
+   выходом полёта за шов петли — это решение владельца, не техническое. */
 export const MARK_FADE_IN_S = 0.08;   // за сколько знак становится видимым
-export const MARK_HOLD_S = 1.45;      // сколько держится после удара, до начала гашения
-export const MARK_FADE_OUT_S = 0.5;   // гашение
+export const MARK_HOLD_S = 1.0;       // сколько держится после удара, до отрыва
+export const MARK_FLIGHT_S = 1.1;     // полёт в знак шапки
+export const MARK_FADE_OUT_S = 0.5;   // гашение на месте — только когда лететь некуда
+
+/* Прилёт: вспышка знака шапки. Яркость и масштаб, свечения нет. Идёт сама по
+   времени стены (не по времени петли): 0.3 с, шов петли ей не помеха. */
+export const ARRIVE_FLASH_MS = 300;
+export const ARRIVE_FLASH_SCALE = 1.1;
+export const ARRIVE_FLASH_BRIGHT = 1.25;
+
+/* Дуга полёта: боковое отклонение от прямой в долях длины пути. 0 — прямая.
+   Минус — дуга вниз-влево: на телефоне знак обходит меню шапки снизу, на низком
+   окне не вылезает за верхний край (плюс — вверх-вправо — делал и то, и другое).
+   Сравнение трёх вариантов — docs/landing-trailer/mark-flight/arc/. */
+export const FLIGHT_ARC = -0.12;
+
+/* Кривая полёта — токен лендинга, а не своя: тяжёлый разгон и торможение,
+   как у плит и хрома. Читается из tokens.css во время полёта. */
+export const FLIGHT_EASE_TOKEN = '--e-weight';
 
 /* Кривые удара: [секунды от удара, масштаб]. Между точками — линейно.
    Знак: влетает крупным, сжимается, выбрасывается за 100 %, садится.
@@ -42,25 +67,74 @@ function along(curve, u) {
   return curve[curve.length - 1][1];
 }
 
-const FX_END_S = MARK_HOLD_S + MARK_FADE_OUT_S;
+const FLIGHT_START_S = MARK_HOLD_S;
+const FLIGHT_END_S = MARK_HOLD_S + MARK_FLIGHT_S;
 
 /**
  * Состояние эффектов для момента петли `t`. Чистая функция времени: никакого
  * накопленного состояния, поэтому после любого числа кругов и после паузы вне
  * экрана рассинхрона быть не может — кадр сам говорит, где он.
  * `active: false` — эффектов нет, страница снимает свои переменные.
+ *
+ * Знак: `flying` — отрыв начался, `flight` — доля пути 0…1 по времени (кривую
+ * и сам путь считает страница: они зависят от раскладки). `arrived` — путь
+ * пройден, летящая копия гаснет. `fly: false` — лететь некуда (шапки не видно),
+ * тогда знак гаснет на месте, как было до полёта.
  */
-export function loopFx(t) {
+export function loopFx(t, { fly = true } = {}) {
   const u = t - HIT_S;
-  if (u < 0 || u > FX_END_S + 0.05) return { active: false };
+  const end = fly ? FLIGHT_END_S : MARK_HOLD_S + MARK_FADE_OUT_S;
+  if (u < 0 || u > end + 0.05) return { active: false };
   let alpha = Math.min(1, u / MARK_FADE_IN_S);
-  if (u > MARK_HOLD_S) alpha = Math.max(0, 1 - (u - MARK_HOLD_S) / MARK_FADE_OUT_S);
-  return {
-    active: true,
-    word: along(WORD_CURVE, u),
-    mark: along(MARK_CURVE, u),
-    alpha,
+  const out = { active: true, word: along(WORD_CURVE, u), mark: along(MARK_CURVE, u) };
+  if (fly) {
+    out.flying = u > FLIGHT_START_S && u < FLIGHT_END_S;
+    out.arrived = u >= FLIGHT_END_S;
+    out.flight = Math.min(1, Math.max(0, (u - FLIGHT_START_S) / MARK_FLIGHT_S));
+    if (out.arrived) alpha = 0;
+  } else if (u > MARK_HOLD_S) {
+    alpha = Math.max(0, 1 - (u - MARK_HOLD_S) / MARK_FADE_OUT_S);
+  }
+  out.alpha = alpha;
+  return out;
+}
+
+/** Кубическая кривая Безье (как CSS cubic-bezier) → функция 0…1 → 0…1. */
+export function bezierEase(x1, y1, x2, y2) {
+  const cx = 3 * x1; const bx = 3 * (x2 - x1) - cx; const ax = 1 - cx - bx;
+  const cy = 3 * y1; const by = 3 * (y2 - y1) - cy; const ay = 1 - cy - by;
+  const X = (s) => ((ax * s + bx) * s + cx) * s;
+  const Y = (s) => ((ay * s + by) * s + cy) * s;
+  const dX = (s) => (3 * ax * s + 2 * bx) * s + cx;
+  return (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let s = x;
+    for (let i = 0; i < 6; i += 1) {            // Ньютон — почти всегда хватает
+      const e = X(s) - x;
+      if (Math.abs(e) < 1e-5) return Y(s);
+      const d = dX(s);
+      if (Math.abs(d) < 1e-6) break;
+      s -= e / d;
+    }
+    let lo = 0; let hi = 1; s = x;              // запасной путь — деление пополам
+    for (let i = 0; i < 24; i += 1) {
+      const e = X(s) - x;
+      if (Math.abs(e) < 1e-5) break;
+      if (e > 0) hi = s; else lo = s;
+      s = (lo + hi) / 2;
+    }
+    return Y(s);
   };
+}
+
+/** Кривая из токена стилей (`cubic-bezier(a,b,c,d)`); без неё — плавная по умолчанию. */
+export function easeFromToken(name, el = document.documentElement) {
+  const raw = getComputedStyle(el).getPropertyValue(name);
+  const m = /cubic-bezier\(([^)]+)\)/.exec(raw || '');
+  const n = m ? m[1].split(',').map(Number) : [];
+  if (n.length === 4 && n.every(Number.isFinite)) return bezierEase(n[0], n[1], n[2], n[3]);
+  return bezierEase(0.55, 0, 0.12, 1);
 }
 
 /* Какая раскладка файла нужна экрану.

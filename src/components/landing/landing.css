@@ -377,7 +377,7 @@
 }
 
 /* Знак над словом. Невидим, пока петля не дошла до удара; переменные пишет
-   LandingHero по времени кадра. */
+   LandingHero по времени кадра. После паузы он улетает в знак шапки. */
 .lp .hero-head { position: relative; }
 .lp .hero-mark {
   position: absolute; left: 50%; pointer-events: none;
@@ -386,7 +386,11 @@
   /* Поле в самом файле знака: видимая часть ниже центра на 0.21 бокса, поэтому
      верх бокса стоит на 0.79 бокса + зазор над заголовком. */
   top: calc(var(--hero-mark) * -0.79 - 14px);
-  opacity: var(--mark-a, 0); transform: scale(var(--mark-s, 1));
+  /* Знак летит в шапку: сдвиг и масштаб — единственное, что меняется (никакой
+     перекладки страницы). Переменные пишет LandingHero прямо на этот элемент. */
+  opacity: var(--mark-a, 0);
+  transform: translate3d(var(--mark-x, 0px), var(--mark-y, 0px), 0) scale(var(--mark-s, 1));
+  will-change: transform, opacity;
 }
 
 /* Кнопка WATCH TRAILER: слот нулевой высоты под «мышкой» (на телефоне — под
