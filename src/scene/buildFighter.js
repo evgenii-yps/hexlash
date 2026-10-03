@@ -801,7 +801,10 @@ export function buildFighter(
     const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance + klichDelta.distance - escFwd, DX.axisMin, DX.axisMax);
     const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative + klichDelta.initiative, DX.axisMin, DX.axisMax);
     stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick + klichDelta.stick) / 100, 0, 1);
-    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo + klichDelta.tempo) / 100, 0, 1);
+    // LATE FIRE «чем дольше бой, тем больше машет»: sb.lateRamp (base 0, в очках оси темпа) × кривая по времени боя — в начале спокойнее, к концу разгон
+    // (форма, а не сила: средний темп за бой почти не растёт). Нет кристалла → 0 → строка считается как раньше.
+    const lateDelta = sb.lateRamp ? sb.lateRamp * (B.lateRamp.lo + (B.lateRamp.hi - B.lateRamp.lo) * THREE.MathUtils.clamp(((fc && fc.elapsed) || 0) / B.lateRamp.sec, 0, 1)) : 0;
+    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo + klichDelta.tempo + lateDelta) / 100, 0, 1);
     character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, RANGE_MAX);
     character.aggression = THREE.MathUtils.clamp(effInit / 100 + escAggr + character.aggrJit, 0, 1);
   };

@@ -1099,6 +1099,10 @@ export const COMBAT_BALANCE = {
   //     сбив замаха (interrupt a read windup) and контра (punish a read opening) —
   //     and biases the picker toward CATCH. Endpoints here, scaled by counter01 via
   //     the helpers below (one tuning point).
+  // --- LATE FIRE (Building Momentum): кривая добавки к темпу по времени боя. Добавка = sb.lateRamp × (lo … hi), линейно за `sec` секунд боя,
+  //     потом держится на hi. lo < 0 — спокойнее в начале; hi > 0 — разгон к концу. Числа подобраны на признаках захода 6 (группа 2).
+  lateRamp: { sec: 40, lo: -0.5, hi: 1 },
+
   read: {
     delayMsLow: 460, delayMsHigh: 95, // perception latency (ms): counter01 0 → 1
     missChanceLow: 0.6, missChanceHigh: 0.12, // miss a real transition; HIGH ≠ 0 = reliability cap < 1
