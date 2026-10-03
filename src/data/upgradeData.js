@@ -176,7 +176,7 @@ export const CRYSTALS = {
       // Shorter gaps between attacks.
       { name: 'No Pause', shifts: [s('tempo', 3)], conditionals: ['no_pause'] },
       // Speeds up as it lands (hit_accel — conditional, accruing accel later).
-      // Заход 6: разгон со временем боя (facetBonus natisk.c.3 lateRamp). Компенсация — rushMiss +8 п.п. (facetBonus): разогнавшийся чаще мажет в ответах.
+      // Заход 6: разгон со временем боя (facetBonus natisk.c.3 lateRamp). Компенсация — rushMiss +12 п.п. (facetBonus): разогнавшийся чаще мажет в ответах.
       { name: 'Building Momentum', shifts: [s('tempo', 2)], conditionals: ['hit_accel'] },
       // Never lets the foe recover (no_breather — REQUIRES a cross-fighter regen-
       // suppression seam; tagged + approximated by tempo+stick pressure for now).

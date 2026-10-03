@@ -381,7 +381,7 @@ export const COMBAT_BALANCE = {
     //   c3 Late Fire  — lateRamp: доля паузы, которая растёт со временем боя (в начале спокойнее, к концу разгон; кривая — combatBalance.lateRamp)
     'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.34, rushMiss: 0.12 },
     'natisk.c.2': { strikePower: 0.02, openPounce: 0.4 },
-    'natisk.c.3': { strikePower: 0.02, lateRamp: 0.66, rushMiss: 0.08 },
+    'natisk.c.3': { strikePower: 0.02, lateRamp: 0.66, rushMiss: 0.12 },
     'natisk.c.4': { strikePower: 0.02 },
     'natisk.c.5': { strikePower: 0.07 },
     // RAI JAB
@@ -1107,7 +1107,8 @@ export const COMBAT_BALANCE = {
   //     the helpers below (one tuning point).
   // --- LATE FIRE (Building Momentum): кривая добавки к темпу по времени боя. Добавка = sb.lateRamp × (lo … hi), линейно за `sec` секунд боя,
   //     потом держится на hi. lo < 0 — спокойнее в начале; hi > 0 — разгон к концу. Множитель темпа: см. paceMul в buildFighter.js.
-  lateRamp: { sec: 40, lo: -0.8, hi: 1.2 },
+  //     lo = −2 (глубже, чем −0.8): спокойный старт ЗДЕСЬ даёт грани WILL +3 п.п. почти бесплатно для сборок (замер захода 6) — единственный «бесплатный» рычаг подбора.
+  lateRamp: { sec: 40, lo: -2, hi: 1.4 },
   pounceCooldownSec: 0, // NO PAUSE: пауза между бросками на открытие врага, с (0 — без паузы)
 
   read: {
