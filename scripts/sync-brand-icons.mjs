@@ -51,7 +51,9 @@ const COPY = [
   ['icon-192.png', 'icon-192.png'],
   ['icon-512.png', 'icon-512.png'],
   ['icon-maskable-512.png', 'icon-maskable-512.png'],
-  ['og-image-1200x630.png', 'og-image.png'],
+  // og-image.png is NOT copied here: since 2026-10-04 it is the link-preview picture
+  // built by scripts/build-og-image.mjs (core figure + mark + word + line).
+  // The old pack file was a black rectangle with a tiny mark.
 ];
 
 for (const [from, to] of COPY) {

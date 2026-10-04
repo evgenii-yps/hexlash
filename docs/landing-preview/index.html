@@ -1,0 +1,20 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Превью ссылки — варианты</title>
+<style>
+body{background:#141418;color:#F6F4F6;font-family:system-ui,sans-serif;margin:0;padding:28px}
+h1{font-size:20px;margin:0 0 6px} p{color:#aaa;margin:0 0 24px;font-size:14px;max-width:900px;line-height:1.5}
+.v{margin:0 0 40px} .v h2{font-size:16px;margin:0 0 4px} .v small{color:#aaa;display:block;margin-bottom:10px}
+.pair{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+figure{margin:0} figcaption{font-size:12px;color:#888;margin-top:6px}
+img{display:block;border:1px solid #333;height:auto}
+.full{width:600px} .sq{width:315px}
+</style></head><body>
+<h1>Картинка превью ссылки: варианты раскладки</h1>
+<p>Слева — как картинку видят Telegram и сайты целиком (1200×630). Справа — как её обрежут X и Discord до центрального квадрата 630×630: всё важное должно остаться в нём. В мета-теги сейчас стоит вариант 1. Сменить — поменять цифру PUBLISH в scripts/build-og-image.mjs и запустить <code>node scripts/build-og-image.mjs --publish</code>.</p>
+<div class="v"><h2>Вариант 1 — сейчас в мета-тегах</h2><small>Ядро в центре, связка сверху, строка снизу</small>
+<div class="pair"><figure><img class="full" src="og-variant-1.png"><figcaption>целиком 1200×630</figcaption></figure>
+<figure><img class="sq" src="og-variant-1-square.png"><figcaption>обрезка до квадрата 630×630</figcaption></figure></div></div><div class="v"><h2>Вариант 2</h2><small>Слово крупно под ядром</small>
+<div class="pair"><figure><img class="full" src="og-variant-2.png"><figcaption>целиком 1200×630</figcaption></figure>
+<figure><img class="sq" src="og-variant-2-square.png"><figcaption>обрезка до квадрата 630×630</figcaption></figure></div></div><div class="v"><h2>Вариант 3</h2><small>Слово и знак по центру, ядро как большой фон</small>
+<div class="pair"><figure><img class="full" src="og-variant-3.png"><figcaption>целиком 1200×630</figcaption></figure>
+<figure><img class="sq" src="og-variant-3-square.png"><figcaption>обрезка до квадрата 630×630</figcaption></figure></div></div>
+</body></html>
