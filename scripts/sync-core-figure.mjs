@@ -61,6 +61,8 @@ const BLOCKS = [
   ['<!-- МЕРЦАНИЕ:НАЧАЛО -->', '<!-- МЕРЦАНИЕ:КОНЕЦ -->', 'мерцание'],
   ['<!-- ГРАНИ:НАЧАЛО -->', '<!-- ГРАНИ:КОНЕЦ -->', 'грани'],
   ['<!-- ЦВЕТА:НАЧАЛО -->', '<!-- ЦВЕТА:КОНЕЦ -->', 'цвета'],
+  ['<!-- ПЕЧАТЬ-RU:НАЧАЛО -->', '<!-- ПЕЧАТЬ-RU:КОНЕЦ -->', 'печать раздела 04, русский слой'],
+  ['<!-- ПЕЧАТЬ-EN:НАЧАЛО -->', '<!-- ПЕЧАТЬ-EN:КОНЕЦ -->', 'печать раздела 04, английский слой'],
 ];
 
 /* ⚠️ Цвета НЕ объявляются здесь. Они читаются из src/styles/tokens.css —
@@ -248,9 +250,65 @@ for (const n of names) {
 colors.push('</style>');
 colors.push(`<script>window.DK_CORE_CYCLE=${JSON.stringify(names)};<\/script>`);
 
+
+/* ---- «Печать» в разделе 04 --------------------------------------------- */
+
+/* Та же фигура, что фоном, но крупно и со светом: три ветки-грани по пять
+   частей. Геометрия, остановки света и сердце — из coreFigure() (общий
+   источник). Здесь только раскладка: какая ветка сколько частей горит и как
+   подписана. ⚠️ Примерная сборка 7 из 15 — как в тексте раздела: ТЕЛО горит
+   целиком (5), РАЗУМ — две части, ВОЛЯ не горит. Свет идёт от сердца к краю
+   пятью шагами; сам ход (радиус обрезающего круга по времени) ведёт сценарий
+   страницы по data-атрибутам ниже, в разметке стоит ИТОГОВОЕ состояние. */
+const SEAL_LIT = [5, 2, 0];
+const SEAL_ARIA = {
+  ru: 'Ядро «Печать»: три грани по пять кристаллов, зажжено семь из пятнадцати',
+  en: 'The “Seal” core: three facets with five crystals each, seven of fifteen lit',
+};
+const SEAL_LABELS = { ru: ['ТЕЛО', 'РАЗУМ', 'ВОЛЯ'], en: ['BODY', 'MIND', 'WILL'] };
+
+function sealSvg(lang) {
+  const g = coreFigure('muted');
+  const out = [];
+  const o = (s) => out.push(s);
+  const id = (k) => `dkSeal${lang === 'ru' ? 'R' : 'E'}${k}`;
+  const verts = g.plate.split(' ').map((p) => p.split(',').map(Number));
+  o(`<svg class="dk-seal" data-mo="seal" viewBox="0 20 ${g.box} 520" role="img" aria-label="${SEAL_ARIA[lang]}" style="display:block;width:100%;max-width:440px;margin:0 auto">`);
+  o('  <defs>');
+  g.branches.forEach((b, i) => {
+    const lit = SEAL_LIT[i];
+    if (!lit) return;
+    o(`    <clipPath id="${id(i)}"><circle cx="${g.c}" cy="${g.c}" r="${b.stops[lit]}" data-seal-stops="${b.stops.join(',')}" data-seal-lit="${lit}"/></clipPath>`);
+  });
+  o('  </defs>');
+  o(`  <polygon points="${g.plate}" fill="#0b0910" stroke="rgba(255,255,255,0.22)" stroke-width="3" stroke-linejoin="round"/>`);
+  o(`  <polygon points="${g.inner}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.2"/>`);
+  for (const b of g.branches) {
+    o(`  <polygon points="${b.points}" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>`);
+  }
+  g.branches.forEach((b, i) => {
+    if (!SEAL_LIT[i]) return;
+    o(`  <g clip-path="url(#${id(i)})"><polygon points="${b.strip}" fill="#FF0069"/></g>`);
+  });
+  o(`  <polygon points="${g.heart.frame}" fill="#0b0910" stroke="rgba(255,255,255,0.4)" stroke-width="${g.heart.frameW}" stroke-linejoin="round"/>`);
+  o(`  <polygon points="${g.heart.ring}" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>`);
+  o(`  <polygon points="${g.heart.gem}" fill="#FF0069"/>`);
+  /* Подписи — у концов веток: вершины 0, 2 и 4 шестиугольника. */
+  const lab = [
+    [verts[0][0], verts[0][1] - 23],
+    [verts[2][0] + 10, verts[2][1] + 45],
+    [verts[4][0] - 10, verts[4][1] + 45],
+  ];
+  SEAL_LABELS[lang].forEach((t, i) => {
+    o(`  <text x="${lab[i][0].toFixed(0)}" y="${lab[i][1].toFixed(0)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">${t}</text>`);
+  });
+  o('</svg>');
+  return out;
+}
+
 /* ---- запись ------------------------------------------------------------- */
 
-const bodies = [ringLines, core, flick, facets, colors].map(
+const bodies = [ringLines, core, flick, facets, colors, sealSvg('ru'), sealSvg('en')].map(
   (l) => l.map((s) => '  ' + s).join('\n'),
 );
 

@@ -270,7 +270,13 @@ a:hover{color:#FF0069}
    Заставка — картинка, видео лежит поверх и невидимо, пока не пошло: нет
    JavaScript, режим энергосбережения iOS или видео не загрузилось — остаётся
    заставка (она же первый кадр петли). Подгрузка и пауза — в последнем скрипте. */
-.dk-clip{position:relative;aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,.09)}
+.dk-clip{position:relative;aspect-ratio:16/9;background:transparent;border:0;
+  /* Края растворяются в фон страницы: полоса ~7% ширины со всех сторон (по вертикали
+     те же точки в процентах высоты окна 16:9 — 12,4%). Рамки нет. */
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 12.4%,#000 87.6%,transparent 100%);
+  -webkit-mask-composite:source-in;
+  mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 12.4%,#000 87.6%,transparent 100%);
+  mask-composite:intersect}
 .dk-clip .dk-clip-poster,.dk-clip .dk-clip-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .dk-clip .dk-clip-video{opacity:0;transition:opacity .4s}
 .dk-clip.is-playing .dk-clip-video{opacity:1}
@@ -401,6 +407,57 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
   html.dk-rail.dk-short .dk-aside{visibility:visible}
   html.dk-rail.dk-short .dk-scale{display:block}
 }
+
+/* --- Движение (TZ_deck_motion_v1): ядро в 04, ступени в 06, шкала боя в 07,
+   карточки рынка в 16. Каждое движение играет один раз, когда блок вошёл в
+   кадр. Скрытое состояние живёт только под html.dk-anim (его нет при «уменьшить
+   движение» и без JS) — иначе итоговое состояние стоит сразу. --- */
+[data-seal-n]{font-variant-numeric:tabular-nums}
+
+/* 06. Ступени и полоса «ТЫ → ИИ» */
+.dk-step,.dk-pick{cursor:pointer;transition:opacity .45s ease,border-color .3s,background-color .3s}
+.dk-step:focus-visible,.dk-pick:focus-visible{outline:1px solid rgba(246,244,246,.7);outline-offset:3px}
+[data-ladder-cards][data-hl="1"] .dk-step[data-step="2"],
+[data-ladder-cards][data-hl="2"] .dk-step[data-step="1"]{opacity:.38}
+.dk-ctl-fill{position:absolute;left:0;top:0;width:100%;height:2px;background:#FFB21D;transform-origin:left;transform:scaleX(1);transition:background-color .3s}
+.dk-ctl.is-click .dk-ctl-fill{transition:transform .5s cubic-bezier(.22,.61,.36,1),background-color .35s}
+.dk-ctl-line{margin:0;max-height:0;overflow:hidden;opacity:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty;transition:max-height .45s ease,opacity .35s ease,margin .35s ease}
+.dk-ctl-line.is-show{max-height:10em;opacity:1;margin-top:16px}
+.dk-ctl-line span{display:none}
+.dk-ctl-line[data-on="1"] [data-line="1"],.dk-ctl-line[data-on="2"] [data-line="2"]{display:block}
+.dk-ctl-line[data-on="1"]{padding-left:14px;border-left:2px solid #F6F4F6}
+.dk-ctl-line[data-on="2"]{padding-left:14px;border-left:2px solid #FFB21D}
+
+/* 07. Масштаб боя: 60 секунд, быстрый слой и вызовы модели */
+.dk-sc-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.dk-sc{position:relative;min-width:720px;padding:26px 0 84px}
+.dk-sc-axis{position:absolute;left:0;right:0;top:0;height:12px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF}
+.dk-sc-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.dk-sc-axis span:first-child{transform:none}
+.dk-sc-axis span:last-child{transform:translateX(-100%)}
+.dk-sc-bars{display:flex;align-items:flex-end;gap:2px;height:36px}
+.dk-sc-bars i{flex:1 1 0;min-width:0;height:10px;background:#7A828B;transition:background-color .25s}
+.dk-sc-bars i.m{height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8;transform-origin:50% 100%}
+.dk-sc-ev{position:absolute;left:0;right:0;top:62px;height:0}
+.dk-sc-c{position:absolute;top:0;width:78px;transform:translateX(-50%);padding-top:var(--lv);text-align:center;font:500 10.5px/1.25 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A9A5AF;transition:opacity .3s}
+.dk-sc-c::before{content:"";position:absolute;left:50%;top:0;height:calc(var(--lv) - 4px);width:1px;background:rgba(200,209,216,.35)}
+.dk-sc-cur{position:absolute;left:0;top:18px;width:1px;height:44px;background:#F6F4F6;opacity:0;transition:opacity .3s;pointer-events:none}
+.dk-sc-cur.is-run{opacity:.85}
+html.dk-anim .dk-sc:not(.is-done) .dk-sc-bars i:not(.m):not(.on){background:#2B3036}
+html.dk-anim .dk-sc:not(.is-done) .dk-sc-bars i.m:not(.on){opacity:0}
+html.dk-anim .dk-sc:not(.is-done) .dk-sc-c:not(.on){opacity:0}
+.dk-sc-bars i.m.pop{animation:dkPop .4s cubic-bezier(.22,.61,.36,1)}
+@keyframes dkPop{0%{transform:scale(1.7,1.25)}100%{transform:scale(1,1)}}
+.dk-sc-sm{display:inline-block;width:8px;height:10px;background:#7A828B}
+.dk-sc-bg{display:inline-block;width:8px;height:16px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8}
+
+/* 16. Два игрока рынка: карточка выбирается, вторая тускнеет */
+.dk-pick{transition:opacity .5s ease,transform .6s cubic-bezier(.22,.61,.36,1),border-color .3s,background-color .3s}
+[data-pickgrid][data-sel="h"]>.dk-pick[data-pick="a"],[data-pickgrid][data-sel="a"]>.dk-pick[data-pick="h"]{opacity:.45}
+[data-pickgrid][data-sel="a"]>.dk-pick[data-pick="a"]{background:rgba(255,255,255,.045)!important;border-color:rgba(255,255,255,.2)!important}
+[data-pickgrid][data-sel="a"]>.dk-pick[data-pick="a"] h3,[data-pickgrid][data-sel="a"]>.dk-pick[data-pick="a"] p{color:#F6F4F6!important}
+html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY(16px)}
+[data-pickgrid].mo-intro>.dk-pick[data-pick="h"]{transition-delay:.5s}
 </style>
 <!-- Появление блоков включается ЗДЕСЬ, до первой отрисовки: иначе скрытое
      состояние мигнуло бы. Не включается при «уменьшить движение» и без
@@ -1069,7 +1126,27 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Из ядра растут три грани — ТЕЛО, РАЗУМ и ВОЛЯ, — в каждой по пять кристаллов. У каждого ядра свои пятнадцать. Зажечь можно любые семь.</p>
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Кристалл меняет не только силу, но и характер: то, как боец выбирает намерение, а значит — как он дерётся.</p>
 </div>
-<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px"><svg viewBox="0 20 600 520" role="img" aria-label="Ядро «Печать»: три грани по пять кристаллов, зажжено семь из пятнадцати" style="display:block;width:100%;max-width:440px;margin:0 auto"><polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/><line x1="300" y1="300" x2="300.0" y2="75.0" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="494.9" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="105.1" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><polygon points="300.0,213.0 307.8,217.5 307.8,226.5 300.0,231.0 292.2,226.5 292.2,217.5" fill="#FF0069"/><polygon points="300.0,181.5 309.1,186.8 309.1,197.2 300.0,202.5 290.9,197.2 290.9,186.8" fill="#FF0069"/><polygon points="300.0,148.0 310.4,154.0 310.4,166.0 300.0,172.0 289.6,166.0 289.6,154.0" fill="#FF0069"/><polygon points="300.0,112.5 311.7,119.2 311.7,132.8 300.0,139.5 288.3,132.8 288.3,119.2" fill="#FF0069"/><polygon points="300.0,75.0 313.0,82.5 313.0,97.5 300.0,105.0 287.0,97.5 287.0,82.5" fill="#FF0069"/><polygon points="367.5,330.0 375.3,334.5 375.3,343.5 367.5,348.0 359.8,343.5 359.8,334.5" fill="#FF0069"/><polygon points="393.5,343.5 402.6,348.8 402.6,359.2 393.5,364.5 384.4,359.2 384.4,348.8" fill="#FF0069"/><polygon points="421.2,358.0 431.6,364.0 431.6,376.0 421.2,382.0 410.9,376.0 410.9,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="450.7,373.5 462.4,380.2 462.4,393.7 450.7,400.5 439.0,393.7 439.0,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="481.9,390.0 494.9,397.5 494.9,412.5 481.9,420.0 468.9,412.5 468.9,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="232.5,330.0 240.2,334.5 240.2,343.5 232.5,348.0 224.7,343.5 224.7,334.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="206.5,343.5 215.6,348.8 215.6,359.2 206.5,364.5 197.4,359.2 197.4,348.8" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="178.8,358.0 189.1,364.0 189.1,376.0 178.8,382.0 168.4,376.0 168.4,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="149.3,373.5 161.0,380.2 161.0,393.7 149.3,400.5 137.6,393.7 137.6,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="118.1,390.0 131.1,397.5 131.1,412.5 118.1,420.0 105.1,412.5 105.1,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="300.0,260.0 334.6,280.0 334.6,320.0 300.0,340.0 265.4,320.0 265.4,280.0" fill="#0b0910" stroke="rgba(255,255,255,0.3)" stroke-width="3"/><text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ТЕЛО</text><text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">РАЗУМ</text><text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ВОЛЯ</text></svg><p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">7 / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">ЗАЖЖЕНО</span><span class="dk-g">ПРИМЕР СБОРКИ</span></figcaption></figure>
+<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px"><!-- ПЕЧАТЬ-RU:НАЧАЛО -->
+  <svg class="dk-seal" data-mo="seal" viewBox="0 20 600 520" role="img" aria-label="Ядро «Печать»: три грани по пять кристаллов, зажжено семь из пятнадцати" style="display:block;width:100%;max-width:440px;margin:0 auto">
+    <defs>
+      <clipPath id="dkSealR0"><circle cx="300" cy="300" r="196.88" data-seal-stops="55.13,83.47,111.83,140.18,168.53,196.88" data-seal-lit="5"/></clipPath>
+      <clipPath id="dkSealR1"><circle cx="300" cy="300" r="111.83" data-seal-stops="55.13,83.47,111.83,140.18,168.53,196.88" data-seal-lit="2"/></clipPath>
+    </defs>
+    <polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="#0b0910" stroke="rgba(255,255,255,0.22)" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="300.0,90.8 481.2,195.4 481.2,404.6 300.0,509.3 118.8,404.6 118.8,195.4" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.2"/>
+    <polygon points="325.9,291.0 319.1,183.0 313.1,103.1 286.9,103.1 280.9,183.0 274.1,291.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="294.9,326.9 391.8,375.1 464.0,409.7 477.0,387.1 410.9,341.9 320.7,282.1" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="279.3,282.1 189.1,341.9 123.0,387.1 136.0,409.7 208.2,375.1 305.1,326.9" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>
+    <g clip-path="url(#dkSealR0)"><polygon points="323.0,244.9 319.1,183.0 313.1,103.1 286.9,103.1 280.9,183.0 277.0,244.9" fill="#FF0069"/></g>
+    <g clip-path="url(#dkSealR1)"><polygon points="336.2,347.5 391.8,375.1 464.0,409.7 477.0,387.1 410.9,341.9 359.2,307.7" fill="#FF0069"/></g>
+    <polygon points="300.0,244.9 347.7,272.4 347.7,327.6 300.0,355.1 252.3,327.6 252.3,272.4" fill="#0b0910" stroke="rgba(255,255,255,0.4)" stroke-width="4.60" stroke-linejoin="round"/>
+    <polygon points="300.0,253.7 340.1,276.8 340.1,323.2 300.0,346.3 259.9,323.2 259.9,276.8" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+    <polygon points="300.0,271.3 324.8,285.7 324.8,314.3 300.0,328.7 275.2,314.3 275.2,285.7" fill="#FF0069"/>
+    <text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ТЕЛО</text>
+    <text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">РАЗУМ</text>
+    <text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">ВОЛЯ</text>
+  </svg>
+<!-- ПЕЧАТЬ-RU:КОНЕЦ --><p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6"><span data-seal-n>7</span> / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">ЗАЖЖЕНО</span><span class="dk-g">ПРИМЕР СБОРКИ</span></figcaption></figure>
 </div>
 </div>
 </section>
@@ -1116,15 +1193,18 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <div data-rv style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:clamp(28px,4vw,44px)">
 <h2 style="margin:0;max-width:22ch;font:700 clamp(30px,4.4vw,52px)/1.14 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:balance">Лестница делегирования</h2>
 <p style="margin:0;max-width:52ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Игрок постепенно отдаёт управление ИИ, которого вырастил сам.</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.16);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">СТУПЕНЬ 1</p><h3 style="margin:0;font:700 22px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Решает игрок</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Ты растишь бойцов и собираешь состав. В бою боец дерётся сам — ты подсказываешь кличами и поддерживаешь баффами.</p></div>
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,178,29,.035);border:1px solid rgba(255,178,29,.4);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">СТУПЕНЬ 2</p><h3 style="margin:0;font:700 22px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Решает легенда</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Лучший боец проходит восхождение и становится легендой. Сам он больше не дерётся: тренирует ростер, пока тебя нет, и ведёт отряд в бою вместо тебя. Вернуть управление можно в любой момент.</p></div>
+<div data-ladder-cards style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
+<div class="dk-step" data-step="1" role="button" tabindex="0" aria-pressed="false" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.16);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">СТУПЕНЬ 1</p><h3 style="margin:0;font:700 22px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Решает игрок</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Ты растишь бойцов и собираешь состав. В бою боец дерётся сам — ты подсказываешь кличами и поддерживаешь баффами.</p></div>
+<div class="dk-step" data-step="2" role="button" tabindex="0" aria-pressed="false" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,178,29,.035);border:1px solid rgba(255,178,29,.4);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">СТУПЕНЬ 2</p><h3 style="margin:0;font:700 22px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Решает легенда</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Лучший боец проходит восхождение и становится легендой. Сам он больше не дерётся: тренирует ростер, пока тебя нет, и ведёт отряд в бою вместо тебя. Вернуть управление можно в любой момент.</p></div>
 </div>
+<div class="dk-ctl" data-mo="ladder">
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
 <span style="font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF">УПРАВЛЕНИЕ</span>
 <span style="font:700 14px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">ТЫ</span>
-<span data-bar style="flex:1 1 140px;display:flex;gap:4px;height:2px;background:rgba(255,255,255,.09)"><i style="flex:1;height:2px;background:#F6F4F6;transform-origin:left"></i><i style="flex:1;height:2px;background:rgba(255,178,29,.45);transform-origin:left"></i><i style="flex:1;height:2px;background:#FFB21D;transform-origin:left"></i></span>
+<span class="dk-ctl-bar" style="flex:1 1 140px;position:relative;height:2px;background:rgba(255,255,255,.09)"><i class="dk-ctl-fill"></i></span>
 <span style="font:700 14px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">ИИ</span>
+</div>
+<p class="dk-ctl-line" aria-live="polite"><span data-line="1">Решаешь ты: каждый клич и каждый бафф — твои.</span><span data-line="2">Решает легенда: она сама читает бой и подсказывает бойцам. Перехватить можно в любой момент.</span></p>
 </div>
 <div style="display:flex;flex-direction:column;gap:28px;padding-top:clamp(32px,4vw,48px);border-top:1px solid rgba(255,255,255,.16)">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0;font:700 clamp(24px,3vw,32px)/1.2 'JetBrains Mono',monospace;color:#F6F4F6">Восхождение</h3><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>РАБОТАЕТ</span></div>
@@ -1169,10 +1249,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">СЛОЙ 1</span><span class="dk-g">ВСЕГДА</span></p><h3 style="margin:0;font:700 22px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Быстрый слой</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Примерно раз в секунду боец выбирает намерение по ядру, кристаллам, своему состоянию и обстановке. Это не сценарий и не дерево условий.</p></div>
 <div style="padding:clamp(22px,2.6vw,30px);background:#16161B;border:1px solid rgba(200,209,216,.16);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#C8D1D8"><span class="dk-g">СЛОЙ 2</span><span class="dk-g">ПО СОБЫТИЯМ</span></p><h3 style="margin:0;font:700 22px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Языковая модель</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Подключается по событиям боя — старт, просадка здоровья или выносливости, смена манеры соперника — не чаще раза в 3 секунды и не больше 12 раз за бой на бойца. Сейчас — у бойца в дуэли и у легенды.</p></div>
 </div>
-<figure style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
-<div style="display:flex;justify-content:space-between;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF"><span>0 С</span><span><span class="dk-ap">≈</span> 60 С</span></div>
-<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:2px;height:36px"><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i></div>
-<p style="display:flex;flex-wrap:wrap;gap:10px 28px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:12px;height:2px;background:#585F68"></i><span class="dk-g">БЫСТРЫЙ СЛОЙ</span><span class="dk-g"><span class="dk-ap">≈</span> 1 РЕШЕНИЕ В СЕКУНДУ</span></span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:8px;height:8px;border:1px solid #C8D1D8"></i><span class="dk-g">ЯЗЫКОВАЯ МОДЕЛЬ</span><span class="dk-g">ПО СОБЫТИЯМ БОЯ</span></span></p>
+<figure data-mo="scale" style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
+<div class="dk-sc-wrap"><div class="dk-sc" aria-hidden="true"><div class="dk-sc-axis"><span style="left:0.000%">0 С</span><span style="left:16.667%">10</span><span style="left:33.333%">20</span><span style="left:50.000%">30</span><span style="left:66.667%">40</span><span style="left:83.333%">50</span><span style="left:100.000%"><span class="dk-ap">≈</span> 60 С</span></div><div class="dk-sc-bars"><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dk-sc-ev"><span class="dk-sc-c" data-evc style="left:5.833%;--lv:14px">СТАРТ</span><span class="dk-sc-c" data-evc style="left:14.167%;--lv:46px">ПРОСАДКА ЗДОРОВЬЯ</span><span class="dk-sc-c" data-evc style="left:25.833%;--lv:14px">ПРОСАДКА СИЛ</span><span class="dk-sc-c" data-evc style="left:32.500%;--lv:46px">СМЕНА МАНЕРЫ</span><span class="dk-sc-c" data-evc style="left:45.833%;--lv:14px">ПРОСАДКА ЗДОРОВЬЯ</span><span class="dk-sc-c" data-evc style="left:57.500%;--lv:46px">СМЕНА МАНЕРЫ</span><span class="dk-sc-c" data-evc style="left:72.500%;--lv:14px">ПРОСАДКА СИЛ</span><span class="dk-sc-c" data-evc style="left:87.500%;--lv:46px">ПРОСАДКА ЗДОРОВЬЯ</span></div><i class="dk-sc-cur"></i></div></div>
+<p style="display:flex;flex-direction:column;gap:10px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-sm"></i><span class="dk-g">БЫСТРЫЙ СЛОЙ</span><span class="dk-g"><span class="dk-ap">≈</span> 1 РЕШЕНИЕ В СЕКУНДУ</span></span><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-bg"></i><span class="dk-g">ЯЗЫКОВАЯ МОДЕЛЬ</span><span class="dk-g">ПО СОБЫТИЯМ БОЯ</span></span></p>
 <figcaption style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF"><span class="dk-g">ДУЭЛЬ, ОДИН БОЕЦ</span><span class="dk-g"><span class="dk-ap">≈</span> 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР НА ТЕКУЩЕЙ СБОРКЕ)</span><span class="dk-g">РАССТАНОВКА — ИЛЛЮСТРАЦИЯ</span></figcaption>
 </figure>
 <div style="display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)">
@@ -1402,9 +1481,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 </aside>
 <div data-rv style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:clamp(28px,4vw,44px)">
 <h2 style="margin:0;max-width:22ch;font:700 clamp(30px,4.4vw,52px)/1.14 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:balance">Кто ещё растит ИИ-бойцов</h2>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:800 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#A9A5AF">AI Arena (ArenaX Labs)</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Ближайший аналог. Игрок обучает бойца, играя за него сам, — боец перенимает его действия. Раунд $6M в январе 2024 под руководством Framework Ventures; токен NRN.</p></div>
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:900 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.14em;color:#F6F4F6">HEXLASH</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Боец не копирует игрока — у него свой характер из ядра и кристаллов. И он вырастает в легенду, которая ведёт других вместо тебя.</p></div>
+<div data-mo="pick" data-pickgrid data-sel="h" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
+<div class="dk-pick" data-pick="a" role="button" tabindex="0" aria-pressed="false" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:800 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#A9A5AF">AI Arena (ArenaX Labs)</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Ближайший аналог. Игрок обучает бойца, играя за него сам, — боец перенимает его действия. Раунд $6M в январе 2024 под руководством Framework Ventures; токен NRN.</p></div>
+<div class="dk-pick" data-pick="h" role="button" tabindex="0" aria-pressed="true" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:900 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.14em;color:#F6F4F6">HEXLASH</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Боец не копирует игрока — у него свой характер из ядра и кристаллов. И он вырастает в легенду, которая ведёт других вместо тебя.</p></div>
 </div>
 <p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ПО ОТКРЫТЫМ ИСТОЧНИКАМ</p>
 </div>
@@ -1633,7 +1712,27 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Three facets grow from the core — BODY, MIND and WILL — five crystals in each. Every core has its own fifteen. Any seven can be lit.</p>
 <p style="margin:0;font:400 16px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">A crystal changes not just strength but character: how the fighter picks his intent — and so how he fights.</p>
 </div>
-<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px"><svg viewBox="0 20 600 520" role="img" aria-label="The “Seal” core: three facets with five crystals each, seven of fifteen lit" style="display:block;width:100%;max-width:440px;margin:0 auto"><polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/><line x1="300" y1="300" x2="300.0" y2="75.0" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="494.9" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><line x1="300" y1="300" x2="105.1" y2="412.5" stroke="rgba(255,255,255,0.09)" stroke-width="2"/><polygon points="300.0,213.0 307.8,217.5 307.8,226.5 300.0,231.0 292.2,226.5 292.2,217.5" fill="#FF0069"/><polygon points="300.0,181.5 309.1,186.8 309.1,197.2 300.0,202.5 290.9,197.2 290.9,186.8" fill="#FF0069"/><polygon points="300.0,148.0 310.4,154.0 310.4,166.0 300.0,172.0 289.6,166.0 289.6,154.0" fill="#FF0069"/><polygon points="300.0,112.5 311.7,119.2 311.7,132.8 300.0,139.5 288.3,132.8 288.3,119.2" fill="#FF0069"/><polygon points="300.0,75.0 313.0,82.5 313.0,97.5 300.0,105.0 287.0,97.5 287.0,82.5" fill="#FF0069"/><polygon points="367.5,330.0 375.3,334.5 375.3,343.5 367.5,348.0 359.8,343.5 359.8,334.5" fill="#FF0069"/><polygon points="393.5,343.5 402.6,348.8 402.6,359.2 393.5,364.5 384.4,359.2 384.4,348.8" fill="#FF0069"/><polygon points="421.2,358.0 431.6,364.0 431.6,376.0 421.2,382.0 410.9,376.0 410.9,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="450.7,373.5 462.4,380.2 462.4,393.7 450.7,400.5 439.0,393.7 439.0,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="481.9,390.0 494.9,397.5 494.9,412.5 481.9,420.0 468.9,412.5 468.9,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="232.5,330.0 240.2,334.5 240.2,343.5 232.5,348.0 224.7,343.5 224.7,334.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="206.5,343.5 215.6,348.8 215.6,359.2 206.5,364.5 197.4,359.2 197.4,348.8" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="178.8,358.0 189.1,364.0 189.1,376.0 178.8,382.0 168.4,376.0 168.4,364.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="149.3,373.5 161.0,380.2 161.0,393.7 149.3,400.5 137.6,393.7 137.6,380.2" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="118.1,390.0 131.1,397.5 131.1,412.5 118.1,420.0 105.1,412.5 105.1,397.5" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5"/><polygon points="300.0,260.0 334.6,280.0 334.6,320.0 300.0,340.0 265.4,320.0 265.4,280.0" fill="#0b0910" stroke="rgba(255,255,255,0.3)" stroke-width="3"/><text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">BODY</text><text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">MIND</text><text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">WILL</text></svg><p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6">7 / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">LIT</span><span class="dk-g">SAMPLE BUILD</span></figcaption></figure>
+<figure style="flex:1 1 260px;max-width:400px;margin:0;display:flex;flex-direction:column;align-items:center;gap:10px"><!-- ПЕЧАТЬ-EN:НАЧАЛО -->
+  <svg class="dk-seal" data-mo="seal" viewBox="0 20 600 520" role="img" aria-label="The “Seal” core: three facets with five crystals each, seven of fifteen lit" style="display:block;width:100%;max-width:440px;margin:0 auto">
+    <defs>
+      <clipPath id="dkSealE0"><circle cx="300" cy="300" r="196.88" data-seal-stops="55.13,83.47,111.83,140.18,168.53,196.88" data-seal-lit="5"/></clipPath>
+      <clipPath id="dkSealE1"><circle cx="300" cy="300" r="111.83" data-seal-stops="55.13,83.47,111.83,140.18,168.53,196.88" data-seal-lit="2"/></clipPath>
+    </defs>
+    <polygon points="300.0,75.0 494.9,187.5 494.9,412.5 300.0,525.0 105.1,412.5 105.1,187.5" fill="#0b0910" stroke="rgba(255,255,255,0.22)" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="300.0,90.8 481.2,195.4 481.2,404.6 300.0,509.3 118.8,404.6 118.8,195.4" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.2"/>
+    <polygon points="325.9,291.0 319.1,183.0 313.1,103.1 286.9,103.1 280.9,183.0 274.1,291.0" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="294.9,326.9 391.8,375.1 464.0,409.7 477.0,387.1 410.9,341.9 320.7,282.1" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="279.3,282.1 189.1,341.9 123.0,387.1 136.0,409.7 208.2,375.1 305.1,326.9" fill="#120f17" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" stroke-linejoin="round"/>
+    <g clip-path="url(#dkSealE0)"><polygon points="323.0,244.9 319.1,183.0 313.1,103.1 286.9,103.1 280.9,183.0 277.0,244.9" fill="#FF0069"/></g>
+    <g clip-path="url(#dkSealE1)"><polygon points="336.2,347.5 391.8,375.1 464.0,409.7 477.0,387.1 410.9,341.9 359.2,307.7" fill="#FF0069"/></g>
+    <polygon points="300.0,244.9 347.7,272.4 347.7,327.6 300.0,355.1 252.3,327.6 252.3,272.4" fill="#0b0910" stroke="rgba(255,255,255,0.4)" stroke-width="4.60" stroke-linejoin="round"/>
+    <polygon points="300.0,253.7 340.1,276.8 340.1,323.2 300.0,346.3 259.9,323.2 259.9,276.8" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+    <polygon points="300.0,271.3 324.8,285.7 324.8,314.3 300.0,328.7 275.2,314.3 275.2,285.7" fill="#FF0069"/>
+    <text x="300" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">BODY</text>
+    <text x="505" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">MIND</text>
+    <text x="95" y="458" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" letter-spacing="3.5" fill="#A9A5AF" aria-hidden="true">WILL</text>
+  </svg>
+<!-- ПЕЧАТЬ-EN:КОНЕЦ --><p style="margin:8px 0 0;font:900 40px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6"><span data-seal-n>7</span> / 15</p><figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">LIT</span><span class="dk-g">SAMPLE BUILD</span></figcaption></figure>
 </div>
 </div>
 </section>
@@ -1680,15 +1779,18 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <div data-rv style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:clamp(28px,4vw,44px)">
 <h2 style="margin:0;max-width:18ch;font:900 clamp(44px,6.6vw,88px)/.92 'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">The delegation ladder</h2>
 <p style="margin:0;max-width:52ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">The player gradually hands control to an AI they raised themselves.</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.16);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">STEP 1</p><h3 style="margin:0;font:800 28px/1.02 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">The player decides</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">You raise fighters and build a lineup. In the fight the fighter acts on its own — you give calls and back it with buffs.</p></div>
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,178,29,.035);border:1px solid rgba(255,178,29,.4);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">STEP 2</p><h3 style="margin:0;font:800 28px/1.02 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">The legend decides</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Your best fighter goes through Ascension and becomes a legend. It no longer fights itself: it trains the roster while you're away and leads the squad in your place. You can take control back at any moment.</p></div>
+<div data-ladder-cards style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
+<div class="dk-step" data-step="1" role="button" tabindex="0" aria-pressed="false" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.16);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">STEP 1</p><h3 style="margin:0;font:800 28px/1.02 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">The player decides</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">You raise fighters and build a lineup. In the fight the fighter acts on its own — you give calls and back it with buffs.</p></div>
+<div class="dk-step" data-step="2" role="button" tabindex="0" aria-pressed="false" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,178,29,.035);border:1px solid rgba(255,178,29,.4);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">STEP 2</p><h3 style="margin:0;font:800 28px/1.02 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">The legend decides</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Your best fighter goes through Ascension and becomes a legend. It no longer fights itself: it trains the roster while you're away and leads the squad in your place. You can take control back at any moment.</p></div>
 </div>
+<div class="dk-ctl" data-mo="ladder">
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
 <span style="font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF">CONTROL</span>
 <span style="font:700 14px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">YOU</span>
-<span data-bar style="flex:1 1 140px;display:flex;gap:4px;height:2px;background:rgba(255,255,255,.09)"><i style="flex:1;height:2px;background:#F6F4F6;transform-origin:left"></i><i style="flex:1;height:2px;background:rgba(255,178,29,.45);transform-origin:left"></i><i style="flex:1;height:2px;background:#FFB21D;transform-origin:left"></i></span>
+<span class="dk-ctl-bar" style="flex:1 1 140px;position:relative;height:2px;background:rgba(255,255,255,.09)"><i class="dk-ctl-fill"></i></span>
 <span style="font:700 14px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#FFB21D">AI</span>
+</div>
+<p class="dk-ctl-line" aria-live="polite"><span data-line="1">You decide: every call and every buff is yours.</span><span data-line="2">The legend decides: it reads the fight and cues the fighters itself. You can take over at any moment.</span></p>
 </div>
 <div style="display:flex;flex-direction:column;gap:28px;padding-top:clamp(32px,4vw,48px);border-top:1px solid rgba(255,255,255,.16)">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0;font:800 clamp(30px,3.6vw,40px)/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Ascension</h3><span style="display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:7px 10px;border:1px solid rgba(127,217,155,.35);font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><i style="width:6px;height:6px;background:#7FD99B"></i>WORKING</span></div>
@@ -1733,10 +1835,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 <div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">LAYER 1</span><span class="dk-g">ALWAYS</span></p><h3 style="margin:0;font:800 28px/1.02 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Fast layer</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">About once a second the fighter picks an intention from its core, crystals, condition and the situation. Not a script, not a decision tree.</p></div>
 <div style="padding:clamp(22px,2.6vw,30px);background:#16161B;border:1px solid rgba(200,209,216,.16);display:flex;flex-direction:column;gap:14px"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#C8D1D8"><span class="dk-g">LAYER 2</span><span class="dk-g">ON FIGHT EVENTS</span></p><h3 style="margin:0;font:800 28px/1.02 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Language model</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Called on fight events — the start, a drop in health or stamina, a change in the opponent's style — no more than once every 3 seconds and no more than 12 times per fighter per fight. Today: for the duel fighter and the legend.</p></div>
 </div>
-<figure style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
-<div style="display:flex;justify-content:space-between;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF"><span>0 S</span><span><span class="dk-ap">≈</span> 60 S</span></div>
-<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:2px;height:36px"><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i><i style="flex:1 1 0;min-width:0;height:10px;background:#585F68"></i></div>
-<p style="display:flex;flex-wrap:wrap;gap:10px 28px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:12px;height:2px;background:#585F68"></i><span class="dk-g">FAST LAYER</span><span class="dk-g"><span class="dk-ap">≈</span> 1 DECISION PER SECOND</span></span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:8px;height:8px;border:1px solid #C8D1D8"></i><span class="dk-g">LANGUAGE MODEL</span><span class="dk-g">ON FIGHT EVENTS</span></span></p>
+<figure data-mo="scale" style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
+<div class="dk-sc-wrap"><div class="dk-sc" aria-hidden="true"><div class="dk-sc-axis"><span style="left:0.000%">0 S</span><span style="left:16.667%">10</span><span style="left:33.333%">20</span><span style="left:50.000%">30</span><span style="left:66.667%">40</span><span style="left:83.333%">50</span><span style="left:100.000%"><span class="dk-ap">≈</span> 60 S</span></div><div class="dk-sc-bars"><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dk-sc-ev"><span class="dk-sc-c" data-evc style="left:5.833%;--lv:14px">START</span><span class="dk-sc-c" data-evc style="left:14.167%;--lv:46px">HEALTH DROP</span><span class="dk-sc-c" data-evc style="left:25.833%;--lv:14px">STAMINA DROP</span><span class="dk-sc-c" data-evc style="left:32.500%;--lv:46px">STYLE CHANGE</span><span class="dk-sc-c" data-evc style="left:45.833%;--lv:14px">HEALTH DROP</span><span class="dk-sc-c" data-evc style="left:57.500%;--lv:46px">STYLE CHANGE</span><span class="dk-sc-c" data-evc style="left:72.500%;--lv:14px">STAMINA DROP</span><span class="dk-sc-c" data-evc style="left:87.500%;--lv:46px">HEALTH DROP</span></div><i class="dk-sc-cur"></i></div></div>
+<p style="display:flex;flex-direction:column;gap:10px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-sm"></i><span class="dk-g">FAST LAYER</span><span class="dk-g"><span class="dk-ap">≈</span> 1 DECISION PER SECOND</span></span><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-bg"></i><span class="dk-g">LANGUAGE MODEL</span><span class="dk-g">ON FIGHT EVENTS</span></span></p>
 <figcaption style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF"><span class="dk-g">DUEL, ONE FIGHTER</span><span class="dk-g"><span class="dk-ap">≈</span> 8 CALLS PER FIGHT (MEASURED ON THE CURRENT BUILD)</span><span class="dk-g">PLACEMENT IS ILLUSTRATIVE</span></figcaption>
 </figure>
 <div style="display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)">
@@ -1966,9 +2067,9 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 </aside>
 <div data-rv style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:clamp(28px,4vw,44px)">
 <h2 style="margin:0;max-width:18ch;font:900 clamp(44px,6.6vw,88px)/.92 'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">Who else raises AI fighters</h2>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:800 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#A9A5AF">AI Arena (ArenaX Labs)</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">The closest analogue. The player trains a fighter by playing it themselves — the fighter imitates their actions. $6M round in January 2024 led by Framework Ventures; NRN token.</p></div>
-<div style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:900 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.14em;color:#F6F4F6">HEXLASH</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">The fighter doesn't copy the player — it has its own character from its core and crystals. And it grows into a legend that leads others in your place.</p></div>
+<div data-mo="pick" data-pickgrid data-sel="h" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">
+<div class="dk-pick" data-pick="a" role="button" tabindex="0" aria-pressed="false" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:800 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#A9A5AF">AI Arena (ArenaX Labs)</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">The closest analogue. The player trains a fighter by playing it themselves — the fighter imitates their actions. $6M round in January 2024 led by Framework Ventures; NRN token.</p></div>
+<div class="dk-pick" data-pick="h" role="button" tabindex="0" aria-pressed="true" style="padding:clamp(22px,2.6vw,30px);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;gap:14px"><h3 style="margin:0;font:900 26px/1.05 'Saira Condensed',sans-serif;letter-spacing:.14em;color:#F6F4F6">HEXLASH</h3><p style="margin:0;font:400 15px/1.65 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">The fighter doesn't copy the player — it has its own character from its core and crystals. And it grows into a legend that leads others in your place.</p></div>
 </div>
 <p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">FROM PUBLIC SOURCES</p>
 </div>
@@ -2593,6 +2694,184 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
   document.addEventListener('visibilitychange', function () {
     items.forEach(function (it) { if (document.hidden) { if (it.loaded) it.v.pause(); } else play(it); });
   });
+})();
+</script>
+<script>
+/* Движение блоков (TZ_deck_motion_v1): ядро в 04, ступени в 06, шкала боя в 07,
+   карточки рынка в 16. Каждое играет один раз, когда блок вошёл в кадр. Без
+   анимации (html.dk-anim нет: «уменьшить движение», нет JS или IntersectionObserver)
+   в разметке уже стоит итоговое состояние. Сыграло на одном языке — на другом
+   сразу итог. Клики по карточкам работают всегда. */
+(function () {
+  var doc = document, root = doc.documentElement;
+  var anim = root.classList.contains('dk-anim') && !!window.IntersectionObserver;
+  var played = {};
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  /* Один механизм «один раз»: init(el) → предмет; pre(it) — стартовое состояние;
+     play(it) — сыграть; final(it) — итог сразу. */
+  function mount(type, init, pre, play, final, thr) {
+    var els = [].slice.call(doc.querySelectorAll('[data-mo="' + type + '"]'));
+    if (!els.length) return [];
+    var items = els.map(init);
+    if (!anim) { items.forEach(final); return items; }
+    items.forEach(pre);
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var it = items[els.indexOf(e.target)];
+        if (!it || it.done) return;
+        if (played[type]) { it.done = true; io.unobserve(e.target); final(it); return; }
+        played[type] = true;
+        items.forEach(function (o) { if (o !== it) { o.done = true; io.unobserve(o.el); final(o); } });
+        it.done = true; io.unobserve(e.target);
+        play(it);
+      });
+    }, { threshold: thr });
+    els.forEach(function (el) { io.observe(el); });
+    return items;
+  }
+
+  /* ---------- 04. Ядро «Печать»: свет от сердца к краю пятью шагами ---------- */
+  mount('seal', function (svg) {
+    var circles = [].map.call(svg.querySelectorAll('circle[data-seal-stops]'), function (c) {
+      return { c: c, st: c.getAttribute('data-seal-stops').split(',').map(Number), lit: +c.getAttribute('data-seal-lit') };
+    });
+    return { el: svg, n: svg.parentNode.querySelector('[data-seal-n]'), cl: circles };
+  }, function (s) {
+    s.cl.forEach(function (x) { x.c.setAttribute('r', x.st[0]); });
+    if (s.n) s.n.textContent = '0';
+  }, function (s) {
+    var STEP = 700, MOVE = 460, STEPS = 5, t0 = null, last = -1;
+    function frame(ts) {
+      if (t0 === null) t0 = ts;
+      var t = ts - t0, k = Math.floor(t / STEP), done = k >= STEPS;
+      if (done) { k = STEPS; }
+      var ph = done ? 1 : clamp((t - k * STEP) / MOVE, 0, 1), e = ease(ph), cnt = 0;
+      s.cl.forEach(function (x) {
+        var a = x.st[Math.min(k, x.lit)], b = x.st[Math.min(k + 1, x.lit)];
+        x.c.setAttribute('r', (done ? x.st[x.lit] : a + (b - a) * e).toFixed(2));
+        cnt += Math.min(x.lit, k + (ph >= 1 ? 1 : 0));
+      });
+      if (cnt !== last && s.n) { last = cnt; s.n.textContent = cnt; }
+      if (!done) requestAnimationFrame(frame);
+    }
+    setTimeout(function () { requestAnimationFrame(frame); }, 250);
+  }, function (s) {
+    s.cl.forEach(function (x) { x.c.setAttribute('r', x.st[x.lit]); });
+    if (s.n) s.n.textContent = '7';
+  }, 0.55);
+
+  /* ---------- 06. Ступени и полоса «ТЫ → ИИ» ---------- */
+  var ladders = [].slice.call(doc.querySelectorAll('[data-mo="ladder"]')).map(function (ctl) {
+    var host = ctl.parentNode;
+    return {
+      ctl: ctl, grid: host.querySelector('[data-ladder-cards]'), cards: [].slice.call(host.querySelectorAll('.dk-step')),
+      fill: ctl.querySelector('.dk-ctl-fill'), bar: ctl.querySelector('.dk-ctl-bar'), line: ctl.querySelector('.dk-ctl-line'),
+      mode: 'scroll', p: -1, hl: 0
+    };
+  });
+  function ladderApply(L, p, hl) {
+    L.fill.style.transform = 'scaleX(' + p.toFixed(3) + ')';
+    L.fill.style.backgroundColor = hl === 1 ? '#F6F4F6' : '#FFB21D';
+    if (L.grid) L.grid.setAttribute('data-hl', hl);
+  }
+  function ladderPick(L, n) {
+    L.mode = 'click';
+    L.ctl.classList.add('is-click');
+    ladderApply(L, n === 1 ? 0.25 : 0.75, n);
+    L.cards.forEach(function (c) { c.setAttribute('aria-pressed', c.getAttribute('data-step') === String(n)); });
+    L.line.setAttribute('data-on', n);
+    L.line.classList.add('is-show');
+  }
+  ladders.forEach(function (L) {
+    L.cards.forEach(function (c) {
+      function go() { ladderPick(L, +c.getAttribute('data-step')); }
+      c.addEventListener('click', go);
+      c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+  });
+  function ladderScroll() {
+    var vh = window.innerHeight;
+    ladders.forEach(function (L) {
+      if (L.mode !== 'scroll' || !L.bar.offsetParent) return;
+      var r = L.bar.getBoundingClientRect();
+      var p = clamp((vh * 0.85 - r.top) / (vh * 0.45), 0, 1), hl = p < 0.5 ? 1 : 2;
+      if (Math.abs(p - L.p) < 0.002 && hl === L.hl) return;
+      L.p = p; L.hl = hl;
+      ladderApply(L, p, hl);
+    });
+  }
+
+  /* ---------- 07. Шкала боя ---------- */
+  mount('scale', function (fig) {
+    var sc = fig.querySelector('.dk-sc'), ticks = [].slice.call(sc.querySelectorAll('.dk-sc-bars i'));
+    return {
+      el: fig, wrap: fig.querySelector('.dk-sc-wrap'), sc: sc, ticks: ticks, cur: sc.querySelector('.dk-sc-cur'),
+      marks: ticks.filter(function (t) { return t.classList.contains('m'); }),
+      caps: [].slice.call(sc.querySelectorAll('.dk-sc-c'))
+    };
+  }, function () {}, function (s) {
+    var DUR = 3600, t0 = null, n = s.ticks.length, idx = 0, mi = 0;
+    s.cur.classList.add('is-run');
+    function frame(ts) {
+      if (t0 === null) t0 = ts;
+      var pos = clamp((ts - t0) / DUR, 0, 1);
+      var x = pos * s.sc.clientWidth;
+      s.cur.style.transform = 'translateX(' + x.toFixed(1) + 'px)';
+      var upto = Math.floor(pos * n);
+      while (idx < upto && idx < n) {
+        var t = s.ticks[idx++];
+        t.classList.add('on');
+        if (t.classList.contains('m')) { t.classList.add('pop'); if (s.caps[mi]) s.caps[mi].classList.add('on'); mi++; }
+      }
+      if (s.wrap.scrollWidth > s.wrap.clientWidth + 2) s.wrap.scrollLeft = clamp(x - s.wrap.clientWidth * 0.5, 0, s.wrap.scrollWidth - s.wrap.clientWidth);
+      if (pos < 1) requestAnimationFrame(frame);
+      else {
+        s.ticks.forEach(function (t) { t.classList.add('on'); });
+        s.caps.forEach(function (c) { c.classList.add('on'); });
+        s.sc.classList.add('is-done');
+        setTimeout(function () { s.cur.classList.remove('is-run'); }, 200);
+      }
+    }
+    setTimeout(function () { requestAnimationFrame(frame); }, 200);
+  }, function (s) {
+    s.ticks.forEach(function (t) { t.classList.add('on'); });
+    s.caps.forEach(function (c) { c.classList.add('on'); });
+    s.sc.classList.add('is-done');
+  }, 0.5);
+
+  /* ---------- 16. AI Arena и HEXLASH ---------- */
+  var picks = mount('pick', function (g) {
+    return { el: g, cards: [].slice.call(g.querySelectorAll('.dk-pick')) };
+  }, function () {}, function (it) {
+    it.el.classList.add('mo-on', 'mo-intro');
+    setTimeout(function () { it.el.classList.remove('mo-intro'); }, 1300);
+  }, function (it) { it.el.classList.add('mo-on'); }, 0.4);
+  [].slice.call(doc.querySelectorAll('[data-pickgrid]')).forEach(function (g) {
+    var cards = [].slice.call(g.querySelectorAll('.dk-pick'));
+    cards.forEach(function (c) {
+      function go() {
+        g.classList.remove('mo-intro');
+        g.setAttribute('data-sel', c.getAttribute('data-pick'));
+        cards.forEach(function (o) { o.setAttribute('aria-pressed', o === c); });
+      }
+      c.addEventListener('click', go);
+      c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+  });
+
+  /* ---------- общий ход по прокрутке ---------- */
+  var queued = false;
+  function frame() { queued = false; if (anim) ladderScroll(); }
+  function schedule() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
+  if (anim) {
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    [].forEach.call(doc.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { setTimeout(schedule, 60); }); });
+    schedule();
+  }
 })();
 </script>
 </body>
