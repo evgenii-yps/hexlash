@@ -10,7 +10,7 @@
         <span class="solid">NEVER GIVE UP</span>
       </h2>
       <p class="code-sub" data-reveal data-d="2">TRAIN<i>.</i> FIGHT<i>.</i> RISE<i>.</i></p>
-      <div class="pillars">
+      <div class="pillars" ref="rowRef">
         <div class="pillar" data-reveal :data-d="i + 3" v-for="(p, i) in pillars" :key="p.k">
           <span class="pillar-k">{{ p.k }}</span>
           <span class="pillar-d">{{ p.d }}</span>
@@ -22,6 +22,11 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { useCardCycle } from '@/composables/useCardCycle';
+
+const rowRef = ref(null);
+useCardCycle(rowRef, '.pillar');
 const pillars = [
   { k: 'TRAIN', d: 'Drill the cage. Master every angle before the bell.' },
   { k: 'FIGHT', d: 'Step in. Read your rival. Commit to the strike.' },

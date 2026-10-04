@@ -513,13 +513,25 @@ html.lp-lock, html.lp-lock body { overflow: hidden; }
   background: linear-gradient(180deg, var(--fill-1), rgba(255, 255, 255, 0));
   display: flex; flex-direction: column; gap: 14px; overflow: hidden;
   transition: border-color var(--d-panel), transform var(--d-panel), background var(--d-panel); }
-.lp .pillar:hover { border-color: rgba(var(--pink-rgb), .32); transform: translateY(-5px);
+.lp .pillar.is-lit { border-color: rgba(var(--pink-rgb), .32); transform: translateY(-5px);
   background: linear-gradient(180deg, rgba(var(--pink-rgb), .05), rgba(255, 255, 255, 0)); }
+/* ⚠️ :hover только там, где наведение есть. На сенсорном экране «залипшее»
+   наведение держало бы коснувшуюся карточку горящей поверх цикла — вторая
+   подсветка в ряду. Касание там ведёт класс .is-lit (useCardCycle). */
+@media (hover: hover) {
+  .lp .pillar:hover { border-color: rgba(var(--pink-rgb), .32); transform: translateY(-5px);
+    background: linear-gradient(180deg, rgba(var(--pink-rgb), .05), rgba(255, 255, 255, 0)); }
+}
 .lp .pillar-k { font-weight: 800; font-size: clamp(26px, 2.6vw, 40px); text-transform: uppercase; color: var(--ink); line-height: 1; }
 .lp .pillar-d { font-family: var(--font-mono); font-size: 13px; line-height: 1.65; color: var(--ink-dim); letter-spacing: .01em; }
 .lp .pillar-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform: scaleX(0); transform-origin: left;
   background: var(--pink); box-shadow: 0 0 12px var(--pink); transition: transform var(--d-panel) var(--e-settle); }
-.lp .pillar:hover .pillar-bar { transform: scaleX(1); }
+.lp .pillar.is-lit .pillar-bar { transform: scaleX(1); }
+@media (hover: hover) { .lp .pillar:hover .pillar-bar { transform: scaleX(1); } }
+/* Ряд сам проигрывает подсветку (useCardCycle): переходы мягкие, 0.8 с.
+   :not(:hover) — наведение мышью по-прежнему приходит за обычные время. */
+.lp .pillars.is-cycling .pillar:not(:hover),
+.lp .pillars.is-cycling .pillar:not(:hover) .pillar-bar { transition-duration: .8s; }
 
 /* ============ GAMEPLAY ============ */
 .lp .sec-gameplay { text-align: center; }
@@ -584,7 +596,9 @@ html.lp-lock, html.lp-lock body { overflow: hidden; }
 .lp .chip { min-width: 210px; flex: 1 1 210px; max-width: 300px; padding: 24px 26px; border: 1px solid var(--line);
   background: var(--fill-1); display: flex; flex-direction: column; gap: 8px; text-align: left;
   transition: border-color var(--d-hover), transform var(--d-hover); }
-.lp .chip:hover { border-color: rgba(var(--pink-rgb), .32); transform: translateY(-4px); }
+.lp .chip.is-lit { border-color: rgba(var(--pink-rgb), .32); transform: translateY(-4px); }
+@media (hover: hover) { .lp .chip:hover { border-color: rgba(var(--pink-rgb), .32); transform: translateY(-4px); } }
+.lp .chips.is-cycling .chip:not(:hover) { transition-duration: .8s; }
 .lp .chip-k { font-weight: 700; letter-spacing: .12em; font-size: 16px; color: var(--ink); text-transform: uppercase; }
 .lp .chip-d { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); letter-spacing: .01em; }
 .lp .contract { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center;

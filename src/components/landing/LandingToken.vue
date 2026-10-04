@@ -17,7 +17,7 @@
       <p class="hex-status" data-reveal data-d="2">COMING SOON</p>
       <p class="hex-chain" data-reveal data-d="3">LAUNCHING ON BASE</p>
 
-      <div class="chips" data-reveal data-d="4">
+      <div class="chips" data-reveal data-d="4" ref="rowRef">
         <div class="chip" v-for="f in facts" :key="f.k">
           <span class="chip-k">{{ f.k }}</span>
           <span class="chip-d">{{ f.d }}</span>
@@ -34,7 +34,12 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { CopyIcon } from './icons.js';
+import { useCardCycle } from '@/composables/useCardCycle';
+
+const rowRef = ref(null);
+useCardCycle(rowRef, '.chip');
 const facts = [
   { k: 'BUILT ON BASE', d: 'Low fees, fast finality.' },
   { k: 'FAIR LAUNCH', d: 'No insiders. No presale.' },
