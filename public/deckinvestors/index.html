@@ -277,6 +277,14 @@ a:hover{color:#FF0069}
   -webkit-mask-composite:source-in;
   mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 12.4%,#000 87.6%,transparent 100%);
   mask-composite:intersect}
+.dk-portrait{
+  /* Рамки нет, фон прозрачный: края кадра растворяются в фон страницы тем же приёмом и той же
+     шириной, что у окон с видео (7% ширины со всех сторон; по вертикали те же точки — 5,6% высоты 4:5). */
+  border:0;background:transparent;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 5.6%,#000 94.4%,transparent 100%);
+  -webkit-mask-composite:source-in;
+  mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%),linear-gradient(to bottom,transparent 0,#000 5.6%,#000 94.4%,transparent 100%);
+  mask-composite:intersect}
 .dk-clip .dk-clip-poster,.dk-clip .dk-clip-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .dk-clip .dk-clip-video{opacity:0;transition:opacity .4s}
 .dk-clip.is-playing .dk-clip-video{opacity:1}
@@ -429,13 +437,21 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 .dk-ctl-line[data-on="2"]{padding-left:14px;border-left:2px solid #FFB21D}
 
 /* 07. Масштаб боя: 60 секунд, быстрый слой и вызовы модели */
-.dk-sc-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.dk-sc-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;
+  /* Растворённые края показывают, что шкала продолжается (тот же приём, что у окон с видео, 7%).
+     Класс .fade-l / .fade-r ставит сценарий: только там, где шкала не помещается и есть куда листать. */
+  --fl:0%;--fr:0%;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%)}
+.dk-sc-wrap::-webkit-scrollbar{display:none;width:0;height:0}
+.dk-sc-wrap.fade-l{--fl:7%}
+.dk-sc-wrap.fade-r{--fr:7%}
 .dk-sc{position:relative;min-width:720px;padding:26px 0 84px}
 .dk-sc-axis{position:absolute;left:0;right:0;top:0;height:12px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF}
-.dk-sc-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;display:inline-flex;align-items:center;gap:.5em}
+.dk-sc-axis>span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;display:inline-flex;align-items:center;gap:.5em}
 .dk-sc-axis .dk-ap{vertical-align:0;margin-right:0}
-.dk-sc-axis span:first-child{transform:none}
-.dk-sc-axis span:last-child{transform:translateX(-100%)}
+.dk-sc-axis>span:first-child{transform:none}
+.dk-sc-axis>span:last-child{transform:translateX(-100%)}
 .dk-sc-bars{display:flex;align-items:flex-end;gap:2px;height:36px}
 .dk-sc-bars i{flex:1 1 0;min-width:0;height:10px;background:#7A828B;transition:background-color .25s}
 .dk-sc-bars i.m{height:32px;background:rgba(200,209,216,.12);border:1px solid #C8D1D8;transform-origin:50% 100%}
@@ -1617,9 +1633,9 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 <h2 style="margin:0;font:700 clamp(30px,4.4vw,52px)/1.14 'JetBrains Mono',monospace;color:#F6F4F6">Команда</h2>
 <p style="margin:0;max-width:52ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Небольшая команда с большим опытом за плечами — и комьюнити тестеров, которое влияет на игру с самой первой демо-версии.</p>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:32px 20px">
-<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5;border:1px solid rgba(255,255,255,.09);background:#08080A;overflow:hidden"><img src="/deckinvestors/team-yuri.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:700 19px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Юрий Варваров</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CEO</span><span class="dk-g">СО-ОСНОВАТЕЛЬ</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">8 лет в управлении инвестициями. Чемпион мира по ушу. Архитектура продукта и ИИ.</p></div>
-<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5;border:1px solid rgba(255,255,255,.09);background:#08080A;overflow:hidden"><img src="/deckinvestors/team-evgeny.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:700 19px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Евгений Бобров</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">СО-ОСНОВАТЕЛЬ</p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Разработка ядра, операции, партнёрства.</p></div>
-<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5;border:1px solid rgba(255,255,255,.09);background:#08080A;overflow:hidden"><img src="/deckinvestors/team-ivan.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:700 19px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Иван Король</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CTO</span><span class="dk-g">СО-ОСНОВАТЕЛЬ</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">CTO и со-основатель AR Spatially (команда 14). Solidity / HUFF / EVM: MEV-система до ~1% транзакций Ethereum. Бэкенд, AI/ML в проде.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5"><img src="/deckinvestors/team-yuri.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:700 19px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Юрий Варваров</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CEO</span><span class="dk-g">СО-ОСНОВАТЕЛЬ</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">8 лет в управлении инвестициями. Чемпион мира по ушу. Архитектура продукта и ИИ.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5"><img src="/deckinvestors/team-evgeny.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:700 19px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Евгений Бобров</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">СО-ОСНОВАТЕЛЬ</p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Разработка ядра, операции, партнёрства.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5"><img src="/deckinvestors/team-ivan.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:700 19px/1.3 'JetBrains Mono',monospace;color:#F6F4F6">Иван Король</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CTO</span><span class="dk-g">СО-ОСНОВАТЕЛЬ</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">CTO и со-основатель AR Spatially (команда 14). Solidity / HUFF / EVM: MEV-система до ~1% транзакций Ethereum. Бэкенд, AI/ML в проде.</p></div>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">ПАРТНЁРЫ И ЭКОСИСТЕМА</p><p style="margin:0;max-width:60ch;font:400 15px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">OWB Studio / Clash of Coins (Ник Самарин) — кросс-игровая интеграция. Base — сеть проекта. Юрлицо регистрируется до закрытия раунда.</p></div>
 </div>
@@ -2203,9 +2219,9 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 <h2 style="margin:0;font:900 clamp(44px,6.6vw,88px)/.92 'Saira Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#F6F4F6">Team</h2>
 <p style="margin:0;max-width:52ch;font:400 18px/1.6 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">A small team with long experience behind it — and a community of testers who have shaped the game since the very first demo build.</p>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:32px 20px">
-<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5;border:1px solid rgba(255,255,255,.09);background:#08080A;overflow:hidden"><img src="/deckinvestors/team-yuri.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:800 26px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Yuri Varvarov</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CEO</span><span class="dk-g">CO-FOUNDER</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">8 years in investment management. Wushu world champion. Product and AI architecture.</p></div>
-<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5;border:1px solid rgba(255,255,255,.09);background:#08080A;overflow:hidden"><img src="/deckinvestors/team-evgeny.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:800 26px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Evgeny Bobrov</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">CO-FOUNDER</p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Core development, operations, partnerships.</p></div>
-<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5;border:1px solid rgba(255,255,255,.09);background:#08080A;overflow:hidden"><img src="/deckinvestors/team-ivan.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:800 26px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Ivan Korol</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CTO</span><span class="dk-g">CO-FOUNDER</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">CTO and co-founder of AR Spatially (team of 14). Solidity / HUFF / EVM: an MEV system touching up to ~1% of Ethereum transactions. Backend, AI/ML in production.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5"><img src="/deckinvestors/team-yuri.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:800 26px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Yuri Varvarov</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CEO</span><span class="dk-g">CO-FOUNDER</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">8 years in investment management. Wushu world champion. Product and AI architecture.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5"><img src="/deckinvestors/team-evgeny.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:800 26px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Evgeny Bobrov</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6">CO-FOUNDER</p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Core development, operations, partnerships.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><div class="dk-portrait" style="aspect-ratio:4/5"><img src="/deckinvestors/team-ivan.webp" width="800" height="1000" alt="" loading="lazy" decoding="async" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover"></div><h3 style="margin:8px 0 0;font:800 26px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6">Ivan Korol</h3><p style="margin:0;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;color:#F6F4F6"><span class="dk-g">CTO</span><span class="dk-g">CO-FOUNDER</span></p><p style="margin:0;font:400 14px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">CTO and co-founder of AR Spatially (team of 14). Solidity / HUFF / EVM: an MEV system touching up to ~1% of Ethereum transactions. Backend, AI/ML in production.</p></div>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)"><p style="margin:0;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF">PARTNERS AND ECOSYSTEM</p><p style="margin:0;max-width:60ch;font:400 15px/1.7 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">OWB Studio / Clash of Coins (Nick Samarin) — cross-game integration. Base — the project's network. The legal entity is registered before the round closes.</p></div>
 </div>
@@ -2815,6 +2831,19 @@ function motion() {
     });
   }
 
+  /* ---------- 07. Края шкалы: растворение только там, где есть куда листать ---------- */
+  [].forEach.call(doc.querySelectorAll('.dk-sc-wrap'), function (w) {
+    function edges() {
+      var max = w.scrollWidth - w.clientWidth, x = w.scrollLeft;
+      w.classList.toggle('fade-l', max > 2 && x > 1);
+      w.classList.toggle('fade-r', max > 2 && x < max - 1);
+    }
+    w.addEventListener('scroll', edges, { passive: true });
+    window.addEventListener('resize', edges);
+    edges();
+    setTimeout(edges, 400);
+  });
+
   /* ---------- 07. Шкала боя ---------- */
   mount('scale', function (fig) {
     var sc = fig.querySelector('.dk-sc'), ticks = [].slice.call(sc.querySelectorAll('.dk-sc-bars i'));
@@ -2829,7 +2858,7 @@ function motion() {
     function frame(ts) {
       if (t0 === null) t0 = ts;
       var pos = clamp((ts - t0) / DUR, 0, 1);
-      var x = pos * s.sc.clientWidth;
+      var x = pos * (s.sc.clientWidth - 1);
       s.cur.style.transform = 'translateX(' + x.toFixed(1) + 'px)';
       var upto = Math.floor(pos * n);
       while (idx < upto && idx < n) {
