@@ -444,6 +444,8 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 .dk-sc-c::before{content:"";position:absolute;left:50%;top:0;height:calc(var(--lv) - 4px);width:1px;background:rgba(200,209,216,.35)}
 .dk-sc-cur{position:absolute;left:0;top:18px;width:1px;height:44px;background:#F6F4F6;opacity:0;transition:opacity .3s;pointer-events:none}
 .dk-sc-cur.is-run{opacity:.85}
+/* узкий экран: шкала крутится внутри блока, по краям — поле 22px, чтобы первая и последняя подписи и оси не упирались в край в начале и в конце прокрутки */
+@media (max-width:760px){.dk-sc-wrap{display:flex}.dk-sc-wrap::before,.dk-sc-wrap::after{content:"";flex:0 0 22px}.dk-sc{flex:1 0 720px}}
 html.dk-anim .dk-sc:not(.is-done) .dk-sc-bars i:not(.m):not(.on){background:#2B3036}
 html.dk-anim .dk-sc:not(.is-done) .dk-sc-bars i.m:not(.on){opacity:0}
 html.dk-anim .dk-sc:not(.is-done) .dk-sc-c:not(.on){opacity:0}
