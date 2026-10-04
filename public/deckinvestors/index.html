@@ -432,7 +432,8 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 .dk-sc-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
 .dk-sc{position:relative;min-width:720px;padding:26px 0 84px}
 .dk-sc-axis{position:absolute;left:0;right:0;top:0;height:12px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF}
-.dk-sc-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.dk-sc-axis span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;display:inline-flex;align-items:center;gap:.5em}
+.dk-sc-axis .dk-ap{vertical-align:0;margin-right:0}
 .dk-sc-axis span:first-child{transform:none}
 .dk-sc-axis span:last-child{transform:translateX(-100%)}
 .dk-sc-bars{display:flex;align-items:flex-end;gap:2px;height:36px}
@@ -1231,7 +1232,7 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 <p style="margin:0;max-width:30ch;padding:clamp(24px,4vw,48px) 0;font:700 clamp(22px,3vw,32px)/1.35 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:balance">Главная награда — не предмет, а свобода: игра продолжается и без тебя.</p>
 <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
 <div class="dk-clip" data-clip="hall"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="Зал FORGE: легенда парит над залом, бойцы внизу" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
-<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">запись из игры</span><span class="dk-g">зал FORGE</span></figcaption>
+<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">Запись из игры</span><span class="dk-g">Зал FORGE</span></figcaption>
 </figure>
 </div>
 </section>
@@ -1251,7 +1252,7 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 </div>
 <figure data-mo="scale" style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
 <div class="dk-sc-wrap"><div class="dk-sc" aria-hidden="true"><div class="dk-sc-axis"><span style="left:0.000%">0 С</span><span style="left:16.667%">10</span><span style="left:33.333%">20</span><span style="left:50.000%">30</span><span style="left:66.667%">40</span><span style="left:83.333%">50</span><span style="left:100.000%"><span class="dk-ap">≈</span> 60 С</span></div><div class="dk-sc-bars"><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dk-sc-ev"><span class="dk-sc-c" data-evc style="left:5.833%;--lv:14px">СТАРТ</span><span class="dk-sc-c" data-evc style="left:14.167%;--lv:46px">ПРОСАДКА ЗДОРОВЬЯ</span><span class="dk-sc-c" data-evc style="left:25.833%;--lv:14px">ПРОСАДКА СИЛ</span><span class="dk-sc-c" data-evc style="left:32.500%;--lv:46px">СМЕНА МАНЕРЫ</span><span class="dk-sc-c" data-evc style="left:45.833%;--lv:14px">ПРОСАДКА ЗДОРОВЬЯ</span><span class="dk-sc-c" data-evc style="left:57.500%;--lv:46px">СМЕНА МАНЕРЫ</span><span class="dk-sc-c" data-evc style="left:72.500%;--lv:14px">ПРОСАДКА СИЛ</span><span class="dk-sc-c" data-evc style="left:87.500%;--lv:46px">ПРОСАДКА ЗДОРОВЬЯ</span></div><i class="dk-sc-cur"></i></div></div>
-<p style="display:flex;flex-direction:column;gap:10px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-sm"></i><span class="dk-g">БЫСТРЫЙ СЛОЙ</span><span class="dk-g"><span class="dk-ap">≈</span> 1 РЕШЕНИЕ В СЕКУНДУ</span></span><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-bg"></i><span class="dk-g">ЯЗЫКОВАЯ МОДЕЛЬ</span><span class="dk-g">ПО СОБЫТИЯМ БОЯ</span></span></p>
+<p style="display:flex;flex-direction:column;gap:10px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px"><i class="dk-sc-sm"></i><span class="dk-g">БЫСТРЫЙ СЛОЙ</span><span class="dk-g"><span class="dk-ap">≈</span> 1 РЕШЕНИЕ В СЕКУНДУ</span></span><span style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px"><i class="dk-sc-bg"></i><span class="dk-g">ЯЗЫКОВАЯ МОДЕЛЬ</span><span class="dk-g">ПО СОБЫТИЯМ БОЯ</span></span></p>
 <figcaption style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF"><span class="dk-g">ДУЭЛЬ, ОДИН БОЕЦ</span><span class="dk-g"><span class="dk-ap">≈</span> 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР НА ТЕКУЩЕЙ СБОРКЕ)</span><span class="dk-g">РАССТАНОВКА — ИЛЛЮСТРАЦИЯ</span></figcaption>
 </figure>
 <div style="display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)">
@@ -1338,8 +1339,8 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 <p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Кросс-игровая интеграция с Clash of Coins.</p>
 </div>
 <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
-<div style="aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;border:1px dashed rgba(255,255,255,.18);background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 1px,transparent 1px 14px);font:500 13px/1.5 'JetBrains Mono',monospace;letter-spacing:.08em;color:#A9A5AF">[КАДР: арена — выбор режима]</div>
-<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">место под кадр</span><span class="dk-g">отбирает владелец</span></figcaption>
+<div class="dk-clip" data-clip="modes"><img class="dk-clip-poster" src="/deckinvestors/modes-poster.jpg" width="1600" height="900" alt="Арена: экран выбора режима, острова режимов в воротах" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">Запись из игры</span><span class="dk-g">Арена, выбор режима</span></figcaption>
 </figure>
 </div>
 </section>
@@ -1817,7 +1818,7 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 <p style="margin:0;max-width:30ch;padding:clamp(24px,4vw,48px) 0;font:800 clamp(28px,3.8vw,44px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:#F6F4F6;text-wrap:balance">The top reward isn't an item. It's freedom: the game goes on without you.</p>
 <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
 <div class="dk-clip" data-clip="hall"><img class="dk-clip-poster" src="/deckinvestors/hall-poster.jpg" width="1600" height="900" alt="The FORGE hall: the legend floats above the hall, fighters below" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
-<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">in-game footage</span><span class="dk-g">FORGE hall</span></figcaption>
+<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">In-game footage</span><span class="dk-g">FORGE hall</span></figcaption>
 </figure>
 </div>
 </section>
@@ -1837,7 +1838,7 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 </div>
 <figure data-mo="scale" style="margin:0;display:flex;flex-direction:column;gap:14px;padding:clamp(20px,3vw,32px) 0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)">
 <div class="dk-sc-wrap"><div class="dk-sc" aria-hidden="true"><div class="dk-sc-axis"><span style="left:0.000%">0 S</span><span style="left:16.667%">10</span><span style="left:33.333%">20</span><span style="left:50.000%">30</span><span style="left:66.667%">40</span><span style="left:83.333%">50</span><span style="left:100.000%"><span class="dk-ap">≈</span> 60 S</span></div><div class="dk-sc-bars"><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="m" data-ev></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dk-sc-ev"><span class="dk-sc-c" data-evc style="left:5.833%;--lv:14px">START</span><span class="dk-sc-c" data-evc style="left:14.167%;--lv:46px">HEALTH DROP</span><span class="dk-sc-c" data-evc style="left:25.833%;--lv:14px">STAMINA DROP</span><span class="dk-sc-c" data-evc style="left:32.500%;--lv:46px">STYLE CHANGE</span><span class="dk-sc-c" data-evc style="left:45.833%;--lv:14px">HEALTH DROP</span><span class="dk-sc-c" data-evc style="left:57.500%;--lv:46px">STYLE CHANGE</span><span class="dk-sc-c" data-evc style="left:72.500%;--lv:14px">STAMINA DROP</span><span class="dk-sc-c" data-evc style="left:87.500%;--lv:46px">HEALTH DROP</span></div><i class="dk-sc-cur"></i></div></div>
-<p style="display:flex;flex-direction:column;gap:10px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-sm"></i><span class="dk-g">FAST LAYER</span><span class="dk-g"><span class="dk-ap">≈</span> 1 DECISION PER SECOND</span></span><span style="display:inline-flex;align-items:center;gap:10px"><i class="dk-sc-bg"></i><span class="dk-g">LANGUAGE MODEL</span><span class="dk-g">ON FIGHT EVENTS</span></span></p>
+<p style="display:flex;flex-direction:column;gap:10px;margin:4px 0 0;font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.14em;color:#F6F4F6"><span style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px"><i class="dk-sc-sm"></i><span class="dk-g">FAST LAYER</span><span class="dk-g"><span class="dk-ap">≈</span> 1 DECISION PER SECOND</span></span><span style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px"><i class="dk-sc-bg"></i><span class="dk-g">LANGUAGE MODEL</span><span class="dk-g">ON FIGHT EVENTS</span></span></p>
 <figcaption style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A9A5AF"><span class="dk-g">DUEL, ONE FIGHTER</span><span class="dk-g"><span class="dk-ap">≈</span> 8 CALLS PER FIGHT (MEASURED ON THE CURRENT BUILD)</span><span class="dk-g">PLACEMENT IS ILLUSTRATIVE</span></figcaption>
 </figure>
 <div style="display:flex;flex-direction:column;gap:clamp(24px,3vw,36px)">
@@ -1924,8 +1925,8 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 <p style="margin:0;font:400 15px/1.6 'JetBrains Mono',monospace;color:#A9A5AF">Cross-game integration with Clash of Coins.</p>
 </div>
 <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
-<div style="aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;border:1px dashed rgba(255,255,255,.18);background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 1px,transparent 1px 14px);font:500 13px/1.5 'JetBrains Mono',monospace;letter-spacing:.08em;color:#A9A5AF">[FRAME: arena — mode select]</div>
-<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">reserved for a game shot</span><span class="dk-g">owner selects</span></figcaption>
+<div class="dk-clip" data-clip="modes"><img class="dk-clip-poster" src="/deckinvestors/modes-poster.jpg" width="1600" height="900" alt="Arena: the mode select screen, mode islands in the gate" loading="lazy" decoding="async"><video class="dk-clip-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture disableremoteplayback></video></div>
+<figcaption style="font:500 12px/1.5 'JetBrains Mono',monospace;letter-spacing:.16em;color:#A9A5AF"><span class="dk-g">In-game footage</span><span class="dk-g">Arena, mode select</span></figcaption>
 </figure>
 </div>
 </section>
@@ -2642,16 +2643,17 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
 })();
 </script>
 <script>
-/* Запись из игры в разделе 06 (зал FORGE). Не качается, пока до раздела больше
+/* Записи из игры: раздел 06 (зал FORGE) и раздел 09 (арена, выбор режима). Не качается, пока до раздела больше
    экрана; играет, когда окно видно хотя бы на четверть; вне экрана — пауза.
    «Уменьшить движение», нет IntersectionObserver или ошибка видео — остаётся
    заставка. Режим энергосбережения iOS запрещает автозапуск — пробуем снова на
    первом касании. Файл: до 700 точек ширины — 720p, иначе 1080p. */
 (function () {
-  var boxes = [].slice.call(document.querySelectorAll('[data-clip="hall"]'));
+  var boxes = [].slice.call(document.querySelectorAll('[data-clip]'));
   if (!boxes.length || !window.IntersectionObserver) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var SRC = window.innerWidth <= 700 ? '/deckinvestors/hall-loop-720.mp4' : '/deckinvestors/hall-loop-1080.mp4';
+  var NARROW = window.innerWidth <= 700;
+  function srcOf(box) { return '/deckinvestors/' + box.getAttribute('data-clip') + '-loop-' + (NARROW ? '720' : '1080') + '.mp4'; }
   var items = boxes.map(function (box) {
     return { box: box, v: box.querySelector('video'), seen: false, loaded: false, failed: false };
   });
@@ -2679,7 +2681,7 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
       var it = items[boxes.indexOf(e.target)];
       if (it.loaded) return;
       it.loaded = true; near.unobserve(e.target);
-      it.v.preload = 'auto'; it.v.src = SRC; it.v.load();
+      it.v.preload = 'auto'; it.v.src = srcOf(it.box); it.v.load();
       play(it);
     });
   }, { rootMargin: '100% 0px' });
@@ -2703,6 +2705,13 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
    в разметке уже стоит итоговое состояние. Сыграло на одном языке — на другом
    сразу итог. Клики по карточкам работают всегда. */
 (function () {
+  try { motion(); } catch (e) {
+    /* Сбой не должен оставить блоки скрытыми: всё встаёт итогом. */
+    [].forEach.call(document.querySelectorAll('[data-pickgrid]'), function (g) { g.classList.add('mo-on'); });
+    [].forEach.call(document.querySelectorAll('.dk-sc'), function (s) { s.classList.add('is-done'); });
+  }
+})();
+function motion() {
   var doc = document, root = doc.documentElement;
   var anim = root.classList.contains('dk-anim') && !!window.IntersectionObserver;
   var played = {};
@@ -2872,7 +2881,7 @@ html.dk-anim [data-pickgrid]:not(.mo-on)>.dk-pick{opacity:0;transform:translateY
     [].forEach.call(doc.querySelectorAll('[data-lang-btn]'), function (b) { b.addEventListener('click', function () { setTimeout(schedule, 60); }); });
     schedule();
   }
-})();
+}
 </script>
 </body>
 </html>
