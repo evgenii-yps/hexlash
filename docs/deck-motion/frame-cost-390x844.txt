@@ -1,0 +1,4 @@
+__before.html en {"frames":1254,"avgMs":16.67,"p95Ms":16.7,"maxMs":16.8,"task":3611,"script":439,"layout":131,"style":665,"H":37595}
+__before.html ru {"frames":1216,"avgMs":16.68,"p95Ms":16.8,"maxMs":33.4,"task":3719,"script":443,"layout":136,"style":697,"H":36498}
+index.html en {"frames":1257,"avgMs":16.67,"p95Ms":16.8,"maxMs":16.8,"task":4249,"script":500,"layout":177,"style":761,"H":37685}
+index.html ru {"frames":1220,"avgMs":16.68,"p95Ms":16.7,"maxMs":33.3,"task":4517,"script":546,"layout":196,"style":812,"H":36606}

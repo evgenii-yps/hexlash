@@ -1,0 +1,58 @@
+insert s06
+   NOW: Решаешь ты: каждый клич и каждый бафф — твои. Решает легенда: она сама читает бой и подсказывает бойцам. Перехватить можно в любой момент.
+replace s06
+   WAS: запись из игры зал FORGE
+   NOW: Запись из игры Зал FORGE
+replace s09
+   WAS: место под кадр отбирает владелец
+   NOW: Арена: экран выбора режима, острова режимов в воротах
+   NOW: Запись из игры Арена, выбор режима
+insert e06
+   NOW: You decide: every call and every buff is yours. The legend decides: it reads the fight and cues the fighters itself. You can take over at any moment.
+replace e06
+   WAS: in-game footage FORGE hall
+   NOW: In-game footage FORGE hall
+replace e09
+   WAS: reserved for a game shot owner selects
+   NOW: Arena: the mode select screen, mode islands in the gate
+   NOW: In-game footage Arena, mode select
+
+--- по всем текстовым узлам (включая подписи шкалы) ---
+БЫЛО (только до):
+  - 7 / 15
+  - запись из игры
+  - зал FORGE
+  - [КАДР: арена — выбор режима]
+  - место под кадр
+  - отбирает владелец
+  - in-game footage
+  - [FRAME: arena — mode select]
+  - reserved for a game shot
+  - owner selects
+СТАЛО (только после):
+  + 10
+  + 20
+  + 7
+  + / 15
+  + Решаешь ты: каждый клич и каждый бафф — твои.
+  + Решает легенда: она сама читает бой и подсказывает бойцам. Перехватить можно в любой момент.
+  + Запись из игры
+  + Зал FORGE
+  + 30
+  + 40
+  + 50
+  + СТАРТ
+  + ПРОСАДКА ЗДОРОВЬЯ
+  + ПРОСАДКА СИЛ
+  + СМЕНА МАНЕРЫ
+  + Арена: экран выбора режима, острова режимов в воротах
+  + Арена, выбор режима
+  + You decide: every call and every buff is yours.
+  + The legend decides: it reads the fight and cues the fighters itself. You can take over at any moment.
+  + In-game footage
+  + START
+  + HEALTH DROP
+  + STAMINA DROP
+  + STYLE CHANGE
+  + Arena: the mode select screen, mode islands in the gate
+  + Arena, mode select

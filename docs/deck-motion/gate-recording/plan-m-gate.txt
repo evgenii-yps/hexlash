@@ -1,0 +1,22 @@
+= [
+  {
+    // ДЕКА (раздел 09): выбор режима арены, первый шаг ворот. Игра как есть, камеру игры не трогаем.
+    id: 'm-gate', title: 'ворота: выбор режима', kind: 'scene', route: '/play/gate', len: 420, align: 420,
+    world: { roster: [hero, ...others], squad: [], mode: 'duel', n: 1 },
+    hide: ['.hs-strip'],
+    actions: [
+      { b: 60,  type: 'move',  expr: "window.__gateTarget('plate','duel')",  mark: 'DUEL' },
+      { b: 200, type: 'move',  expr: "window.__gateTarget('plate','squad')", mark: 'SQUAD' },
+      { b: 330, type: 'move',  expr: "({x:12,y:700})", mark: 'уход курсора' },
+    ],
+    camera: {
+      // Спокойное дыхание камеры: лёгкий отъезд со сдвигом и возврат в исходную позу — последний кадр равен первому, петля без шва.
+      kind: 'rel', drive: true, ease: 'smoother', D: 10,
+      keys: [
+        { f: 0,   push: 0,    right: 0,   up: 0 },
+        { f: 210, push: -0.07, right: 0.25, up: 0.0 },
+        { f: 419, push: 0,    right: 0,   up: 0 },
+      ],
+    },
+    still: 30,
+  },
