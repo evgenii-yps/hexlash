@@ -1,0 +1,392 @@
+replace head
+   WAS: HEXLASH · Investor deck
+   NOW: HEXLASH Investor deck
+replace head
+   WAS: HEXLASH · Investor deck
+   NOW: HEXLASH Investor deck
+replace head
+   WAS: HEXLASH · Investor deck
+   NOW: HEXLASH Investor deck
+delete head
+   WAS: HEXLASH
+replace first
+   WAS: You raise an AI until it starts raising others.
+   NOW: You raise an AI until it starts raising others
+replace first
+   WAS: Ты растишь ИИ, пока он не начнёт растить других.
+   NOW: Ты растишь ИИ, пока он не начнёт растить других
+replace s01
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s01
+   WAS: COINGECKO · НОЯБРЬ 2023 · НЕАКТИВНА = АКТИВНОСТЬ УПАЛА НА 99%+ ОТ ПИКА
+   WAS: Токен = единственное, что удерживало.
+   NOW: COINGECKO НОЯБРЬ 2023 НЕАКТИВНА = АКТИВНОСТЬ УПАЛА НА 99%+ ОТ ПИКА
+   NOW: Токен = единственное, что удерживало
+replace s01
+   WAS: Эмиссия больше спроса.
+   NOW: Эмиссия больше спроса
+replace s01
+   WAS: Игра никому не нужна.
+   NOW: Игра никому не нужна
+replace s02
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s03
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s03
+   WAS: НАСТОЯЩАЯ ИГРА · ВЫБЕРИТЕ РЕЖИМ И ЗАПУСТИТЕ БОЙ
+   NOW: НАСТОЯЩАЯ ИГРА ВЫБЕРИТЕ РЕЖИМ И ЗАПУСТИТЕ БОЙ
+replace s04
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s04
+   WAS: ЗАЖЖЕНО · ПРИМЕР СБОРКИ
+   NOW: ЗАЖЖЕНО ПРИМЕР СБОРКИ
+replace s05
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s05
+   WAS: РЫЧАГ 1 · КЛИЧИ
+   NOW: РЫЧАГ 1 КЛИЧИ
+replace s05
+   WAS: РЫЧАГ 2 · БАФФЫ
+   NOW: РЫЧАГ 2 БАФФЫ
+replace s06
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s06
+   WAS: БЕЗ КОПИИ · БЕЗ ВОЗВРАТА
+   WAS: ЛЕГЕНДА · ЗОЛОТОЕ ЯДРО
+   NOW: БЕЗ КОПИИ БЕЗ ВОЗВРАТА
+   NOW: ЛЕГЕНДА ЗОЛОТОЕ ЯДРО
+replace s06
+   WAS: запись из игры · зал FORGE
+   NOW: запись из игры зал FORGE
+replace s07
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s07
+   WAS: СЛОЙ 1 · ВСЕГДА
+   NOW: СЛОЙ 1 ВСЕГДА
+replace s07
+   WAS: СЛОЙ 2 · ПО СОБЫТИЯМ
+   NOW: СЛОЙ 2 ПО СОБЫТИЯМ
+replace s07
+   WAS: БЫСТРЫЙ СЛОЙ · ≈ 1 РЕШЕНИЕ В СЕКУНДУ ЯЗЫКОВАЯ МОДЕЛЬ · ПО СОБЫТИЯМ БОЯ
+   WAS: ДУЭЛЬ, ОДИН БОЕЦ · ≈ 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР 02.10.2026) · РАССТАНОВКА — ИЛЛЮСТРАЦИЯ
+   NOW: БЫСТРЫЙ СЛОЙ ≈ 1 РЕШЕНИЕ В СЕКУНДУ ЯЗЫКОВАЯ МОДЕЛЬ ПО СОБЫТИЯМ БОЯ
+   NOW: ДУЭЛЬ, ОДИН БОЕЦ ≈ 8 ОБРАЩЕНИЙ ЗА БОЙ (ЗАМЕР НА ТЕКУЩЕЙ СБОРКЕ) РАССТАНОВКА — ИЛЛЮСТРАЦИЯ
+replace s07
+   WAS: Замер 02.10.2026: 21 дуэль и 20 отрядных боёв с легендой, модель Claude Haiku 4.5. Токены расчётные, верхняя граница — $0,016 за дуэль. Серверы, хранение и сеть не входят.
+   NOW: Замер на текущей сборке: 21 дуэль и 20 отрядных боёв с легендой, модель Claude Haiku 4.5. Токены расчётные, верхняя граница — $0,016 за дуэль. Серверы, хранение и сеть не входят.
+replace s08
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s08
+   WAS: Внешность.
+   NOW: Внешность
+replace s08
+   WAS: Принадлежность.
+   NOW: Принадлежность
+replace s08
+   WAS: Общая черта.
+   NOW: Общая черта
+replace s08
+   WAS: Место в круге.
+   NOW: Место в круге
+replace s09
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s09
+   WAS: Без внешнего капитала. Статус на 02.10.2026.
+   NOW: Без внешнего капитала. Статус на текущей сборке.
+replace s09
+   WAS: Стек: Vue 3 · Three.js · Node.js · PostgreSQL · Claude API · Сеть: Base
+   NOW: Стек: Vue 3 Three.js Node.js PostgreSQL Claude API Сеть: Base
+replace s09
+   WAS: место под кадр · отбирает владелец
+   NOW: место под кадр отбирает владелец
+replace s10
+   WAS: I ИГРА ·
+   NOW: I ИГРА
+replace s11
+   WAS: II ЭКОНОМИКА ·
+   NOW: II ЭКОНОМИКА
+replace s12
+   WAS: II ЭКОНОМИКА ·
+   NOW: II ЭКОНОМИКА
+replace s12
+   WAS: Внешний вид за $HXL.
+   NOW: Внешний вид за $HXL
+replace s12
+   WAS: Рынок бойцов.
+   NOW: Рынок бойцов
+replace s12
+   WAS: Партнёры.
+   NOW: Партнёры
+replace s13
+   WAS: II ЭКОНОМИКА ·
+   NOW: II ЭКОНОМИКА
+replace s14
+   WAS: II ЭКОНОМИКА ·
+   NOW: II ЭКОНОМИКА
+replace s15
+   WAS: II ЭКОНОМИКА ·
+   NOW: II ЭКОНОМИКА
+replace s15
+   WAS: Силы не даёт.
+   NOW: Силы не даёт
+replace s15
+   WAS: Нет аэрдропа за активность.
+   NOW: Нет аэрдропа за активность
+replace s15
+   WAS: Игра работает без него.
+   NOW: Игра работает без него
+replace s16
+   WAS: III РЫНОК И ПЛАН ·
+   NOW: III РЫНОК И ПЛАН
+replace s17
+   WAS: III РЫНОК И ПЛАН ·
+   NOW: III РЫНОК И ПЛАН
+replace s18
+   WAS: III РЫНОК И ПЛАН ·
+   NOW: III РЫНОК И ПЛАН
+replace s18
+   WAS: баланс всех систем · прокачка и ресурсы · экономика LASH
+   NOW: баланс всех систем прокачка и ресурсы экономика LASH
+replace s18
+   WAS: ЦЕПЬ, РЕЙД, ОБВАЛ, ОХОТА · модель у бойцов в отрядах · спарринг с настоящим боем · первые плейтесты (H1–H4)
+   WAS: ЭТАП 3 · ЗАПУСК
+   WAS: постоянные аккаунты · магазин $HXL · бойцы-NFT на Base · рынок бойцов · интеграция с Clash of Coins
+   NOW: ЦЕПЬ, РЕЙД, ОБВАЛ, ОХОТА модель у бойцов в отрядах спарринг с настоящим боем первые плейтесты (H1–H4)
+   NOW: ЭТАП 3 ЗАПУСК
+   NOW: постоянные аккаунты магазин $HXL бойцы-NFT на Base рынок бойцов интеграция с Clash of Coins
+replace s18
+   WAS: миры и круг преимущества · кланы · сезоны и турниры
+   NOW: миры и круг преимущества кланы сезоны и турниры
+replace s19
+   WAS: III РЫНОК И ПЛАН ·
+   NOW: III РЫНОК И ПЛАН
+replace s19
+   WAS: Цена мышления.
+   NOW: Цена мышления
+replace s19
+   WAS: Удержание не доказано.
+   NOW: Удержание не доказано
+replace s19
+   WAS: Правовой статус токена.
+   NOW: Правовой статус токена
+replace s19
+   WAS: Маленькая команда.
+   NOW: Маленькая команда
+replace s19
+   WAS: Зависимость от внешней модели.
+   NOW: Зависимость от внешней модели
+delete finale-Финал
+   WAS: NEVER GIVE UP
+replace s20
+   WAS: IV РАУНД ·
+   NOW: IV РАУНД
+replace s21
+   WAS: IV РАУНД ·
+   NOW: IV РАУНД
+insert s21
+   NOW: Небольшая команда с большим опытом за плечами — и комьюнити тестеров, которое влияет на игру с самой первой демо-версии.
+replace s21
+   WAS: CEO · СО-ОСНОВАТЕЛЬ
+   NOW: CEO СО-ОСНОВАТЕЛЬ
+replace s21
+   WAS: CTO · СО-ОСНОВАТЕЛЬ
+   NOW: CTO СО-ОСНОВАТЕЛЬ
+replace e01
+   WAS: I GAME ·
+   NOW: I GAME
+replace e01
+   WAS: COINGECKO · NOV 2023 · INACTIVE = ACTIVITY DOWN 99%+ FROM PEAK
+   WAS: The token was the only retention.
+   NOW: COINGECKO NOV 2023 INACTIVE = ACTIVITY DOWN 99%+ FROM PEAK
+   NOW: The token was the only retention
+replace e01
+   WAS: Emission outran demand.
+   NOW: Emission outran demand
+replace e01
+   WAS: Nobody wanted the game.
+   NOW: Nobody wanted the game
+replace e02
+   WAS: I GAME ·
+   NOW: I GAME
+replace e03
+   WAS: I GAME ·
+   NOW: I GAME
+replace e03
+   WAS: THE REAL GAME · PICK A MODE AND START A FIGHT
+   NOW: THE REAL GAME PICK A MODE AND START A FIGHT
+replace e04
+   WAS: I GAME ·
+   NOW: I GAME
+replace e04
+   WAS: LIT · SAMPLE BUILD
+   NOW: LIT SAMPLE BUILD
+replace e05
+   WAS: I GAME ·
+   NOW: I GAME
+replace e05
+   WAS: LEVER 1 · CALLS
+   NOW: LEVER 1 CALLS
+replace e05
+   WAS: LEVER 2 · BUFFS
+   NOW: LEVER 2 BUFFS
+replace e06
+   WAS: I GAME ·
+   NOW: I GAME
+replace e06
+   WAS: NO COPY · NO RETURN
+   WAS: LEGEND · GOLDEN CORE
+   NOW: NO COPY NO RETURN
+   NOW: LEGEND GOLDEN CORE
+replace e06
+   WAS: in-game footage · FORGE hall
+   NOW: in-game footage FORGE hall
+replace e07
+   WAS: I GAME ·
+   NOW: I GAME
+replace e07
+   WAS: LAYER 1 · ALWAYS
+   NOW: LAYER 1 ALWAYS
+replace e07
+   WAS: LAYER 2 · ON FIGHT EVENTS
+   NOW: LAYER 2 ON FIGHT EVENTS
+replace e07
+   WAS: FAST LAYER · ≈ 1 DECISION PER SECOND LANGUAGE MODEL · ON FIGHT EVENTS
+   WAS: DUEL, ONE FIGHTER · ≈ 8 CALLS PER FIGHT (MEASURED 02.10.2026) · PLACEMENT IS ILLUSTRATIVE
+   NOW: FAST LAYER ≈ 1 DECISION PER SECOND LANGUAGE MODEL ON FIGHT EVENTS
+   NOW: DUEL, ONE FIGHTER ≈ 8 CALLS PER FIGHT (MEASURED ON THE CURRENT BUILD) PLACEMENT IS ILLUSTRATIVE
+replace e07
+   WAS: Measured 02.10.2026: 21 duels and 20 squad fights with a legend, Claude Haiku 4.5. Token counts are computed; upper bound $0.016 per duel. Servers, storage and network not included.
+   NOW: Measured on the current build: 21 duels and 20 squad fights with a legend, Claude Haiku 4.5. Token counts are computed; upper bound $0.016 per duel. Servers, storage and network not included.
+replace e08
+   WAS: I GAME ·
+   NOW: I GAME
+replace e08
+   WAS: Look.
+   NOW: Look
+replace e08
+   WAS: Belonging.
+   NOW: Belonging
+replace e08
+   WAS: Shared trait.
+   NOW: Shared trait
+replace e08
+   WAS: Place in the circle.
+   NOW: Place in the circle
+replace e09
+   WAS: I GAME ·
+   NOW: I GAME
+replace e09
+   WAS: No outside capital. Status as of 02.10.2026.
+   NOW: No outside capital. Status on the current build.
+replace e09
+   WAS: Stack: Vue 3 · Three.js · Node.js · PostgreSQL · Claude API · Network: Base
+   NOW: Stack: Vue 3 Three.js Node.js PostgreSQL Claude API Network: Base
+replace e09
+   WAS: reserved for a game shot · owner selects
+   NOW: reserved for a game shot owner selects
+replace e10
+   WAS: I GAME ·
+   NOW: I GAME
+replace e11
+   WAS: II ECONOMICS ·
+   NOW: II ECONOMICS
+replace e12
+   WAS: II ECONOMICS ·
+   NOW: II ECONOMICS
+replace e12
+   WAS: Appearance for $HXL.
+   NOW: Appearance for $HXL
+replace e12
+   WAS: Fighter market.
+   NOW: Fighter market
+replace e12
+   WAS: Partners.
+   NOW: Partners
+replace e13
+   WAS: II ECONOMICS ·
+   NOW: II ECONOMICS
+replace e14
+   WAS: II ECONOMICS ·
+   NOW: II ECONOMICS
+replace e15
+   WAS: II ECONOMICS ·
+   NOW: II ECONOMICS
+replace e15
+   WAS: Gives no power.
+   NOW: Gives no power
+replace e15
+   WAS: No airdrop for activity.
+   NOW: No airdrop for activity
+replace e15
+   WAS: The game works without it.
+   NOW: The game works without it
+replace e16
+   WAS: III MARKET & PLAN ·
+   NOW: III MARKET & PLAN
+replace e17
+   WAS: III MARKET & PLAN ·
+   NOW: III MARKET & PLAN
+replace e18
+   WAS: III MARKET & PLAN ·
+   NOW: III MARKET & PLAN
+replace e18
+   WAS: balance of all systems · progression and resources · LASH economy
+   NOW: balance of all systems progression and resources LASH economy
+replace e18
+   WAS: CHAIN, RAID, COLLAPSE, HUNT · model for squad fighters · sparring with a real fight · first playtests (H1–H4)
+   WAS: PHASE 3 · LAUNCH
+   WAS: persistent accounts · $HXL shop · fighter NFTs on Base · fighter market · Clash of Coins integration
+   NOW: CHAIN, RAID, COLLAPSE, HUNT model for squad fighters sparring with a real fight first playtests (H1–H4)
+   NOW: PHASE 3 LAUNCH
+   NOW: persistent accounts $HXL shop fighter NFTs on Base fighter market Clash of Coins integration
+replace e18
+   WAS: worlds and the circle of advantage · clans · seasons and tournaments
+   NOW: worlds and the circle of advantage clans seasons and tournaments
+replace e19
+   WAS: III MARKET & PLAN ·
+   NOW: III MARKET & PLAN
+replace e19
+   WAS: The cost of thinking.
+   NOW: The cost of thinking
+replace e19
+   WAS: Retention is unproven.
+   NOW: Retention is unproven
+replace e19
+   WAS: The token's legal status.
+   NOW: The token's legal status
+replace e19
+   WAS: A small team.
+   NOW: A small team
+replace e19
+   WAS: Dependence on an external model.
+   NOW: Dependence on an external model
+delete finale-Finale
+   WAS: NEVER GIVE UP
+replace e20
+   WAS: IV ROUND ·
+   NOW: IV ROUND
+replace e21
+   WAS: IV ROUND ·
+   NOW: IV ROUND
+insert e21
+   NOW: A small team with long experience behind it — and a community of testers who have shaped the game since the very first demo build.
+replace e21
+   WAS: CEO · CO-FOUNDER
+   NOW: CEO CO-FOUNDER
+replace e21
+   WAS: CTO · CO-FOUNDER
+   NOW: CTO CO-FOUNDER
+replace foot
+   WAS: hexlash.com · 02.10.2026 · CONFIDENTIAL
+   WAS: Contact: [CONTACT]
+   WAS: Контакт: [КОНТАКТ]
+   NOW: hexlash.com CONFIDENTIAL
