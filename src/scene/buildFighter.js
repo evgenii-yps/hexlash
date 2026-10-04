@@ -2274,9 +2274,13 @@ export function buildFighter(
   // реакциями-ответами (последние — основной источник запусков у ядер с чтением: см. tryReadReaction). sb.pauseCut — постоянная доля;
   // sb.lateRamp — доля, растущая со временем боя (в начале спокойнее — отрицательная, к концу разгон). Оба базово 0 → множитель ровно 1.
   let foeAtkT = 0; // NO LETUP: последний миг, когда враг был в ударе (замах / касание / отдача) — по ИСТИННОЙ фазе
+  // ВПЕРЁД (клич PUSH): «держит его замахиваться быстрее» — на полной силе клича пауза между ударами × KLICH_BALANCE.cadenceByCore[клич][ядро] (поправка по ядру; нет записи — ×1).
+  const klichPace = () => (klichId && klichStrength >= 1 && coreId && KLICH_BALANCE.cadenceByCore[klichId] && KLICH_BALANCE.cadenceByCore[klichId][coreId]) || null;
+  const klichCadence = () => { const k = klichPace(); return k ? k.pauseMul : 1; };
+  const klichStaminaMul = () => { const k = klichPace(); return k ? k.staminaMul : 1; }; // цена темпа: частые удары не должны выжимать силы быстрее, чем клич их даёт
   const isFoeQuiet = () => !!(sb.quietPace && getFoePhase && lastT >= 2 && lastT - foeAtkT >= 2); // NO LETUP: враг не бил ≥ 2 с (как «затишье» в замере)
-  // Боец не досиживает хвост удара после последнего касания: NO LETUP в затишье врага.
-  const noTail = () => isFoeQuiet();
+  // Боец не досиживает хвост удара после последнего касания: NO LETUP в затишье врага, ВПЕРЁД на полной силе клича (там, где у ядра есть поправка темпа).
+  const noTail = () => isFoeQuiet() || klichCadence() !== 1;
   const paceMul = () => {
     let cut = sb.pauseCut || 0;
     if (sb.lateRamp) {
@@ -2285,7 +2289,7 @@ export function buildFighter(
     }
     // NO LETUP: враг не бил ≥ 2 с — боец не останавливается: отдельный множитель паузы (не в сумме cut — тот упирается в потолок 0.6 у Late Fire)
     const quiet = isFoeQuiet() ? 1 - sb.quietPace : 1;
-    return (1 - THREE.MathUtils.clamp(cut, -0.5, 0.6)) * quiet;
+    return (1 - THREE.MathUtils.clamp(cut, -0.5, 0.6)) * quiet * klichCadence();
   };
   // Launch a chosen strike clip + its bookkeeping: spend stamina, (maybe) release
   // charge, arm a feint-payoff if a bait window is open, signal the foe, set the
@@ -2295,7 +2299,7 @@ export function buildFighter(
   const launchStrike = (t, atk) => {
     rushedClip = answerPending; answerPending = false; // удар-ответ на чтение несёт sb.rushMiss до конца клипа
     play(atk);
-    stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
+    stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk) * klichStaminaMul(), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
     // CHARGE release (TEMPORARY decideRelease — near-full + foe in reach): empower
     // this strike ∝ the charge level (captured into chargeShot* for resolveImpact),
     // then SPEND it. Normal (un-released) attacks leave the charge untouched.
