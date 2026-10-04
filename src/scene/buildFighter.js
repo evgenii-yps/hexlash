@@ -2273,13 +2273,19 @@ export function buildFighter(
   // ТЕМП ударов поверх оси темпа (LONG COMBO / NO PAUSE / LATE FIRE): доля, на которую боец НЕ досиживает паузу между ударами и паузу между
   // реакциями-ответами (последние — основной источник запусков у ядер с чтением: см. tryReadReaction). sb.pauseCut — постоянная доля;
   // sb.lateRamp — доля, растущая со временем боя (в начале спокойнее — отрицательная, к концу разгон). Оба базово 0 → множитель ровно 1.
+  let foeAtkT = 0; // NO LETUP: последний миг, когда враг был в ударе (замах / касание / отдача) — по ИСТИННОЙ фазе
+  const isFoeQuiet = () => !!(sb.quietPace && getFoePhase && lastT >= 2 && lastT - foeAtkT >= 2); // NO LETUP: враг не бил ≥ 2 с (как «затишье» в замере)
+  // Боец не досиживает хвост удара после последнего касания: NO LETUP в затишье врага.
+  const noTail = () => isFoeQuiet();
   const paceMul = () => {
     let cut = sb.pauseCut || 0;
     if (sb.lateRamp) {
       const fc = getFightContext && getFightContext();
       cut += sb.lateRamp * (B.lateRamp.lo + (B.lateRamp.hi - B.lateRamp.lo) * THREE.MathUtils.clamp(((fc && fc.elapsed) || 0) / B.lateRamp.sec, 0, 1));
     }
-    return 1 - THREE.MathUtils.clamp(cut, -0.5, 0.6);
+    // NO LETUP: враг не бил ≥ 2 с — боец не останавливается: отдельный множитель паузы (не в сумме cut — тот упирается в потолок 0.6 у Late Fire)
+    const quiet = isFoeQuiet() ? 1 - sb.quietPace : 1;
+    return (1 - THREE.MathUtils.clamp(cut, -0.5, 0.6)) * quiet;
   };
   // Launch a chosen strike clip + its bookkeeping: spend stamina, (maybe) release
   // charge, arm a feint-payoff if a bait window is open, signal the foe, set the
@@ -2310,7 +2316,10 @@ export function buildFighter(
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
     const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + rand() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
-    ai.nextAt = t + atk.dur + pause * paceMul() * B.distance.attackPauseMul; // paceMul (sb.pauseCut / sb.lateRamp, база ×1) — доля паузы, которую боец не ждёт; pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
+    // NO LETUP: в затишье врага боец не досиживает хвост удара после последнего касания (там отдача — и «останавливается»): следующий бросок отсчитывается от касания
+    let atkDur = atk.dur;
+    if (noTail()) { const li = atk.impacts ? atk.impacts[atk.impacts.length - 1] : atk.impact; if (typeof li === 'number' && li >= 0) atkDur = Math.min(atk.dur, li + 0.04); }
+    ai.nextAt = t + atkDur + pause * paceMul() * B.distance.attackPauseMul; // paceMul (sb.pauseCut / sb.lateRamp, база ×1) — доля паузы, которую боец не ждёт; pause stretched by combatBalance.distance.attackPauseMul (free time for movement)
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
@@ -2730,6 +2739,14 @@ export function buildFighter(
     // это не чтение, а «поймал на неустойчивом») один бросок: с шансом openPounce боец тут же бросает быстрый одиночный. Если он ещё в хвосте своего удара
     // (после последнего касания), хвост обрывается — иначе в большинстве обменов боец занят собственным клипом, пока враг открыт (~93%), и ответить нечем.
     // Один rand() на открытие и только у носителя: у остальных строка не срабатывает.
+    if (sb.quietPace && getFoePhase) { const qp = getFoePhase(); if (qp === 'windup' || qp === 'commit' || qp === 'recovery') foeAtkT = lastT; }
+    if (ai.on && clip && clip.dmgMult && noTail() && state === 'alive' && !gathering && !blocking && lastT >= staggerUntil && !lunge.active) {
+      const li = clip.impacts ? clip.impacts[clip.impacts.length - 1] : clip.impact; // NO LETUP: хвост удара оборван — боец готов к следующему броску, как только подошла пауза
+      if (typeof li === 'number' && li >= 0 && t - clipStart >= li + 0.04 && t >= ai.nextAt - 0.001) {
+        feintPayoffActive = false; chargeShotPower = 0; chargeShotPen = 0; windupVulnUntil = 0;
+        clip = null; dodgeRun = null;
+      }
+    }
     if (ai.on && sb.openPounce && state === 'alive') {
       const tp = getFoePhase ? getFoePhase() : 'neutral';
       const open = tp === 'recovery' || tp === 'stagger';

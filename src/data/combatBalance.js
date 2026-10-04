@@ -382,7 +382,7 @@ export const COMBAT_BALANCE = {
     'natisk.c.1': { strikePower: 0.01, seriesBias: 0.085, pauseCut: 0.34, rushMiss: 0.12 },
     'natisk.c.2': { strikePower: 0.02, openPounce: 0.4 },
     'natisk.c.3': { strikePower: 0.02, lateRamp: 0.66, rushMiss: 0.12 },
-    'natisk.c.4': { strikePower: 0.02 },
+    'natisk.c.4': { strikePower: 0.02, quietPace: 0.5 },
     'natisk.c.5': { strikePower: 0.07 },
     // RAI JAB
     // AMBUSH STING

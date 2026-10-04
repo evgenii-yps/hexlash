@@ -45,6 +45,7 @@ const STAT_PHRASES = {
   openPounce: { up: 'Pounces on openings', down: 'Slower on openings' },
   lateRamp: { up: 'Builds pace', down: 'Fades late' },
   rushMiss: { up: 'Wilder answers', down: 'Cleaner answers' },
+  quietPace: { up: 'Keeps pace in lulls', down: 'Eases in lulls' },
   feintWindow: { up: 'Longer bait window', down: 'Shorter bait window' },
   feintLunge: { up: 'Fakes on the approach', down: 'Fakes less on approach' },
 };
