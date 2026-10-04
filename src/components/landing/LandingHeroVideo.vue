@@ -48,7 +48,8 @@ const props = defineProps({
   /** Пауза снаружи — пока открыто окно полного трейлера. */
   paused: { type: Boolean, default: false },
 });
-/** frame(t) — на каждый показанный кадр: t — время петли, секунды.
+/** frame(t, rate) — на каждый показанный кадр: t — время петли, секунды; rate —
+    скорость воспроизведения (1 всегда, кроме проверок), нужна для сглаживания.
     reset — видео пропало (включили «уменьшить движение»), эффекты снять. */
 const emit = defineEmits(['frame', 'reset']);
 
@@ -136,7 +137,7 @@ function onFrame(t) {
   // до настоящего запуска остаётся заставка, а знак и слово лежат в покое.
   if (boundEl && boundEl.paused) return;
   if (!ready.value) ready.value = true;
-  emit('frame', t);
+  emit('frame', t, boundEl ? boundEl.playbackRate : 1);
 }
 
 function startRaf() {
