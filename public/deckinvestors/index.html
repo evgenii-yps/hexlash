@@ -437,19 +437,17 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 .dk-ctl-line[data-on="2"]{padding-left:14px;border-left:2px solid #FFB21D}
 
 /* 07. Масштаб боя: 60 секунд, быстрый слой и вызовы модели */
-.dk-sc-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;
-  /* Растворённые края показывают, что шкала продолжается (тот же приём, что у окон с видео, 7%).
-     Класс .fade-l / .fade-r ставит сценарий: только там, где шкала не помещается и есть куда листать. */
-  --fl:0%;--fr:0%;
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%);
-  mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%)}
+.dk-sc-wrap{overflow:hidden;
+  /* Широкая раскладка (всё, что шире 760px): шкала помещается в колонку целиком, прокрутки нет совсем,
+     overflow скрыт. Прокрутка включается только в узкой раскладке (@media ниже). Полосу прокрутки
+     гасим всеми способами и тут: у Chrome на Windows она обычная, со стрелками, а не накладная. */
+  scrollbar-width:none;-ms-overflow-style:none}
 .dk-sc-wrap::-webkit-scrollbar{display:none;width:0;height:0}
-.dk-sc-wrap.fade-l{--fl:7%}
-.dk-sc-wrap.fade-r{--fr:7%}
-.dk-sc{position:relative;min-width:720px;padding:26px 0 84px}
+.dk-sc{position:relative;padding:26px 0 84px}
 .dk-sc-axis{position:absolute;left:0;right:0;top:0;height:12px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.2em;color:#A9A5AF}
-.dk-sc-axis>span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;display:inline-flex;align-items:center;gap:.5em}
-.dk-sc-axis .dk-ap{vertical-align:0;margin-right:0}
+/* width:max-content: подпись у правого края (left:100%) не сжимается до min-content, «≈» не лезет на «60» */
+.dk-sc-axis>span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;width:max-content;display:inline-flex;align-items:center;gap:.5em}
+.dk-sc-axis .dk-ap{flex:0 0 auto;vertical-align:0;margin-right:0}
 .dk-sc-axis>span:first-child{transform:none}
 .dk-sc-axis>span:last-child{transform:translateX(-100%)}
 .dk-sc-bars{display:flex;align-items:flex-end;gap:2px;height:36px}
@@ -461,7 +459,18 @@ html.dk-anim .dk-pause.dk-done .dk-w[data-w]::after{animation:none;opacity:0}
 .dk-sc-cur{position:absolute;left:0;top:18px;width:1px;height:44px;background:#F6F4F6;opacity:0;transition:opacity .3s;pointer-events:none}
 .dk-sc-cur.is-run{opacity:.85}
 /* узкий экран: шкала крутится внутри блока, по краям — поле 22px, чтобы первая и последняя подписи и оси не упирались в край в начале и в конце прокрутки */
-@media (max-width:760px){.dk-sc-wrap{display:flex}.dk-sc-wrap::before,.dk-sc-wrap::after{content:"";flex:0 0 22px}.dk-sc{flex:1 0 720px}}
+/* Узкая раскладка: шкала шире экрана, листается пальцем внутри блока; полосы нет, края растворены (7%),
+   пока есть куда листать. Класс .fade-l / .fade-r ставит сценарий и снимает на широкой раскладке. */
+@media (max-width:760px){
+  .dk-sc-wrap{display:flex;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .dk-sc-wrap::before,.dk-sc-wrap::after{content:"";flex:0 0 22px}
+  .dk-sc{flex:1 0 720px;min-width:720px}
+  .dk-sc-wrap.fade-l,.dk-sc-wrap.fade-r{--fl:0%;--fr:0%;
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%)}
+  .dk-sc-wrap.fade-l{--fl:7%}
+  .dk-sc-wrap.fade-r{--fr:7%}
+}
 html.dk-anim .dk-sc:not(.is-done) .dk-sc-bars i:not(.m):not(.on){background:#2B3036}
 html.dk-anim .dk-sc:not(.is-done) .dk-sc-bars i.m:not(.on){opacity:0}
 html.dk-anim .dk-sc:not(.is-done) .dk-sc-c:not(.on){opacity:0}
@@ -2831,15 +2840,24 @@ function motion() {
     });
   }
 
-  /* ---------- 07. Края шкалы: растворение только там, где есть куда листать ---------- */
+  /* ---------- 07. Края шкалы: растворение только в узкой раскладке и только там, где есть куда листать ---------- */
+  var scNarrow = window.matchMedia ? window.matchMedia('(max-width:760px)') : { matches: false };
   [].forEach.call(doc.querySelectorAll('.dk-sc-wrap'), function (w) {
     function edges() {
+      if (!scNarrow.matches) {
+        /* широкая раскладка: overflow скрыт, прокрутка не нужна; остаток от узкой раскладки сбрасываем */
+        if (w.scrollLeft) w.scrollLeft = 0;
+        w.classList.remove('fade-l', 'fade-r');
+        return;
+      }
       var max = w.scrollWidth - w.clientWidth, x = w.scrollLeft;
       w.classList.toggle('fade-l', max > 2 && x > 1);
       w.classList.toggle('fade-r', max > 2 && x < max - 1);
     }
     w.addEventListener('scroll', edges, { passive: true });
     window.addEventListener('resize', edges);
+    if (scNarrow.addEventListener) scNarrow.addEventListener('change', edges);
+    else if (scNarrow.addListener) scNarrow.addListener(edges);
     edges();
     setTimeout(edges, 400);
   });
@@ -2866,13 +2884,15 @@ function motion() {
         t.classList.add('on');
         if (t.classList.contains('m')) { t.classList.add('pop'); if (s.caps[mi]) s.caps[mi].classList.add('on'); mi++; }
       }
-      if (s.wrap.scrollWidth > s.wrap.clientWidth + 2) s.wrap.scrollLeft = clamp(x - s.wrap.clientWidth * 0.5, 0, s.wrap.scrollWidth - s.wrap.clientWidth);
+      if (scNarrow.matches && s.wrap.scrollWidth > s.wrap.clientWidth + 2) s.wrap.scrollLeft = clamp(x - s.wrap.clientWidth * 0.5, 0, s.wrap.scrollWidth - s.wrap.clientWidth);
       if (pos < 1) requestAnimationFrame(frame);
       else {
         s.ticks.forEach(function (t) { t.classList.add('on'); });
         s.caps.forEach(function (c) { c.classList.add('on'); });
         s.sc.classList.add('is-done');
         setTimeout(function () { s.cur.classList.remove('is-run'); }, 200);
+        /* курсор погас; убираем его сдвиг, чтобы после смены ширины окна он не раздвигал шкалу */
+        setTimeout(function () { s.cur.style.transform = ''; }, 700);
       }
     }
     setTimeout(function () { requestAnimationFrame(frame); }, 200);
