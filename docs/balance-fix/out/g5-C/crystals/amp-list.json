@@ -1,0 +1,137 @@
+[
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 1
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 2
+ },
+ {
+  "core": "natisk",
+  "branch": "a",
+  "idx": 4
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 1
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 2
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 3
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 4
+ },
+ {
+  "core": "natisk",
+  "branch": "b",
+  "idx": 5
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 1
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 2
+ },
+ {
+  "core": "natisk",
+  "branch": "c",
+  "idx": 4
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 1
+ },
+ {
+  "core": "nalet",
+  "branch": "a",
+  "idx": 2
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 1
+ },
+ {
+  "core": "nalet",
+  "branch": "b",
+  "idx": 3
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 2
+ },
+ {
+  "core": "nalet",
+  "branch": "c",
+  "idx": 3
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 1
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 3
+ },
+ {
+  "core": "skala",
+  "branch": "c",
+  "idx": 4
+ },
+ {
+  "core": "zasada",
+  "branch": "a",
+  "idx": 3
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 1
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 2
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 3
+ },
+ {
+  "core": "zasada",
+  "branch": "b",
+  "idx": 5
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 2
+ },
+ {
+  "core": "zasada",
+  "branch": "c",
+  "idx": 5
+ }
+]
