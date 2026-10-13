@@ -55,10 +55,10 @@ export const WORLD = {
   ripple: {
     max: 20,           // не больше одновременно; старые вытесняются
     life: 5.6,         // секунд до полного затухания
-    speed: 2.1,        // скорость расхождения кольца, ед/с
+    speed: 1.7,        // скорость расхождения кольца, ед/с
     width: 0.42,       // полутолщина кольца в начале …
     widen: 0.55,       // … и прирост толщины за жизнь
-    gain: 2.4,         // кольцо светлит воду на столько «разниц гребень−вода» (вода НЕ светится — только гребень)
+    gain: 3.4,         // кольцо светлит воду на столько «разниц гребень−вода» (вода НЕ светится — только гребень)
     follow: 0.55,      // вторая, отстающая волна: доля яркости
     gap: 1.25,         // …и её отставание, ед
     tapPx: 6,          // тап = сдвиг не больше стольких пикселей
@@ -240,7 +240,7 @@ const SEA_FRAG = /* glsl */`
       if (i >= uRipN) break;
       float age = uTime - uRip[i].z;
       float life = clamp(age / ${WORLD.ripple.life.toFixed(3)}, 0.0, 1.0);
-      float fall = (1.0 - life) * (1.0 - life) * min(age * 4.0, 1.0) * uRip[i].w;
+      float fall = pow(1.0 - life, 1.15) * min(age * 4.0, 1.0) * uRip[i].w;
       float dist = distance(vW.xz, uRip[i].xy);
       float r = age * ${WORLD.ripple.speed.toFixed(3)};
       float w = ${WORLD.ripple.width.toFixed(3)} + life * ${WORLD.ripple.widen.toFixed(3)};

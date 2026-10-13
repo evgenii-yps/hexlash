@@ -22,6 +22,12 @@ const BASE = process.env.BASE || 'http://127.0.0.1:4173';
 const OUT = process.env.OUT || 'docs/world-diorama/shots';
 const URL = `${BASE}/dev/world?dev=1`;
 mkdirSync(OUT, { recursive: true });
+// ONLY=shots,ripple,reduced,cost — прогнать только эти разделы (программный рендер медленный).
+// DSFS=1,2 — плотности для замера кадра; FRAMES — кадров на строку.
+const ONLY = (process.env.ONLY || 'shots,ripple,reduced,cost').split(',');
+const want = (k) => ONLY.includes(k);
+const DSFS = (process.env.DSFS || '1').split(',').map(Number);
+const FRAMES = Number(process.env.FRAMES || 60);
 
 let failed = 0;
 const ok = (c, n, d = '') => {
@@ -67,7 +73,7 @@ const storage = (page) => page.evaluate(() => JSON.stringify({ l: { ...localStor
 
 // ───────────── 1–2. снимки ─────────────
 console.log('\n[1–2] снимки');
-for (const [w, h, tag] of [[390, 844, 'portrait'], [1280, 720, 'desktop']]) {
+if (want('shots')) for (const [w, h, tag] of [[390, 844, 'portrait'], [1280, 720, 'desktop']]) {
   const { ctx, page } = await open({ w, h });
   const before = await storage(page);
   await page.screenshot({ path: `${OUT}/${tag}-all-on.png` });
@@ -96,10 +102,12 @@ for (const [w, h, tag] of [[390, 844, 'portrait'], [1280, 720, 'desktop']]) {
 
 // ───────────── 3. рябь ─────────────
 console.log('\n[3] рябь по тапу');
-{
+if (want('ripple')) {
   const { ctx, page } = await open({ w: 390, h: 844 });
   await setLayers(page, ALL);
-  const WATER = [60, 790];   // нижний левый угол: вода под островом
+  // Открытая вода на стартовом портретном ракурсе — только полоса сверху (остальное закрыто
+  // островом и бойцами): тап в (110, 250) падает в мировую точку ≈ (−17, −15).
+  const WATER = [110, 250];
   const ISLAND = [200, 640]; // плита
   const FIGHTER = [292, 470]; // боец справа
   const count = () => page.evaluate(() => window.__worldProbe.world.rippleCount);
@@ -115,7 +123,7 @@ console.log('\n[3] рябь по тапу');
   await page.waitForTimeout(150);
   ok((await count()) === 1, 'тап по воде пускает кольцо', JSON.stringify(await last()));
   // три кадра подряд
-  const shots = [[0.4, 'a'], [1.6, 'b'], [3.2, 'c']];
+  const shots = [[0.5, 'a'], [1.6, 'b'], [3.2, 'c'], [4.8, 'd']];
   for (const [at, tag] of shots) {
     const wait = at * 1000 - (Date.now() - t0);
     if (wait > 0) await page.waitForTimeout(wait);
@@ -126,14 +134,17 @@ console.log('\n[3] рябь по тапу');
   ok((await count()) === 0, 'через ~6 с кольцо погасло и вытеснено из списка');
 
   // перетаскивание (поворот камеры) ряби не даёт
-  await page.mouse.move(60, 790); await page.mouse.down(); await page.mouse.move(120, 790, { steps: 6 }); await page.mouse.up();
+  await page.mouse.move(110, 250); await page.mouse.down(); await page.mouse.move(170, 250, { steps: 6 }); await page.mouse.up();
   await page.waitForTimeout(200);
   ok((await count()) === 0, 'поворот камеры пальцем не даёт ряби');
 
   // потолок 20
-  for (let i = 0; i < 25; i++) { await page.mouse.click(40 + (i % 5) * 20, 740 + Math.floor(i / 5) * 18); await page.waitForTimeout(40); }
+  for (let i = 0; i < 25; i++) { await page.mouse.click(40 + (i % 5) * 60, 200 + Math.floor(i / 5) * 25); await page.waitForTimeout(40); }
   const n = await count();
-  ok(n <= 20 && n >= 15, `25 быстрых тапов → колец одновременно ${n} (потолок 20)`);
+  ok(n <= 20 && n >= 10, `25 быстрых тапов по воде → колец одновременно ${n} (потолок 20)`);
+  // вытеснение старых строго: 30 колец подряд в одну секунду → ровно 20
+  const forced = await page.evaluate(() => { const w = window.__worldProbe.world; for (let i = 0; i < 30; i++) w.rippleAt(-10 - i * 0.3, -12); return w.rippleCount; });
+  ok(forced === 20, `30 колец за секунду → в воздухе ровно ${forced}, старые вытеснены`);
 
   // слой «рябь» выключен — рябь не пускается
   await page.waitForTimeout(6500);
@@ -145,16 +156,16 @@ console.log('\n[3] рябь по тапу');
 
 // ───────────── 4. уменьшенное движение ─────────────
 console.log('\n[4] prefers-reduced-motion');
-{
+if (want('reduced')) {
   const { ctx, page } = await open({ w: 390, h: 844, reduce: true });
   await setLayers(page, { ...NONE, sea: true, clouds: true }); await page.waitForTimeout(1000);
-  const crop = { x: 0, y: 700, width: 390, height: 144 }; // нижний край — только вода
+  const crop = { x: 0, y: 130, width: 390, height: 100 }; // верхняя полоса — только вода
   const a = await page.screenshot({ clip: crop });
   await page.waitForTimeout(2500);
   const b = await page.screenshot({ clip: crop });
   ok(Buffer.compare(a, b) === 0, 'вода стоит (два кадра с разницей 2.5 с побайтно равны)');
   await setLayers(page, ALL);
-  await page.mouse.click(60, 790); await page.waitForTimeout(200);
+  await page.mouse.click(110, 250); await page.waitForTimeout(200);
   ok((await page.evaluate(() => window.__worldProbe.world.rippleCount)) === 0, 'рябь по тапу не запускается');
   await ctx.close();
 }
@@ -162,9 +173,9 @@ console.log('\n[4] prefers-reduced-motion');
 // ───────────── 5. время кадра ─────────────
 console.log('\n[5] время кадра (программный рендер — сравнивать слои между собой)');
 const COSTS = [];
-for (const dsf of [1, 2]) {
+if (want('cost')) for (const dsf of DSFS) {
   const { ctx, page } = await open({ w: 390, h: 844, dsf });
-  const N = dsf === 1 ? 120 : 60;
+  const N = dsf === 1 ? FRAMES : Math.max(20, Math.floor(FRAMES / 2));
   const rows = [
     ['без мира', NONE],
     ['только море', { ...NONE, sea: true }],
@@ -184,7 +195,7 @@ for (const dsf of [1, 2]) {
   // все слои + 20 колец в воздухе
   await setLayers(page, ALL);
   await page.evaluate(() => { const w = window.__worldProbe.world; for (let i = 0; i < 20; i++) w.rippleAt(-8 + i * 0.7, 6 + (i % 4)); });
-  const r = await page.evaluate((n) => window.__worldProbe.measure(n), Math.min(N, 40));
+  const r = await page.evaluate((n) => window.__worldProbe.measure(n), Math.min(N, 30));
   COSTS.push({ dsf, name: 'все слои + 20 колец', ...r });
   console.log(`  dpr${dsf}  ${'все слои + 20 колец'.padEnd(20)} медиана ${String(r.median).padStart(6)} мс  p90 ${String(r.p90).padStart(6)}`);
   const stats = await page.evaluate(() => window.__worldProbe.world.stats());
