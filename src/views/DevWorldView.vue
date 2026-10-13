@@ -23,7 +23,7 @@
         :aria-pressed="on[l.id]"
         @click="toggle(l.id)"
       >{{ l.name }}</button>
-      <div class="dw-read" aria-live="off">КАДР {{ read.renderMs }} мс · ИНТ {{ read.intervalMs }} · СЛОЁВ {{ read.layers }}</div>
+      <div class="dw-read" aria-live="off">КАДР {{ read.intervalMs }} мс · {{ read.fps }} к/с · ОТРИС {{ read.renderMs }} · СЛОЁВ {{ read.layers }}</div>
     </div>
   </div>
 </template>
@@ -48,7 +48,7 @@ const LAYERS = [
   { id: 'islands', name: 'ОСТРОВА' },
 ];
 const on = reactive({ sea: true, ripple: true, clouds: true, stars: true, islands: true });
-const read = reactive({ renderMs: '—', intervalMs: '—', layers: '5/5' });
+const read = reactive({ renderMs: '—', intervalMs: '—', fps: '—', layers: '5/5' });
 
 let world = null;
 const pending = { ...on }; // переключения, пришедшие раньше, чем мир собрался
@@ -124,7 +124,11 @@ onMounted(() => {
 
   readTimer = setInterval(() => {
     read.renderMs = samples.length ? median(samples).toFixed(1) : '—';
+    // КАДР = интервал между кадрами (это и есть цена кадра; у дома потолок 30 к/с на
+    // телефоне, то есть здоровый ответ ≈ 33 мс). ОТРИС = тик мира + постановка отрисовки:
+    // на настоящей видеокарте полезно, в программном рендере почти ничего не показывает.
     read.intervalMs = intervals.length ? median(intervals).toFixed(1) : '—';
+    read.fps = intervals.length ? Math.round(1000 / median(intervals)) : '—';
   }, 500);
 
   // Служебная линейка приёмки: числа, которых не видно глазами. Только эта страница.

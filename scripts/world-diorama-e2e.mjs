@@ -69,7 +69,12 @@ async function drag(page, w, h, dx, dy) {
 }
 
 // ───────────── 6. сейф до ─────────────
-const storage = (page) => page.evaluate(() => JSON.stringify({ l: { ...localStorage }, s: { ...sessionStorage } }));
+// Очередь аналитики Amplitude (AMP_*) сама сбрасывается по сети — она есть и на эталонном
+// /play/home без мира, к прогрессу не относится и в сверку не входит.
+const storage = (page) => page.evaluate(() => {
+  const pick = (st) => Object.fromEntries(Object.entries({ ...st }).filter(([k]) => !k.startsWith('AMP_')));
+  return JSON.stringify({ l: pick(localStorage), s: pick(sessionStorage) });
+});
 
 // ───────────── 1–2. снимки ─────────────
 console.log('\n[1–2] снимки');
@@ -96,7 +101,7 @@ if (want('shots')) for (const [w, h, tag] of [[390, 844, 'portrait'], [1280, 720
   const after = await storage(page);
   // сейф: страница ничего не пишет сверх того, что дом и бутстрап пишут сами при загрузке
   // (сравнение — между началом и концом сеанса на этой странице)
-  ok(before === after, `${tag}: хранилище браузера не менялось за сеанс`);
+  ok(before === after, `${tag}: хранилище браузера (сейф игрока, без аналитики) не менялось за сеанс`);
   await ctx.close();
 }
 
