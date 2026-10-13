@@ -307,6 +307,11 @@ const devRoutes = [
     // плоские иконки, панель боя и слоты выбора — до того, как баффы попадут в
     // бой. Ничего не встраивает, тот же принцип, что и у /dev/core.
     {path: '/dev/buffs', name: 'DevBuffsPreview', component: () => import('@/views/DevBuffsPreviewView.vue')},
+    // /dev/world — проба «живой мир» (ТЗ 13.10.2026): настоящий дом игрока и слой
+    // моря/облаков/звёзд/дальних островов вокруг него. Ничего не встраивает в игру;
+    // ростер выдуманный, прогресс игрока страница не читает и не пишет. meta.scene3d —
+    // чтобы экран загрузки закрывал сборку дома, как на настоящем /play/home.
+    {path: '/dev/world', name: 'DevWorldPreview', component: () => import('@/views/DevWorldView.vue'), meta: { scene3d: true }},
 ];
 
 const routes = [
